@@ -4,7 +4,7 @@
 \alias{loglik}
 \title{Title}
 \usage{
-loglik(LLL, LLA, LLB, D, links, sumRowD, sumColD, gamma)
+loglik(LLL, LLA, LLB, links, sumRowD, sumColD, gamma)
 }
 \arguments{
 \item{LLL}{.}
@@ -12,8 +12,6 @@ loglik(LLL, LLA, LLB, D, links, sumRowD, sumColD, gamma)
 \item{LLA}{.}
 
 \item{LLB}{.}
-
-\item{D}{.}
 
 \item{links}{.}
 

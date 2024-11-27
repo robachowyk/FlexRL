@@ -59,23 +59,41 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// initΔMap
+void initΔMap();
+RcppExport SEXP _FlexRL_initΔMap() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    initΔMap();
+    return R_NilValue;
+END_RCPP
+}
+// Δfind
+IntegerMatrix Δfind();
+RcppExport SEXP _FlexRL_Δfind() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(Δfind());
+    return rcpp_result_gen;
+END_RCPP
+}
 // sampleD
-List sampleD(const IntegerMatrix& S, const NumericVector& LLA, const NumericVector& LLB, const RcppSparse::Matrix& LLL, const NumericVector& gamma, double loglik, RcppSparse::Matrix& D, int nlinkrec, LogicalVector& sumRowD, LogicalVector& sumColD);
-RcppExport SEXP _FlexRL_sampleD(SEXP SSEXP, SEXP LLASEXP, SEXP LLBSEXP, SEXP LLLSEXP, SEXP gammaSEXP, SEXP loglikSEXP, SEXP DSEXP, SEXP nlinkrecSEXP, SEXP sumRowDSEXP, SEXP sumColDSEXP) {
+List sampleD(const IntegerMatrix& S, const NumericVector& LLA, const NumericVector& LLB, const NumericMatrix& LLL, const NumericVector& gamma, double loglik, int nlinkrec, LogicalVector& sumRowD, LogicalVector& sumColD);
+RcppExport SEXP _FlexRL_sampleD(SEXP SSEXP, SEXP LLASEXP, SEXP LLBSEXP, SEXP LLLSEXP, SEXP gammaSEXP, SEXP loglikSEXP, SEXP nlinkrecSEXP, SEXP sumRowDSEXP, SEXP sumColDSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const IntegerMatrix& >::type S(SSEXP);
     Rcpp::traits::input_parameter< const NumericVector& >::type LLA(LLASEXP);
     Rcpp::traits::input_parameter< const NumericVector& >::type LLB(LLBSEXP);
-    Rcpp::traits::input_parameter< const RcppSparse::Matrix& >::type LLL(LLLSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type LLL(LLLSEXP);
     Rcpp::traits::input_parameter< const NumericVector& >::type gamma(gammaSEXP);
     Rcpp::traits::input_parameter< double >::type loglik(loglikSEXP);
-    Rcpp::traits::input_parameter< RcppSparse::Matrix& >::type D(DSEXP);
     Rcpp::traits::input_parameter< int >::type nlinkrec(nlinkrecSEXP);
     Rcpp::traits::input_parameter< LogicalVector& >::type sumRowD(sumRowDSEXP);
     Rcpp::traits::input_parameter< LogicalVector& >::type sumColD(sumColDSEXP);
-    rcpp_result_gen = Rcpp::wrap(sampleD(S, LLA, LLB, LLL, gamma, loglik, D, nlinkrec, sumRowD, sumColD));
+    rcpp_result_gen = Rcpp::wrap(sampleD(S, LLA, LLB, LLL, gamma, loglik, nlinkrec, sumRowD, sumColD));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -174,7 +192,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_FlexRL_F2", (DL_FUNC) &_FlexRL_F2, 2},
     {"_FlexRL_F33", (DL_FUNC) &_FlexRL_F33, 3},
     {"_FlexRL_sspaste2", (DL_FUNC) &_FlexRL_sspaste2, 1},
-    {"_FlexRL_sampleD", (DL_FUNC) &_FlexRL_sampleD, 10},
+    {"_FlexRL_initΔMap", (DL_FUNC) &_FlexRL_initΔMap, 0},
+    {"_FlexRL_Δfind", (DL_FUNC) &_FlexRL_Δfind, 0},
+    {"_FlexRL_sampleD", (DL_FUNC) &_FlexRL_sampleD, 9},
     {"_FlexRL_sampleNL", (DL_FUNC) &_FlexRL_sampleNL, 3},
     {"_FlexRL_sampleL", (DL_FUNC) &_FlexRL_sampleL, 9},
     {"_FlexRL_cartesianProduct", (DL_FUNC) &_FlexRL_cartesianProduct, 2},

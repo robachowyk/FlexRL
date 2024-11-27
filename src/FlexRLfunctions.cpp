@@ -4,13 +4,10 @@
 #define ARMA_64BIT_WORD 1
 #include <RcppArmadillo.h>
 #include <RcppArmadilloExtensions/sample.h>
-#include <RcppSparse.h>
 #include <Rcpp.h>
 
 // [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::depends(RcppSparse)]]
 using namespace Rcpp;
-using namespace arma;
 
 // Use R random number generator to control seeds
 // Otherwise use the following:
@@ -192,7 +189,7 @@ IntegerMatrix Δfind()
   }
   if(index != length)
   {
-    Rf_error("Something went wrong creating Δ");
+    Rf_error("Something went wrong creating Δ.");
   }
   return found;
 }
@@ -203,7 +200,7 @@ IntegerMatrix Δfind()
 List sampleD(const IntegerMatrix & S,
              const NumericVector & LLA,
              const NumericVector & LLB,
-             const RcppSparse::Matrix & LLL,
+             const NumericMatrix & LLL, // const arma::sp_mat & LLL,
              const NumericVector & gamma,
              double loglik,
              int nlinkrec,
@@ -215,7 +212,7 @@ List sampleD(const IntegerMatrix & S,
     int i = S(q,0)-1;
     int j = S(q,1)-1;
     // If non match and possible match -> check if match
-    if((sumRowD(i)==false) && (sumColD(j)==false) && LLL(i,j) < 10000000)
+    if((sumRowD(i)==false) && (sumColD(j)==false))
     {
       double loglikNew = loglik
       // Comparison vectors

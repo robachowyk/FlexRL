@@ -2,7 +2,7 @@
 % Please edit documentation in R/FlexRecordLinkage.r
 \name{stEM}
 \alias{stEM}
-\title{Title}
+\title{Stochastic EM for Record Linkage}
 \usage{
 stEM(
   data,
@@ -10,7 +10,6 @@ stEM(
   StEMBurnin,
   GibbsIter,
   GibbsBurnin,
-  sparseOutput = TRUE,
   musicOn = TRUE,
   newDirectory = NULL,
   saveInfoIter = FALSE
@@ -18,7 +17,7 @@ stEM(
 }
 \arguments{
 \item{data}{A list with elements A, B, Nvalues, PIVs_config, controlOnMistakes,
-sameMistakes, phiMistakesAFixed, phiMistakesBFixed, phiForMistakesA, phiForMistakesB}
+sameMistakes, phiMistakesAFixed, phiMistakesBFixed, phiForMistakesA, phiForMistakesB.}
 
 \item{StEMIter}{An integer with the total number of iterations of the Stochastic
 EM algorithm (including the period to discard as burn-in)}
@@ -29,9 +28,6 @@ EM algorithm (including the period to discard as burn-in)}
 (done in each iteration of the StEM) (including the period to discard as burn-in)}
 
 \item{GibbsBurnin}{An integer with the number of iterations to discard as burn-in}
-
-\item{sparseOutput}{A boolean value, to handle the final linkage matrix as sparse or
-not, for large data sets it should be set to TRUE to avoid R crashing or memory errors}
 
 \item{musicOn}{A boolean value, if TRUE the algorithm will play music at the end of
 the algorithm, useful if you have to wait for the record linkage to run and to act as
@@ -48,10 +44,16 @@ loose everything and not restart from scratch in case your computer shut downs b
 record linkage is finished)}
 }
 \value{
-A list with: Delta, (sparse) matrix with the pairs of records linked and their posterior probabilities to be linked (select the pairs where the proba>0.5 to get a valid set of linked records), gamma, a vector with the chain of the parameter gamma representing the proportion of linked records as a fraction of the smallest file, eta, a vector with the chain of the parameter eta representing the distribution of the PIVs, alpha, a vector with the chain of the parameter alpha representing the hazard coefficient of the model for instability, phi, a vector with the chain of the parameter phi representing the registration errors parameters)
+A list with: Delta, (sparse) matrix with the pairs of records linked and their
+posterior probabilities to be linked (select the pairs where the proba>0.5 to get a valid
+set of linked records), gamma, a vector with the chain of the parameter gamma representing
+the proportion of linked records as a fraction of the smallest file, eta, a vector with the
+chain of the parameter eta representing the distribution of the PIVs, alpha, a vector with
+the chain of the parameter alpha representing the hazard coefficient of the model for instability,
+phi, a vector with the chain of the parameter phi representing the registration errors parameters)
 }
 \description{
-Title
+Stochastic EM for Record Linkage
 }
 \examples{
 data = list( A=encodedA,

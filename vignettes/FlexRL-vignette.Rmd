@@ -167,7 +167,6 @@ fit = stEM(  data                 = data,
              StEMBurnin           = 30,
              GibbsIter            = 100, 
              GibbsBurnin          = 70,
-             sparseOutput         = TRUE,
              musicOn              = TRUE,
              newDirectory         = NULL,
              saveInfoIter         = FALSE
@@ -231,7 +230,6 @@ DeltaResult = fit$Delta
 colnames(DeltaResult) = c("idx20","idx16","probaLink")
 DeltaResult = DeltaResult[DeltaResult$probaLink>0.5,]
 DeltaResult
-
 ```
 
 We can then compare the linked records with the true links:

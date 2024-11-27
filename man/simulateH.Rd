@@ -20,8 +20,6 @@ simulateH(data, links, survivalpSameH, sumRowD, sumColD, eta, phi)
 \item{eta}{.}
 
 \item{phi}{.}
-
-\item{D}{.}
 }
 \value{
 .

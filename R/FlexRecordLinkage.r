@@ -1,7 +1,3 @@
-#' @useDynLib FlexRL, .registration=TRUE
-NULL
-#> NULL
-#'
 #' Title
 #'
 #' @param PIVs_config A list (of size number of PIVs) where element names are the PIVs and element values are lists with elements: stable (boolean for whether the PIV is stable), conditionalHazard (boolean for whether there are external covariates available to model instability, only required if stable is FALSE), pSameH.cov.A and pSameH.covB (vectors with strings corresponding to the names of the covariates to use to model instability from file A and file B, only required if stable is FALSE, empty vectors may be provided if conditionalHazard is FALSE)
@@ -314,7 +310,7 @@ simulateD = function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamma
     LLB = LLB + logpTrue + log(contr)
   }
   # What do we add/substract from the loglikelihood if a pair is linked
-  LLL = Matrix::Matrix(0, nrow=nrow(data$A[,PIVs]), ncol=nrow(data$B[,PIVs]), sparse=TRUE)
+  LLL = matrix(0, nrow=nrow(data$A[,PIVs]), ncol=nrow(data$B[,PIVs]))
   for(k in 1:length(data$Nvalues))
   {
     HA = truepivsA[ select[,1],k ]
@@ -348,7 +344,9 @@ simulateD = function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamma
       LLL[select] = LLL[select] + log(helpH)
     }
   }
-  LLL[select][is.na(LLL[select])] = Inf
+  if(sum(is.na(LLL[select]))>0){
+    cat("\nSomething went wrong filling LLL\n")
+  }
   # Complete data likelihood
   LL0 = loglik(LLL=LLL, LLA=LLA, LLB=LLB, links=linksR, sumRowD=sumRowD, sumColD=sumColD, gamma=gamma)
   # Single run through D
@@ -407,10 +405,10 @@ SurvivalUnstable = function(Xlinksk, alphask, times)
   exp( - exp( as.matrix(Xlinksk) %*% alphask ) * times )
 }
 
-#' Title
+#' Stochastic EM for Record Linkage
 #'
 #' @param data A list with elements A, B, Nvalues, PIVs_config, controlOnMistakes,
-#' sameMistakes, phiMistakesAFixed, phiMistakesBFixed, phiForMistakesA, phiForMistakesB
+#' sameMistakes, phiMistakesAFixed, phiMistakesBFixed, phiForMistakesA, phiForMistakesB.
 #' @param StEMIter An integer with the total number of iterations of the Stochastic
 #' EM algorithm (including the period to discard as burn-in)
 #' @param StEMBurnin An integer with the number of iterations to discard as burn-in
@@ -429,8 +427,13 @@ SurvivalUnstable = function(Xlinksk, alphask, times)
 #' loose everything and not restart from scratch in case your computer shut downs before
 #' record linkage is finished)
 #'
-#' @return A list with: Delta, (sparse) matrix with the pairs of records linked and their posterior probabilities to be linked (select the pairs where the proba>0.5 to get a valid set of linked records), gamma, a vector with the chain of the parameter gamma representing the proportion of linked records as a fraction of the smallest file, eta, a vector with the chain of the parameter eta representing the distribution of the PIVs, alpha, a vector with the chain of the parameter alpha representing the hazard coefficient of the model for instability, phi, a vector with the chain of the parameter phi representing the registration errors parameters)
-#' @export
+#' @return A list with: Delta, (sparse) matrix with the pairs of records linked and their
+#' posterior probabilities to be linked (select the pairs where the proba>0.5 to get a valid
+#' set of linked records), gamma, a vector with the chain of the parameter gamma representing
+#' the proportion of linked records as a fraction of the smallest file, eta, a vector with the
+#' chain of the parameter eta representing the distribution of the PIVs, alpha, a vector with
+#' the chain of the parameter alpha representing the hazard coefficient of the model for instability,
+#' phi, a vector with the chain of the parameter phi representing the registration errors parameters)
 #'
 #' @examples data = list( A=encodedA,
 #'                        B=encodedB,
@@ -519,11 +522,10 @@ stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, musicOn=TRUE
     tijdM = Sys.time()
 
     initΔMap()
-    # D = Matrix::Matrix(0, nrow(data$A), nrow(data$B), sparse=TRUE) # Matrix::sparseMatrix(i=c(),j=c(),dims=c(nrow(data$A),nrow(data$B)))
     linksR = base::matrix(0,0,2)
     linksCpp = linksR
-    sumRowD = rep(0, nrow(data$A)) # Matrix::rowSums(D)
-    sumColD = rep(0, nrow(data$B)) # Matrix::colSums(D)
+    sumRowD = rep(0, nrow(data$A))
+    sumColD = rep(0, nrow(data$B))
     nlinkrec = 0
     survivalpSameH = base::matrix(1, nrow(linksR), length(data$Nvalues))
 

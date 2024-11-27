@@ -6,7 +6,6 @@
 \usage{
 simulateD(
   data,
-  D,
   linksR,
   sumRowD,
   sumColD,
@@ -20,8 +19,6 @@ simulateD(
 }
 \arguments{
 \item{data}{.}
-
-\item{D}{.}
 
 \item{linksR}{.}
 

@@ -1,3 +1,53 @@
+#' FlexRL
+#'
+#' A Flexible Model For Record Linkage
+#'
+#' @author Kayané Robach
+#' @import Rcpp
+#' @importFrom Rcpp evalCpp
+#' @useDynLib FlexRL, .registration=TRUE
+#' @name FlexRL
+#'
+#' @param data is a list gathering information on the data to be linked such as the data
+#' sources 'A' and 'B', the unique values in each PIV 'Nvalues', the list of PIVs to use for Record Linkage
+#' and details on how each should be handled by the algorithm 'PIVs_config', potential bounds on the
+#' mistakes probabilities for each PIV 'controlOnMistakes', whether there should be one parameter for
+#' the mistakes in A and B or whether each source should have its own (sameMistakes=TRUE is recommended in case
+#' of small data sources) 'sameMistakes', whether the parameters for mistakes should be fixed in case of instability
+#' 'phiMistakesAFixed' and 'phiMistakesBFixed', as well as the values they should be fixed to 'phiForMistakesA' and 'phiForMistakesB'
+#' @param StEMIter The total number of iterations of the Stochastic EM algorithm (including the period to discard as burn-in)
+#' @param StEMBurnin The number of iterations to discard as burn-in
+#' @param GibbsIter The total number of iterations of the Gibbs sampler
+#' (run in each iteration of the StEM) (including the period to discard as burn-in)
+#' @param GibbsBurnin The number of iterations to discard as burn-in
+#'
+#' @return The StEM function returns w list with: Delta, the (sparse) matrix with the pairs of records linked and their
+#' posterior probabilities to be linked (select the pairs where the proba>0.5 to get a valid set of linked records), as well as gamma,
+#' eta, alpha, phi, the model parameters chains
+#'
+#' @examples
+#' An example for a real data sources already encoded, with 5 PIVs: birth year, sex, marital status, education level, region.
+#' PIVs may be considered stable if there is not enough information to model their dynamics.
+#' We may not give a bound on the 3 last PIVs: marital status, education level, region, since there may be a lot of disagreements among the links for those variables.
+#' For a small example we prefer havingone parameter for the probabilities of mistakes over the 2 data sources.
+#' We do not need to fix the mistakes parameters to avoid estimability problems here.
+#'           data = list( A=encodedA,
+#'                        B=encodedB,
+#'                        Nvalues=nvalues,
+#'                        PIVs_config=PIVs_config,
+#'                        controlOnMistakes=c(TRUE,TRUE,FALSE,FALSE,FALSE),
+#'                        sameMistakes=TRUE,
+#'                        phiMistakesAFixed=FALSE,
+#'                        phiMistakesBFixed=FALSE,
+#'                        phiForMistakesA=c(NA,NA,NA,NA,NA),
+#'                        phiForMistakesB=c(NA,NA,NA,NA,NA))
+#'            fit = StEM( data,
+#'                        100,
+#'                        70,
+#'                        200,
+#'                        100 )
+NULL
+
 .onLoad <- function(...) {
   base::packageStartupMessage("If you are happy with FlexRL, please cite us! Also, if you are unhappy, please cite us anyway.\nHERE ADD\nbibtex format in CITATION.", appendLF = TRUE)
 }

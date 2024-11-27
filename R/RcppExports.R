@@ -22,8 +22,18 @@ sspaste2 <- function(A) {
 }
 
 #' @export
-sampleD <- function(S, LLA, LLB, LLL, gamma, loglik, D, nlinkrec, sumRowD, sumColD) {
-    .Call(`_FlexRL_sampleD`, S, LLA, LLB, LLL, gamma, loglik, D, nlinkrec, sumRowD, sumColD)
+initΔMap <- function() {
+    invisible(.Call(`_FlexRL_initΔMap`))
+}
+
+#' @export
+Δfind <- function() {
+    .Call(`_FlexRL_Δfind`)
+}
+
+#' @export
+sampleD <- function(S, LLA, LLB, LLL, gamma, loglik, nlinkrec, sumRowD, sumColD) {
+    .Call(`_FlexRL_sampleD`, S, LLA, LLB, LLL, gamma, loglik, nlinkrec, sumRowD, sumColD)
 }
 
 #' @export
