@@ -1,19 +1,19 @@
 #include <random>
 #include <chrono>
 
-#define ARMA_64BIT_WORD 1 
+#define ARMA_64BIT_WORD 1
 #include <RcppArmadillo.h>
 #include <RcppArmadilloExtensions/sample.h>
 #include <Rcpp.h>
 
-// [[Rcpp::depends(RcppArmadillo)]] 
+// [[Rcpp::depends(RcppArmadillo)]]
 using namespace Rcpp;
 
 // Use R random number generator to control seeds
 // Otherwise use the following:
-// static std::random_device rd; 
+// static std::random_device rd;
 // initialize Mersennes' twister using rd to generate the seed
-// static std::mt19937 gen{rd()}; 
+// static std::mt19937 gen{rd()};
 // std::uniform_real_distribution<double> dist(0, 1);
 
 // [[Rcpp::export]]
@@ -34,12 +34,12 @@ double ControlRandomSampleGen(IntegerVector choiceset, NumericVector probavec) {
   return generatedrandom;
 }
 
-// [[Rcpp::export]] 
+// [[Rcpp::export]]
 List F2(IntegerVector U, int nvals)
 {
   List out(nvals);
   for (int i = 0; i < nvals; i++)
-  { 
+  {
     IntegerVector tmp;
     out[i] = tmp;
   }
@@ -49,12 +49,12 @@ List F2(IntegerVector U, int nvals)
     IntegerVector tmpX = out[U[i]-1];
     tmpX.push_back(i+1);
     out[U[i]-1] = tmpX;
-  } 
+  }
   return out;
 }
 
 // Cartesian product of both lists. Which combos are possible based on the true values?
-// [[Rcpp::export]] 
+// [[Rcpp::export]]
 IntegerMatrix F33(List A, List B, int nvals)
 {
   int ntotal = 0;
@@ -80,17 +80,17 @@ IntegerMatrix F33(List A, List B, int nvals)
         counter += 1;
       }
     }
-  } 
+  }
   return tmpC;
 }
 
-// [[Rcpp::export]] 
+// [[Rcpp::export]]
 CharacterVector sspaste2(IntegerMatrix A)
 {
   int i = 0, j = 0;
   int sz = A.nrow();
   CharacterVector res(sz);
-  for (std::ostringstream oss; i < sz; i++, oss.str("")) 
+  for (std::ostringstream oss; i < sz; i++, oss.str(""))
   {
     oss << A(i,0);
     for (j = 1; j < A.ncol(); j++)
@@ -102,7 +102,7 @@ CharacterVector sspaste2(IntegerMatrix A)
   return res;
 }
 
-// [[Rcpp::export]] 
+// [[Rcpp::export]]
 List F11(const List & F, const int & nvals)
 {
   List out(nvals);
@@ -127,7 +127,7 @@ List F11(const List & F, const int & nvals)
   return out;
 }
 
-// [[Rcpp::export]] 
+// [[Rcpp::export]]
 List F1(const IntegerVector & HA, const IntegerVector & HB, const int & nvals)
 {
   List out(nvals);
@@ -146,7 +146,7 @@ List F1(const IntegerVector & HA, const IntegerVector & HB, const int & nvals)
     tmpA.push_back(i+1);
     tmp[0] = tmpA;
     out[HA[i]-1] = tmp;
-  } 
+  }
   for (int j = 0; j < HB.length(); j++)
   {
     List tmp = out[HB[j]-1];
@@ -158,14 +158,14 @@ List F1(const IntegerVector & HA, const IntegerVector & HB, const int & nvals)
   return out;
 }
 
-// [[Rcpp::export]] 
+// [[Rcpp::export]]
 List sampleD(const IntegerMatrix & S,
-             const NumericVector & LLA, 
-             const NumericVector & LLB, 
-             const arma::sp_mat & LLL, 
-             const NumericVector & gamma, 
-             double loglik, 
-             arma::sp_mat D, 
+             const NumericVector & LLA,
+             const NumericVector & LLB,
+             const arma::sp_mat & LLL,
+             const NumericVector & gamma,
+             double loglik,
+             arma::sp_mat D,
              int nlinkrec,
              LogicalVector sumRowD,
              LogicalVector sumColD)
@@ -176,16 +176,16 @@ List sampleD(const IntegerMatrix & S,
     int j = S(q,1)-1;
     // If non match and possible match -> check if match
     if((sumRowD(i)==false) && (sumColD(j)==false) && LLL(i,j) < 10000000)
-    {					
-      double loglikNew = loglik  
+    {
+      double loglikNew = loglik
       // Comparison vectors
-      - LLB(j) - LLA(i) 
+      - LLB(j) - LLA(i)
       + LLL(i,j)
       // Bipartite matching
       - log(1-gamma(i)) + log(gamma(i))
       - log(LLB.length() - nlinkrec);
       double sumlogdensity = log(1 + exp(loglik-loglikNew)) + loglikNew;
-      double pswitch = exp(loglikNew - sumlogdensity);		
+      double pswitch = exp(loglikNew - sumlogdensity);
       // Random number smaller than prob -> generate binomial value
       bool link = ControlRandomNumberGen()  < pswitch;
       if(link)
@@ -194,20 +194,20 @@ List sampleD(const IntegerMatrix & S,
         D(i,j) = true;
         sumRowD(i) = true;
         sumColD(j) = true;
-        nlinkrec = nlinkrec + 1; 
+        nlinkrec = nlinkrec + 1;
       }
     }else if(D(i,j)==true)
     {
       // If match -> check if nonmatch
       double loglikNew = loglik
       // Comparison vectors
-      + LLB(j) + LLA(i) 
+      + LLB(j) + LLA(i)
       - LLL(i,j)
       // Bipartite matching
       + log(1-gamma(i)) - log(gamma(i))
       + log(LLB.length() - nlinkrec+1);
-      double sumlogdensity = log(1 + exp(loglik-loglikNew)) + loglikNew;	
-      double pswitch = exp(loglikNew - sumlogdensity);	
+      double sumlogdensity = log(1 + exp(loglik-loglikNew)) + loglikNew;
+      double pswitch = exp(loglikNew - sumlogdensity);
       bool nolink = ControlRandomNumberGen()  < pswitch;
       if(nolink)
       {
@@ -215,8 +215,8 @@ List sampleD(const IntegerMatrix & S,
         D(i,j) = false;
         sumRowD(i) = false;
         sumColD(j) = false;
-        nlinkrec = nlinkrec - 1; 
-      }			
+        nlinkrec = nlinkrec - 1;
+      }
     }
   }
   arma::uvec indices = find(D);
@@ -230,7 +230,7 @@ List sampleD(const IntegerMatrix & S,
   List ret;
   ret["D"] = D;
   ret["links"] = links;
-  ret["sumRowD"] = sumRowD;	
+  ret["sumRowD"] = sumRowD;
   ret["sumColD"] = sumColD;
   ret["loglik"] = loglik;
   ret["nlinkrec"] = nlinkrec;
@@ -242,7 +242,7 @@ IntegerVector sampleNL(IntegerVector G, NumericVector eta, NumericVector phi)
 {
   IntegerVector H(G.length());
   // Number of possible values
-  int nval = eta.length(); 
+  int nval = eta.length();
   // Create the possible values to sample from
   IntegerVector choice_set = seq_len(nval);
   // Possible registration errors
@@ -250,21 +250,21 @@ IntegerVector sampleNL(IntegerVector G, NumericVector eta, NumericVector phi)
   double pTypo = (1-pMissing) * (1-phi[0]) / (eta.length()-1);
   double pAgree = (1-pMissing) * phi[0];
   // Iterate over all elements
-  for(int i = 0; i < G.length(); i++) 
+  for(int i = 0; i < G.length(); i++)
   {
     // Create a vector indicating P(Registered=X|True)
     // First value is for the missings
     // What happens if missing:
     if(G(i) == 0)
-    { 
+    {
       // All equally likely
       H(i) = ControlRandomSampleGen(choice_set, eta);
     }else
     {
-      NumericVector help1(nval, pTypo);   
-      help1(G(i)-1) = pAgree; 
+      NumericVector help1(nval, pTypo);
+      help1(G(i)-1) = pAgree;
       // Joint probability to have the registered and true value
-      NumericVector prob = eta * help1; 
+      NumericVector prob = eta * help1;
       H(i) = ControlRandomSampleGen(choice_set, prob);
     }
   }
@@ -288,29 +288,29 @@ IntegerVector sampleL(IntegerVector GA, IntegerVector GB, NumericVector survival
   double pTypoB = (1-pMissingB) * (1-phikB[0]) / (nval-1);
   double pAgreeB = (1-pMissingB) * phikB[0];
   // Iterate over all matches
-  for(int i = 0; i < GA.length(); i++) 
+  for(int i = 0; i < GA.length(); i++)
   {
     // Prob that both TRUE values are the same
     double pSameH = survivalpSameH[i];
     // Dummy Vectors
     // Define P(Hb|Ha)
-    NumericVector probH(size_choice_set, pSameH); 
+    NumericVector probH(size_choice_set, pSameH);
     // Define P(Ga|Ha) and P(Gb|Hb)
-    NumericVector helpA(size_choice_set, pTypoA);   
+    NumericVector helpA(size_choice_set, pTypoA);
     NumericVector helpB(size_choice_set, pTypoB);
-    for(int j = 0; j < size_choice_set; j++) 
+    for(int j = 0; j < size_choice_set; j++)
     {
       // Prob to observe HB=b|HA=a where a!=b
       if(choice_equal(j)==0)
       {
-        probH(j) = (1-pSameH)/(nval-1); // 
+        probH(j) = (1-pSameH)/(nval-1); //
       }
       if(GA(i) == choice_set(j,0))
         helpA(j) = pAgreeA;
       if(GB(i) == choice_set(j,1))
         helpB(j) = pAgreeB;
     }
-    // There are four options possible 
+    // There are four options possible
     // Both missing
     if(GA(i)==0 && GB(i)==0)
     {
@@ -319,7 +319,7 @@ IntegerVector sampleL(IntegerVector GA, IntegerVector GB, NumericVector survival
     }else if(GA(i)>0 && GB(i)==0)
     {
       // Joint probability to have the registered and true value
-      NumericVector prob = eta * probH * helpA; 
+      NumericVector prob = eta * probH * helpA;
       H(i) = ControlRandomSampleGen(choice_index, prob);
     }else if(GA(i)==0 && GB(i)>0)
     {
@@ -327,13 +327,13 @@ IntegerVector sampleL(IntegerVector GA, IntegerVector GB, NumericVector survival
       NumericVector prob = eta * probH * helpB;
       H(i) = ControlRandomSampleGen(choice_index, prob);
     }else if(GA(i)>0 && GB(i)>0)
-    {  
+    {
       // None missing
       // Create vectors indicating P(Registered=X|True)
       // Joint probability to have the registered and true value
-      NumericVector prob = eta * probH * helpA * helpB; 
+      NumericVector prob = eta * probH * helpA * helpB;
       H(i) = ControlRandomSampleGen(choice_index, prob);
-    }   
+    }
   }
   return H;
 }
@@ -378,7 +378,7 @@ List sampleH(IntegerVector nA, IntegerVector nB, IntegerMatrix links, NumericMat
     NumericVector eta_k = eta[k];
     NumericVector phi_k = phi[k];
     NumericVector phi_k_A(nphi);
-    phi_k_A[0] = phi_k[0]; 
+    phi_k_A[0] = phi_k[0];
     phi_k_A[1] = phi_k[2];
     NumericVector phi_k_B(nphi);
     phi_k_B[0] = phi_k[1];
