@@ -1,3 +1,7 @@
+#' @useDynLib FlexRL, .registration=TRUE
+NULL
+#> NULL
+#'
 #' Title
 #'
 #' @param PIVs_config A list (of size number of PIVs) where element names are the PIVs and element values are lists with elements: stable (boolean for whether the PIV is stable), conditionalHazard (boolean for whether there are external covariates available to model instability, only required if stable is FALSE), pSameH.cov.A and pSameH.covB (vectors with strings corresponding to the names of the covariates to use to model instability from file A and file B, only required if stable is FALSE, empty vectors may be provided if conditionalHazard is FALSE)
@@ -209,7 +213,6 @@ logPossibleConfig = function(Brecords,sumD)
 #' @param LLL .
 #' @param LLA .
 #' @param LLB .
-#' @param D .
 #' @param links .
 #' @param sumRowD .
 #' @param sumColD .
@@ -219,20 +222,19 @@ logPossibleConfig = function(Brecords,sumD)
 #' @export
 #'
 #' @examples .
-loglik = function(LLL, LLA, LLB, D, links, sumRowD, sumColD, gamma)
+loglik = function(LLL, LLA, LLB, links, sumRowD, sumColD, gamma)
 {
   # Sanity check for using logPossibleConfig(.) below
-  if(ncol(D) - sum(D) + 1 <= 0){
-    cat("\nThe number of records in B has to be >= to the number of linked records.\nNumber of records in B:", ncol(D), "\nNumber of linked records:", sum(D), "\nThe problem may come from the fact that file A is bigger than file B, which should not happen.\nNumber of records in A:", nrow(D), "\n")
+  if(length(sumColD) - nrow(links) + 1 <= 0){
+    cat("\nThe number of records in B has to be >= to the number of linked records.\nNumber of records in B:", length(sumColD), "\nNumber of linked records:", nrow(links), "\nThe problem may come from the fact that file A is bigger than file B, which should not happen.\nNumber of records in A:", length(sumColD), "\n")
   }
-  logPossD = sum(log(gamma) * sumRowD + log(1-gamma) * (1-sumRowD)) - logPossibleConfig(ncol(D),sum(D))
+  logPossD = sum(log(gamma) * sumRowD + log(1-gamma) * (1-sumRowD)) - logPossibleConfig(length(sumColD),nrow(links))
   logPossD + sum(LLA[sumRowD==0]) + sum(LLB[sumColD==0]) + sum(LLL[links])
 }
 
 #' Title
 #'
 #' @param data .
-#' @param D .
 #' @param links .
 #' @param survivalpSameH .
 #' @param sumRowD .
@@ -244,18 +246,17 @@ loglik = function(LLL, LLA, LLB, D, links, sumRowD, sumColD, gamma)
 #' @export
 #'
 #' @examples .
-simulateH = function(data, D, links, survivalpSameH, sumRowD, sumColD, eta, phi)
+simulateH = function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi)
 {
   nonlinkedA = sumRowD==0
   nonlinkedB = sumColD==0
-  truePIVs = sampleH(nA=dim(data$A[,PIVs]), nB=dim(data$B[,PIVs]), links=links, survivalpSameH=as.matrix(survivalpSameH), pivs_stable=PIVs_stable, pivsA=data$A[,PIVs], pivsB=data$B[,PIVs], nvalues=data$Nvalues, D=D, nonlinkedA=nonlinkedA, nonlinkedB=nonlinkedB, eta=eta, phi=phi)
+  truePIVs = sampleH(nA=dim(data$A[,PIVs]), nB=dim(data$B[,PIVs]), links=links, survivalpSameH=as.matrix(survivalpSameH), pivs_stable=PIVs_stable, pivsA=data$A[,PIVs], pivsB=data$B[,PIVs], nvalues=data$Nvalues, nonlinkedA=nonlinkedA, nonlinkedB=nonlinkedB, eta=eta, phi=phi)
   list(truepivsA=truePIVs$truepivsA, truepivsB=truePIVs$truepivsB)
 }
 
 #' Title
 #'
 #' @param data .
-#' @param D .
 #' @param linksR .
 #' @param sumRowD .
 #' @param sumColD .
@@ -270,7 +271,7 @@ simulateH = function(data, D, links, survivalpSameH, sumRowD, sumColD, eta, phi)
 #' @export
 #'
 #' @examples .
-simulateD = function(data, D, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamma, eta, alpha, phi)
+simulateD = function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamma, eta, alpha, phi)
 {
   #Determine which observation pairs can be matches (or not) based on the true values of the PIVS
   UA = sspaste2(as.matrix(truepivsA[,PIVs_stable]))
@@ -349,7 +350,7 @@ simulateD = function(data, D, linksR, sumRowD, sumColD, truepivsA, truepivsB, ga
   }
   LLL[select][is.na(LLL[select])] = Inf
   # Complete data likelihood
-  LL0 = loglik(LLL=LLL, LLA=LLA, LLB=LLB, D=D, links=linksR, sumRowD=sumRowD, sumColD=sumColD, gamma=gamma)
+  LL0 = loglik(LLL=LLL, LLA=LLA, LLB=LLB, links=linksR, sumRowD=sumRowD, sumColD=sumColD, gamma=gamma)
   # Single run through D
   Dsample = sampleD(S=as.matrix(select),
                     LLA=LLA,
@@ -357,15 +358,14 @@ simulateD = function(data, D, linksR, sumRowD, sumColD, truepivsA, truepivsB, ga
                     LLL=LLL,
                     gamma=pLink,
                     loglik=LL0,
-                    D=D,
-                    nlinkrec=as.integer(sum(D)),
+                    nlinkrec=as.integer(nrow(linksR)),
                     sumRowD=sumRowD>0,
                     sumColD=sumColD>0)
   linksR = Dsample$links+1
   # Sanity check: does it give the same likelihood?
-  if (round(Dsample$loglik, digits = 3) != round(loglik( LLL=LLL, LLA=LLA, LLB=LLB, D=Dsample$D, links=linksR, sumRowD=Dsample$sumRowD, sumColD=Dsample$sumColD, gamma=pLink), digits = 3))
+  if (round(Dsample$loglik, digits = 3) != round(loglik( LLL=LLL, LLA=LLA, LLB=LLB, links=linksR, sumRowD=Dsample$sumRowD, sumColD=Dsample$sumColD, gamma=pLink), digits = 3))
   {
-    cat("\nSanity check failed.\nLog likelihood associated with new Delta:", Dsample$loglik, "\nLog likelihood computed on the new Delta:", loglik( LLL=LLL, LLA=LLA, LLB=LLB, D=Dsample$D, links=linksR, sumRowD=Dsample$sumRowD, sumColD=Dsample$sumColD, gamma=pLink), "\n")
+    cat("\nSanity check failed.\nLog likelihood associated with new Delta:", Dsample$loglik, "\nLog likelihood computed on the new Delta:", loglik( LLL=LLL, LLA=LLA, LLB=LLB, links=linksR, sumRowD=Dsample$sumRowD, sumColD=Dsample$sumColD, gamma=pLink), "\n")
   }
   Dsample
 }
@@ -417,8 +417,6 @@ SurvivalUnstable = function(Xlinksk, alphask, times)
 #' @param GibbsIter An integer with the total number of iterations of the Gibbs sampler
 #' (done in each iteration of the StEM) (including the period to discard as burn-in)
 #' @param GibbsBurnin An integer with the number of iterations to discard as burn-in
-#' @param sparseOutput A boolean value, to handle the final linkage matrix as sparse or
-#' not, for large data sets it should be set to TRUE to avoid R crashing or memory errors
 #' @param musicOn A boolean value, if TRUE the algorithm will play music at the end of
 #' the algorithm, useful if you have to wait for the record linkage to run and to act as
 #' an alarm when record linkage is done
@@ -453,7 +451,7 @@ SurvivalUnstable = function(Xlinksk, alphask, times)
 #'                        TRUE,
 #'                        NULL,
 #'                        FALSE )
-stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, sparseOutput=TRUE, musicOn=TRUE, newDirectory=NULL, saveInfoIter=FALSE)
+stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, musicOn=TRUE, newDirectory=NULL, saveInfoIter=FALSE)
 {
 
   PIVs = names(data$PIVs_config)
@@ -520,11 +518,12 @@ stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, sparseOutput
   {
     tijdM = Sys.time()
 
-    D = Matrix::Matrix(0, nrow=nrow(data$A), ncol=nrow(data$B), sparse=TRUE)
-    linksR = which(D==1, arr.ind=TRUE)
+    initΔMap()
+    # D = Matrix::Matrix(0, nrow(data$A), nrow(data$B), sparse=TRUE) # Matrix::sparseMatrix(i=c(),j=c(),dims=c(nrow(data$A),nrow(data$B)))
+    linksR = base::matrix(0,0,2)
     linksCpp = linksR
-    sumRowD = rowSums(D)
-    sumColD = colSums(D)
+    sumRowD = rep(0, nrow(data$A)) # Matrix::rowSums(D)
+    sumColD = rep(0, nrow(data$B)) # Matrix::colSums(D)
     nlinkrec = 0
     survivalpSameH = base::matrix(1, nrow(linksR), length(data$Nvalues))
 
@@ -538,12 +537,11 @@ stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, sparseOutput
       while(countBurnin != 0)
       {
         Burnin_total = Burnin_total + 1
-        newTruePivs = simulateH(data=data, D=D, links=linksCpp, survivalpSameH=survivalpSameH, sumRowD=sumRowD, sumColD=sumColD, eta=eta, phi=phi)
+        newTruePivs = simulateH(data=data, links=linksCpp, survivalpSameH=survivalpSameH, sumRowD=sumRowD, sumColD=sumColD, eta=eta, phi=phi)
         truepivsA = newTruePivs$truepivsA
         truepivsB = newTruePivs$truepivsB
-        Dsample = simulateD(data=data, D=D, linksR=linksR, sumRowD=sumRowD, sumColD=sumColD, truepivsA=truepivsA, truepivsB=truepivsB, gamma=gamma, eta=eta, alpha=alpha, phi=phi)
+        Dsample = simulateD(data=data, linksR=linksR, sumRowD=sumRowD, sumColD=sumColD, truepivsA=truepivsA, truepivsB=truepivsB, gamma=gamma, eta=eta, alpha=alpha, phi=phi)
 
-        D = Dsample$D
         linksCpp = Dsample$links
         linksR = linksCpp + 1
         sumRowD = Dsample$sumRowD
@@ -587,12 +585,11 @@ stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, sparseOutput
     }else{
       for(j in 1:GibbsBurnin)
       {
-        newTruePivs = simulateH(data=data, D=D, links=linksCpp, survivalpSameH=survivalpSameH, sumRowD=sumRowD, sumColD=sumColD, eta=eta, phi=phi)
+        newTruePivs = simulateH(data=data, links=linksCpp, survivalpSameH=survivalpSameH, sumRowD=sumRowD, sumColD=sumColD, eta=eta, phi=phi)
         truepivsA = newTruePivs$truepivsA
         truepivsB = newTruePivs$truepivsB
-        Dsample = simulateD(data=data, D=D, linksR=linksR, sumRowD=sumRowD, sumColD=sumColD, truepivsA=truepivsA, truepivsB=truepivsB, gamma=gamma, eta=eta, alpha=alpha, phi=phi)
+        Dsample = simulateD(data=data, linksR=linksR, sumRowD=sumRowD, sumColD=sumColD, truepivsA=truepivsA, truepivsB=truepivsB, gamma=gamma, eta=eta, alpha=alpha, phi=phi)
 
-        D = Dsample$D
         linksCpp = Dsample$links
         linksR = linksCpp + 1
         sumRowD = Dsample$sumRowD
@@ -626,12 +623,11 @@ stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, sparseOutput
 
     for(j in 1:nGibbsIter)
     {
-      newTruePivs = simulateH(data=data, D=D, links=linksCpp, survivalpSameH=survivalpSameH, sumRowD=sumRowD, sumColD=sumColD, eta=eta, phi=phi)
+      newTruePivs = simulateH(data=data, links=linksCpp, survivalpSameH=survivalpSameH, sumRowD=sumRowD, sumColD=sumColD, eta=eta, phi=phi)
       truepivsA = newTruePivs$truepivsA
       truepivsB = newTruePivs$truepivsB
-      Dsample = simulateD(data=data, D=D, linksR=linksR, sumRowD=sumRowD, sumColD=sumColD, truepivsA=truepivsA, truepivsB=truepivsB, gamma=gamma, eta=eta, alpha=alpha, phi=phi)
+      Dsample = simulateD(data=data, linksR=linksR, sumRowD=sumRowD, sumColD=sumColD, truepivsA=truepivsA, truepivsB=truepivsB, gamma=gamma, eta=eta, alpha=alpha, phi=phi)
 
-      D = Dsample$D
       linksCpp = Dsample$links
       linksR = linksCpp + 1
       sumRowD = Dsample$sumRowD
@@ -661,8 +657,8 @@ stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, sparseOutput
       }
 
       # Update gamma
-      Vgamma[j] = sum(D)
-      if(sum(D)==0){
+      Vgamma[j] = nrow(linksR)
+      if(nrow(linksR)==0){
         cat("\nloglikelihood = ", loglikelihood, "\nSo far, gamma = ", gamma, "\nIn the last iteration no link has been made.\nThis is probably due to a difference in the support of some PIV between file A and file B.\n")
       }
 
@@ -780,12 +776,11 @@ stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, sparseOutput
 
   for(m in 1:1000)
   {
-    newTruePivs = simulateH(data=data, D=D, links=linksCpp, survivalpSameH=survivalpSameH, sumRowD=sumRowD, sumColD=sumColD, eta=eta_avg, phi=phi_avg)
+    newTruePivs = simulateH(data=data, links=linksCpp, survivalpSameH=survivalpSameH, sumRowD=sumRowD, sumColD=sumColD, eta=eta_avg, phi=phi_avg)
     truepivsA = newTruePivs$truepivsA
     truepivsB = newTruePivs$truepivsB
-    Dsample = simulateD(data=data, D=D, linksR=linksR, sumRowD=sumRowD, sumColD=sumColD, truepivsA=truepivsA, truepivsB=truepivsB, gamma=gamma_avg, eta=eta_avg, alpha=alpha_avg, phi=phi_avg)
+    Dsample = simulateD(data=data, linksR=linksR, sumRowD=sumRowD, sumColD=sumColD, truepivsA=truepivsA, truepivsB=truepivsB, gamma=gamma_avg, eta=eta_avg, alpha=alpha_avg, phi=phi_avg)
 
-    D = Dsample$D
     linksCpp = Dsample$links
     linksR = linksCpp+1
     sumRowD = Dsample$sumRowD
@@ -809,14 +804,14 @@ stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, sparseOutput
       }
     }
 
-    Delta = Delta + D
+    for(l in 1:nrow(linksR)){
+      i = linksR[l,1]
+      j = linksR[l,2]
+      Delta[i,j] = Delta[i,j] + 1
+    }
     pbfinal$tick()
   }
   Delta = Delta / 1000
-
-  if(sparseOutput){
-    Delta = summary(Delta)
-  }
 
   pbfinal$terminate()
 
@@ -824,7 +819,7 @@ stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, sparseOutput
     utils::browseURL('https://www.youtube.com/watch?v=NTa6Xbzfq1U')
   }
 
-  list(Delta=Delta, gamma=gamma.iter, eta=eta.iter, alpha=alpha.iter, phi=phi.iter)
+  list(Delta=Matrix::summary(Delta), gamma=gamma.iter, eta=eta.iter, alpha=alpha.iter, phi=phi.iter)
 }
 
 #' Title

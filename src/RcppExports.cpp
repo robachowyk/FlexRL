@@ -23,28 +23,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// ControlRandomNumberGen
-double ControlRandomNumberGen();
-RcppExport SEXP _FlexRL_ControlRandomNumberGen() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(ControlRandomNumberGen());
-    return rcpp_result_gen;
-END_RCPP
-}
-// ControlRandomSampleGen
-double ControlRandomSampleGen(IntegerVector choiceset, NumericVector probavec);
-RcppExport SEXP _FlexRL_ControlRandomSampleGen(SEXP choicesetSEXP, SEXP probavecSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type choiceset(choicesetSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type probavec(probavecSEXP);
-    rcpp_result_gen = Rcpp::wrap(ControlRandomSampleGen(choiceset, probavec));
-    return rcpp_result_gen;
-END_RCPP
-}
 // F2
 List F2(IntegerVector U, int nvals);
 RcppExport SEXP _FlexRL_F2(SEXP USEXP, SEXP nvalsSEXP) {
@@ -81,33 +59,8 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// F11
-List F11(const List& F, const int& nvals);
-RcppExport SEXP _FlexRL_F11(SEXP FSEXP, SEXP nvalsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const List& >::type F(FSEXP);
-    Rcpp::traits::input_parameter< const int& >::type nvals(nvalsSEXP);
-    rcpp_result_gen = Rcpp::wrap(F11(F, nvals));
-    return rcpp_result_gen;
-END_RCPP
-}
-// F1
-List F1(const IntegerVector& HA, const IntegerVector& HB, const int& nvals);
-RcppExport SEXP _FlexRL_F1(SEXP HASEXP, SEXP HBSEXP, SEXP nvalsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const IntegerVector& >::type HA(HASEXP);
-    Rcpp::traits::input_parameter< const IntegerVector& >::type HB(HBSEXP);
-    Rcpp::traits::input_parameter< const int& >::type nvals(nvalsSEXP);
-    rcpp_result_gen = Rcpp::wrap(F1(HA, HB, nvals));
-    return rcpp_result_gen;
-END_RCPP
-}
 // sampleD
-List sampleD(const IntegerMatrix& S, const NumericVector& LLA, const NumericVector& LLB, const arma::sp_mat& LLL, const NumericVector& gamma, double loglik, arma::sp_mat D, int nlinkrec, LogicalVector sumRowD, LogicalVector sumColD);
+List sampleD(const IntegerMatrix& S, const NumericVector& LLA, const NumericVector& LLB, const RcppSparse::Matrix& LLL, const NumericVector& gamma, double loglik, RcppSparse::Matrix& D, int nlinkrec, LogicalVector& sumRowD, LogicalVector& sumColD);
 RcppExport SEXP _FlexRL_sampleD(SEXP SSEXP, SEXP LLASEXP, SEXP LLBSEXP, SEXP LLLSEXP, SEXP gammaSEXP, SEXP loglikSEXP, SEXP DSEXP, SEXP nlinkrecSEXP, SEXP sumRowDSEXP, SEXP sumColDSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -115,13 +68,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const IntegerMatrix& >::type S(SSEXP);
     Rcpp::traits::input_parameter< const NumericVector& >::type LLA(LLASEXP);
     Rcpp::traits::input_parameter< const NumericVector& >::type LLB(LLBSEXP);
-    Rcpp::traits::input_parameter< const arma::sp_mat& >::type LLL(LLLSEXP);
+    Rcpp::traits::input_parameter< const RcppSparse::Matrix& >::type LLL(LLLSEXP);
     Rcpp::traits::input_parameter< const NumericVector& >::type gamma(gammaSEXP);
     Rcpp::traits::input_parameter< double >::type loglik(loglikSEXP);
-    Rcpp::traits::input_parameter< arma::sp_mat >::type D(DSEXP);
+    Rcpp::traits::input_parameter< RcppSparse::Matrix& >::type D(DSEXP);
     Rcpp::traits::input_parameter< int >::type nlinkrec(nlinkrecSEXP);
-    Rcpp::traits::input_parameter< LogicalVector >::type sumRowD(sumRowDSEXP);
-    Rcpp::traits::input_parameter< LogicalVector >::type sumColD(sumColDSEXP);
+    Rcpp::traits::input_parameter< LogicalVector& >::type sumRowD(sumRowDSEXP);
+    Rcpp::traits::input_parameter< LogicalVector& >::type sumColD(sumColDSEXP);
     rcpp_result_gen = Rcpp::wrap(sampleD(S, LLA, LLB, LLL, gamma, loglik, D, nlinkrec, sumRowD, sumColD));
     return rcpp_result_gen;
 END_RCPP
@@ -194,8 +147,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // sampleH
-List sampleH(IntegerVector nA, IntegerVector nB, IntegerMatrix links, NumericMatrix survivalpSameH, LogicalVector pivs_stable, List pivsA, List pivsB, IntegerVector nvalues, arma::sp_mat D, LogicalVector nonlinkedA, LogicalVector nonlinkedB, List eta, List phi);
-RcppExport SEXP _FlexRL_sampleH(SEXP nASEXP, SEXP nBSEXP, SEXP linksSEXP, SEXP survivalpSameHSEXP, SEXP pivs_stableSEXP, SEXP pivsASEXP, SEXP pivsBSEXP, SEXP nvaluesSEXP, SEXP DSEXP, SEXP nonlinkedASEXP, SEXP nonlinkedBSEXP, SEXP etaSEXP, SEXP phiSEXP) {
+List sampleH(IntegerVector nA, IntegerVector nB, IntegerMatrix links, NumericMatrix survivalpSameH, LogicalVector pivs_stable, List pivsA, List pivsB, IntegerVector nvalues, LogicalVector nonlinkedA, LogicalVector nonlinkedB, List eta, List phi);
+RcppExport SEXP _FlexRL_sampleH(SEXP nASEXP, SEXP nBSEXP, SEXP linksSEXP, SEXP survivalpSameHSEXP, SEXP pivs_stableSEXP, SEXP pivsASEXP, SEXP pivsBSEXP, SEXP nvaluesSEXP, SEXP nonlinkedASEXP, SEXP nonlinkedBSEXP, SEXP etaSEXP, SEXP phiSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -207,32 +160,27 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< List >::type pivsA(pivsASEXP);
     Rcpp::traits::input_parameter< List >::type pivsB(pivsBSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type nvalues(nvaluesSEXP);
-    Rcpp::traits::input_parameter< arma::sp_mat >::type D(DSEXP);
     Rcpp::traits::input_parameter< LogicalVector >::type nonlinkedA(nonlinkedASEXP);
     Rcpp::traits::input_parameter< LogicalVector >::type nonlinkedB(nonlinkedBSEXP);
     Rcpp::traits::input_parameter< List >::type eta(etaSEXP);
     Rcpp::traits::input_parameter< List >::type phi(phiSEXP);
-    rcpp_result_gen = Rcpp::wrap(sampleH(nA, nB, links, survivalpSameH, pivs_stable, pivsA, pivsB, nvalues, D, nonlinkedA, nonlinkedB, eta, phi));
+    rcpp_result_gen = Rcpp::wrap(sampleH(nA, nB, links, survivalpSameH, pivs_stable, pivsA, pivsB, nvalues, nonlinkedA, nonlinkedB, eta, phi));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_FlexRL_callFunction", (DL_FUNC) &_FlexRL_callFunction, 2},
-    {"_FlexRL_ControlRandomNumberGen", (DL_FUNC) &_FlexRL_ControlRandomNumberGen, 0},
-    {"_FlexRL_ControlRandomSampleGen", (DL_FUNC) &_FlexRL_ControlRandomSampleGen, 2},
     {"_FlexRL_F2", (DL_FUNC) &_FlexRL_F2, 2},
     {"_FlexRL_F33", (DL_FUNC) &_FlexRL_F33, 3},
     {"_FlexRL_sspaste2", (DL_FUNC) &_FlexRL_sspaste2, 1},
-    {"_FlexRL_F11", (DL_FUNC) &_FlexRL_F11, 2},
-    {"_FlexRL_F1", (DL_FUNC) &_FlexRL_F1, 3},
     {"_FlexRL_sampleD", (DL_FUNC) &_FlexRL_sampleD, 10},
     {"_FlexRL_sampleNL", (DL_FUNC) &_FlexRL_sampleNL, 3},
     {"_FlexRL_sampleL", (DL_FUNC) &_FlexRL_sampleL, 9},
     {"_FlexRL_cartesianProduct", (DL_FUNC) &_FlexRL_cartesianProduct, 2},
     {"_FlexRL_ExpandGrid", (DL_FUNC) &_FlexRL_ExpandGrid, 2},
     {"_FlexRL_generateSequence", (DL_FUNC) &_FlexRL_generateSequence, 1},
-    {"_FlexRL_sampleH", (DL_FUNC) &_FlexRL_sampleH, 13},
+    {"_FlexRL_sampleH", (DL_FUNC) &_FlexRL_sampleH, 12},
     {NULL, NULL, 0}
 };
 

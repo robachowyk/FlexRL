@@ -11,5 +11,8 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Depends: R
 Imports: Matrix, progress, testit
-LinkingTo: Rcpp, RcppArmadillo
-
+LinkingTo: Rcpp, RcppArmadillo, RcppSparse
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

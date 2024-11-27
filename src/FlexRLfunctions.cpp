@@ -4,10 +4,13 @@
 #define ARMA_64BIT_WORD 1
 #include <RcppArmadillo.h>
 #include <RcppArmadilloExtensions/sample.h>
+#include <RcppSparse.h>
 #include <Rcpp.h>
 
 // [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::depends(RcppSparse)]]
 using namespace Rcpp;
+using namespace arma;
 
 // Use R random number generator to control seeds
 // Otherwise use the following:
@@ -16,25 +19,25 @@ using namespace Rcpp;
 // static std::mt19937 gen{rd()};
 // std::uniform_real_distribution<double> dist(0, 1);
 
+//' @export
 // [[Rcpp::export]]
 NumericVector callFunction(NumericVector x, Function f) {
   NumericVector res = f(x);
   return res;
 }
 
-// [[Rcpp::export]]
 double ControlRandomNumberGen() {
   double randomnumber = R::runif(0,1);
   return randomnumber;
 }
 
-// [[Rcpp::export]]
 double ControlRandomSampleGen(IntegerVector choiceset, NumericVector probavec) {
   double generatedrandom = Rcpp::sample(choiceset, 1, false, probavec)[0];
   return generatedrandom;
 }
 
-// [[Rcpp::export]]
+//' @export
+ // [[Rcpp::export]]
 List F2(IntegerVector U, int nvals)
 {
   List out(nvals);
@@ -54,7 +57,8 @@ List F2(IntegerVector U, int nvals)
 }
 
 // Cartesian product of both lists. Which combos are possible based on the true values?
-// [[Rcpp::export]]
+//' @export
+ // [[Rcpp::export]]
 IntegerMatrix F33(List A, List B, int nvals)
 {
   int ntotal = 0;
@@ -84,6 +88,7 @@ IntegerMatrix F33(List A, List B, int nvals)
   return tmpC;
 }
 
+//' @export
 // [[Rcpp::export]]
 CharacterVector sspaste2(IntegerMatrix A)
 {
@@ -102,7 +107,6 @@ CharacterVector sspaste2(IntegerMatrix A)
   return res;
 }
 
-// [[Rcpp::export]]
 List F11(const List & F, const int & nvals)
 {
   List out(nvals);
@@ -127,7 +131,6 @@ List F11(const List & F, const int & nvals)
   return out;
 }
 
-// [[Rcpp::export]]
 List F1(const IntegerVector & HA, const IntegerVector & HB, const int & nvals)
 {
   List out(nvals);
@@ -158,17 +161,54 @@ List F1(const IntegerVector & HA, const IntegerVector & HB, const int & nvals)
   return out;
 }
 
+std::map<int, std::set<int>> _ΔMap;
+
+//' @export
+ // [[Rcpp::export]]
+void initΔMap()
+{
+  _ΔMap = {};
+}
+
+//' @export
+ // [[Rcpp::export]]
+IntegerMatrix Δfind()
+{
+  int length = 0;
+  for(const auto & rowColSet: _ΔMap)
+  {
+    length += rowColSet.second.size();
+  }
+  IntegerMatrix found(length, 2);
+  int index = 0;
+  for(const auto & rowColSet: _ΔMap)
+  {
+
+    for (int c : rowColSet.second)
+    {
+      found(index,0)   = rowColSet.first;
+      found(index++,1) = c;
+    }
+  }
+  if(index != length)
+  {
+    Rf_error("Something went wrong creating Δ");
+  }
+  return found;
+}
+
+
+//' @export
 // [[Rcpp::export]]
 List sampleD(const IntegerMatrix & S,
              const NumericVector & LLA,
              const NumericVector & LLB,
-             const arma::sp_mat & LLL,
+             const RcppSparse::Matrix & LLL,
              const NumericVector & gamma,
              double loglik,
-             arma::sp_mat D,
              int nlinkrec,
-             LogicalVector sumRowD,
-             LogicalVector sumColD)
+             LogicalVector & sumRowD,
+             LogicalVector & sumColD)
 {
   for (int q = 0; q < S.nrow(); q++)
   {
@@ -191,12 +231,12 @@ List sampleD(const IntegerMatrix & S,
       if(link)
       {
         loglik = loglikNew;
-        D(i,j) = true;
+        _ΔMap[i].insert(j);
         sumRowD(i) = true;
         sumColD(j) = true;
         nlinkrec = nlinkrec + 1;
       }
-    }else if(D(i,j)==true)
+    }else if(_ΔMap.count(i) && _ΔMap.at(i).count(j))
     {
       // If match -> check if nonmatch
       double loglikNew = loglik
@@ -212,23 +252,17 @@ List sampleD(const IntegerMatrix & S,
       if(nolink)
       {
         loglik = loglikNew;
-        D(i,j) = false;
+        if(_ΔMap.count(i) && _ΔMap[i].count(j))
+          _ΔMap[i].erase(j);
         sumRowD(i) = false;
         sumColD(j) = false;
         nlinkrec = nlinkrec - 1;
       }
     }
   }
-  arma::uvec indices = find(D);
-  int n = indices.n_elem;
-  IntegerMatrix links(n, 2);
-  for (int i = 0; i < n; i++) {
-    links(i, 0) = indices(i) % D.n_rows;
-    links(i, 1) = indices(i) / D.n_rows;
-  }
+  IntegerMatrix links=Δfind();
   // Return to R
   List ret;
-  ret["D"] = D;
   ret["links"] = links;
   ret["sumRowD"] = sumRowD;
   ret["sumColD"] = sumColD;
@@ -237,6 +271,7 @@ List sampleD(const IntegerMatrix & S,
   return ret;
 }
 
+//' @export
 // [[Rcpp::export]]
 IntegerVector sampleNL(IntegerVector G, NumericVector eta, NumericVector phi)
 {
@@ -271,6 +306,7 @@ IntegerVector sampleNL(IntegerVector G, NumericVector eta, NumericVector phi)
   return H;
 }
 
+//' @export
 // [[Rcpp::export]]
 IntegerVector sampleL(IntegerVector GA, IntegerVector GB, NumericVector survivalpSameH,
                       IntegerMatrix choice_set, IntegerVector choice_equal,
@@ -338,6 +374,7 @@ IntegerVector sampleL(IntegerVector GA, IntegerVector GB, NumericVector survival
   return H;
 }
 
+//' @export
 // [[Rcpp::export]]
 IntegerMatrix cartesianProduct(IntegerVector vec1, IntegerVector vec2) {
   int n = vec1.size();
@@ -352,11 +389,13 @@ IntegerMatrix cartesianProduct(IntegerVector vec1, IntegerVector vec2) {
   return result;
 }
 
+//' @export
 // [[Rcpp::export]]
 IntegerMatrix ExpandGrid(IntegerVector vector1, IntegerVector vector2) {
   return cartesianProduct(vector1, vector2);
 }
 
+//' @export
 // [[Rcpp::export]]
 IntegerVector generateSequence(int n) {
   IntegerVector result(n);
@@ -366,8 +405,9 @@ IntegerVector generateSequence(int n) {
   return result;
 }
 
+//' @export
 // [[Rcpp::export]]
-List sampleH(IntegerVector nA, IntegerVector nB, IntegerMatrix links, NumericMatrix survivalpSameH, LogicalVector pivs_stable, List pivsA, List pivsB, IntegerVector nvalues, arma::sp_mat D, LogicalVector nonlinkedA, LogicalVector nonlinkedB, List eta, List phi)
+List sampleH(IntegerVector nA, IntegerVector nB, IntegerMatrix links, NumericMatrix survivalpSameH, LogicalVector pivs_stable, List pivsA, List pivsB, IntegerVector nvalues, LogicalVector nonlinkedA, LogicalVector nonlinkedB, List eta, List phi)
 {
   IntegerMatrix truepivsA(nA[0],nA[1]);
   IntegerMatrix truepivsB(nB[0],nB[1]);

@@ -4,12 +4,10 @@
 \alias{simulateH}
 \title{Title}
 \usage{
-simulateH(data, D, links, survivalpSameH, sumRowD, sumColD, eta, phi)
+simulateH(data, links, survivalpSameH, sumRowD, sumColD, eta, phi)
 }
 \arguments{
 \item{data}{.}
-
-\item{D}{.}
 
 \item{links}{.}
 
@@ -22,6 +20,8 @@ simulateH(data, D, links, survivalpSameH, sumRowD, sumColD, eta, phi)
 \item{eta}{.}
 
 \item{phi}{.}
+
+\item{D}{.}
 }
 \value{
 .
