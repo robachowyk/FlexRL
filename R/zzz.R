@@ -2,6 +2,13 @@
 #'
 #' A Flexible Model For Record Linkage
 #'
+#' An example for a real data sources already encoded, with 5 PIVs: birth year, sex, marital status, education level, region.
+#' PIVs may be considered stable if there is not enough information to model their dynamics.
+#' We may not give a bound on the 3 last PIVs: marital status, education level, region, since there may be a lot of disagreements among the links for those variables.
+#' For a small example we prefer having one parameter for the probabilities of mistakes over the 2 data sources.
+#' We do not need to fix the mistakes parameters to avoid estimability problems here (since there is no 'unstable' variable defined).
+#' More details are available on the experiments repository of our paper and in the vignettes.
+#'
 #' @author Kayané Robach
 #' @import Rcpp
 #' @importFrom Rcpp evalCpp
@@ -26,26 +33,92 @@
 #' eta, alpha, phi, the model parameters chains
 #'
 #' @examples
-#' An example for a real data sources already encoded, with 5 PIVs: birth year, sex, marital status, education level, region.
-#' PIVs may be considered stable if there is not enough information to model their dynamics.
-#' We may not give a bound on the 3 last PIVs: marital status, education level, region, since there may be a lot of disagreements among the links for those variables.
-#' For a small example we prefer havingone parameter for the probabilities of mistakes over the 2 data sources.
-#' We do not need to fix the mistakes parameters to avoid estimability problems here.
-#'           data = list( A=encodedA,
-#'                        B=encodedB,
-#'                        Nvalues=nvalues,
-#'                        PIVs_config=PIVs_config,
-#'                        controlOnMistakes=c(TRUE,TRUE,FALSE,FALSE,FALSE),
-#'                        sameMistakes=TRUE,
-#'                        phiMistakesAFixed=FALSE,
-#'                        phiMistakesBFixed=FALSE,
-#'                        phiForMistakesA=c(NA,NA,NA,NA,NA),
-#'                        phiForMistakesB=c(NA,NA,NA,NA,NA))
-#'            fit = StEM( data,
-#'                        100,
-#'                        70,
-#'                        200,
-#'                        100 )
+#' library(FlexRL)
+#'
+#' df2016 = read.csv("vignettes/exA.csv", row.names = 1)
+#' df2020 = read.csv("vignettes/exB.csv", row.names = 1)
+#'
+#' PIVs_config = list( ANASCI     = list(stable = TRUE),
+#'                     SESSO      = list(stable = TRUE),
+#'                     STACIV     = list(stable = TRUE),
+#'                     STUDIO     = list(stable = TRUE),
+#'                     IREG       = list(stable = TRUE)
+#'                   )
+#' PIVs = names(PIVs_config)
+#' PIVs_stable = sapply(PIVs_config, function(x) x$stable)
+#'
+#' for(i in 1:length(PIVs))
+#' {
+#'   intersect_support_piv = intersect( unique(df2016[,PIVs[i]]), unique(df2020[,PIVs[i]]) )
+#'   df2016 = df2016[df2016[,PIVs[i]] %in% c(NA,intersect_support_piv),]
+#'   df2020 = df2020[df2020[,PIVs[i]] %in% c(NA,intersect_support_piv),]
+#' }
+#'
+#' rownames(df2016) = 1:nrow(df2016)
+#' rownames(df2020) = 1:nrow(df2020)
+#'
+#' links = intersect(df2016$ID, df2020$ID)
+#' Nlinks = length(links)
+#'
+#' TrueDelta = data.frame( matrix(0, nrow=0, ncol=2) )
+#' for (i in 1:Nlinks)
+#' {
+#'   id = links[i]
+#'   id16 = which(df2016$ID == id)
+#'   id20 = which(df2020$ID == id)
+#'   TrueDelta = rbind(TrueDelta, cbind(rownames(df2016[id16,]),rownames(df2020[id20,])))
+#' }
+#' true_pairs = do.call(paste, c(TrueDelta, list(sep="_")))
+#'
+#' df2016$source = "df2016"
+#' df2020$source = "df2020"
+#'
+#' if(nrow(df2020)>nrow(df2016))
+#' {
+#'   encodedA = df2016
+#'   encodedB = df2020
+#'   cat("df2020 is the largest file, denoted encodedB")
+#' }else
+#' {
+#'   encodedB = df2016
+#'   encodedA = df2020
+#'   cat("df2016 is the largest file, denoted encodedB")
+#' }
+#'
+#' levels_PIVs = lapply(PIVs, function(x) levels(factor(as.character(c(encodedA[,x], encodedB[,x])))))
+#'
+#' for(i in 1:length(PIVs))
+#' {
+#'   encodedA[,PIVs[i]] = as.numeric(factor(as.character(encodedA[,PIVs[i]]), levels=levels_PIVs[[i]]))
+#'   encodedB[,PIVs[i]] = as.numeric(factor(as.character(encodedB[,PIVs[i]]), levels=levels_PIVs[[i]]))
+#' }
+#' nvalues = sapply(levels_PIVs, length)
+#' names(nvalues) = PIVs
+#'
+#' encodedA[,PIVs][ is.na(encodedA[,PIVs]) ] = 0
+#' encodedB[,PIVs][ is.na(encodedB[,PIVs]) ] = 0
+#'
+#' data = list( A                    = encodedA,
+#'              B                    = encodedB,
+#'              Nvalues              = nvalues,
+#'              PIVs_config          = PIVs_config,
+#'              controlOnMistakes    = c(TRUE, TRUE, FALSE, FALSE, FALSE),
+#'              sameMistakes         = TRUE,
+#'              phiMistakesAFixed    = FALSE,
+#'              phiMistakesBFixed    = FALSE,
+#'              phiForMistakesA      = c(NA, NA, NA, NA, NA),
+#'              phiForMistakesB      = c(NA, NA, NA, NA, NA)
+#'            )
+#'
+#' fit = stEM(  data                 = data,
+#'              StEMIter             = 100,
+#'              StEMBurnin           = 70,
+#'              GibbsIter            = 200,
+#'              GibbsBurnin          = 100,
+#'              musicOn              = TRUE,
+#'              newDirectory         = NULL,
+#'              saveInfoIter         = FALSE
+#'           )
 NULL
 
 .onLoad <- function(...) {

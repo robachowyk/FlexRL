@@ -1,4 +1,10 @@
-#' Title
+#' DataCreation
+#'
+#' This function is used to synthesise data for record linkage. It creates 2 data sources of specific sizes, with a common set of records of a specific size, with a certain amount of Partially Identifying Variables (PIVs).
+#' For each PIV, we specify the number of unique values, the desired proportion of mistakes and missing values. They can be statble or evolving over time (e.g. representing the postal code).
+#' For the unstable PIVs, we can specify the parameter(s) to be used in the survival exponential model that generates changes over time between the records referring to the same entities.
+#' When a PIV is unstable, it is later harder to estimate its parameters (probability of mistake vs. probability of change across time). Therefore we may want to enforce estimability in the synthetic data, which we do by
+#' enforcing half of the links to have a near-zero time gaps. More examples for how to use this function are available in the experiments repository or in our paper.
 #'
 #' @param PIVs_config A list (of size number of PIVs) where element names are the PIVs and element values are lists with elements: stable (boolean for whether the PIV is stable), conditionalHazard (boolean for whether there are external covariates available to model instability, only required if stable is FALSE), pSameH.cov.A and pSameH.covB (vectors with strings corresponding to the names of the covariates to use to model instability from file A and file B, only required if stable is FALSE, empty vectors may be provided if conditionalHazard is FALSE)
 #' @param Nval A vector (of size number of PIVs) with the number fo unique values per PIVs (in the order of the PIVs defined in PIVs_config)
@@ -12,7 +18,6 @@
 #' @param enforceEstimability A boolean value for whether half of the links should have near-0 time gaps (useful for modeling instability and avoiding estimability issues as discussed in the paper)
 #'
 #' @return A list with generated dataframe A, dataframe B, vector of Nvalues (Nval), vector of TimeDifference (for the links, when thewre is instability), matrix proba_same_H (number of links, number fo PIVs) with the proba that true values coincide (e.g. 1 - proba of moving)
-#' @export
 #'
 #' @examples
 #' PIVs_config = list( V1 = list(stable = TRUE),
@@ -368,15 +373,16 @@ simulateD = function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamma
   Dsample
 }
 
-#' Title
+#' Log(likelihood) of the survival function with exponential model representing the probability that true values of a pair of records referring to the same entity coincide. This function
+#' is only used if the PIV is unstable and evolve over time. If so the true values of a linked pair of records may not coincide. We use this log(likelihood) in our model; more details in the paper. If one
+#' wants to define their own survival function (thus change the SurvivalUnstable function) for the probability of true values to coincide, the log(likelihood) function: loglikSurvival should also be modified.
 #'
 #' @param alphas A vector of size 1+cov in A+cov in B with coefficients of the hazard (baseline hazard and conditional hazard)
 #' @param X A matrix with number of linked records rows and 1+cov in A+cov in B columns (first column: intercept, following columns: covariates from A and then from B to model instability) (used for optimisation: X concatenate the X obtained in each iteration of the Gibbs sampler)
 #' @param times A vector of size number of linked records with the time gaps between the record from each sources (used for optimisation: times concatenate the times vectors obtained in each iteration of the Gibbs sampler)
 #' @param Hequal A vector of size number of linked records with boolean values indicating wether the values in A and in B coincide (used for optimisation: times concatenate the times vectors obtained in each iteration of the Gibbs sampler)
 #'
-#' @return The value of the opposite (-) of the log likelihood associated with the survival function defining the probabilities that true values coincide (as defined in the paper) (the algorithm minimises -loglik i.e. maximises the loglik)
-#' @export
+#' @return The value of the opposite (-) of the log(likelihood) associated with the survival function defining the probabilities that true values coincide (as defined in the paper) (the algorithm minimises -log(likelihood) i.e. maximises the log(likelihood)).
 #'
 #' @examples .
 loglikSurvival = function(alphas, X, times, Hequal)
@@ -385,14 +391,14 @@ loglikSurvival = function(alphas, X, times, Hequal)
   - loglikelihood
 }
 
-#' Title
+#' The survival function with exponential model (as proposed in our paper) representing the probability that true values of a pair of records referring to the same entity coincide. For a linked pair of record (i,j) from sources A, B respectively,
+#' P(HAik = HBjk | t_ij, ...) = exp( - exp(X.ALPHA) t_ij ).
 #'
 #' @param Xlinksk A matrix with number of linked records rows and 1+cov in A+cov in B columns, with a first column filled with 1 (intercept), and following columns filled with the values of the covariates useful for modelling instability for the linked records
 #' @param alphask A vector of size 1+cov in A+cov in B, with as first element the baseline hazard and following elements being the coefficient of the conditional hazard associated with the covariates given in X
 #' @param times A vector of size number of linked records with the time gaps between the record from each sources
 #'
 #' @return A vector (for an unstable PIV) of size number of linked records with the probabilities that true values coincide (e.g. 1 - proba to move if the PIV is postal code) defined according to the survival function with exponential model proposed in the paper
-#' @export
 #'
 #' @examples .
 SurvivalUnstable = function(Xlinksk, alphask, times)
@@ -427,33 +433,39 @@ SurvivalUnstable = function(Xlinksk, alphask, times)
 #' loose everything and not restart from scratch in case your computer shut downs before
 #' record linkage is finished)
 #'
-#' @return A list with: Delta, (sparse) matrix with the pairs of records linked and their
+#' @return A list with:
+#' - Delta, (sparse) matrix with the pairs of records linked and their
 #' posterior probabilities to be linked (select the pairs where the proba>0.5 to get a valid
-#' set of linked records), gamma, a vector with the chain of the parameter gamma representing
-#' the proportion of linked records as a fraction of the smallest file, eta, a vector with the
-#' chain of the parameter eta representing the distribution of the PIVs, alpha, a vector with
+#' set of linked records),
+#' - gamma, a vector with the chain of the parameter gamma representing
+#' the proportion of linked records as a fraction of the smallest file,
+#' - eta, a vector with the
+#' chain of the parameter eta representing the distribution of the PIVs,
+#' - alpha, a vector with
 #' the chain of the parameter alpha representing the hazard coefficient of the model for instability,
-#' phi, a vector with the chain of the parameter phi representing the registration errors parameters)
+#' - phi, a vector with the chain of the parameter phi representing the registration errors parameters).
 #'
-#' @examples data = list( A=encodedA,
-#'                        B=encodedB,
-#'                        Nvalues=nvalues,
-#'                        PIVs_config=PIVs_config,
-#'                        controlOnMistakes=c(TRUE,TRUE,FALSE,FALSE,FALSE),
-#'                        sameMistakes=TRUE,
-#'                        phiMistakesAFixed=FALSE,
-#'                        phiMistakesBFixed=FALSE,
-#'                        phiForMistakesA=c(NA,NA,NA,NA,NA),
-#'                        phiForMistakesB=c(NA,NA,NA,NA,NA))
-#'            fit = StEM( data,
-#'                        100,
-#'                        70,
-#'                        200,
-#'                        100,
-#'                        TRUE,
-#'                        TRUE,
-#'                        NULL,
-#'                        FALSE )
+#' More details are available in the vignettes and in the experiments repository of our paper.
+#'
+#' @examples
+#' data = list( A = encodedA,
+#'              B = encodedB,
+#'              Nvalues = nvalues,
+#'              PIVs_config = PIVs_config,
+#'              controlOnMistakes = c(TRUE,TRUE,FALSE,FALSE,FALSE),
+#'              sameMistakes = TRUE,
+#'              phiMistakesAFixed = FALSE,
+#'              phiMistakesBFixed = FALSE,
+#'              phiForMistakesA = c(NA,NA,NA,NA,NA),
+#'              phiForMistakesB = c(NA,NA,NA,NA,NA))
+#'  fit = StEM( data = data,
+#'              StEMIter = 100,
+#'              StEMBurnin = 70,
+#'              GibbsIter = 200,
+#'              GibbsBurnin = 100,
+#'              musicOn = TRUE,
+#'              newDirectory = NULL,
+#'              saveInfoIter = FALSE )
 stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, musicOn=TRUE, newDirectory=NULL, saveInfoIter=FALSE)
 {
 

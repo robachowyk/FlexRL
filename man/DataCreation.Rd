@@ -2,7 +2,7 @@
 % Please edit documentation in R/FlexRecordLinkage.r
 \name{DataCreation}
 \alias{DataCreation}
-\title{Title}
+\title{DataCreation}
 \usage{
 DataCreation(
   PIVs_config,
@@ -42,7 +42,11 @@ DataCreation(
 A list with generated dataframe A, dataframe B, vector of Nvalues (Nval), vector of TimeDifference (for the links, when thewre is instability), matrix proba_same_H (number of links, number fo PIVs) with the proba that true values coincide (e.g. 1 - proba of moving)
 }
 \description{
-Title
+This function is used to synthesise data for record linkage. It creates 2 data sources of specific sizes, with a common set of records of a specific size, with a certain amount of Partially Identifying Variables (PIVs).
+For each PIV, we specify the number of unique values, the desired proportion of mistakes and missing values. They can be statble or evolving over time (e.g. representing the postal code).
+For the unstable PIVs, we can specify the parameter(s) to be used in the survival exponential model that generates changes over time between the records referring to the same entities.
+When a PIV is unstable, it is later harder to estimate its parameters (probability of mistake vs. probability of change across time). Therefore we may want to enforce estimability in the synthetic data, which we do by
+enforcing half of the links to have a near-zero time gaps. More examples for how to use this function are available in the experiments repository or in our paper.
 }
 \examples{
 PIVs_config = list( V1 = list(stable = TRUE),

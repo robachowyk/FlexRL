@@ -2,7 +2,8 @@
 % Please edit documentation in R/FlexRecordLinkage.r
 \name{SurvivalUnstable}
 \alias{SurvivalUnstable}
-\title{Title}
+\title{The survival function with exponential model (as proposed in our paper) representing the probability that true values of a pair of records referring to the same entity coincide. For a linked pair of record (i,j) from sources A, B respectively,
+P(HAik = HBjk | t_ij, ...) = exp( - exp(X.ALPHA) t_ij ).}
 \usage{
 SurvivalUnstable(Xlinksk, alphask, times)
 }
@@ -17,7 +18,8 @@ SurvivalUnstable(Xlinksk, alphask, times)
 A vector (for an unstable PIV) of size number of linked records with the probabilities that true values coincide (e.g. 1 - proba to move if the PIV is postal code) defined according to the survival function with exponential model proposed in the paper
 }
 \description{
-Title
+The survival function with exponential model (as proposed in our paper) representing the probability that true values of a pair of records referring to the same entity coincide. For a linked pair of record (i,j) from sources A, B respectively,
+P(HAik = HBjk | t_ij, ...) = exp( - exp(X.ALPHA) t_ij ).
 }
 \examples{
 .

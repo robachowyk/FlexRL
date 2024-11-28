@@ -44,35 +44,42 @@ loose everything and not restart from scratch in case your computer shut downs b
 record linkage is finished)}
 }
 \value{
-A list with: Delta, (sparse) matrix with the pairs of records linked and their
+A list with:
+\itemize{
+\item Delta, (sparse) matrix with the pairs of records linked and their
 posterior probabilities to be linked (select the pairs where the proba>0.5 to get a valid
-set of linked records), gamma, a vector with the chain of the parameter gamma representing
-the proportion of linked records as a fraction of the smallest file, eta, a vector with the
-chain of the parameter eta representing the distribution of the PIVs, alpha, a vector with
+set of linked records),
+\item gamma, a vector with the chain of the parameter gamma representing
+the proportion of linked records as a fraction of the smallest file,
+\item eta, a vector with the
+chain of the parameter eta representing the distribution of the PIVs,
+\item alpha, a vector with
 the chain of the parameter alpha representing the hazard coefficient of the model for instability,
-phi, a vector with the chain of the parameter phi representing the registration errors parameters)
+\item phi, a vector with the chain of the parameter phi representing the registration errors parameters).
+}
+
+More details are available in the vignettes and in the experiments repository of our paper.
 }
 \description{
 Stochastic EM for Record Linkage
 }
 \examples{
-data = list( A=encodedA,
-                       B=encodedB,
-                       Nvalues=nvalues,
-                       PIVs_config=PIVs_config,
-                       controlOnMistakes=c(TRUE,TRUE,FALSE,FALSE,FALSE),
-                       sameMistakes=TRUE,
-                       phiMistakesAFixed=FALSE,
-                       phiMistakesBFixed=FALSE,
-                       phiForMistakesA=c(NA,NA,NA,NA,NA),
-                       phiForMistakesB=c(NA,NA,NA,NA,NA))
-           fit = StEM( data,
-                       100,
-                       70,
-                       200,
-                       100,
-                       TRUE,
-                       TRUE,
-                       NULL,
-                       FALSE )
+data = list( A = encodedA,
+             B = encodedB,
+             Nvalues = nvalues,
+             PIVs_config = PIVs_config,
+             controlOnMistakes = c(TRUE,TRUE,FALSE,FALSE,FALSE),
+             sameMistakes = TRUE,
+             phiMistakesAFixed = FALSE,
+             phiMistakesBFixed = FALSE,
+             phiForMistakesA = c(NA,NA,NA,NA,NA),
+             phiForMistakesB = c(NA,NA,NA,NA,NA))
+ fit = StEM( data = data,
+             StEMIter = 100,
+             StEMBurnin = 70,
+             GibbsIter = 200,
+             GibbsBurnin = 100,
+             musicOn = TRUE,
+             newDirectory = NULL,
+             saveInfoIter = FALSE )
 }

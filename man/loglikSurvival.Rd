@@ -2,7 +2,9 @@
 % Please edit documentation in R/FlexRecordLinkage.r
 \name{loglikSurvival}
 \alias{loglikSurvival}
-\title{Title}
+\title{Log(likelihood) of the survival function with exponential model representing the probability that true values of a pair of records referring to the same entity coincide. This function
+is only used if the PIV is unstable and evolve over time. If so the true values of a linked pair of records may not coincide. We use this log(likelihood) in our model; more details in the paper. If one
+wants to define their own survival function (thus change the SurvivalUnstable function) for the probability of true values to coincide, the log(likelihood) function: loglikSurvival should also be modified.}
 \usage{
 loglikSurvival(alphas, X, times, Hequal)
 }
@@ -16,10 +18,12 @@ loglikSurvival(alphas, X, times, Hequal)
 \item{Hequal}{A vector of size number of linked records with boolean values indicating wether the values in A and in B coincide (used for optimisation: times concatenate the times vectors obtained in each iteration of the Gibbs sampler)}
 }
 \value{
-The value of the opposite (-) of the log likelihood associated with the survival function defining the probabilities that true values coincide (as defined in the paper) (the algorithm minimises -loglik i.e. maximises the loglik)
+The value of the opposite (-) of the log(likelihood) associated with the survival function defining the probabilities that true values coincide (as defined in the paper) (the algorithm minimises -log(likelihood) i.e. maximises the log(likelihood)).
 }
 \description{
-Title
+Log(likelihood) of the survival function with exponential model representing the probability that true values of a pair of records referring to the same entity coincide. This function
+is only used if the PIV is unstable and evolve over time. If so the true values of a linked pair of records may not coincide. We use this log(likelihood) in our model; more details in the paper. If one
+wants to define their own survival function (thus change the SurvivalUnstable function) for the probability of true values to coincide, the log(likelihood) function: loglikSurvival should also be modified.
 }
 \examples{
 .
