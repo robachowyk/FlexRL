@@ -2,12 +2,15 @@
 #'
 #' A Flexible Model For Record Linkage
 #'
-#' An example for a real data sources already encoded, with 5 PIVs: birth year, sex, marital status, education level, region.
-#' PIVs may be considered stable if there is not enough information to model their dynamics.
-#' We may not give a bound on the 3 last PIVs: marital status, education level, region, since there may be a lot of disagreements among the links for those variables.
+#' The example below aims to link 2 synthetic data sources, with 5 PIVs (4 stable ones and 1 unstable, which evolve over time).
+#' PIVs may be considered stable if there is not enough information to model their dynamics. Since we synthesise the data we can model it.
+#' We may not give a bound on some PIVs in real settings, since there may be a lot of disagreements among the links for those variables (in situations where we would have liked to model their dynamics otherwise but we do not have enough information for this).
+#' Here we bound all the mistakes parameters since we know that the mistakes probabilities are inferior to 10%.
 #' For a small example we prefer having one parameter for the probabilities of mistakes over the 2 data sources.
-#' We do not need to fix the mistakes parameters to avoid estimability problems here (since there is no 'unstable' variable defined).
-#' More details are available on the experiments repository of our paper and in the vignettes.
+#' We do need to fix the mistake parameter of the 5th PIV to avoid estimability problems here (since it is an 'unstable' variable).
+#' We know the true linkage structure in this example so we can compute performances of the method at the end.
+#'
+#' There are more details to understand the method in our paper, or on the experiments repository of our paper, or in the vignettes, or in the documentation of the main algorithm ?FlexRL::StEM.
 #'
 #' @author Kayané Robach
 #' @import Rcpp
@@ -15,99 +18,90 @@
 #' @useDynLib FlexRL, .registration=TRUE
 #' @name FlexRL
 #'
-#' @param data is a list gathering information on the data to be linked such as the data
-#' sources 'A' and 'B', the unique values in each PIV 'Nvalues', the list of PIVs to use for Record Linkage
-#' and details on how each should be handled by the algorithm 'PIVs_config', potential bounds on the
-#' mistakes probabilities for each PIV 'controlOnMistakes', whether there should be one parameter for
-#' the mistakes in A and B or whether each source should have its own (sameMistakes=TRUE is recommended in case
-#' of small data sources) 'sameMistakes', whether the parameters for mistakes should be fixed in case of instability
-#' 'phiMistakesAFixed' and 'phiMistakesBFixed', as well as the values they should be fixed to 'phiForMistakesA' and 'phiForMistakesB'
+#' @param data is a list gathering information on the data to be linked
+#' - sources 'A' and 'B',
+#' - a vector 'Nvalues' gathering the number of unique values in each PIV,
+#' - 'PIVs_config' the list of PIVs to use for Record Linkage and details on how each should be handled by the algorithm,
+#' - potential bounds on the mistakes probabilities for each PIV: 'controlOnMistakes',
+#' - 'sameMistakes' whether there should be one parameter for the mistakes in A and B or whether each source should have its own (in case of small data sources it is recommended to set sameMistakes=TRUE)
+#' - whether the parameters for mistakes should be fixed in case of instability 'phiMistakesAFixed' and 'phiMistakesBFixed',
+#' - as well as the values they should be fixed to 'phiForMistakesA' and 'phiForMistakesB'
 #' @param StEMIter The total number of iterations of the Stochastic EM algorithm (including the period to discard as burn-in)
 #' @param StEMBurnin The number of iterations to discard as burn-in
 #' @param GibbsIter The total number of iterations of the Gibbs sampler
 #' (run in each iteration of the StEM) (including the period to discard as burn-in)
 #' @param GibbsBurnin The number of iterations to discard as burn-in
 #'
-#' @return The StEM function returns w list with: Delta, the (sparse) matrix with the pairs of records linked and their
-#' posterior probabilities to be linked (select the pairs where the proba>0.5 to get a valid set of linked records), as well as gamma,
-#' eta, alpha, phi, the model parameters chains
+#' @return The StEM function returns w list with:
+#' - Delta, the (sparse) matrix with the pairs of records linked and their posterior probabilities to be linked (select the pairs where the proba>0.5 to get a valid set of linked records),
+#' - as well as the model parameters chains:
+#'    - gamma,
+#'    - eta,
+#'    - alpha,
+#'    - phi.
 #'
 #' @examples
 #' library(FlexRL)
 #'
-#' df2016 = read.csv("vignettes/exA.csv", row.names = 1)
-#' df2020 = read.csv("vignettes/exB.csv", row.names = 1)
-#'
-#' PIVs_config = list( ANASCI     = list(stable = TRUE),
-#'                     SESSO      = list(stable = TRUE),
-#'                     STACIV     = list(stable = TRUE),
-#'                     STUDIO     = list(stable = TRUE),
-#'                     IREG       = list(stable = TRUE)
-#'                   )
+#' PIVs_config = list( V1 = list(stable = TRUE),
+#'                     V2 = list(stable = TRUE),
+#'                     V3 = list(stable = TRUE),
+#'                     V4 = list(stable = TRUE),
+#'                     V5 = list( stable = FALSE,
+#'                                conditionalHazard = FALSE,
+#'                                pSameH.cov.A = c(),
+#'                                pSameH.cov.B = c()) )
 #' PIVs = names(PIVs_config)
 #' PIVs_stable = sapply(PIVs_config, function(x) x$stable)
+#' Nval = c(6, 7, 8, 9, 15)
+#' NRecords = c(500, 800)
+#' Nlinks = 300
+#' PmistakesA = c(0.02, 0.02, 0.02, 0.02, 0.02)
+#' PmistakesB = c(0.02, 0.02, 0.02, 0.02, 0.02)
+#' PmissingA = c(0.007, 0.007, 0.007, 0.007, 0.007)
+#' PmissingB = c(0.007, 0.007, 0.007, 0.007, 0.007)
+#' moving_params = list(V1=c(),V2=c(),V3=c(),V4=c(),V5=c(0.28))
+#' enforceEstimability = TRUE
+#' DATA = DataCreation( PIVs_config,
+#'                      Nval,
+#'                      NRecords,
+#'                      Nlinks,
+#'                      PmistakesA,
+#'                      PmistakesB,
+#'                      PmissingA,
+#'                      PmissingB,
+#'                      moving_params,
+#'                      enforceEstimability)
+#' A                    = DATA$A
+#' B                    = DATA$B
+#' Nvalues              = DATA$Nvalues
+#' TimeDifference       = DATA$TimeDifference
+#' proba_same_H         = DATA$proba_same_H
 #'
-#' for(i in 1:length(PIVs))
-#' {
-#'   intersect_support_piv = intersect( unique(df2016[,PIVs[i]]), unique(df2020[,PIVs[i]]) )
-#'   df2016 = df2016[df2016[,PIVs[i]] %in% c(NA,intersect_support_piv),]
-#'   df2020 = df2020[df2020[,PIVs[i]] %in% c(NA,intersect_support_piv),]
-#' }
-#'
-#' rownames(df2016) = 1:nrow(df2016)
-#' rownames(df2020) = 1:nrow(df2020)
-#'
-#' links = intersect(df2016$ID, df2020$ID)
-#' Nlinks = length(links)
-#'
+#' # the first 1:Nlinks records of each files created are links
 #' TrueDelta = data.frame( matrix(0, nrow=0, ncol=2) )
 #' for (i in 1:Nlinks)
 #' {
-#'   id = links[i]
-#'   id16 = which(df2016$ID == id)
-#'   id20 = which(df2020$ID == id)
-#'   TrueDelta = rbind(TrueDelta, cbind(rownames(df2016[id16,]),rownames(df2020[id20,])))
+#'   TrueDelta = rbind(TrueDelta, cbind(rownames(A[i,]),rownames(B[i,])))
 #' }
 #' true_pairs = do.call(paste, c(TrueDelta, list(sep="_")))
 #'
-#' df2016$source = "df2016"
-#' df2020$source = "df2020"
-#'
-#' if(nrow(df2020)>nrow(df2016))
-#' {
-#'   encodedA = df2016
-#'   encodedB = df2020
-#'   cat("df2020 is the largest file, denoted encodedB")
-#' }else
-#' {
-#'   encodedB = df2016
-#'   encodedA = df2020
-#'   cat("df2016 is the largest file, denoted encodedB")
-#' }
-#'
-#' levels_PIVs = lapply(PIVs, function(x) levels(factor(as.character(c(encodedA[,x], encodedB[,x])))))
-#'
-#' for(i in 1:length(PIVs))
-#' {
-#'   encodedA[,PIVs[i]] = as.numeric(factor(as.character(encodedA[,PIVs[i]]), levels=levels_PIVs[[i]]))
-#'   encodedB[,PIVs[i]] = as.numeric(factor(as.character(encodedB[,PIVs[i]]), levels=levels_PIVs[[i]]))
-#' }
-#' nvalues = sapply(levels_PIVs, length)
-#' names(nvalues) = PIVs
+#' encodedA = A
+#' encodedB = B
 #'
 #' encodedA[,PIVs][ is.na(encodedA[,PIVs]) ] = 0
 #' encodedB[,PIVs][ is.na(encodedB[,PIVs]) ] = 0
 #'
 #' data = list( A                    = encodedA,
 #'              B                    = encodedB,
-#'              Nvalues              = nvalues,
+#'              Nvalues              = Nvalues,
 #'              PIVs_config          = PIVs_config,
-#'              controlOnMistakes    = c(TRUE, TRUE, FALSE, FALSE, FALSE),
+#'              controlOnMistakes    = c(TRUE, TRUE, TRUE, TRUE, TRUE),
 #'              sameMistakes         = TRUE,
-#'              phiMistakesAFixed    = FALSE,
-#'              phiMistakesBFixed    = FALSE,
-#'              phiForMistakesA      = c(NA, NA, NA, NA, NA),
-#'              phiForMistakesB      = c(NA, NA, NA, NA, NA)
+#'              phiMistakesAFixed    = TRUE,
+#'              phiMistakesBFixed    = TRUE,
+#'              phiForMistakesA      = c(NA, NA, NA, NA, 0),
+#'              phiForMistakesB      = c(NA, NA, NA, NA, 0)
 #'            )
 #'
 #' fit = stEM(  data                 = data,
@@ -119,6 +113,25 @@
 #'              newDirectory         = NULL,
 #'              saveInfoIter         = FALSE
 #'           )
+#'
+#' DeltaResult = fit$Delta
+#' colnames(DeltaResult) = c("idxA","idxB","probaLink")
+#' DeltaResult = DeltaResult[DeltaResult$probaLink>0.5,]
+#'
+#' results = data.frame( Results=matrix(NA, nrow=6, ncol=1) )
+#' rownames(results) = c("tp","fp","fn","f1score","fdr","sens.")
+#' if(nrow(DeltaResult)>1){
+#'   linked_pairs    = do.call(paste, c(DeltaResult[,c("idxA","idxB")], list(sep="_")))
+#'   truepositive    = length( intersect(linked_pairs, true_pairs) )
+#'   falsepositive   = length( setdiff(linked_pairs, true_pairs) )
+#'   falsenegative   = length( setdiff(true_pairs, linked_pairs) )
+#'   precision       = truepositive / (truepositive + falsepositive)
+#'   fdr             = 1 - precision
+#'   sensitivity     = truepositive / (truepositive + falsenegative)
+#'   f1score         = 2 * (precision * sensitivity) / (precision + sensitivity)
+#'   results[,"FlexRL"] = c(truepositive,falsepositive,falsenegative,f1score,fdr,sensitivity)
+#' }
+#'
 NULL
 
 .onLoad <- function(...) {

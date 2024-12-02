@@ -1,10 +1,12 @@
 #' DataCreation
 #'
 #' This function is used to synthesise data for record linkage. It creates 2 data sources of specific sizes, with a common set of records of a specific size, with a certain amount of Partially Identifying Variables (PIVs).
-#' For each PIV, we specify the number of unique values, the desired proportion of mistakes and missing values. They can be statble or evolving over time (e.g. representing the postal code).
+#' For each PIV, we specify the number of unique values, the desired proportion of mistakes and missing values. They can be stable or evolving over time (e.g. representing the postal code).
 #' For the unstable PIVs, we can specify the parameter(s) to be used in the survival exponential model that generates changes over time between the records referring to the same entities.
 #' When a PIV is unstable, it is later harder to estimate its parameters (probability of mistake vs. probability of change across time). Therefore we may want to enforce estimability in the synthetic data, which we do by
-#' enforcing half of the links to have a near-zero time gaps. More examples for how to use this function are available in the experiments repository or in our paper.
+#' enforcing half of the links to have a near-zero time gaps.
+#'
+#' There are more details to understand the method in our paper, or on the experiments repository of our paper, or in the vignettes.
 #'
 #' @param PIVs_config A list (of size number of PIVs) where element names are the PIVs and element values are lists with elements: stable (boolean for whether the PIV is stable), conditionalHazard (boolean for whether there are external covariates available to model instability, only required if stable is FALSE), pSameH.cov.A and pSameH.covB (vectors with strings corresponding to the names of the covariates to use to model instability from file A and file B, only required if stable is FALSE, empty vectors may be provided if conditionalHazard is FALSE)
 #' @param Nval A vector (of size number of PIVs) with the number fo unique values per PIVs (in the order of the PIVs defined in PIVs_config)
@@ -17,7 +19,13 @@
 #' @param moving_params A list (of size number of PIVs) where element names are the PIVs and element values are vectors (of size: 1 + number of covariates to use from A + number of covariates to use from B) with the log hazards coefficient (1st one: log baseline hazard, then: the coefficients for conditional hazard covariates from A, then: the coefficients for conditional hazard covariates from B)
 #' @param enforceEstimability A boolean value for whether half of the links should have near-0 time gaps (useful for modeling instability and avoiding estimability issues as discussed in the paper)
 #'
-#' @return A list with generated dataframe A, dataframe B, vector of Nvalues (Nval), vector of TimeDifference (for the links, when thewre is instability), matrix proba_same_H (number of links, number fo PIVs) with the proba that true values coincide (e.g. 1 - proba of moving)
+#' @return A list with generated
+#' - dataframe A (encoded: the categorical values of the PIVs are matched to sets of natural numbers),
+#' - dataframe B (encoded),
+#' - vector of Nvalues (Nval),
+#' - vector of TimeDifference (for the links, when thewre is instability),
+#' - matrix proba_same_H (number of links, number fo PIVs) with the proba that true values coincide (e.g. 1 - proba of moving)
+#' @export
 #'
 #' @examples
 #' PIVs_config = list( V1 = list(stable = TRUE),
@@ -179,28 +187,40 @@ DataCreation = function(PIVs_config, Nval, NRecords, Nlinks, PmistakesA, Pmistak
   list(A=A, B=B, Nvalues=Nvalues, TimeDifference=TimeDifference, proba_same_H=proba_same_H)
 }
 
-#' Title
+#' createDataAlpha
 #'
-#' @param nCoefUnstable .
-#' @param stable .
+#' @param nCoefUnstable An integer value with the number of covariates (including the intercept): number of cov from A + number of cov from B + 1.
+#' @param stable A boolean value indicating whether the PIV concerned is stable.
 #'
-#' @return .
+#' @return An empty data frame (if stable=FALSE) with nCoefUnstable + 2 columns for book keeping of the elements necessary to update the parameter for instability. There are
+#' nCoefUnstable + 2 of those elements: number of cov from A + number of cov from B + intercept + boolean vector indicating where the true values of the records (for the concerned PIV) are equal, vector of time gaps between records
 #' @export
 #'
-#' @examples .
+#' @examples
+#' \dontrun{
+#' Valpha = mapply(createDataAlpha, nCoefUnstable = nCoefUnstable,
+#'                 stable = PIVs_stable, SIMPLIFY=FALSE)
+#' }
 createDataAlpha <- function(nCoefUnstable, stable){
   nCoef = nCoefUnstable + 2 # cov A + cov B + 1 + Hequal + times
   if (!stable){ return ( data.frame(base::matrix(nrow = 0, ncol = nCoef)) ) } }
 
-#' Title
+#' logPossibleConfig
 #'
-#' @param Brecords .
-#' @param sumD .
+#' This function helps calculating the number of possible designs for ∆ given by nB!/(nB − nLinks)! Needed to compute the log likelihood of the linkage matrix.
 #'
-#' @return .
+#' @param Brecords Number of records in data source B (the largest).
+#' @param sumD Number of linked records (at a specific time point of the algorithm).
+#'
+#' @return The sum of logs of the vector going from nB - nLinks + 1 to nB.
 #' @export
 #'
-#' @examples .
+#' @examples
+#' \dontrun{
+#' possconfig = logPossibleConfig(length(sumColD),nrow(links))
+#' logPossD = sum(log(gamma) * sumRowD + log(1-gamma) * (1-sumRowD)) - possconfig
+#' logPossD + sum(LLA[sumRowD==0]) + sum(LLB[sumColD==0]) + sum(LLL[links])
+#' }
 logPossibleConfig = function(Brecords,sumD)
 {
   return = 0
@@ -209,20 +229,26 @@ logPossibleConfig = function(Brecords,sumD)
   return
 }
 
-#' Title
+#' loglik
 #'
-#' @param LLL .
-#' @param LLA .
-#' @param LLB .
-#' @param links .
-#' @param sumRowD .
-#' @param sumColD .
-#' @param gamma .
+#' Log(likelihood) of the linkage matrix.
 #'
-#' @return .
+#' @param LLL A (sparse) matrix with contributions to the complete likelihood of the linked records.
+#' @param LLA A vector with contributions to the complete likelihood of the non linked records from A.
+#' @param LLB A vector with contributions to the complete likelihood of the non linked records from B.
+#' @param links A matrix of 2 columns with indices of the linked records.
+#' @param sumRowD A boolean vector indicating, for each row of the linkage matrix, i.e. for each record in the smallest file A, whether the record has a link in B or not.
+#' @param sumColD A boolean vector indicating, for each column of the linkage matrix, i.e. for each record in the largest file B, whether the record has a link in A or not.
+#' @param gamma The proportion of linked records as a fraction of the smallest file.
+#'
+#' @return The Log(likelihood) of the linkage matrix.
 #' @export
 #'
-#' @examples .
+#' @examples
+#' \dontrun{
+#' # Complete data likelihood
+#' LL0 = loglik(LLL=LLL, LLA=LLA, LLB=LLB, links=linksR, sumRowD=sumRowD, sumColD=sumColD, gamma=gamma)
+#' }
 loglik = function(LLL, LLA, LLB, links, sumRowD, sumColD, gamma)
 {
   # Sanity check for using logPossibleConfig(.) below
@@ -233,47 +259,91 @@ loglik = function(LLL, LLA, LLB, links, sumRowD, sumColD, gamma)
   logPossD + sum(LLA[sumRowD==0]) + sum(LLB[sumColD==0]) + sum(LLL[links])
 }
 
-#' Title
+#' simulateH
 #'
-#' @param data .
-#' @param links .
-#' @param survivalpSameH .
-#' @param sumRowD .
-#' @param sumColD .
-#' @param eta .
-#' @param phi .
+#' @param data A list with elements:
+#' - A: the smallest data source (encoded: the categorical values of the PIVs have to be mapped to sets of natural numbers and missing values are encoded as 0).
+#' - B: the largest data source (encoded).
+#' - Nvalues: A vector (of size number of PIVs) with the number fo unique values per PIVs (in the order of the PIVs defined in PIVs_config).
+#' - PIVs_config: A list (of size number of PIVs) where element names are the PIVs and element values are lists with elements: stable (boolean for whether the PIV is stable), conditionalHazard (boolean for whether there are external covariates available to model instability, only required if stable is FALSE), pSameH.cov.A and pSameH.covB (vectors with strings corresponding to the names of the covariates to use to model instability from file A and file B, only required if stable is FALSE, empty vectors may be provided if conditionalHazard is FALSE).
+#' - controlOnMistakes: A vector (of size number of PIVs) of booleans indicating potential bounds on the mistakes probabilities for each PIV. For each PIV, if TRUE there will be control on mistake and the mistake probability will not go above 10%. If FALSE there is no bound on the probability of mistake. WATCH OUT, if you suspect that a variable is unstable but you do not have data to model its dynamics the boolean value should be set to FALSE to allow the parameter for mistake to adapt for the instability. However if you model this instability, the boolean value should be set to TRUE to help the algorithm differenciate the mistakes from the changes over time.
+#' - sameMistakes: A boolean value for whether there should be one parameter for the mistakes in A and B or whether each source should have its own parameter. Setting sameMistakes=TRUE is recommended in case of small data sources; the estimation with 2 parameters in that case will fail to capture the mistakes correctly while 1 parameter will be more adapted.
+#' - phiMistakesAFixed A vector (of size number of PIVs) of booleans indicating whether the parameters for mistakes should be fixed in case of instability. It should be FALSE, except for unstable PIVs for which it may be set to TRUE in order to avoid estimability problems between the parameter for mistake and the parameter for changes across time.
+#' - phiMistakesBFixed A vector (of size number of PIVs) of booleans indicating whether the parameters for mistakes should be fixed in case of instability. It should be FALSE, except for unstable PIVs for which it may be set to TRUE in order to avoid estimability problems between the parameter for mistake and the parameter for changes across time.
+#' - phiForMistakesA A vector (of size number of PIVs) of NA or fixed values for the parameters for mistakes. It should be NA, except for unstable PIVs for which one wants to fix the parameter to avoid estimability problem (as indicated with the boolean values in phiMistakesAFixed). In that case it should be set the the expected value for the probability of mistake. If you have no idea: you can put it to 0, the algorithm is quite robust to wrongly fixed parameters.
+#' - phiForMistakesB A vector (of size number of PIVs) of NA or fixed values for the parameters for mistakes. It should be NA, except for unstable PIVs for which one wants to fix the parameter to avoid estimability problem (as indicated with the boolean values in phiMistakesBFixed). In that case it should be set the the expected value for the probability of mistake. If you have no idea: you can put it to 0, the algorithm is quite robust to wrongly fixed parameters.
+#' @param links A matrix of 2 columns with indices of the linked records.
+#' @param survivalpSameH a matrix of size (nrow=number of linked records, ncol=number of PIVs), filled for each PIV in column, with 1 if the PIV is stable and with the probability for true values of the records to coincide as calculate by survival function if the PIV is unstable.
+#' @param sumRowD A boolean vector indicating, for each row of the linkage matrix, i.e. for each record in the smallest file A, whether the record has a link in B or not.
+#' @param sumColD A boolean vector indicating, for each column of the linkage matrix, i.e. for each record in the largest file B, whether the record has a link in A or not.
+#' @param eta The distribution weights for the PIVs.
+#' @param phi The proportion of mistakes and missing for the PIVs.
 #'
-#' @return .
+#' @return A list with 2 matrices of the shapes of both data sources, representing the true values of the PIVs underlying the registered values present in the data sources.
 #' @export
 #'
-#' @examples .
+#' @examples
+#' \dontrun{
+#' newTruePivs = simulateH(data=data, links=linksCpp, survivalpSameH=survivalpSameH,
+#'                         sumRowD=sumRowD, sumColD=sumColD, eta=eta, phi=phi)
+#' truepivsA = newTruePivs$truepivsA
+#' truepivsB = newTruePivs$truepivsB
+#' }
 simulateH = function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi)
 {
+  PIVs = names(data$PIVs_config)
+  PIVs_stable = sapply(data$PIVs_config, function(x) x$stable)
   nonlinkedA = sumRowD==0
   nonlinkedB = sumColD==0
   truePIVs = sampleH(nA=dim(data$A[,PIVs]), nB=dim(data$B[,PIVs]), links=links, survivalpSameH=as.matrix(survivalpSameH), pivs_stable=PIVs_stable, pivsA=data$A[,PIVs], pivsB=data$B[,PIVs], nvalues=data$Nvalues, nonlinkedA=nonlinkedA, nonlinkedB=nonlinkedB, eta=eta, phi=phi)
   list(truepivsA=truePIVs$truepivsA, truepivsB=truePIVs$truepivsB)
 }
 
-#' Title
+#' simulateD
 #'
-#' @param data .
-#' @param linksR .
-#' @param sumRowD .
-#' @param sumColD .
-#' @param truepivsA .
-#' @param truepivsB .
-#' @param gamma .
-#' @param eta .
-#' @param alpha .
-#' @param phi .
+#' @param data A list with elements:
+#' - A: the smallest data source (encoded: the categorical values of the PIVs have to be mapped to sets of natural numbers and missing values are encoded as 0).
+#' - B: the largest data source (encoded).
+#' - Nvalues: A vector (of size number of PIVs) with the number fo unique values per PIVs (in the order of the PIVs defined in PIVs_config).
+#' - PIVs_config: A list (of size number of PIVs) where element names are the PIVs and element values are lists with elements: stable (boolean for whether the PIV is stable), conditionalHazard (boolean for whether there are external covariates available to model instability, only required if stable is FALSE), pSameH.cov.A and pSameH.covB (vectors with strings corresponding to the names of the covariates to use to model instability from file A and file B, only required if stable is FALSE, empty vectors may be provided if conditionalHazard is FALSE).
+#' - controlOnMistakes: A vector (of size number of PIVs) of booleans indicating potential bounds on the mistakes probabilities for each PIV. For each PIV, if TRUE there will be control on mistake and the mistake probability will not go above 10%. If FALSE there is no bound on the probability of mistake. WATCH OUT, if you suspect that a variable is unstable but you do not have data to model its dynamics the boolean value should be set to FALSE to allow the parameter for mistake to adapt for the instability. However if you model this instability, the boolean value should be set to TRUE to help the algorithm differenciate the mistakes from the changes over time.
+#' - sameMistakes: A boolean value for whether there should be one parameter for the mistakes in A and B or whether each source should have its own parameter. Setting sameMistakes=TRUE is recommended in case of small data sources; the estimation with 2 parameters in that case will fail to capture the mistakes correctly while 1 parameter will be more adapted.
+#' - phiMistakesAFixed A vector (of size number of PIVs) of booleans indicating whether the parameters for mistakes should be fixed in case of instability. It should be FALSE, except for unstable PIVs for which it may be set to TRUE in order to avoid estimability problems between the parameter for mistake and the parameter for changes across time.
+#' - phiMistakesBFixed A vector (of size number of PIVs) of booleans indicating whether the parameters for mistakes should be fixed in case of instability. It should be FALSE, except for unstable PIVs for which it may be set to TRUE in order to avoid estimability problems between the parameter for mistake and the parameter for changes across time.
+#' - phiForMistakesA A vector (of size number of PIVs) of NA or fixed values for the parameters for mistakes. It should be NA, except for unstable PIVs for which one wants to fix the parameter to avoid estimability problem (as indicated with the boolean values in phiMistakesAFixed). In that case it should be set the the expected value for the probability of mistake. If you have no idea: you can put it to 0, the algorithm is quite robust to wrongly fixed parameters.
+#' - phiForMistakesB A vector (of size number of PIVs) of NA or fixed values for the parameters for mistakes. It should be NA, except for unstable PIVs for which one wants to fix the parameter to avoid estimability problem (as indicated with the boolean values in phiMistakesBFixed). In that case it should be set the the expected value for the probability of mistake. If you have no idea: you can put it to 0, the algorithm is quite robust to wrongly fixed parameters.
+#' @param linksR A matrix of 2 columns with indices of the linked records.
+#' @param sumRowD A boolean vector indicating, for each row of the linkage matrix, i.e. for each record in the smallest file A, whether the record has a link in B or not.
+#' @param sumColD A boolean vector indicating, for each column of the linkage matrix, i.e. for each record in the largest file B, whether the record has a link in A or not.
+#' @param truepivsA A matrix of the shape of data source A, representing the true values of the PIVs underlying the registered values present in A.
+#' @param truepivsB A matrix of the shape of data source B, representing the true values of the PIVs underlying the registered values present in B.
+#' @param gamma The proportion of linked records as a fraction of the smallest file.
+#' @param eta The distribution weights for the PIVs.
+#' @param alpha The parameter involved in the survival model for the probability of true values to coincide (parameter for instability).
+#' @param phi The proportion of mistakes and missing for the PIVs.
 #'
-#' @return .
+#' @return A list with:
+#' - new set of links
+#' - new sumRowD
+#' - new sumColD;
+#' - new value of the complete log likelihood;
+#' - new number fo linked records
 #' @export
 #'
-#' @examples .
+#' @examples
+#' \dontrun{
+#' newTruePivs = simulateH(data=data, links=linksCpp, survivalpSameH=survivalpSameH,
+#'                         sumRowD=sumRowD, sumColD=sumColD, eta=eta, phi=phi)
+#' truepivsA = newTruePivs$truepivsA
+#' truepivsB = newTruePivs$truepivsB
+#' Dsample = simulateD(data=data, linksR=linksR, sumRowD=sumRowD, sumColD=sumColD,
+#'                     truepivsA=truepivsA, truepivsB=truepivsB,
+#'                     gamma=gamma, eta=eta, alpha=alpha, phi=phi)
+#' }
 simulateD = function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamma, eta, alpha, phi)
 {
+  PIVs = names(data$PIVs_config)
+  PIVs_stable = sapply(data$PIVs_config, function(x) x$stable)
   #Determine which observation pairs can be matches (or not) based on the true values of the PIVS
   UA = sspaste2(as.matrix(truepivsA[,PIVs_stable]))
   UB = sspaste2(as.matrix(truepivsB[,PIVs_stable]))
@@ -315,7 +385,7 @@ simulateD = function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamma
     LLB = LLB + logpTrue + log(contr)
   }
   # What do we add/substract from the loglikelihood if a pair is linked
-  LLL = matrix(0, nrow=nrow(data$A[,PIVs]), ncol=nrow(data$B[,PIVs]))
+  LLL = Matrix::Matrix(0, nrow=nrow(data$A[,PIVs]), ncol=nrow(data$B[,PIVs]), sparse=TRUE)
   for(k in 1:length(data$Nvalues))
   {
     HA = truepivsA[ select[,1],k ]
@@ -358,7 +428,7 @@ simulateD = function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamma
   Dsample = sampleD(S=as.matrix(select),
                     LLA=LLA,
                     LLB=LLB,
-                    LLL=LLL,
+                    LLL=LLL[select],
                     gamma=pLink,
                     loglik=LL0,
                     nlinkrec=as.integer(nrow(linksR)),
@@ -373,9 +443,13 @@ simulateD = function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamma
   Dsample
 }
 
-#' Log(likelihood) of the survival function with exponential model representing the probability that true values of a pair of records referring to the same entity coincide. This function
-#' is only used if the PIV is unstable and evolve over time. If so the true values of a linked pair of records may not coincide. We use this log(likelihood) in our model; more details in the paper. If one
-#' wants to define their own survival function (thus change the SurvivalUnstable function) for the probability of true values to coincide, the log(likelihood) function: loglikSurvival should also be modified.
+#' The log likelihood of the survival function with exponential model (-)
+#'
+#' Log(likelihood) of the survival function with exponential model (as proposed in our paper), representing the probability that true values of a pair of records referring to the same entity coincide. See ?FlexRL::SurvivalUnstable.
+#' This function is only used if the PIV is unstable and evolve over time. If so the true values of a linked pair of records may not coincide.
+#' If you want to use a different survival function to model instability, you can change the function 'SurvivalUnstable' as well as this function 'loglikSurvival'.
+#'
+#' In our StEM algorithm (see ?FlexRL::StEM) we minimise - log(likelihood), which is equivalent to maximise log(likelihood). Therefore this function actually returns (and should return if you create your own) the opposite (-) of the log(likelihood) associated with the survival function defining the probabilities that true values coincide.
 #'
 #' @param alphas A vector of size 1+cov in A+cov in B with coefficients of the hazard (baseline hazard and conditional hazard)
 #' @param X A matrix with number of linked records rows and 1+cov in A+cov in B columns (first column: intercept, following columns: covariates from A and then from B to model instability) (used for optimisation: X concatenate the X obtained in each iteration of the Gibbs sampler)
@@ -383,24 +457,161 @@ simulateD = function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamma
 #' @param Hequal A vector of size number of linked records with boolean values indicating wether the values in A and in B coincide (used for optimisation: times concatenate the times vectors obtained in each iteration of the Gibbs sampler)
 #'
 #' @return The value of the opposite (-) of the log(likelihood) associated with the survival function defining the probabilities that true values coincide (as defined in the paper) (the algorithm minimises -log(likelihood) i.e. maximises the log(likelihood)).
+#' @export
 #'
-#' @examples .
+#' @examples
+#' \dontrun{
+#' for(iter in 1:StEMIter)
+#' {
+#'
+#'   for(j in 1:GibbsBurnin)
+#'   {
+#'
+#'     ...
+#'
+#'   }
+#'
+#'   for(j in 1:nGibbsIter)
+#'   {
+#'     ...
+#'
+#'     survivalpSameH = base::matrix(1, nrow(linksR), length(data$Nvalues))
+#'     if(instability){
+#'       if(nrow(linksR)>0){
+#'         times = abs(data$B[data$B$source!="synthetic",][linksR[,2], "date"] -
+#'                     data$A[data$A$source!="synthetic",][linksR[,1], "date"])
+#'         intercept = rep(1, nrow(linksR))
+#'         for(k in 1:length(PIVs)){
+#'           if(k %in% unstablePIVs){
+#'             cov_k = cbind( intercept,
+#'                            data$A[linksR[,1], data$PIVs_config[[k]]$pSameH.cov.A, drop=FALSE],
+#'                            data$B[linksR[,2], data$PIVs_config[[k]]$pSameH.cov.B, drop=FALSE] )
+#'             survivalpSameH[,k] = SurvivalUnstable(cov_k, alpha[[k]], times)
+#'             Hequal = truepivsA[linksR[,1],k] == truepivsB[linksR[,2],k]
+#'             Vtmp_k = cbind( cov_k,
+#'                             times,
+#'                             Hequal )
+#'             Valpha[[k]] = rbind(Valpha[[k]], Vtmp_k)
+#'           }
+#'         }
+#'       }
+#'     }
+#'
+#'     ...
+#'
+#'   }
+#'
+#'   ...
+#'
+#'   # Update the alpha chain wth a new parameter:
+#'   if(instability){
+#'     if(nrow(linksR)>0){
+#'       for(k in 1:length(PIVs)){
+#'         if(!PIVs_stable[k]){
+#'           alphaInit = rep(-0.05, nCoefUnstable[[k]])
+#'           X = Valpha[[k]][,1:nCoefUnstable[[k]]]
+#'           times = Valpha[[k]]$times
+#'           Hequal = Valpha[[k]]$Hequal
+#'           optim = stats::nlminb(alphaInit, loglikSurvival, control=list(trace=FALSE),
+#'                                 X=X, times=times, Hequal=Hequal)
+#'           alpha[[k]] = optim$par
+#'         }
+#'       }
+#'     }
+#'   }
+#'
+#'   ...
+#'
+#' }
+#' }
 loglikSurvival = function(alphas, X, times, Hequal)
 {
   loglikelihood = sum( - exp( as.matrix(X) %*% alphas ) * times + (!Hequal) * log( exp( exp( as.matrix(X) %*% alphas ) * times ) - 1 ) )
   - loglikelihood
 }
 
-#' The survival function with exponential model (as proposed in our paper) representing the probability that true values of a pair of records referring to the same entity coincide. For a linked pair of record (i,j) from sources A, B respectively,
-#' P(HAik = HBjk | t_ij, ...) = exp( - exp(X.ALPHA) t_ij ).
+#' The survival function with exponential model
+#'
+#' The survival function with exponential model (as proposed in our paper) is representing the probability that true values of a pair of records referring to the same entity coincide. For a linked pair of record (i,j) from sources A, B respectively, P(HAik = HBjk | t_ij, ...) = exp( - exp(X.ALPHA) t_ij ).
+#' This function is only used if the PIV is unstable and evolve over time. If so the true values of a linked pair of records may not coincide.
+#' If you want to use a different survival function to model instability, you can change this function 'SurvivalUnstable' as well as the associated log(likelihood) function 'loglikSurvival'.
+#' Also see ?FlexRL::loglikSurvival.
+#'
+#' The simplest model (without covariates) just writes P(HAik = HBjk | t_ij, ...) = exp( - exp(alpha) . t_ij )
+#' The more complex model (with covariates) writes P(HAik = HBjk | t_ij, ...) = exp( - exp(X.ALPHA) . t_ij ) and uses a matrix X (nrow=nbr of linked records, ncol=1 + nbr of cov from A + nbr of cov from B) where the first column is filled with 1 (intercept) and the subsequent columns are the covariates values from source A and/or from source B to be used. The ALPHA in this case is a vector of parameters, the first one being associated with the intercept is the same one than for the simplest model, the subsequent ones are associated with the covariates from A and/or from B.
 #'
 #' @param Xlinksk A matrix with number of linked records rows and 1+cov in A+cov in B columns, with a first column filled with 1 (intercept), and following columns filled with the values of the covariates useful for modelling instability for the linked records
 #' @param alphask A vector of size 1+cov in A+cov in B, with as first element the baseline hazard and following elements being the coefficient of the conditional hazard associated with the covariates given in X
 #' @param times A vector of size number of linked records with the time gaps between the record from each sources
 #'
 #' @return A vector (for an unstable PIV) of size number of linked records with the probabilities that true values coincide (e.g. 1 - proba to move if the PIV is postal code) defined according to the survival function with exponential model proposed in the paper
+#' @export
 #'
-#' @examples .
+#' @examples
+#' \dontrun{
+#' for(iter in 1:StEMIter)
+#' {
+#'
+#'   for(j in 1:GibbsBurnin)
+#'   {
+#'
+#'     ...
+#'
+#'   }
+#'
+#'   for(j in 1:nGibbsIter)
+#'   {
+#'     ...
+#'
+#'     survivalpSameH = base::matrix(1, nrow(linksR), length(data$Nvalues))
+#'     if(instability){
+#'       if(nrow(linksR)>0){
+#'         times = abs(data$B[data$B$source!="synthetic",][linksR[,2], "date"] -
+#'                     data$A[data$A$source!="synthetic",][linksR[,1], "date"])
+#'         intercept = rep(1, nrow(linksR))
+#'         for(k in 1:length(PIVs)){
+#'           if(k %in% unstablePIVs){
+#'             cov_k = cbind( intercept,
+#'                            data$A[linksR[,1], data$PIVs_config[[k]]$pSameH.cov.A, drop=FALSE],
+#'                            data$B[linksR[,2], data$PIVs_config[[k]]$pSameH.cov.B, drop=FALSE] )
+#'             survivalpSameH[,k] = SurvivalUnstable(cov_k, alpha[[k]], times)
+#'             Hequal = truepivsA[linksR[,1],k] == truepivsB[linksR[,2],k]
+#'             Vtmp_k = cbind( cov_k,
+#'                             times,
+#'                             Hequal )
+#'             Valpha[[k]] = rbind(Valpha[[k]], Vtmp_k)
+#'           }
+#'         }
+#'       }
+#'     }
+#'
+#'     ...
+#'
+#'   }
+#'
+#'   ...
+#'
+#'   # Update the alpha chain wth a new parameter:
+#'   if(instability){
+#'     if(nrow(linksR)>0){
+#'       for(k in 1:length(PIVs)){
+#'         if(!PIVs_stable[k]){
+#'           alphaInit = rep(-0.05, nCoefUnstable[[k]])
+#'           X = Valpha[[k]][,1:nCoefUnstable[[k]]]
+#'           times = Valpha[[k]]$times
+#'           Hequal = Valpha[[k]]$Hequal
+#'           optim = stats::nlminb(alphaInit, loglikSurvival, control=list(trace=FALSE),
+#'                                 X=X, times=times, Hequal=Hequal)
+#'           alpha[[k]] = optim$par
+#'         }
+#'       }
+#'     }
+#'   }
+#'
+#'   ...
+#'
+#' }
+#' }
 SurvivalUnstable = function(Xlinksk, alphask, times)
 {
   # returns the proba that true values of PIV indexed by k coincide
@@ -413,8 +624,17 @@ SurvivalUnstable = function(Xlinksk, alphask, times)
 
 #' Stochastic EM for Record Linkage
 #'
-#' @param data A list with elements A, B, Nvalues, PIVs_config, controlOnMistakes,
-#' sameMistakes, phiMistakesAFixed, phiMistakesBFixed, phiForMistakesA, phiForMistakesB.
+#' @param data A list with elements:
+#' - A: the smallest data source (encoded: the categorical values of the PIVs have to be mapped to sets of natural numbers and missing values are encoded as 0).
+#' - B: the largest data source (encoded).
+#' - Nvalues: A vector (of size number of PIVs) with the number fo unique values per PIVs (in the order of the PIVs defined in PIVs_config).
+#' - PIVs_config: A list (of size number of PIVs) where element names are the PIVs and element values are lists with elements: stable (boolean for whether the PIV is stable), conditionalHazard (boolean for whether there are external covariates available to model instability, only required if stable is FALSE), pSameH.cov.A and pSameH.covB (vectors with strings corresponding to the names of the covariates to use to model instability from file A and file B, only required if stable is FALSE, empty vectors may be provided if conditionalHazard is FALSE).
+#' - controlOnMistakes: A vector (of size number of PIVs) of booleans indicating potential bounds on the mistakes probabilities for each PIV. For each PIV, if TRUE there will be control on mistake and the mistake probability will not go above 10%. If FALSE there is no bound on the probability of mistake. WATCH OUT, if you suspect that a variable is unstable but you do not have data to model its dynamics the boolean value should be set to FALSE to allow the parameter for mistake to adapt for the instability. However if you model this instability, the boolean value should be set to TRUE to help the algorithm differenciate the mistakes from the changes over time.
+#' - sameMistakes: A boolean value for whether there should be one parameter for the mistakes in A and B or whether each source should have its own parameter. Setting sameMistakes=TRUE is recommended in case of small data sources; the estimation with 2 parameters in that case will fail to capture the mistakes correctly while 1 parameter will be more adapted.
+#' - phiMistakesAFixed A vector (of size number of PIVs) of booleans indicating whether the parameters for mistakes should be fixed in case of instability. It should be FALSE, except for unstable PIVs for which it may be set to TRUE in order to avoid estimability problems between the parameter for mistake and the parameter for changes across time.
+#' - phiMistakesBFixed A vector (of size number of PIVs) of booleans indicating whether the parameters for mistakes should be fixed in case of instability. It should be FALSE, except for unstable PIVs for which it may be set to TRUE in order to avoid estimability problems between the parameter for mistake and the parameter for changes across time.
+#' - phiForMistakesA A vector (of size number of PIVs) of NA or fixed values for the parameters for mistakes. It should be NA, except for unstable PIVs for which one wants to fix the parameter to avoid estimability problem (as indicated with the boolean values in phiMistakesAFixed). In that case it should be set the the expected value for the probability of mistake. If you have no idea: you can put it to 0, the algorithm is quite robust to wrongly fixed parameters.
+#' - phiForMistakesB A vector (of size number of PIVs) of NA or fixed values for the parameters for mistakes. It should be NA, except for unstable PIVs for which one wants to fix the parameter to avoid estimability problem (as indicated with the boolean values in phiMistakesBFixed). In that case it should be set the the expected value for the probability of mistake. If you have no idea: you can put it to 0, the algorithm is quite robust to wrongly fixed parameters.
 #' @param StEMIter An integer with the total number of iterations of the Stochastic
 #' EM algorithm (including the period to discard as burn-in)
 #' @param StEMBurnin An integer with the number of iterations to discard as burn-in
@@ -434,9 +654,8 @@ SurvivalUnstable = function(Xlinksk, alphask, times)
 #' record linkage is finished)
 #'
 #' @return A list with:
-#' - Delta, (sparse) matrix with the pairs of records linked and their
-#' posterior probabilities to be linked (select the pairs where the proba>0.5 to get a valid
-#' set of linked records),
+#' - Delta, the summarry of a sparse matrix, i.e. a dataframe with 3 columns: the indices from the first data source A, the indices from the second data source B, the non-zero probability that the records associated with this pair of indices are linked (i.e. the
+#' posterior probabilities to be linked). One has to select the pairs where this proba>0.5 to get a valid set of linked records, (this threshold on the linkage probability is necessary to ensure the one-to-one assignment constraint of record linkage stating that one record in one file can at most be linked to one record in the other file).
 #' - gamma, a vector with the chain of the parameter gamma representing
 #' the proportion of linked records as a fraction of the smallest file,
 #' - eta, a vector with the
@@ -445,9 +664,11 @@ SurvivalUnstable = function(Xlinksk, alphask, times)
 #' the chain of the parameter alpha representing the hazard coefficient of the model for instability,
 #' - phi, a vector with the chain of the parameter phi representing the registration errors parameters).
 #'
-#' More details are available in the vignettes and in the experiments repository of our paper.
+#' There are more details to understand the method in our paper, or on the experiments repository of our paper, or in the vignettes.
+#' @export
 #'
 #' @examples
+#' \dontrun{
 #' data = list( A = encodedA,
 #'              B = encodedB,
 #'              Nvalues = nvalues,
@@ -466,6 +687,7 @@ SurvivalUnstable = function(Xlinksk, alphask, times)
 #'              musicOn = TRUE,
 #'              newDirectory = NULL,
 #'              saveInfoIter = FALSE )
+#' }
 stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, musicOn=TRUE, newDirectory=NULL, saveInfoIter=FALSE)
 {
 
@@ -490,9 +712,9 @@ stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, musicOn=TRUE
       for(k in 1:length(unstablePIVs)){
         unstablePIV = unstablePIVs[k]
         if( length(data$PIVs_config[[unstablePIV]]$pSameH.cov.A)>0 )
-          testit::assert( "Some variables from A to include in the survival model for unstable PIVs do not exist.", data$PIVs_config[[unstablePIV]]$pSameH.cov.A %in% colnames(A) )
+          testit::assert( "Some variables from A to include in the survival model for unstable PIVs do not exist.", data$PIVs_config[[unstablePIV]]$pSameH.cov.A %in% colnames(data$A) )
         if( length(data$PIVs_config[[unstablePIV]]$pSameH.cov.B)>0 )
-          testit::assert( "Some variables from B to include in the survival model for unstable PIVs do not exist.", data$PIVs_config[[unstablePIV]]$pSameH.cov.B %in% colnames(B) )
+          testit::assert( "Some variables from B to include in the survival model for unstable PIVs do not exist.", data$PIVs_config[[unstablePIV]]$pSameH.cov.B %in% colnames(data$B) )
       }
     }
   }
@@ -705,7 +927,7 @@ stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, musicOn=TRUE
     for(k in 1:length(data$Nvalues)){
       eta[[k]] = colSums(Veta[[k]])/sum(Veta[[k]])
       if(sum(eta[[k]]==0)>0){
-        cat("\nAn error may appear due to some rare values in PIV", k, "\nSo far, eta ", k, ":\n", eta[[k]], "\nCount values of PIV", k, "in A: \n", table(encodedA[,PIVs][,k]), "\nand in B: \n", table(encodedB[,PIVs][,k]), "\n")
+        cat("\nAn error may appear due to some rare values in PIV", k, "\nSo far, eta ", k, ":\n", eta[[k]], "\nCount values of PIV", k, "in A: \n", table(data$A[,PIVs][,k]), "\nand in B: \n", table(data$B[,PIVs][,k]), "\n")
       }
     }
 
@@ -833,25 +1055,96 @@ stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, musicOn=TRUE
     utils::browseURL('https://www.youtube.com/watch?v=NTa6Xbzfq1U')
   }
 
-  list(Delta=Matrix::summary(Delta), gamma=gamma.iter, eta=eta.iter, alpha=alpha.iter, phi=phi.iter)
+  list(Delta=as.data.frame(Matrix::summary(Delta)), gamma=gamma.iter, eta=eta.iter, alpha=alpha.iter, phi=phi.iter)
 }
 
-#' Title
+#' launchNaive
 #'
-#' @param PIVs .
-#' @param encodedA .
-#' @param encodedB .
+#' @param PIVs A vector of size the number of PIVs with their names (as columns names in the data sources).
+#' @param encodedA One data source (encoded: the categorical values of the PIVs have to be mapped to sets of natural numbers and missing values are encoded as 0).
+#' @param encodedB The other data source (encoded).
 #'
-#' @return .
+#' @return
+#' The linkage set, a dataframe of 2 columns with indices from the first data source (A) and the second one (B) for which all the PIVs (when non-missing) matches in their values. When a PIV is missing, this method will match the record to all the records in the other file for which all other values of the PIVs match.
+#' Therefore, this 'naive' (or 'simplistic') method does not enforce the one-to-one assignment constraint of record linkage (one record in one file can at most be linked to one record in the other file).
+#' This method should only be used to judge the difficulty of the record linkage task: it gives information about the amount of duplicates between files and the discriminative power of all the PIVs together as a way to link the records.
 #' @export
 #'
-#' @examples .
+#' @examples
+#' library(FlexRL)
+#'
+#' PIVs_config = list( V1 = list(stable = TRUE),
+#'                     V2 = list(stable = TRUE),
+#'                     V3 = list(stable = TRUE),
+#'                     V4 = list(stable = TRUE),
+#'                     V5 = list( stable = FALSE,
+#'                                conditionalHazard = FALSE,
+#'                                pSameH.cov.A = c(),
+#'                                pSameH.cov.B = c()) )
+#' PIVs = names(PIVs_config)
+#' PIVs_stable = sapply(PIVs_config, function(x) x$stable)
+#' Nval = c(6, 7, 8, 9, 15)
+#' NRecords = c(500, 800)
+#' Nlinks = 300
+#' PmistakesA = c(0.02, 0.02, 0.02, 0.02, 0.02)
+#' PmistakesB = c(0.02, 0.02, 0.02, 0.02, 0.02)
+#' PmissingA = c(0.007, 0.007, 0.007, 0.007, 0.007)
+#' PmissingB = c(0.007, 0.007, 0.007, 0.007, 0.007)
+#' moving_params = list(V1=c(),V2=c(),V3=c(),V4=c(),V5=c(0.28))
+#' enforceEstimability = TRUE
+#' DATA = DataCreation( PIVs_config,
+#'                      Nval,
+#'                      NRecords,
+#'                      Nlinks,
+#'                      PmistakesA,
+#'                      PmistakesB,
+#'                      PmissingA,
+#'                      PmissingB,
+#'                      moving_params,
+#'                      enforceEstimability)
+#' A                    = DATA$A
+#' B                    = DATA$B
+#' Nvalues              = DATA$Nvalues
+#' TimeDifference       = DATA$TimeDifference
+#' proba_same_H         = DATA$proba_same_H
+#'
+#' # the first 1:Nlinks records of each files created are links
+#' TrueDelta = data.frame( matrix(0, nrow=0, ncol=2) )
+#' for (i in 1:Nlinks)
+#' {
+#'   TrueDelta = rbind(TrueDelta, cbind(rownames(A[i,]),rownames(B[i,])))
+#' }
+#' true_pairs = do.call(paste, c(TrueDelta, list(sep="_")))
+#'
+#' encodedA = A
+#' encodedB = B
+#'
+#' encodedA[,PIVs][ is.na(encodedA[,PIVs]) ] = 0
+#' encodedB[,PIVs][ is.na(encodedB[,PIVs]) ] = 0
+#'
+#' DeltaResult = launchNaive(PIVs, encodedA, encodedB)
+#'
+#' results = data.frame( Results=matrix(NA, nrow=6, ncol=1) )
+#' rownames(results) = c("tp","fp","fn","f1score","fdr","sens.")
+#' if(nrow(DeltaResult)>1){
+#'   linked_pairs    = do.call(paste, c(DeltaResult[,c("idxA","idxB")], list(sep="_")))
+#'   truepositive    = length( intersect(linked_pairs, true_pairs) )
+#'   falsepositive   = length( setdiff(linked_pairs, true_pairs) )
+#'   falsenegative   = length( setdiff(true_pairs, linked_pairs) )
+#'   precision       = truepositive / (truepositive + falsepositive)
+#'   fdr             = 1 - precision
+#'   sensitivity     = truepositive / (truepositive + falsenegative)
+#'   f1score         = 2 * (precision * sensitivity) / (precision + sensitivity)
+#'   results[,"Naive"] = c(truepositive,falsepositive,falsenegative,f1score,fdr,sensitivity)
+#' }
+#' results
+#'
 launchNaive <- function(PIVs, encodedA, encodedB){
   testit::assert( "NA in A should be encoded as 0.", sum(is.na(encodedA))==0 )
   testit::assert( "NA in B should be encoded as 0.", sum(is.na(encodedB))==0 )
   rownames(encodedA) = 1:nrow(encodedA)
   rownames(encodedB) = 1:nrow(encodedB)
-  DeltaNaiveLinked = data.frame( Matrix::Matrix(0, nrow=0, ncol=2, sparse=TRUE) )
+  DeltaNaiveLinked = data.frame( base::matrix(0, nrow=0, ncol=2) )
   colnames(DeltaNaiveLinked) = c("idxA", "idxB")
   # A NOT MISSING THAT MATCH WITH B
   isNotMissingA = apply(encodedA[,PIVs]!=0, 1, all)
@@ -948,4 +1241,3 @@ launchNaive <- function(PIVs, encodedA, encodedB){
   DeltaNaiveLinked = DeltaNaiveLinked[!duplicated(DeltaNaiveLinked), ]
   DeltaNaiveLinked
 }
-

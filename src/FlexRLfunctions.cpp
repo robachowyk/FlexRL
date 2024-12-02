@@ -1,12 +1,8 @@
 #include <random>
 #include <chrono>
 
-#define ARMA_64BIT_WORD 1
-#include <RcppArmadillo.h>
-#include <RcppArmadilloExtensions/sample.h>
 #include <Rcpp.h>
 
-// [[Rcpp::depends(RcppArmadillo)]]
 using namespace Rcpp;
 
 // Use R random number generator to control seeds
@@ -194,14 +190,13 @@ IntegerMatrix Δfind()
   return found;
 }
 
-
 //' @export
 // [[Rcpp::export]]
-List sampleD(const IntegerMatrix & S,
-             const NumericVector & LLA,
-             const NumericVector & LLB,
-             const NumericMatrix & LLL, // const arma::sp_mat & LLL,
-             const NumericVector & gamma,
+List sampleD(const Rcpp::IntegerMatrix & S,
+             const Rcpp::NumericVector & LLA,
+             const Rcpp::NumericVector & LLB,
+             const Rcpp::NumericVector & LLL,
+             const Rcpp::NumericVector & gamma,
              double loglik,
              int nlinkrec,
              LogicalVector & sumRowD,
@@ -214,10 +209,11 @@ List sampleD(const IntegerMatrix & S,
     // If non match and possible match -> check if match
     if((sumRowD(i)==false) && (sumColD(j)==false))
     {
+
       double loglikNew = loglik
       // Comparison vectors
       - LLB(j) - LLA(i)
-      + LLL(i,j)
+      + LLL(q)
       // Bipartite matching
       - log(1-gamma(i)) + log(gamma(i))
       - log(LLB.length() - nlinkrec);
@@ -239,7 +235,7 @@ List sampleD(const IntegerMatrix & S,
       double loglikNew = loglik
       // Comparison vectors
       + LLB(j) + LLA(i)
-      - LLL(i,j)
+      - LLL(q)
       // Bipartite matching
       + log(1-gamma(i)) - log(gamma(i))
       + log(LLB.length() - nlinkrec+1);

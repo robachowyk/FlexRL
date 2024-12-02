@@ -2,16 +2,16 @@ Package: FlexRL
 Title: A Flexible Model For Record Linkage
 Version: 0.0.0.9000
 Authors@R: 
-    person("Kayané", "ROBACH", , "k.c.robach@amsterdamumc.nl", role = c("aut", "cre"),
+    person("Kayané", "ROBACH", , "k.c.robach@amsterdamumc.nl", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0002-5725-623X"))
-Description: An StEM approach to determine common entities when combining 2 files. Includes modelling of dynamic Partially Identifying Variables (e.g. zipcode) that may evolve over time. Low memory footprint.
+Description: This package implements the Stochastic EM approach to Record Linkage described in our paper https://arxiv.org/abs/2407.06835 'A flexible model for Record Linkage'. It is a record linkage method, for finding the common set of records among 2 data sources based on Partically Identifying Variables (PIVs) available in both sources. It includes modelling of dynamic PIVs (e.g. zipcode) that may evolve over time. Low memory footprint.
 License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Depends: R
 Imports: Matrix, progress, testit, Rcpp
-LinkingTo: Rcpp, RcppArmadillo
+LinkingTo: Rcpp
 Suggests: 
     knitr,
     rmarkdown

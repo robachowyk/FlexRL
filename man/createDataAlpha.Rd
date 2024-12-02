@@ -2,21 +2,25 @@
 % Please edit documentation in R/FlexRecordLinkage.r
 \name{createDataAlpha}
 \alias{createDataAlpha}
-\title{Title}
+\title{createDataAlpha}
 \usage{
 createDataAlpha(nCoefUnstable, stable)
 }
 \arguments{
-\item{nCoefUnstable}{.}
+\item{nCoefUnstable}{An integer value with the number of covariates (including the intercept): number of cov from A + number of cov from B + 1.}
 
-\item{stable}{.}
+\item{stable}{A boolean value indicating whether the PIV concerned is stable.}
 }
 \value{
-.
+An empty data frame (if stable=FALSE) with nCoefUnstable + 2 columns for book keeping of the elements necessary to update the parameter for instability. There are
+nCoefUnstable + 2 of those elements: number of cov from A + number of cov from B + intercept + boolean vector indicating where the true values of the records (for the concerned PIV) are equal, vector of time gaps between records
 }
 \description{
-Title
+createDataAlpha
 }
 \examples{
-.
+\dontrun{
+Valpha = mapply(createDataAlpha, nCoefUnstable = nCoefUnstable,
+                stable = PIVs_stable, SIMPLIFY=FALSE)
+}
 }

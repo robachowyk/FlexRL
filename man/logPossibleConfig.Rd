@@ -2,21 +2,25 @@
 % Please edit documentation in R/FlexRecordLinkage.r
 \name{logPossibleConfig}
 \alias{logPossibleConfig}
-\title{Title}
+\title{logPossibleConfig}
 \usage{
 logPossibleConfig(Brecords, sumD)
 }
 \arguments{
-\item{Brecords}{.}
+\item{Brecords}{Number of records in data source B (the largest).}
 
-\item{sumD}{.}
+\item{sumD}{Number of linked records (at a specific time point of the algorithm).}
 }
 \value{
-.
+The sum of logs of the vector going from nB - nLinks + 1 to nB.
 }
 \description{
-Title
+This function helps calculating the number of possible designs for ∆ given by nB!/(nB − nLinks)! Needed to compute the log likelihood of the linkage matrix.
 }
 \examples{
-.
+\dontrun{
+possconfig = logPossibleConfig(length(sumColD),nrow(links))
+logPossD = sum(log(gamma) * sumRowD + log(1-gamma) * (1-sumRowD)) - possconfig
+logPossD + sum(LLA[sumRowD==0]) + sum(LLB[sumColD==0]) + sum(LLL[links])
+}
 }

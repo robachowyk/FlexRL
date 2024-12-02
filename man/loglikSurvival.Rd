@@ -2,9 +2,7 @@
 % Please edit documentation in R/FlexRecordLinkage.r
 \name{loglikSurvival}
 \alias{loglikSurvival}
-\title{Log(likelihood) of the survival function with exponential model representing the probability that true values of a pair of records referring to the same entity coincide. This function
-is only used if the PIV is unstable and evolve over time. If so the true values of a linked pair of records may not coincide. We use this log(likelihood) in our model; more details in the paper. If one
-wants to define their own survival function (thus change the SurvivalUnstable function) for the probability of true values to coincide, the log(likelihood) function: loglikSurvival should also be modified.}
+\title{The log likelihood of the survival function with exponential model (-)}
 \usage{
 loglikSurvival(alphas, X, times, Hequal)
 }
@@ -21,10 +19,76 @@ loglikSurvival(alphas, X, times, Hequal)
 The value of the opposite (-) of the log(likelihood) associated with the survival function defining the probabilities that true values coincide (as defined in the paper) (the algorithm minimises -log(likelihood) i.e. maximises the log(likelihood)).
 }
 \description{
-Log(likelihood) of the survival function with exponential model representing the probability that true values of a pair of records referring to the same entity coincide. This function
-is only used if the PIV is unstable and evolve over time. If so the true values of a linked pair of records may not coincide. We use this log(likelihood) in our model; more details in the paper. If one
-wants to define their own survival function (thus change the SurvivalUnstable function) for the probability of true values to coincide, the log(likelihood) function: loglikSurvival should also be modified.
+Log(likelihood) of the survival function with exponential model (as proposed in our paper), representing the probability that true values of a pair of records referring to the same entity coincide. See ?FlexRL::SurvivalUnstable.
+This function is only used if the PIV is unstable and evolve over time. If so the true values of a linked pair of records may not coincide.
+If you want to use a different survival function to model instability, you can change the function 'SurvivalUnstable' as well as this function 'loglikSurvival'.
+}
+\details{
+In our StEM algorithm (see ?FlexRL::StEM) we minimise - log(likelihood), which is equivalent to maximise log(likelihood). Therefore this function actually returns (and should return if you create your own) the opposite (-) of the log(likelihood) associated with the survival function defining the probabilities that true values coincide.
 }
 \examples{
-.
+\dontrun{
+for(iter in 1:StEMIter)
+{
+
+  for(j in 1:GibbsBurnin)
+  {
+
+    ...
+
+  }
+
+  for(j in 1:nGibbsIter)
+  {
+    ...
+
+    survivalpSameH = base::matrix(1, nrow(linksR), length(data$Nvalues))
+    if(instability){
+      if(nrow(linksR)>0){
+        times = abs(data$B[data$B$source!="synthetic",][linksR[,2], "date"] -
+                    data$A[data$A$source!="synthetic",][linksR[,1], "date"])
+        intercept = rep(1, nrow(linksR))
+        for(k in 1:length(PIVs)){
+          if(k \%in\% unstablePIVs){
+            cov_k = cbind( intercept,
+                           data$A[linksR[,1], data$PIVs_config[[k]]$pSameH.cov.A, drop=FALSE],
+                           data$B[linksR[,2], data$PIVs_config[[k]]$pSameH.cov.B, drop=FALSE] )
+            survivalpSameH[,k] = SurvivalUnstable(cov_k, alpha[[k]], times)
+            Hequal = truepivsA[linksR[,1],k] == truepivsB[linksR[,2],k]
+            Vtmp_k = cbind( cov_k,
+                            times,
+                            Hequal )
+            Valpha[[k]] = rbind(Valpha[[k]], Vtmp_k)
+          }
+        }
+      }
+    }
+
+    ...
+
+  }
+
+  ...
+
+  # Update the alpha chain wth a new parameter:
+  if(instability){
+    if(nrow(linksR)>0){
+      for(k in 1:length(PIVs)){
+        if(!PIVs_stable[k]){
+          alphaInit = rep(-0.05, nCoefUnstable[[k]])
+          X = Valpha[[k]][,1:nCoefUnstable[[k]]]
+          times = Valpha[[k]]$times
+          Hequal = Valpha[[k]]$Hequal
+          optim = stats::nlminb(alphaInit, loglikSurvival, control=list(trace=FALSE),
+                                X=X, times=times, Hequal=Hequal)
+          alpha[[k]] = optim$par
+        }
+      }
+    }
+  }
+
+  ...
+
+}
+}
 }

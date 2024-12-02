@@ -16,8 +16,19 @@ stEM(
 )
 }
 \arguments{
-\item{data}{A list with elements A, B, Nvalues, PIVs_config, controlOnMistakes,
-sameMistakes, phiMistakesAFixed, phiMistakesBFixed, phiForMistakesA, phiForMistakesB.}
+\item{data}{A list with elements:
+\itemize{
+\item A: the smallest data source (encoded: the categorical values of the PIVs have to be mapped to sets of natural numbers and missing values are encoded as 0).
+\item B: the largest data source (encoded).
+\item Nvalues: A vector (of size number of PIVs) with the number fo unique values per PIVs (in the order of the PIVs defined in PIVs_config).
+\item PIVs_config: A list (of size number of PIVs) where element names are the PIVs and element values are lists with elements: stable (boolean for whether the PIV is stable), conditionalHazard (boolean for whether there are external covariates available to model instability, only required if stable is FALSE), pSameH.cov.A and pSameH.covB (vectors with strings corresponding to the names of the covariates to use to model instability from file A and file B, only required if stable is FALSE, empty vectors may be provided if conditionalHazard is FALSE).
+\item controlOnMistakes: A vector (of size number of PIVs) of booleans indicating potential bounds on the mistakes probabilities for each PIV. For each PIV, if TRUE there will be control on mistake and the mistake probability will not go above 10\%. If FALSE there is no bound on the probability of mistake. WATCH OUT, if you suspect that a variable is unstable but you do not have data to model its dynamics the boolean value should be set to FALSE to allow the parameter for mistake to adapt for the instability. However if you model this instability, the boolean value should be set to TRUE to help the algorithm differenciate the mistakes from the changes over time.
+\item sameMistakes: A boolean value for whether there should be one parameter for the mistakes in A and B or whether each source should have its own parameter. Setting sameMistakes=TRUE is recommended in case of small data sources; the estimation with 2 parameters in that case will fail to capture the mistakes correctly while 1 parameter will be more adapted.
+\item phiMistakesAFixed A vector (of size number of PIVs) of booleans indicating whether the parameters for mistakes should be fixed in case of instability. It should be FALSE, except for unstable PIVs for which it may be set to TRUE in order to avoid estimability problems between the parameter for mistake and the parameter for changes across time.
+\item phiMistakesBFixed A vector (of size number of PIVs) of booleans indicating whether the parameters for mistakes should be fixed in case of instability. It should be FALSE, except for unstable PIVs for which it may be set to TRUE in order to avoid estimability problems between the parameter for mistake and the parameter for changes across time.
+\item phiForMistakesA A vector (of size number of PIVs) of NA or fixed values for the parameters for mistakes. It should be NA, except for unstable PIVs for which one wants to fix the parameter to avoid estimability problem (as indicated with the boolean values in phiMistakesAFixed). In that case it should be set the the expected value for the probability of mistake. If you have no idea: you can put it to 0, the algorithm is quite robust to wrongly fixed parameters.
+\item phiForMistakesB A vector (of size number of PIVs) of NA or fixed values for the parameters for mistakes. It should be NA, except for unstable PIVs for which one wants to fix the parameter to avoid estimability problem (as indicated with the boolean values in phiMistakesBFixed). In that case it should be set the the expected value for the probability of mistake. If you have no idea: you can put it to 0, the algorithm is quite robust to wrongly fixed parameters.
+}}
 
 \item{StEMIter}{An integer with the total number of iterations of the Stochastic
 EM algorithm (including the period to discard as burn-in)}
@@ -46,9 +57,8 @@ record linkage is finished)}
 \value{
 A list with:
 \itemize{
-\item Delta, (sparse) matrix with the pairs of records linked and their
-posterior probabilities to be linked (select the pairs where the proba>0.5 to get a valid
-set of linked records),
+\item Delta, the summarry of a sparse matrix, i.e. a dataframe with 3 columns: the indices from the first data source A, the indices from the second data source B, the non-zero probability that the records associated with this pair of indices are linked (i.e. the
+posterior probabilities to be linked). One has to select the pairs where this proba>0.5 to get a valid set of linked records, (this threshold on the linkage probability is necessary to ensure the one-to-one assignment constraint of record linkage stating that one record in one file can at most be linked to one record in the other file).
 \item gamma, a vector with the chain of the parameter gamma representing
 the proportion of linked records as a fraction of the smallest file,
 \item eta, a vector with the
@@ -58,12 +68,13 @@ the chain of the parameter alpha representing the hazard coefficient of the mode
 \item phi, a vector with the chain of the parameter phi representing the registration errors parameters).
 }
 
-More details are available in the vignettes and in the experiments repository of our paper.
+There are more details to understand the method in our paper, or on the experiments repository of our paper, or in the vignettes.
 }
 \description{
 Stochastic EM for Record Linkage
 }
 \examples{
+\dontrun{
 data = list( A = encodedA,
              B = encodedB,
              Nvalues = nvalues,
@@ -82,4 +93,5 @@ data = list( A = encodedA,
              musicOn = TRUE,
              newDirectory = NULL,
              saveInfoIter = FALSE )
+}
 }

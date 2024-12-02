@@ -162,7 +162,7 @@ data = list( A                    = encodedA,
              phiForMistakesB      = c(NA, NA, NA, NA, NA)
              )
 
-fit = stEM(  data                 = data,
+fit = FlexRL::stEM(  data                 = data,
              StEMIter             = 50,
              StEMBurnin           = 30,
              GibbsIter            = 100, 

@@ -39,14 +39,24 @@ DataCreation(
 \item{enforceEstimability}{A boolean value for whether half of the links should have near-0 time gaps (useful for modeling instability and avoiding estimability issues as discussed in the paper)}
 }
 \value{
-A list with generated dataframe A, dataframe B, vector of Nvalues (Nval), vector of TimeDifference (for the links, when thewre is instability), matrix proba_same_H (number of links, number fo PIVs) with the proba that true values coincide (e.g. 1 - proba of moving)
+A list with generated
+\itemize{
+\item dataframe A (encoded: the categorical values of the PIVs are matched to sets of natural numbers),
+\item dataframe B (encoded),
+\item vector of Nvalues (Nval),
+\item vector of TimeDifference (for the links, when thewre is instability),
+\item matrix proba_same_H (number of links, number fo PIVs) with the proba that true values coincide (e.g. 1 - proba of moving)
+}
 }
 \description{
 This function is used to synthesise data for record linkage. It creates 2 data sources of specific sizes, with a common set of records of a specific size, with a certain amount of Partially Identifying Variables (PIVs).
-For each PIV, we specify the number of unique values, the desired proportion of mistakes and missing values. They can be statble or evolving over time (e.g. representing the postal code).
+For each PIV, we specify the number of unique values, the desired proportion of mistakes and missing values. They can be stable or evolving over time (e.g. representing the postal code).
 For the unstable PIVs, we can specify the parameter(s) to be used in the survival exponential model that generates changes over time between the records referring to the same entities.
 When a PIV is unstable, it is later harder to estimate its parameters (probability of mistake vs. probability of change across time). Therefore we may want to enforce estimability in the synthetic data, which we do by
-enforcing half of the links to have a near-zero time gaps. More examples for how to use this function are available in the experiments repository or in our paper.
+enforcing half of the links to have a near-zero time gaps.
+}
+\details{
+There are more details to understand the method in our paper, or on the experiments repository of our paper, or in the vignettes.
 }
 \examples{
 PIVs_config = list( V1 = list(stable = TRUE),

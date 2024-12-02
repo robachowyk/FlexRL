@@ -2,31 +2,34 @@
 % Please edit documentation in R/FlexRecordLinkage.r
 \name{loglik}
 \alias{loglik}
-\title{Title}
+\title{loglik}
 \usage{
 loglik(LLL, LLA, LLB, links, sumRowD, sumColD, gamma)
 }
 \arguments{
-\item{LLL}{.}
+\item{LLL}{A (sparse) matrix with contributions to the complete likelihood of the linked records.}
 
-\item{LLA}{.}
+\item{LLA}{A vector with contributions to the complete likelihood of the non linked records from A.}
 
-\item{LLB}{.}
+\item{LLB}{A vector with contributions to the complete likelihood of the non linked records from B.}
 
-\item{links}{.}
+\item{links}{A matrix of 2 columns with indices of the linked records.}
 
-\item{sumRowD}{.}
+\item{sumRowD}{A boolean vector indicating, for each row of the linkage matrix, i.e. for each record in the smallest file A, whether the record has a link in B or not.}
 
-\item{sumColD}{.}
+\item{sumColD}{A boolean vector indicating, for each column of the linkage matrix, i.e. for each record in the largest file B, whether the record has a link in A or not.}
 
-\item{gamma}{.}
+\item{gamma}{The proportion of linked records as a fraction of the smallest file.}
 }
 \value{
-.
+The Log(likelihood) of the linkage matrix.
 }
 \description{
-Title
+Log(likelihood) of the linkage matrix.
 }
 \examples{
-.
+\dontrun{
+# Complete data likelihood
+LL0 = loglik(LLL=LLL, LLA=LLA, LLB=LLB, links=linksR, sumRowD=sumRowD, sumColD=sumColD, gamma=gamma)
+}
 }
