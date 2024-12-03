@@ -12,8 +12,6 @@ using namespace Rcpp;
 // static std::mt19937 gen{rd()};
 // std::uniform_real_distribution<double> dist(0, 1);
 
-//' @export
-// [[Rcpp::export]]
 NumericVector callFunction(NumericVector x, Function f) {
   NumericVector res = f(x);
   return res;
@@ -29,8 +27,14 @@ double ControlRandomSampleGen(IntegerVector choiceset, NumericVector probavec) {
   return generatedrandom;
 }
 
+//' F2
+//'
+//' @param U IntegerVector with factor values corresponding to the patterns of PIVs observed among records in the concerned source
+//' @param nvals integer for the total number of possible patterns (among all sources)
+//'
+//' @return List: for each pattern in value, count of the records having the pattern in the concerned source
 //' @export
- // [[Rcpp::export]]
+// [[Rcpp::export]]
 List F2(IntegerVector U, int nvals)
 {
   List out(nvals);
@@ -49,9 +53,15 @@ List F2(IntegerVector U, int nvals)
   return out;
 }
 
-// Cartesian product of both lists. Which combos are possible based on the true values?
+//' F33
+//'
+//' @param A List with for each pattern in value, count of the records having the pattern in the concerned source
+//' @param B List with for each pattern in value, count of the records having the pattern in the concerned source
+//' @param nvals integer for the total number of possible patterns (among all sources)
+//'
+//' @return IntegerMatrix: nrow=nbr of potential links, ncol = 2, indicates the indices (of records from A, records from B) of records with matching patterns to be considered in the likelihood as potential links. It represents the cartesian product of both lists passed as parameters to represent all possible linked pairs of records.
 //' @export
- // [[Rcpp::export]]
+// [[Rcpp::export]]
 IntegerMatrix F33(List A, List B, int nvals)
 {
   int ntotal = 0;
@@ -81,6 +91,11 @@ IntegerMatrix F33(List A, List B, int nvals)
   return tmpC;
 }
 
+//' sspaste2
+//'
+//' @param A IntegerMatrix with values to form patterns
+//'
+//' @return CharacterVector: "sspaste2(A)" is a faster version in Rcpp of "do.call(paste, c(as.data.frame(A), list(sep="_")))"
 //' @export
 // [[Rcpp::export]]
 CharacterVector sspaste2(IntegerMatrix A)
@@ -154,27 +169,33 @@ List F1(const IntegerVector & HA, const IntegerVector & HB, const int & nvals)
   return out;
 }
 
-std::map<int, std::set<int>> _ΔMap;
+std::map<int, std::set<int>> _DeltaMap;
 
+//' initDeltaMap
+//'
+//' @return void: Initialise the cpp map _DeltaMap representing the sparse linkage matrix Delta.
 //' @export
- // [[Rcpp::export]]
-void initΔMap()
+// [[Rcpp::export]]
+void initDeltaMap()
 {
-  _ΔMap = {};
+  _DeltaMap = {};
 }
 
+//' Deltafind()
+//'
+//' @return IntegerMatrix: find the indices of the elements in the cpp map _DeltaMap representing the sparse linkage matrix Delta.
 //' @export
- // [[Rcpp::export]]
-IntegerMatrix Δfind()
+// [[Rcpp::export]]
+IntegerMatrix Deltafind()
 {
   int length = 0;
-  for(const auto & rowColSet: _ΔMap)
+  for(const auto & rowColSet: _DeltaMap)
   {
     length += rowColSet.second.size();
   }
   IntegerMatrix found(length, 2);
   int index = 0;
-  for(const auto & rowColSet: _ΔMap)
+  for(const auto & rowColSet: _DeltaMap)
   {
 
     for (int c : rowColSet.second)
@@ -190,13 +211,32 @@ IntegerMatrix Δfind()
   return found;
 }
 
+//' sampleD
+//'
+//' @param S IntegerMatrix where each row correspond to the indices (from source A and source B) of records for which the true values matches (representing the potential links)
+//' @param LLA NumericVector gives the likelihood contribution of each non linked record from A
+//' @param LLB NumericVector gives the likelihood contribution of each non linked record from B
+//' @param LLL NumericVector gives the likelihood contribution of each potential linked records (from select)
+//' @param gamma NumericVector repeats the value of the parameter gamma (proportion of linked records) number of potential linked records (nrow of S) times
+//' @param loglik double for the value of the current complete log likelihood of the model
+//' @param nlinkrec integer for the current number of linked records
+//' @param sumRowD A LogicalVector vector indicating, for each row of the linkage matrix, i.e. for each record in the smallest file A, whether the record has a link in B or not.
+//' @param sumColD A LogicalVector vector indicating, for each column of the linkage matrix, i.e. for each record in the largest file B, whether the record has a link in A or not.
+//'
+//' @return
+//' List:
+//' - new set of links
+//' - new sumRowD
+//' - new sumColD
+//' - new value of the complete log likelihood
+//' - new number fo linked records
 //' @export
 // [[Rcpp::export]]
-List sampleD(const Rcpp::IntegerMatrix & S,
-             const Rcpp::NumericVector & LLA,
-             const Rcpp::NumericVector & LLB,
-             const Rcpp::NumericVector & LLL,
-             const Rcpp::NumericVector & gamma,
+List sampleD(const IntegerMatrix & S,
+             const NumericVector & LLA,
+             const NumericVector & LLB,
+             const NumericVector & LLL,
+             const NumericVector & gamma,
              double loglik,
              int nlinkrec,
              LogicalVector & sumRowD,
@@ -224,12 +264,12 @@ List sampleD(const Rcpp::IntegerMatrix & S,
       if(link)
       {
         loglik = loglikNew;
-        _ΔMap[i].insert(j);
+        _DeltaMap[i].insert(j);
         sumRowD(i) = true;
         sumColD(j) = true;
         nlinkrec = nlinkrec + 1;
       }
-    }else if(_ΔMap.count(i) && _ΔMap.at(i).count(j))
+    }else if(_DeltaMap.count(i) && _DeltaMap.at(i).count(j))
     {
       // If match -> check if nonmatch
       double loglikNew = loglik
@@ -245,15 +285,15 @@ List sampleD(const Rcpp::IntegerMatrix & S,
       if(nolink)
       {
         loglik = loglikNew;
-        if(_ΔMap.count(i) && _ΔMap[i].count(j))
-          _ΔMap[i].erase(j);
+        if(_DeltaMap.count(i) && _DeltaMap[i].count(j))
+          _DeltaMap[i].erase(j);
         sumRowD(i) = false;
         sumColD(j) = false;
         nlinkrec = nlinkrec - 1;
       }
     }
   }
-  IntegerMatrix links=Δfind();
+  IntegerMatrix links=Deltafind();
   // Return to R
   List ret;
   ret["links"] = links;
@@ -264,6 +304,13 @@ List sampleD(const Rcpp::IntegerMatrix & S,
   return ret;
 }
 
+//' sampleNL
+//'
+//' @param G IntegerVector of registered values for a certain PIV for non linked records
+//' @param eta NumericVector parameter for the distribution of the PIV concerned
+//' @param phi NumericVector parameter for the registration errors for the PIV concerned
+//'
+//' @return IntegerVector: of latent true values underlying G
 //' @export
 // [[Rcpp::export]]
 IntegerVector sampleNL(IntegerVector G, NumericVector eta, NumericVector phi)
@@ -299,6 +346,19 @@ IntegerVector sampleNL(IntegerVector G, NumericVector eta, NumericVector phi)
   return H;
 }
 
+//' sampleNL
+//'
+//' @param GA IntegerVector of registered values for a certain PIV for linked records from A
+//' @param GB IntegerVector of registered values for a certain PIV for linked records from B
+//' @param survivalpSameH NumericVector of probabilities that the concerned PIV values coincide between file A and file B
+//' @param choice_set IntegerMatrix of 2 columns (for A and for B) with possible joint true values underlying GA and GB
+//' @param choice_equal IntegerVector of booleans indicating whether the 2 true values (from A and B) in the choice set are equal
+//' @param nval integer for the number of unique values in the PIV concerned
+//' @param phikA NumericVector parameter for the registration errors in A for the PIV concerned
+//' @param phikB NumericVector parameter for the registration errors in B for the PIV concerned
+//' @param eta NumericVector parameter for the distribution of the PIV concerned
+//'
+//' @return IntegerVector: of indices from the joint latent true values choice set underlying GA and GB
 //' @export
 // [[Rcpp::export]]
 IntegerVector sampleL(IntegerVector GA, IntegerVector GB, NumericVector survivalpSameH,
@@ -367,6 +427,12 @@ IntegerVector sampleL(IntegerVector GA, IntegerVector GB, NumericVector survival
   return H;
 }
 
+//' cartesianProduct
+//'
+//' @param vec1 first IntegerVector of values to compute the cartesian product
+//' @param vec2 second IntegerVector of values to compute the cartesian product
+//'
+//' @return IntegerMatrix: of 2 columns with the cartesian product of vec1 and vec2
 //' @export
 // [[Rcpp::export]]
 IntegerMatrix cartesianProduct(IntegerVector vec1, IntegerVector vec2) {
@@ -382,12 +448,23 @@ IntegerMatrix cartesianProduct(IntegerVector vec1, IntegerVector vec2) {
   return result;
 }
 
+//' ExpandGrid
+//'
+//' @param vector1 first IntegerVector of values to compute the cartesian product
+//' @param vector2 second IntegerVector of values to compute the cartesian product
+//'
+//' @return IntegerMatrix: of 2 columns with the cartesian product of vec1 and vec2
 //' @export
 // [[Rcpp::export]]
 IntegerMatrix ExpandGrid(IntegerVector vector1, IntegerVector vector2) {
   return cartesianProduct(vector1, vector2);
 }
 
+//' generateSequence
+//'
+//' @param n integer superior to 1
+//'
+//' @return IntegerVector: with n values from 1 to n
 //' @export
 // [[Rcpp::export]]
 IntegerVector generateSequence(int n) {
@@ -398,6 +475,24 @@ IntegerVector generateSequence(int n) {
   return result;
 }
 
+//' sampleH
+//'
+//' @param nA IntegerVector of dimensions of registered values of the PIVs in A
+//' @param nB IntegerVector of dimensions of registered values of the PIVs in B
+//' @param links IntegerMatrix of 2 columns with the indices of the linked records
+//' @param survivalpSameH NumericMatrix with for each PIV the probability that true values coincide (if stable: filled with 1)
+//' @param pivs_stable LogicalVector indicating for each PIV whether it is stable of not (if not we expect survivalpSameH for that same element to not be filled with 1 but with lower values)
+//' @param pivsA List ith registered data from A
+//' @param pivsB List with registered data from B
+//' @param nvalues IntegerVector with number of unique values of each PIV
+//' @param nonlinkedA LogicalVector indicating for all records in A whether they are linked or not
+//' @param nonlinkedB LogicalVector indicating for all records in B whether they are linked or not
+//' @param eta List parameters of the PIVs distributions
+//' @param phi List parameters of the PIVs registration errors
+//'
+//' @return List:
+//' - truePIVsA, true values underlying data in A
+//' - truePIVsB, true values underlying data in B
 //' @export
 // [[Rcpp::export]]
 List sampleH(IntegerVector nA, IntegerVector nB, IntegerMatrix links, NumericMatrix survivalpSameH, LogicalVector pivs_stable, List pivsA, List pivsB, IntegerVector nvalues, LogicalVector nonlinkedA, LogicalVector nonlinkedB, List eta, List phi)

@@ -29,7 +29,6 @@ Log(likelihood) of the linkage matrix.
 }
 \examples{
 \dontrun{
-# Complete data likelihood
 LL0 = loglik(LLL=LLL, LLA=LLA, LLB=LLB, links=linksR, sumRowD=sumRowD, sumColD=sumColD, gamma=gamma)
 }
 }

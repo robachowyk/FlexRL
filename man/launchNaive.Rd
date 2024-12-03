@@ -59,7 +59,6 @@ Nvalues              = DATA$Nvalues
 TimeDifference       = DATA$TimeDifference
 proba_same_H         = DATA$proba_same_H
 
-# the first 1:Nlinks records of each files created are links
 TrueDelta = data.frame( matrix(0, nrow=0, ncol=2) )
 for (i in 1:Nlinks)
 {

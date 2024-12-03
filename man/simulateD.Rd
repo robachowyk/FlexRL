@@ -55,8 +55,8 @@ A list with:
 \itemize{
 \item new set of links
 \item new sumRowD
-\item new sumColD;
-\item new value of the complete log likelihood;
+\item new sumColD
+\item new value of the complete log likelihood
 \item new number fo linked records
 }
 }

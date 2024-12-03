@@ -38,7 +38,7 @@ for(iter in 1:StEMIter)
 
   }
 
-  for(j in 1:nGibbsIter)
+  for(j in 1:GibbsIter)
   {
     ...
 
@@ -70,7 +70,7 @@ for(iter in 1:StEMIter)
 
   ...
 
-  # Update the alpha chain wth a new parameter:
+  # Update the alpha chain with a new parameter:
   if(instability){
     if(nrow(linksR)>0){
       for(k in 1:length(PIVs)){

@@ -1,3 +1,3 @@
 # FlexRL (development version)
 
-* Initial CRAN submission.
+* Package creation. Initial CRAN submission. 

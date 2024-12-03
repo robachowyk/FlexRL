@@ -207,7 +207,7 @@ createDataAlpha <- function(nCoefUnstable, stable){
 
 #' logPossibleConfig
 #'
-#' This function helps calculating the number of possible designs for ∆ given by nB!/(nB − nLinks)! Needed to compute the log likelihood of the linkage matrix.
+#' This function helps calculating the number of possible designs for Delta given by nB!/(nB − nLinks)! Needed to compute the log likelihood of the linkage matrix.
 #'
 #' @param Brecords Number of records in data source B (the largest).
 #' @param sumD Number of linked records (at a specific time point of the algorithm).
@@ -246,7 +246,6 @@ logPossibleConfig = function(Brecords,sumD)
 #'
 #' @examples
 #' \dontrun{
-#' # Complete data likelihood
 #' LL0 = loglik(LLL=LLL, LLA=LLA, LLB=LLB, links=linksR, sumRowD=sumRowD, sumColD=sumColD, gamma=gamma)
 #' }
 loglik = function(LLL, LLA, LLB, links, sumRowD, sumColD, gamma)
@@ -325,8 +324,8 @@ simulateH = function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi)
 #' @return A list with:
 #' - new set of links
 #' - new sumRowD
-#' - new sumColD;
-#' - new value of the complete log likelihood;
+#' - new sumColD
+#' - new value of the complete log likelihood
 #' - new number fo linked records
 #' @export
 #'
@@ -471,7 +470,7 @@ simulateD = function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamma
 #'
 #'   }
 #'
-#'   for(j in 1:nGibbsIter)
+#'   for(j in 1:GibbsIter)
 #'   {
 #'     ...
 #'
@@ -503,7 +502,7 @@ simulateD = function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamma
 #'
 #'   ...
 #'
-#'   # Update the alpha chain wth a new parameter:
+#'   # Update the alpha chain with a new parameter:
 #'   if(instability){
 #'     if(nrow(linksR)>0){
 #'       for(k in 1:length(PIVs)){
@@ -755,7 +754,7 @@ stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, musicOn=TRUE
   {
     tijdM = Sys.time()
 
-    initΔMap()
+    initDeltaMap()
     linksR = base::matrix(0,0,2)
     linksCpp = linksR
     sumRowD = rep(0, nrow(data$A))
@@ -1108,7 +1107,6 @@ stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, musicOn=TRUE
 #' TimeDifference       = DATA$TimeDifference
 #' proba_same_H         = DATA$proba_same_H
 #'
-#' # the first 1:Nlinks records of each files created are links
 #' TrueDelta = data.frame( matrix(0, nrow=0, ncol=2) )
 #' for (i in 1:Nlinks)
 #' {

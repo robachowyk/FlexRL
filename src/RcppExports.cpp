@@ -10,18 +10,6 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// callFunction
-NumericVector callFunction(NumericVector x, Function f);
-RcppExport SEXP _FlexRL_callFunction(SEXP xSEXP, SEXP fSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
-    Rcpp::traits::input_parameter< Function >::type f(fSEXP);
-    rcpp_result_gen = Rcpp::wrap(callFunction(x, f));
-    return rcpp_result_gen;
-END_RCPP
-}
 // F2
 List F2(IntegerVector U, int nvals);
 RcppExport SEXP _FlexRL_F2(SEXP USEXP, SEXP nvalsSEXP) {
@@ -58,36 +46,36 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// initΔMap
-void initΔMap();
-RcppExport SEXP _FlexRL_initΔMap() {
+// initDeltaMap
+void initDeltaMap();
+RcppExport SEXP _FlexRL_initDeltaMap() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    initΔMap();
+    initDeltaMap();
     return R_NilValue;
 END_RCPP
 }
-// Δfind
-IntegerMatrix Δfind();
-RcppExport SEXP _FlexRL_Δfind() {
+// Deltafind
+IntegerMatrix Deltafind();
+RcppExport SEXP _FlexRL_Deltafind() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(Δfind());
+    rcpp_result_gen = Rcpp::wrap(Deltafind());
     return rcpp_result_gen;
 END_RCPP
 }
 // sampleD
-List sampleD(const Rcpp::IntegerMatrix& S, const Rcpp::NumericVector& LLA, const Rcpp::NumericVector& LLB, const Rcpp::NumericVector& LLL, const Rcpp::NumericVector& gamma, double loglik, int nlinkrec, LogicalVector& sumRowD, LogicalVector& sumColD);
+List sampleD(const IntegerMatrix& S, const NumericVector& LLA, const NumericVector& LLB, const NumericVector& LLL, const NumericVector& gamma, double loglik, int nlinkrec, LogicalVector& sumRowD, LogicalVector& sumColD);
 RcppExport SEXP _FlexRL_sampleD(SEXP SSEXP, SEXP LLASEXP, SEXP LLBSEXP, SEXP LLLSEXP, SEXP gammaSEXP, SEXP loglikSEXP, SEXP nlinkrecSEXP, SEXP sumRowDSEXP, SEXP sumColDSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::IntegerMatrix& >::type S(SSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type LLA(LLASEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type LLB(LLBSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type LLL(LLLSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type gamma(gammaSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type S(SSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type LLA(LLASEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type LLB(LLBSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type LLL(LLLSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type gamma(gammaSEXP);
     Rcpp::traits::input_parameter< double >::type loglik(loglikSEXP);
     Rcpp::traits::input_parameter< int >::type nlinkrec(nlinkrecSEXP);
     Rcpp::traits::input_parameter< LogicalVector& >::type sumRowD(sumRowDSEXP);
@@ -187,12 +175,11 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_FlexRL_callFunction", (DL_FUNC) &_FlexRL_callFunction, 2},
     {"_FlexRL_F2", (DL_FUNC) &_FlexRL_F2, 2},
     {"_FlexRL_F33", (DL_FUNC) &_FlexRL_F33, 3},
     {"_FlexRL_sspaste2", (DL_FUNC) &_FlexRL_sspaste2, 1},
-    {"_FlexRL_initΔMap", (DL_FUNC) &_FlexRL_initΔMap, 0},
-    {"_FlexRL_Δfind", (DL_FUNC) &_FlexRL_Δfind, 0},
+    {"_FlexRL_initDeltaMap", (DL_FUNC) &_FlexRL_initDeltaMap, 0},
+    {"_FlexRL_Deltafind", (DL_FUNC) &_FlexRL_Deltafind, 0},
     {"_FlexRL_sampleD", (DL_FUNC) &_FlexRL_sampleD, 9},
     {"_FlexRL_sampleNL", (DL_FUNC) &_FlexRL_sampleNL, 3},
     {"_FlexRL_sampleL", (DL_FUNC) &_FlexRL_sampleL, 9},
