@@ -207,7 +207,7 @@ createDataAlpha <- function(nCoefUnstable, stable){
 
 #' logPossibleConfig
 #'
-#' This function helps calculating the number of possible designs for Delta given by nB!/(nB − nLinks)! Needed to compute the log likelihood of the linkage matrix.
+#' This function helps calculating the number of possible designs for Delta given by nB!/(nB-nLinks)! Needed to compute the log likelihood of the linkage matrix.
 #'
 #' @param Brecords Number of records in data source B (the largest).
 #' @param sumD Number of linked records (at a specific time point of the algorithm).

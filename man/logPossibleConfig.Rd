@@ -15,7 +15,7 @@ logPossibleConfig(Brecords, sumD)
 The sum of logs of the vector going from nB - nLinks + 1 to nB.
 }
 \description{
-This function helps calculating the number of possible designs for Delta given by nB!/(nB − nLinks)! Needed to compute the log likelihood of the linkage matrix.
+This function helps calculating the number of possible designs for Delta given by nB!/(nB-nLinks)! Needed to compute the log likelihood of the linkage matrix.
 }
 \examples{
 \dontrun{
