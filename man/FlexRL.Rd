@@ -52,6 +52,7 @@ We know the true linkage structure in this example so we can compute performance
 There are more details to understand the method in our paper, or on the experiments repository of our paper, or in the vignettes, or in the documentation of the main algorithm ?FlexRL::StEM.
 }
 \examples{
+\dontrun{
 library(FlexRL)
 
 PIVs_config = list( V1 = list(stable = TRUE),
@@ -116,10 +117,10 @@ data = list( A                    = encodedA,
            )
 
 fit = stEM(  data                 = data,
-             StEMIter             = 100,
-             StEMBurnin           = 70,
-             GibbsIter            = 200,
-             GibbsBurnin          = 100,
+             StEMIter             = 50,
+             StEMBurnin           = 30,
+             GibbsIter            = 50,
+             GibbsBurnin          = 30,
              musicOn              = TRUE,
              newDirectory         = NULL,
              saveInfoIter         = FALSE
@@ -141,6 +142,7 @@ if(nrow(DeltaResult)>1){
   sensitivity     = truepositive / (truepositive + falsenegative)
   f1score         = 2 * (precision * sensitivity) / (precision + sensitivity)
   results[,"FlexRL"] = c(truepositive,falsepositive,falsenegative,f1score,fdr,sensitivity)
+}
 }
 
 }

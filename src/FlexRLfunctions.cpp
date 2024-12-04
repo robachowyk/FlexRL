@@ -29,7 +29,7 @@ double ControlRandomSampleGen(IntegerVector choiceset, NumericVector probavec) {
 
 //' F2
 //'
-//' @param U IntegerVector with factor values corresponding to the patterns of PIVs observed among records in the concerned source
+//' @param U IntegerVector with factor values corresponding to the patterns of Partially Identifying Variables (PIVs) observed among records in the concerned source
 //' @param nvals integer for the total number of possible patterns (among all sources)
 //'
 //' @return List: for each pattern in value, count of the records having the pattern in the concerned source
@@ -306,7 +306,7 @@ List sampleD(const IntegerMatrix & S,
 
 //' sampleNL
 //'
-//' @param G IntegerVector of registered values for a certain PIV for non linked records
+//' @param G IntegerVector of registered values for a certain Partially Identifying Variable (PIV) for non linked records
 //' @param eta NumericVector parameter for the distribution of the PIV concerned
 //' @param phi NumericVector parameter for the registration errors for the PIV concerned
 //'
@@ -348,7 +348,7 @@ IntegerVector sampleNL(IntegerVector G, NumericVector eta, NumericVector phi)
 
 //' sampleNL
 //'
-//' @param GA IntegerVector of registered values for a certain PIV for linked records from A
+//' @param GA IntegerVector of registered values for a certain Partially Identifying Variable (PIV) for linked records from A
 //' @param GB IntegerVector of registered values for a certain PIV for linked records from B
 //' @param survivalpSameH NumericVector of probabilities that the concerned PIV values coincide between file A and file B
 //' @param choice_set IntegerMatrix of 2 columns (for A and for B) with possible joint true values underlying GA and GB
@@ -477,7 +477,7 @@ IntegerVector generateSequence(int n) {
 
 //' sampleH
 //'
-//' @param nA IntegerVector of dimensions of registered values of the PIVs in A
+//' @param nA IntegerVector of dimensions of registered values of the Partially Identifying Variables (PIVs) in A
 //' @param nB IntegerVector of dimensions of registered values of the PIVs in B
 //' @param links IntegerMatrix of 2 columns with the indices of the linked records
 //' @param survivalpSameH NumericMatrix with for each PIV the probability that true values coincide (if stable: filled with 1)

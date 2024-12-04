@@ -28,6 +28,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' PIVs_config = list( V1 = list(stable = TRUE),
 #'                     V2 = list(stable = TRUE),
 #'                     V3 = list(stable = TRUE),
@@ -55,6 +56,7 @@
 #'               PmissingB,
 #'               moving_params,
 #'               enforceEstimability)
+#' }
 DataCreation = function(PIVs_config, Nval, NRecords, Nlinks, PmistakesA, PmistakesB, PmissingA, PmissingB, moving_params, enforceEstimability){
 
   PIVs = names(PIVs_config)
@@ -190,7 +192,7 @@ DataCreation = function(PIVs_config, Nval, NRecords, Nlinks, PmistakesA, Pmistak
 #' createDataAlpha
 #'
 #' @param nCoefUnstable An integer value with the number of covariates (including the intercept): number of cov from A + number of cov from B + 1.
-#' @param stable A boolean value indicating whether the PIV concerned is stable.
+#' @param stable A boolean value indicating whether the Partially Identifying Variable (PIV) concerned is stable.
 #'
 #' @return An empty data frame (if stable=FALSE) with nCoefUnstable + 2 columns for book keeping of the elements necessary to update the parameter for instability. There are
 #' nCoefUnstable + 2 of those elements: number of cov from A + number of cov from B + intercept + boolean vector indicating where the true values of the records (for the concerned PIV) are equal, vector of time gaps between records
@@ -624,7 +626,7 @@ SurvivalUnstable = function(Xlinksk, alphask, times)
 #' Stochastic EM for Record Linkage
 #'
 #' @param data A list with elements:
-#' - A: the smallest data source (encoded: the categorical values of the PIVs have to be mapped to sets of natural numbers and missing values are encoded as 0).
+#' - A: the smallest data source (encoded: the categorical values of the Partially Identifying Variables (PIVs) have to be mapped to sets of natural numbers and missing values are encoded as 0).
 #' - B: the largest data source (encoded).
 #' - Nvalues: A vector (of size number of PIVs) with the number fo unique values per PIVs (in the order of the PIVs defined in PIVs_config).
 #' - PIVs_config: A list (of size number of PIVs) where element names are the PIVs and element values are lists with elements: stable (boolean for whether the PIV is stable), conditionalHazard (boolean for whether there are external covariates available to model instability, only required if stable is FALSE), pSameH.cov.A and pSameH.covB (vectors with strings corresponding to the names of the covariates to use to model instability from file A and file B, only required if stable is FALSE, empty vectors may be provided if conditionalHazard is FALSE).
@@ -679,10 +681,10 @@ SurvivalUnstable = function(Xlinksk, alphask, times)
 #'              phiForMistakesA = c(NA,NA,NA,NA,NA),
 #'              phiForMistakesB = c(NA,NA,NA,NA,NA))
 #'  fit = StEM( data = data,
-#'              StEMIter = 100,
-#'              StEMBurnin = 70,
-#'              GibbsIter = 200,
-#'              GibbsBurnin = 100,
+#'              StEMIter = 50,
+#'              StEMBurnin = 30,
+#'              GibbsIter = 50,
+#'              GibbsBurnin = 30,
 #'              musicOn = TRUE,
 #'              newDirectory = NULL,
 #'              saveInfoIter = FALSE )
@@ -1059,7 +1061,7 @@ stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, musicOn=TRUE
 
 #' launchNaive
 #'
-#' @param PIVs A vector of size the number of PIVs with their names (as columns names in the data sources).
+#' @param PIVs A vector of size the number of Partially Identifying Variables (PIVs) with their names (as columns names in the data sources).
 #' @param encodedA One data source (encoded: the categorical values of the PIVs have to be mapped to sets of natural numbers and missing values are encoded as 0).
 #' @param encodedB The other data source (encoded).
 #'
@@ -1070,6 +1072,7 @@ stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, musicOn=TRUE
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' library(FlexRL)
 #'
 #' PIVs_config = list( V1 = list(stable = TRUE),
@@ -1136,7 +1139,7 @@ stEM = function(data, StEMIter, StEMBurnin, GibbsIter, GibbsBurnin, musicOn=TRUE
 #'   results[,"Naive"] = c(truepositive,falsepositive,falsenegative,f1score,fdr,sensitivity)
 #' }
 #' results
-#'
+#' }
 launchNaive <- function(PIVs, encodedA, encodedB){
   testit::assert( "NA in A should be encoded as 0.", sum(is.na(encodedA))==0 )
   testit::assert( "NA in B should be encoded as 0.", sum(is.na(encodedB))==0 )

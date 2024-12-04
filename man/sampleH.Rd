@@ -20,7 +20,7 @@ sampleH(
 )
 }
 \arguments{
-\item{nA}{IntegerVector of dimensions of registered values of the PIVs in A}
+\item{nA}{IntegerVector of dimensions of registered values of the Partially Identifying Variables (PIVs) in A}
 
 \item{nB}{IntegerVector of dimensions of registered values of the PIVs in B}
 

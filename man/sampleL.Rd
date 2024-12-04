@@ -17,7 +17,7 @@ sampleL(
 )
 }
 \arguments{
-\item{GA}{IntegerVector of registered values for a certain PIV for linked records from A}
+\item{GA}{IntegerVector of registered values for a certain Partially Identifying Variable (PIV) for linked records from A}
 
 \item{GB}{IntegerVector of registered values for a certain PIV for linked records from B}
 

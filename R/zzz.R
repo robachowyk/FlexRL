@@ -41,6 +41,7 @@
 #'    - phi.
 #'
 #' @examples
+#' \dontrun{
 #' library(FlexRL)
 #'
 #' PIVs_config = list( V1 = list(stable = TRUE),
@@ -105,10 +106,10 @@
 #'            )
 #'
 #' fit = stEM(  data                 = data,
-#'              StEMIter             = 100,
-#'              StEMBurnin           = 70,
-#'              GibbsIter            = 200,
-#'              GibbsBurnin          = 100,
+#'              StEMIter             = 50,
+#'              StEMBurnin           = 30,
+#'              GibbsIter            = 50,
+#'              GibbsBurnin          = 30,
 #'              musicOn              = TRUE,
 #'              newDirectory         = NULL,
 #'              saveInfoIter         = FALSE
@@ -130,6 +131,7 @@
 #'   sensitivity     = truepositive / (truepositive + falsenegative)
 #'   f1score         = 2 * (precision * sensitivity) / (precision + sensitivity)
 #'   results[,"FlexRL"] = c(truepositive,falsepositive,falsenegative,f1score,fdr,sensitivity)
+#' }
 #' }
 #'
 NULL

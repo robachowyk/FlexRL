@@ -7,7 +7,7 @@
 F2(U, nvals)
 }
 \arguments{
-\item{U}{IntegerVector with factor values corresponding to the patterns of PIVs observed among records in the concerned source}
+\item{U}{IntegerVector with factor values corresponding to the patterns of Partially Identifying Variables (PIVs) observed among records in the concerned source}
 
 \item{nvals}{integer for the total number of possible patterns (among all sources)}
 }

@@ -7,7 +7,7 @@
 sampleNL(G, eta, phi)
 }
 \arguments{
-\item{G}{IntegerVector of registered values for a certain PIV for non linked records}
+\item{G}{IntegerVector of registered values for a certain Partially Identifying Variable (PIV) for non linked records}
 
 \item{eta}{NumericVector parameter for the distribution of the PIV concerned}
 

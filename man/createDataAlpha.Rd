@@ -9,7 +9,7 @@ createDataAlpha(nCoefUnstable, stable)
 \arguments{
 \item{nCoefUnstable}{An integer value with the number of covariates (including the intercept): number of cov from A + number of cov from B + 1.}
 
-\item{stable}{A boolean value indicating whether the PIV concerned is stable.}
+\item{stable}{A boolean value indicating whether the Partially Identifying Variable (PIV) concerned is stable.}
 }
 \value{
 An empty data frame (if stable=FALSE) with nCoefUnstable + 2 columns for book keeping of the elements necessary to update the parameter for instability. There are

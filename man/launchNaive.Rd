@@ -7,7 +7,7 @@
 launchNaive(PIVs, encodedA, encodedB)
 }
 \arguments{
-\item{PIVs}{A vector of size the number of PIVs with their names (as columns names in the data sources).}
+\item{PIVs}{A vector of size the number of Partially Identifying Variables (PIVs) with their names (as columns names in the data sources).}
 
 \item{encodedA}{One data source (encoded: the categorical values of the PIVs have to be mapped to sets of natural numbers and missing values are encoded as 0).}
 
@@ -22,6 +22,7 @@ This method should only be used to judge the difficulty of the record linkage ta
 launchNaive
 }
 \examples{
+\dontrun{
 library(FlexRL)
 
 PIVs_config = list( V1 = list(stable = TRUE),
@@ -88,5 +89,5 @@ if(nrow(DeltaResult)>1){
   results[,"Naive"] = c(truepositive,falsepositive,falsenegative,f1score,fdr,sensitivity)
 }
 results
-
+}
 }

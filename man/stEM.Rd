@@ -18,7 +18,7 @@ stEM(
 \arguments{
 \item{data}{A list with elements:
 \itemize{
-\item A: the smallest data source (encoded: the categorical values of the PIVs have to be mapped to sets of natural numbers and missing values are encoded as 0).
+\item A: the smallest data source (encoded: the categorical values of the Partially Identifying Variables (PIVs) have to be mapped to sets of natural numbers and missing values are encoded as 0).
 \item B: the largest data source (encoded).
 \item Nvalues: A vector (of size number of PIVs) with the number fo unique values per PIVs (in the order of the PIVs defined in PIVs_config).
 \item PIVs_config: A list (of size number of PIVs) where element names are the PIVs and element values are lists with elements: stable (boolean for whether the PIV is stable), conditionalHazard (boolean for whether there are external covariates available to model instability, only required if stable is FALSE), pSameH.cov.A and pSameH.covB (vectors with strings corresponding to the names of the covariates to use to model instability from file A and file B, only required if stable is FALSE, empty vectors may be provided if conditionalHazard is FALSE).
@@ -86,10 +86,10 @@ data = list( A = encodedA,
              phiForMistakesA = c(NA,NA,NA,NA,NA),
              phiForMistakesB = c(NA,NA,NA,NA,NA))
  fit = StEM( data = data,
-             StEMIter = 100,
-             StEMBurnin = 70,
-             GibbsIter = 200,
-             GibbsBurnin = 100,
+             StEMIter = 50,
+             StEMBurnin = 30,
+             GibbsIter = 50,
+             GibbsBurnin = 30,
              musicOn = TRUE,
              newDirectory = NULL,
              saveInfoIter = FALSE )
