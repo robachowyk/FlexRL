@@ -24,71 +24,18 @@ This function is only used if the PIV is unstable and evolve over time. If so th
 If you want to use a different survival function to model instability, you can change the function 'SurvivalUnstable' as well as this function 'loglikSurvival'.
 }
 \details{
-In our StEM algorithm (see ?FlexRL::StEM) we minimise - log(likelihood), which is equivalent to maximise log(likelihood). Therefore this function actually returns (and should return if you create your own) the opposite (-) of the log(likelihood) associated with the survival function defining the probabilities that true values coincide.
+In our Stochastic Expectation Maximisation (StEM) algorithm (see ?FlexRL::StEM) we minimise - log(likelihood), which is equivalent to maximise log(likelihood). Therefore this function actually returns (and should return if you create your own) the opposite (-) of the log(likelihood) associated with the survival function defining the probabilities that true values coincide.
 }
 \examples{
-\dontrun{
-for(iter in 1:StEMIter)
-{
-
-  for(j in 1:GibbsBurnin)
-  {
-
-    ...
-
-  }
-
-  for(j in 1:GibbsIter)
-  {
-    ...
-
-    survivalpSameH = base::matrix(1, nrow(linksR), length(data$Nvalues))
-    if(instability){
-      if(nrow(linksR)>0){
-        times = abs(data$B[data$B$source!="synthetic",][linksR[,2], "date"] -
-                    data$A[data$A$source!="synthetic",][linksR[,1], "date"])
-        intercept = rep(1, nrow(linksR))
-        for(k in 1:length(PIVs)){
-          if(k \%in\% unstablePIVs){
-            cov_k = cbind( intercept,
-                           data$A[linksR[,1], data$PIVs_config[[k]]$pSameH.cov.A, drop=FALSE],
-                           data$B[linksR[,2], data$PIVs_config[[k]]$pSameH.cov.B, drop=FALSE] )
-            survivalpSameH[,k] = SurvivalUnstable(cov_k, alpha[[k]], times)
-            Hequal = truepivsA[linksR[,1],k] == truepivsB[linksR[,2],k]
-            Vtmp_k = cbind( cov_k,
-                            times,
-                            Hequal )
-            Valpha[[k]] = rbind(Valpha[[k]], Vtmp_k)
-          }
-        }
-      }
-    }
-
-    ...
-
-  }
-
-  ...
-
-  # Update the alpha chain with a new parameter:
-  if(instability){
-    if(nrow(linksR)>0){
-      for(k in 1:length(PIVs)){
-        if(!PIVs_stable[k]){
-          alphaInit = rep(-0.05, nCoefUnstable[[k]])
-          X = Valpha[[k]][,1:nCoefUnstable[[k]]]
-          times = Valpha[[k]]$times
-          Hequal = Valpha[[k]]$Hequal
-          optim = stats::nlminb(alphaInit, loglikSurvival, control=list(trace=FALSE),
-                                X=X, times=times, Hequal=Hequal)
-          alpha[[k]] = optim$par
-        }
-      }
-    }
-  }
-
-  ...
-
-}
-}
+nCoefUnstable = 1
+alphaInit = rep(-0.05, nCoefUnstable)
+Valpha = base::data.frame(list(cov=c(2,2.1,3.4,2.5,2.9),
+                               times=c(0.001,0.2,1.3,1.5,2),
+                               Hequal=c(TRUE, TRUE, TRUE, FALSE, FALSE)))
+X = Valpha[,1:nCoefUnstable]
+times = Valpha$times
+Hequal = Valpha$Hequal
+optim = stats::nlminb(alphaInit, loglikSurvival, control=list(trace=FALSE),
+                      X=X, times=times, Hequal=Hequal)
+alpha = optim$par
 }

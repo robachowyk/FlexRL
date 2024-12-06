@@ -26,13 +26,13 @@
 #' - 'sameMistakes' whether there should be one parameter for the mistakes in A and B or whether each source should have its own (in case of small data sources it is recommended to set sameMistakes=TRUE)
 #' - whether the parameters for mistakes should be fixed in case of instability 'phiMistakesAFixed' and 'phiMistakesBFixed',
 #' - as well as the values they should be fixed to 'phiForMistakesA' and 'phiForMistakesB'
-#' @param StEMIter The total number of iterations of the Stochastic EM algorithm (including the period to discard as burn-in)
+#' @param StEMIter The total number of iterations of the Stochastic Expectation Maximisation (StEM) algorithm (including the period to discard as burn-in)
 #' @param StEMBurnin The number of iterations to discard as burn-in
 #' @param GibbsIter The total number of iterations of the Gibbs sampler
 #' (run in each iteration of the StEM) (including the period to discard as burn-in)
 #' @param GibbsBurnin The number of iterations to discard as burn-in
 #'
-#' @return The StEM function returns w list with:
+#' @return The Stochastic Expectation Maximisation (StEM) function returns w list with:
 #' - Delta, the (sparse) matrix with the pairs of records linked and their posterior probabilities to be linked (select the pairs where the proba>0.5 to get a valid set of linked records),
 #' - as well as the model parameters chains:
 #'    - gamma,
@@ -41,9 +41,7 @@
 #'    - phi.
 #'
 #' @examples
-#' \dontrun{
-#' library(FlexRL)
-#'
+#' \donttest{
 #' PIVs_config = list( V1 = list(stable = TRUE),
 #'                     V2 = list(stable = TRUE),
 #'                     V3 = list(stable = TRUE),
@@ -80,7 +78,7 @@
 #' proba_same_H         = DATA$proba_same_H
 #'
 #' # the first 1:Nlinks records of each files created are links
-#' TrueDelta = data.frame( matrix(0, nrow=0, ncol=2) )
+#' TrueDelta = base::data.frame( matrix(0, nrow=0, ncol=2) )
 #' for (i in 1:Nlinks)
 #' {
 #'   TrueDelta = rbind(TrueDelta, cbind(rownames(A[i,]),rownames(B[i,])))
@@ -105,21 +103,21 @@
 #'              phiForMistakesB      = c(NA, NA, NA, NA, 0)
 #'            )
 #'
-#' fit = stEM(  data                 = data,
-#'              StEMIter             = 50,
-#'              StEMBurnin           = 30,
-#'              GibbsIter            = 50,
-#'              GibbsBurnin          = 30,
-#'              musicOn              = TRUE,
-#'              newDirectory         = NULL,
-#'              saveInfoIter         = FALSE
-#'           )
+#' fit = FlexRL::stEM(  data                 = data,
+#'                      StEMIter             = 50,
+#'                      StEMBurnin           = 30,
+#'                      GibbsIter            = 50,
+#'                      GibbsBurnin          = 30,
+#'                      musicOn              = TRUE,
+#'                      newDirectory         = NULL,
+#'                      saveInfoIter         = FALSE
+#'                   )
 #'
 #' DeltaResult = fit$Delta
 #' colnames(DeltaResult) = c("idxA","idxB","probaLink")
 #' DeltaResult = DeltaResult[DeltaResult$probaLink>0.5,]
 #'
-#' results = data.frame( Results=matrix(NA, nrow=6, ncol=1) )
+#' results = base::data.frame( Results=matrix(NA, nrow=6, ncol=1) )
 #' rownames(results) = c("tp","fp","fn","f1score","fdr","sens.")
 #' if(nrow(DeltaResult)>1){
 #'   linked_pairs    = do.call(paste, c(DeltaResult[,c("idxA","idxB")], list(sep="_")))

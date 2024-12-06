@@ -28,7 +28,14 @@ The Log(likelihood) of the linkage matrix.
 Log(likelihood) of the linkage matrix.
 }
 \examples{
-\dontrun{
-LL0 = loglik(LLL=LLL, LLA=LLA, LLB=LLB, links=linksR, sumRowD=sumRowD, sumColD=sumColD, gamma=gamma)
-}
+LLL = Matrix::Matrix(0, nrow=13, ncol=15, sparse=TRUE)
+LLA = c(0.001,0.001,0.001,0.001,1.43,0.02,0.007,0.001,2.1,0.0003,1.67,1.5,10)
+LLB = c(0.001,0.001,0.001,0.001,1.22,0.008,0.01,0.04,3.9,0.0002,1.99,0,2.4,0.009,12)
+linksR = as.matrix(base::data.frame(list(idxA=c(5,9,11,12,13), idxB=c(5,9,11,13,15))))
+LLL[linksR] = 0.67
+sumRowD = c(0,0,0,0,1,0,0,0,1,0,1,1,1)
+sumColD = c(0,0,0,0,1,0,0,0,1,0,1,0,1,0,1)
+gamma = 0.5
+LL0 = loglik(LLL=LLL, LLA=LLA, LLB=LLB, links=linksR, sumRowD=sumRowD, sumColD=sumColD,
+             gamma=gamma)
 }

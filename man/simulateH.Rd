@@ -40,10 +40,81 @@ A list with 2 matrices of the shapes of both data sources, representing the true
 simulateH
 }
 \examples{
-\dontrun{
-newTruePivs = simulateH(data=data, links=linksCpp, survivalpSameH=survivalpSameH,
+PIVs_config = list( V1 = list(stable = TRUE),
+                    V2 = list(stable = TRUE),
+                    V3 = list(stable = TRUE),
+                    V4 = list(stable = TRUE),
+                    V5 = list( stable = FALSE,
+                               conditionalHazard = FALSE,
+                               pSameH.cov.A = c(),
+                               pSameH.cov.B = c()) )
+PIVs = names(PIVs_config)
+PIVs_stable = sapply(PIVs_config, function(x) x$stable)
+Nval = c(6, 7, 8, 9, 15)
+NRecords = c(13, 15)
+Nlinks = 6
+PmistakesA = c(0.02, 0.02, 0.02, 0.02, 0.02)
+PmistakesB = c(0.02, 0.02, 0.02, 0.02, 0.02)
+PmissingA = c(0.007, 0.007, 0.007, 0.007, 0.007)
+PmissingB = c(0.007, 0.007, 0.007, 0.007, 0.007)
+moving_params = list(V1=c(),V2=c(),V3=c(),V4=c(),V5=c(0.28))
+enforceEstimability = TRUE
+DATA = DataCreation( PIVs_config,
+                     Nval,
+                     NRecords,
+                     Nlinks,
+                     PmistakesA,
+                     PmistakesB,
+                     PmissingA,
+                     PmissingB,
+                     moving_params,
+                     enforceEstimability)
+A                    = DATA$A
+B                    = DATA$B
+Nvalues              = DATA$Nvalues
+
+encodedA = A
+encodedB = B
+
+encodedA[,PIVs][ is.na(encodedA[,PIVs]) ] = 0
+encodedB[,PIVs][ is.na(encodedB[,PIVs]) ] = 0
+
+dataForStEM = list( A                    = encodedA,
+                    B                    = encodedB,
+                    Nvalues              = Nvalues,
+                    PIVs_config          = PIVs_config,
+                    controlOnMistakes    = c(TRUE, TRUE, TRUE, TRUE, TRUE),
+                    sameMistakes         = TRUE,
+                    phiMistakesAFixed    = TRUE,
+                    phiMistakesBFixed    = TRUE,
+                    phiForMistakesA      = c(NA, NA, NA, NA, 0),
+                    phiForMistakesB      = c(NA, NA, NA, NA, 0)
+)
+
+initDeltaMap()
+linksR = base::matrix(0,0,2)
+linksCpp = linksR
+sumRowD = rep(0, nrow(dataForStEM$A))
+sumColD = rep(0, nrow(dataForStEM$B))
+nlinkrec = 0
+survivalpSameH = base::matrix(1, nrow(linksR), length(dataForStEM$Nvalues))
+gamma = 0.5
+eta = lapply(dataForStEM$Nvalues, function(x) rep(1/x,x))
+phi = lapply(dataForStEM$Nvalues, function(x)  c(0.9,0.9,0.1,0.1))
+nCoefUnstable = lapply( seq_along(PIVs_stable),
+                        function(idx)
+                        if(PIVs_stable[idx]){ 0 }
+                        else{
+                        ncol(dataForStEM$A[, dataForStEM$PIVs_config[[idx]]$pSameH.cov.A,
+                             drop=FALSE]) +
+                        ncol(dataForStEM$B[, dataForStEM$PIVs_config[[idx]]$pSameH.cov.B,
+                             drop=FALSE]) +
+                        1 } )
+alpha = lapply( seq_along(PIVs_stable),
+                function(idx) if(PIVs_stable[idx]){ c(-Inf) }else{
+                  rep(log(0.05), nCoefUnstable[[idx]]) })
+newTruePivs = simulateH(data=dataForStEM, links=linksCpp, survivalpSameH=survivalpSameH,
                         sumRowD=sumRowD, sumColD=sumColD, eta=eta, phi=phi)
 truepivsA = newTruePivs$truepivsA
 truepivsB = newTruePivs$truepivsB
-}
 }

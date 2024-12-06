@@ -16,7 +16,7 @@ install.packages("FlexRL")
 library(FlexRL)
 ```
 
-Or you can install the development version of FlexRL from its [GitHub](https://github.com/robachowyk/FlexRL) with:
+Or you can install the development version of FlexRL from its [GitHub](https://github.com/robachowyk/FlexRL) with one of the following:
 
 ``` r
 pak::pak("robachowyk/FlexRL")
@@ -28,9 +28,9 @@ remotes::install_github("robachowyk/FlexRL")
 devtools::install_github("robachowyk/FlexRL")
 ```
 
-## How to use
+## How to use `FlexRL`
 
-This is a basic example which shows you how to solve a common problem:
+Here is a basic example which shows how to solve a common record linkage task:
 
 ``` r
 library(FlexRL)
@@ -39,7 +39,9 @@ library(FlexRL)
 df2016 = read.csv("FlexRL/vignettes/exA.csv", row.names = 1)
 df2020 = read.csv("FlexRL/vignettes/exB.csv", row.names = 1)
 
-# use 5 PIVs birth year, sex, marital status, educational level, regional code; not enough information to model instability
+# use 5 PIVs birth year, sex, marital status, educational level, regional code; 
+# we do not have enough information to model instability
+# all PIVs are considered stable
 PIVs_config = list(
   ANASCI     = list(stable = TRUE),
   SESSO      = list(stable = TRUE),
@@ -49,6 +51,12 @@ PIVs_config = list(
 )
 PIVs = names(PIVs_config)
 PIVs_stable = sapply(PIVs_config, function(x) x$stable)
+
+# we put bounds on the probability of mistakes: 
+# there should realistically be less than 10% of mistakes in the PIVs
+# however for some PIVs which are probably dynamic (though we cannot model it here) it is good to
+# not bound the mistakes parameter, which will adapt to the dynamics not taken into account
+boundMistakes = c(TRUE, TRUE, FALSE, FALSE, FALSE)
 
 # filter the data to their common support
 for(i in 1:length(PIVs)){
@@ -79,7 +87,8 @@ true_pairs = do.call(paste, c(TrueDelta, list(sep="_")))
 df2016$source = "df2016"
 df2020$source = "df2020"
 
-# the first dataset (namely source A) has to be the smallest one i.e. the second dataset (namely source B) has to be the largest one
+# the first dataset (namely source A) has to be the smallest one 
+# i.e. the second dataset (namely source B) has to be the largest one
 if(nrow(df2020)>nrow(df2016)){
   encodedA = df2016
   encodedB = df2020
@@ -104,13 +113,11 @@ names(nvalues) = PIVs
 encodedA[,PIVs][ is.na(encodedA[,PIVs]) ] = 0
 encodedB[,PIVs][ is.na(encodedB[,PIVs]) ] = 0
 
-# define all necessary parameters
-# controlOnMistakes is FALSE for potential unstable PIVs (for which we actually cannot model the dynamics), marital status, educational level, regional code
 data = list( A                    = encodedA,
              B                    = encodedB,
              Nvalues              = nvalues,
              PIVs_config          = PIVs_config,
-             controlOnMistakes    = c(TRUE, TRUE, FALSE, FALSE, FALSE),
+             controlOnMistakes    = boundMistakes,
              sameMistakes         = TRUE,
              phiMistakesAFixed    = FALSE,
              phiMistakesBFixed    = FALSE,
@@ -129,14 +136,16 @@ fit = stEM(  data                 = data,
              saveInfoIter         = FALSE
 )
 
-# collect the output and build the final set of linked records with posterior probability > 0.5 to ensure that the one-to-one assignment constraint is fulfilled
+# collect the output and build the final set of linked records with posterior probability > 0.5 
+# to ensure that the one-to-one assignment constraint is fulfilled
 DeltaResult = fit$Delta
 colnames(DeltaResult) = c("idx20","idx16","probaLink")
 DeltaResult = DeltaResult[DeltaResult$probaLink>0.5,]
 DeltaResult
 
 # compute the results by comparing the true links to the linked records
-# watch out for the order of the source in the outcome, source A here corresponds to df2020 and source B corresponds to df2016
+# watch out for the order of the source in the outcome, source A here corresponds to df2020 
+# and source B corresponds to df2016
 # in the set of true links we ordered pairs with first df2016 and then df2020
 results = data.frame( Results=matrix(NA, nrow=6, ncol=1) )
 rownames(results) = c("tp","fp","fn","f1score","fdr","sens.")
@@ -170,7 +179,8 @@ if(nrow(DeltaResult)>1){
 results
 ```
 
-This is another example (using synthetic data to illustrate more elaborated options) which shows you how to solve a common problem:
+Here is another example (using synthetic data to illustrate more elaborated options) which shows you how to solve a common record linkage problem:
+
 
 ``` r
 library(FlexRL)
@@ -210,6 +220,13 @@ Nvalues              = DATA$Nvalues
 TimeDifference       = DATA$TimeDifference
 proba_same_H         = DATA$proba_same_H
 
+# we generate data with an unstable PIV (representing that people move for instance)
+plot( sort(proba_same_H_5, decreasing=TRUE), ylim=c(0,1) )plot( TimeDifference, proba_same_H_5, ylim=c(0,1) )
+
+# it is realistic to bound the parameter for mistakes to not exceeds 10% 
+# (also for the unstable PIV since we model its dynamics)
+boundMistakes = c(TRUE, TRUE, TRUE, TRUE, TRUE)
+
 # the first 1:Nlinks records of each files created are links
 TrueDelta = data.frame( matrix(0, nrow=0, ncol=2) )
 for (i in 1:Nlinks)
@@ -228,7 +245,7 @@ data = list( A                    = encodedA,
              B                    = encodedB,
              Nvalues              = Nvalues,
              PIVs_config          = PIVs_config,
-             controlOnMistakes    = c(TRUE, TRUE, TRUE, TRUE, TRUE),
+             controlOnMistakes    = boundMistakes,
              sameMistakes         = TRUE,
              phiMistakesAFixed    = TRUE,
              phiMistakesBFixed    = TRUE,
@@ -268,8 +285,6 @@ results
 
 More documentation is accessible on CRAN.
 
-More examples are available in the vignettes folder.
-
-The repository [FlexRL-experiments](https://github.com/robachowyk/FlexRL-experiments) gives more examples and data sets for reproducing the article experiments.
+More examples are available in the vignette and in the repository [FlexRL-experiments](https://github.com/robachowyk/FlexRL-experiments).
  
 For support requests, contact _k dot c dot robach at amsterdamumc dot nl_.

@@ -18,9 +18,7 @@ The sum of logs of the vector going from nB - nLinks + 1 to nB.
 This function helps calculating the number of possible designs for Delta given by nB!/(nB-nLinks)! Needed to compute the log likelihood of the linkage matrix.
 }
 \examples{
-\dontrun{
+sumColD = c(0,0,0,0,1,0,0,0,1,0,1,0,1,0,1)
+links = base::data.frame(list(idxA=c(5,9,11,12,13), idxB=c(5,9,11,13,15)))
 possconfig = logPossibleConfig(length(sumColD),nrow(links))
-logPossD = sum(log(gamma) * sumRowD + log(1-gamma) * (1-sumRowD)) - possconfig
-logPossD + sum(LLA[sumRowD==0]) + sum(LLB[sumColD==0]) + sum(LLL[links])
-}
 }

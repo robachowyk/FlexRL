@@ -2,7 +2,7 @@
 % Please edit documentation in R/FlexRecordLinkage.r
 \name{stEM}
 \alias{stEM}
-\title{Stochastic EM for Record Linkage}
+\title{Stochastic Expectation Maximisation (StEM) for Record Linkage}
 \usage{
 stEM(
   data,
@@ -71,13 +71,52 @@ the chain of the parameter alpha representing the hazard coefficient of the mode
 There are more details to understand the method in our paper, or on the experiments repository of our paper, or in the vignettes.
 }
 \description{
-Stochastic EM for Record Linkage
+Stochastic Expectation Maximisation (StEM) for Record Linkage
 }
 \examples{
-\dontrun{
+\donttest{
+PIVs_config = list( V1 = list(stable = TRUE),
+                    V2 = list(stable = TRUE),
+                    V3 = list(stable = TRUE),
+                    V4 = list(stable = TRUE),
+                    V5 = list( stable = FALSE,
+                               conditionalHazard = FALSE,
+                               pSameH.cov.A = c(),
+                               pSameH.cov.B = c()) )
+PIVs = names(PIVs_config)
+PIVs_stable = sapply(PIVs_config, function(x) x$stable)
+Nval = c(6, 7, 8, 9, 15)
+NRecords = c(500, 800)
+Nlinks = 300
+PmistakesA = c(0.02, 0.02, 0.02, 0.02, 0.02)
+PmistakesB = c(0.02, 0.02, 0.02, 0.02, 0.02)
+PmissingA = c(0.007, 0.007, 0.007, 0.007, 0.007)
+PmissingB = c(0.007, 0.007, 0.007, 0.007, 0.007)
+moving_params = list(V1=c(),V2=c(),V3=c(),V4=c(),V5=c(0.28))
+enforceEstimability = TRUE
+DATA = DataCreation( PIVs_config,
+                     Nval,
+                     NRecords,
+                     Nlinks,
+                     PmistakesA,
+                     PmistakesB,
+                     PmissingA,
+                     PmissingB,
+                     moving_params,
+                     enforceEstimability)
+A                    = DATA$A
+B                    = DATA$B
+Nvalues              = DATA$Nvalues
+
+encodedA = A
+encodedB = B
+
+encodedA[,PIVs][ is.na(encodedA[,PIVs]) ] = 0
+encodedB[,PIVs][ is.na(encodedB[,PIVs]) ] = 0
+
 data = list( A = encodedA,
              B = encodedB,
-             Nvalues = nvalues,
+             Nvalues = Nvalues,
              PIVs_config = PIVs_config,
              controlOnMistakes = c(TRUE,TRUE,FALSE,FALSE,FALSE),
              sameMistakes = TRUE,
@@ -85,7 +124,7 @@ data = list( A = encodedA,
              phiMistakesBFixed = FALSE,
              phiForMistakesA = c(NA,NA,NA,NA,NA),
              phiForMistakesB = c(NA,NA,NA,NA,NA))
- fit = StEM( data = data,
+ fit = stEM( data = data,
              StEMIter = 50,
              StEMBurnin = 30,
              GibbsIter = 50,

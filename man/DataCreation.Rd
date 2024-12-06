@@ -59,7 +59,6 @@ enforcing half of the links to have a near-zero time gaps.
 There are more details to understand the method in our paper, or on the experiments repository of our paper, or in the vignettes.
 }
 \examples{
-\dontrun{
 PIVs_config = list( V1 = list(stable = TRUE),
                     V2 = list(stable = TRUE),
                     V3 = list(stable = TRUE),
@@ -87,5 +86,4 @@ DataCreation( PIVs_config,
               PmissingB,
               moving_params,
               enforceEstimability)
-}
 }

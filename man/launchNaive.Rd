@@ -22,9 +22,6 @@ This method should only be used to judge the difficulty of the record linkage ta
 launchNaive
 }
 \examples{
-\dontrun{
-library(FlexRL)
-
 PIVs_config = list( V1 = list(stable = TRUE),
                     V2 = list(stable = TRUE),
                     V3 = list(stable = TRUE),
@@ -60,7 +57,7 @@ Nvalues              = DATA$Nvalues
 TimeDifference       = DATA$TimeDifference
 proba_same_H         = DATA$proba_same_H
 
-TrueDelta = data.frame( matrix(0, nrow=0, ncol=2) )
+TrueDelta = base::data.frame( matrix(0, nrow=0, ncol=2) )
 for (i in 1:Nlinks)
 {
   TrueDelta = rbind(TrueDelta, cbind(rownames(A[i,]),rownames(B[i,])))
@@ -75,7 +72,7 @@ encodedB[,PIVs][ is.na(encodedB[,PIVs]) ] = 0
 
 DeltaResult = launchNaive(PIVs, encodedA, encodedB)
 
-results = data.frame( Results=matrix(NA, nrow=6, ncol=1) )
+results = base::data.frame( Results=matrix(NA, nrow=6, ncol=1) )
 rownames(results) = c("tp","fp","fn","f1score","fdr","sens.")
 if(nrow(DeltaResult)>1){
   linked_pairs    = do.call(paste, c(DeltaResult[,c("idxA","idxB")], list(sep="_")))
@@ -89,5 +86,4 @@ if(nrow(DeltaResult)>1){
   results[,"Naive"] = c(truepositive,falsepositive,falsenegative,f1score,fdr,sensitivity)
 }
 results
-}
 }

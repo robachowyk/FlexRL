@@ -27,68 +27,9 @@ The simplest model (without covariates) just writes P(HAik = HBjk | t_ij, ...) =
 The more complex model (with covariates) writes P(HAik = HBjk | t_ij, ...) = exp( - exp(X.ALPHA) . t_ij ) and uses a matrix X (nrow=nbr of linked records, ncol=1 + nbr of cov from A + nbr of cov from B) where the first column is filled with 1 (intercept) and the subsequent columns are the covariates values from source A and/or from source B to be used. The ALPHA in this case is a vector of parameters, the first one being associated with the intercept is the same one than for the simplest model, the subsequent ones are associated with the covariates from A and/or from B.
 }
 \examples{
-\dontrun{
-for(iter in 1:StEMIter)
-{
-
-  for(j in 1:GibbsBurnin)
-  {
-
-    ...
-
-  }
-
-  for(j in 1:nGibbsIter)
-  {
-    ...
-
-    survivalpSameH = base::matrix(1, nrow(linksR), length(data$Nvalues))
-    if(instability){
-      if(nrow(linksR)>0){
-        times = abs(data$B[data$B$source!="synthetic",][linksR[,2], "date"] -
-                    data$A[data$A$source!="synthetic",][linksR[,1], "date"])
-        intercept = rep(1, nrow(linksR))
-        for(k in 1:length(PIVs)){
-          if(k \%in\% unstablePIVs){
-            cov_k = cbind( intercept,
-                           data$A[linksR[,1], data$PIVs_config[[k]]$pSameH.cov.A, drop=FALSE],
-                           data$B[linksR[,2], data$PIVs_config[[k]]$pSameH.cov.B, drop=FALSE] )
-            survivalpSameH[,k] = SurvivalUnstable(cov_k, alpha[[k]], times)
-            Hequal = truepivsA[linksR[,1],k] == truepivsB[linksR[,2],k]
-            Vtmp_k = cbind( cov_k,
-                            times,
-                            Hequal )
-            Valpha[[k]] = rbind(Valpha[[k]], Vtmp_k)
-          }
-        }
-      }
-    }
-
-    ...
-
-  }
-
-  ...
-
-  # Update the alpha chain wth a new parameter:
-  if(instability){
-    if(nrow(linksR)>0){
-      for(k in 1:length(PIVs)){
-        if(!PIVs_stable[k]){
-          alphaInit = rep(-0.05, nCoefUnstable[[k]])
-          X = Valpha[[k]][,1:nCoefUnstable[[k]]]
-          times = Valpha[[k]]$times
-          Hequal = Valpha[[k]]$Hequal
-          optim = stats::nlminb(alphaInit, loglikSurvival, control=list(trace=FALSE),
-                                X=X, times=times, Hequal=Hequal)
-          alpha[[k]] = optim$par
-        }
-      }
-    }
-  }
-
-  ...
-
-}
-}
+nCoefUnstable = 1
+intercept = rep(1,5)
+cov_k = cbind( intercept )
+times = c(0.001,0.2,1.3,1.5,2)
+survivalpSameH = SurvivalUnstable(cov_k, log(0.28), times)
 }

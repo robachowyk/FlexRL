@@ -15,7 +15,7 @@
 \item as well as the values they should be fixed to 'phiForMistakesA' and 'phiForMistakesB'
 }}
 
-\item{StEMIter}{The total number of iterations of the Stochastic EM algorithm (including the period to discard as burn-in)}
+\item{StEMIter}{The total number of iterations of the Stochastic Expectation Maximisation (StEM) algorithm (including the period to discard as burn-in)}
 
 \item{StEMBurnin}{The number of iterations to discard as burn-in}
 
@@ -25,7 +25,7 @@
 \item{GibbsBurnin}{The number of iterations to discard as burn-in}
 }
 \value{
-The StEM function returns w list with:
+The Stochastic Expectation Maximisation (StEM) function returns w list with:
 \itemize{
 \item Delta, the (sparse) matrix with the pairs of records linked and their posterior probabilities to be linked (select the pairs where the proba>0.5 to get a valid set of linked records),
 \item as well as the model parameters chains:
@@ -52,9 +52,7 @@ We know the true linkage structure in this example so we can compute performance
 There are more details to understand the method in our paper, or on the experiments repository of our paper, or in the vignettes, or in the documentation of the main algorithm ?FlexRL::StEM.
 }
 \examples{
-\dontrun{
-library(FlexRL)
-
+\donttest{
 PIVs_config = list( V1 = list(stable = TRUE),
                     V2 = list(stable = TRUE),
                     V3 = list(stable = TRUE),
@@ -91,7 +89,7 @@ TimeDifference       = DATA$TimeDifference
 proba_same_H         = DATA$proba_same_H
 
 # the first 1:Nlinks records of each files created are links
-TrueDelta = data.frame( matrix(0, nrow=0, ncol=2) )
+TrueDelta = base::data.frame( matrix(0, nrow=0, ncol=2) )
 for (i in 1:Nlinks)
 {
   TrueDelta = rbind(TrueDelta, cbind(rownames(A[i,]),rownames(B[i,])))
@@ -116,21 +114,21 @@ data = list( A                    = encodedA,
              phiForMistakesB      = c(NA, NA, NA, NA, 0)
            )
 
-fit = stEM(  data                 = data,
-             StEMIter             = 50,
-             StEMBurnin           = 30,
-             GibbsIter            = 50,
-             GibbsBurnin          = 30,
-             musicOn              = TRUE,
-             newDirectory         = NULL,
-             saveInfoIter         = FALSE
-          )
+fit = FlexRL::stEM(  data                 = data,
+                     StEMIter             = 50,
+                     StEMBurnin           = 30,
+                     GibbsIter            = 50,
+                     GibbsBurnin          = 30,
+                     musicOn              = TRUE,
+                     newDirectory         = NULL,
+                     saveInfoIter         = FALSE
+                  )
 
 DeltaResult = fit$Delta
 colnames(DeltaResult) = c("idxA","idxB","probaLink")
 DeltaResult = DeltaResult[DeltaResult$probaLink>0.5,]
 
-results = data.frame( Results=matrix(NA, nrow=6, ncol=1) )
+results = base::data.frame( Results=matrix(NA, nrow=6, ncol=1) )
 rownames(results) = c("tp","fp","fn","f1score","fdr","sens.")
 if(nrow(DeltaResult)>1){
   linked_pairs    = do.call(paste, c(DeltaResult[,c("idxA","idxB")], list(sep="_")))

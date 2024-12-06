@@ -19,8 +19,21 @@ nCoefUnstable + 2 of those elements: number of cov from A + number of cov from B
 createDataAlpha
 }
 \examples{
-\dontrun{
-Valpha = mapply(createDataAlpha, nCoefUnstable = nCoefUnstable,
-                stable = PIVs_stable, SIMPLIFY=FALSE)
-}
+PIVs_config = list( V1 = list(stable = TRUE),
+                    V2 = list(stable = TRUE),
+                    V3 = list(stable = TRUE),
+                    V4 = list(stable = TRUE),
+                    V5 = list( stable = FALSE,
+                               conditionalHazard = FALSE,
+                               pSameH.cov.A = c(),
+                               pSameH.cov.B = c()) )
+
+PIVs_stable = sapply(PIVs_config, function(x) x$stable)
+
+nCoefUnstable = c(0,0,0,0,1)
+
+Valpha = mapply( createDataAlpha,
+                 nCoefUnstable = nCoefUnstable,
+                 stable = PIVs_stable,
+                 SIMPLIFY=FALSE)
 }
