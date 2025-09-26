@@ -1,6 +1,6 @@
 Package: FlexRL
 Title: A Flexible Model for Record Linkage
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: c(
     person("Kayané", "ROBACH", email = "k.c.robach@amsterdamumc.nl", role = c("aut", "cre", "cph"), comment = c(ORCID = "0000-0002-5725-623X")),
     person(c("Michel", "H."), "HOF", email = "m.h.hof@amsterdamumc.nl", role = c("aut", "cph")))
