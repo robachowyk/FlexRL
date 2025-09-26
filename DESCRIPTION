@@ -1,10 +1,9 @@
 Package: FlexRL
 Title: A Flexible Model for Record Linkage
 Version: 0.1.0
-Authors@R: 
-    c(person("Kayané", "ROBACH", , "k.c.robach@amsterdamumc.nl", role = c("aut", "cre", "cph"),
-           comment = c(ORCID = "0000-0002-5725-623X")),
-      person(c("Michel", "H."), "HOF", , "m.h.hof@amsterdamumc.nl", role = c("aut", "cph")))
+Authors@R: c(
+    person("Kayané", "ROBACH", email = "k.c.robach@amsterdamumc.nl", role = c("aut", "cre", "cph"), comment = c(ORCID = "0000-0002-5725-623X")),
+    person(c("Michel", "H."), "HOF", email = "m.h.hof@amsterdamumc.nl", role = c("aut", "cph")))
 Description: Implementation of the Stochastic Expectation Maximisation (StEM) approach to Record Linkage described in the paper by K. Robach, S. L. van der Pas, M. A. van de Wiel and M. H. Hof (2024, <doi:10.1093/jrsssc/qlaf016>); see citation("FlexRL") for details. This is a record linkage method, for finding the common set of records among 2 data sources based on Partially Identifying Variables (PIVs) available in both sources. It includes modelling of dynamic Partially Identifying Variables (e.g. postal code) that may evolve over time and registration errors (missing values and mistakes in the registration). Low memory footprint.
 License: GPL (>= 3)
 Encoding: UTF-8
