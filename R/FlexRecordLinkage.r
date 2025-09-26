@@ -164,6 +164,9 @@ DataCreation = function(PIVs_config, Nval, NRecords, Nlinks, PmistakesA, Pmistak
         }
       }
     }
+  }else{
+    TimeDifference = NA
+    proba_same_H = NA
   }
 
   A = dataSet1
