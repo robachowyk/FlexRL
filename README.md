@@ -1,6 +1,7 @@
 # FlexRL
 
 <!-- badges: start -->
+[![](https://cranlogs.r-pkg.org/badges/grand-total/FlexRL)](https://cran.r-project.org/web/packages/FlexRL/index.html)
 <!-- badges: end -->
 
 FlexRL is a package for Flexible Record Linkage, to find the common set of records among 2 data sources. The area of applications of Record Linkage is broad, it can be used to link data from any sources where an overlap in the populations is expected, like healthcare monitoring studies at 2 different time points, registries of casualties in conflict zones collected by distinct organisations, ...
