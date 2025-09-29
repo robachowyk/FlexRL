@@ -1,12 +1,11 @@
-
 # FlexRL
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-FlexRL is a package for Flexible Record Linkage, to find the common set of records among 2 data sources. The area of applications of Record Linkage is broad, it can be used to link data from any sources where an overlap in the populations is expected, like healthcare monitoring studies at 2 different time points, registries of casualties in conflict zones collected by distinct organisations, ... 
+FlexRL is a package for Flexible Record Linkage, to find the common set of records among 2 data sources. The area of applications of Record Linkage is broad, it can be used to link data from any sources where an overlap in the populations is expected, like healthcare monitoring studies at 2 different time points, registries of casualties in conflict zones collected by distinct organisations, ...
 
-FlexRL models registration errors (missing values and mistakes in the data) and handles dynamic **P**artially **I**dentifying **V**ariable**s** that evolve over time (e.g. postal code can change between the 2 data collections) in order to identify a final set of linked records (and their posterior probabilities to be linked). 
+FlexRL models registration errors (missing values and mistakes in the data) and handles dynamic **P**artially **I**dentifying **V**ariable**s** that evolve over time (e.g. postal code can change between the 2 data collections) in order to identify a final set of linked records (and their posterior probabilities to be linked).
 
 The algorithm can take time to run on large data sets but has a low memory footprint and can easily run on standard computers.
 
@@ -17,20 +16,23 @@ Please [open an issue](https://github.com/robachowyk/FlexRL/issues) to report an
 ## Installation
 
 You can install FlexRL from CRAN with:
-``` r
+
+```r
 install.packages("FlexRL")
 library(FlexRL)
 ```
 
 Or you can install the development version of FlexRL from its [GitHub](https://github.com/robachowyk/FlexRL) with one of the following:
 
-``` r
+```r
 pak::pak("robachowyk/FlexRL")
 ```
-``` r
+
+```r
 remotes::install_github("robachowyk/FlexRL")
 ```
-``` r
+
+```r
 devtools::install_github("robachowyk/FlexRL")
 ```
 
@@ -40,14 +42,14 @@ FlexRL relies on Rcpp; when imported from Github, it may require gfortran and gc
 
 Here is a basic example which shows how to solve a common record linkage task:
 
-``` r
+```r
 library(FlexRL)
 
 # load real data subsets from the vignettes
 df2016 = read.csv("FlexRL/vignettes/exA.csv", row.names = 1)
 df2020 = read.csv("FlexRL/vignettes/exB.csv", row.names = 1)
 
-# use 5 PIVs birth year, sex, marital status, educational level, regional code; 
+# use 5 PIVs birth year, sex, marital status, educational level, regional code;
 # we do not have enough information to model instability
 # all PIVs are considered stable
 PIVs_config = list(
@@ -60,7 +62,7 @@ PIVs_config = list(
 PIVs = names(PIVs_config)
 PIVs_stable = sapply(PIVs_config, function(x) x$stable)
 
-# we put bounds on the probability of mistakes: 
+# we put bounds on the probability of mistakes:
 # there should realistically be less than 10% of mistakes in the PIVs
 # however for some PIVs which are probably dynamic (though we cannot model it here) it is good to
 # not bound the mistakes parameter, which will adapt to the dynamics not taken into account
@@ -95,7 +97,7 @@ true_pairs = do.call(paste, c(TrueDelta, list(sep="_")))
 df2016$source = "df2016"
 df2020$source = "df2020"
 
-# the first dataset (namely source A) has to be the smallest one 
+# the first dataset (namely source A) has to be the smallest one
 # i.e. the second dataset (namely source B) has to be the largest one
 if(nrow(df2020)>nrow(df2016)){
   encodedA = df2016
@@ -144,7 +146,7 @@ fit = stEM(  data                 = data,
              saveInfoIter         = FALSE
 )
 
-# collect the output and build the final set of linked records with posterior probability > 0.5 
+# collect the output and build the final set of linked records with posterior probability > 0.5
 # to ensure that the one-to-one assignment constraint is fulfilled
 DeltaResult = fit$Delta
 colnames(DeltaResult) = c("idx20","idx16","probaLink")
@@ -152,7 +154,7 @@ DeltaResult = DeltaResult[DeltaResult$probaLink>0.5,]
 DeltaResult
 
 # compute the results by comparing the true links to the linked records
-# watch out for the order of the source in the outcome, source A here corresponds to df2020 
+# watch out for the order of the source in the outcome, source A here corresponds to df2020
 # and source B corresponds to df2016
 # in the set of true links we ordered pairs with first df2016 and then df2020
 results = data.frame( Results=matrix(NA, nrow=6, ncol=1) )
@@ -170,7 +172,7 @@ if(nrow(DeltaResult)>1){
 }
 results
 
-# one can use the simplistic method to assess the difficulty of the task 
+# one can use the simplistic method to assess the difficulty of the task
 DeltaResult = launchNaive(PIVs, encodedA, encodedB)
 
 if(nrow(DeltaResult)>1){
@@ -189,8 +191,7 @@ results
 
 Here is another example (using synthetic data to illustrate more elaborated options) which shows you how to solve a common record linkage problem:
 
-
-``` r
+```r
 library(FlexRL)
 
 PIVs_config = list( V1 = list(stable = TRUE),
@@ -233,7 +234,7 @@ proba_same_H_5 = proba_same_H[,5]
 plot( sort(proba_same_H_5, decreasing=TRUE), ylim=c(0,1) )
 plot( TimeDifference, proba_same_H_5, ylim=c(0,1) )
 
-# it is realistic to bound the parameter for mistakes to not exceeds 10% 
+# it is realistic to bound the parameter for mistakes to not exceeds 10%
 # (also for the unstable PIV since we model its dynamics)
 boundMistakes = c(TRUE, TRUE, TRUE, TRUE, TRUE)
 
@@ -296,5 +297,5 @@ results
 More documentation is accessible on CRAN.
 
 More examples are available in the vignette and in the repository [FlexRL-experiments](https://github.com/robachowyk/FlexRL-experiments).
- 
+
 For support requests, contact _k dot c dot robach at amsterdamumc dot nl_.
