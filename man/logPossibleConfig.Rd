@@ -2,23 +2,23 @@
 % Please edit documentation in R/FlexRecordLinkage.r
 \name{logPossibleConfig}
 \alias{logPossibleConfig}
-\title{logPossibleConfig}
+\title{Log number of possible linkage configurations}
 \usage{
 logPossibleConfig(Brecords, sumD)
 }
 \arguments{
-\item{Brecords}{Number of records in data source B (the largest).}
+\item{Brecords}{Integer, number of records in the larger data source (B).}
 
-\item{sumD}{Number of linked records (at a specific time point of the algorithm).}
+\item{sumD}{Integer, number of currently linked records.}
 }
 \value{
-The sum of logs of the vector going from nB - nLinks + 1 to nB.
+Numeric, \code{sum(log((Brecords - sumD + 1):Brecords))}, or \code{0} if \code{sumD == 0}.
 }
 \description{
-This function helps calculating the number of possible designs for Delta given by nB!/(nB-nLinks)! Needed to compute the log likelihood of the linkage matrix.
+Computes \verb{log(nB! / (nB - sumD)!)}, i.e. the log number of ways to choose
+\code{sumD} ordered links among \code{Brecords} records of the larger file; used in
+\code{\link[=loglik]{loglik()}} to normalise the likelihood of the linkage matrix.
 }
 \examples{
-sumColD = c(0,0,0,0,1,0,0,0,1,0,1,0,1,0,1)
-links = base::data.frame(list(idxA=c(5,9,11,12,13), idxB=c(5,9,11,13,15)))
-possconfig = logPossibleConfig(length(sumColD),nrow(links))
+logPossibleConfig(Brecords = 15, sumD = 5)
 }

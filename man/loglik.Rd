@@ -2,40 +2,39 @@
 % Please edit documentation in R/FlexRecordLinkage.r
 \name{loglik}
 \alias{loglik}
-\title{loglik}
+\title{Log-likelihood of the linkage matrix}
 \usage{
 loglik(LLL, LLA, LLB, links, sumRowD, sumColD, gamma)
 }
 \arguments{
-\item{LLL}{A (sparse) matrix with contributions to the complete likelihood of the linked records.}
+\item{LLL}{(Sparse) matrix of log-likelihood contributions for linked records.}
 
-\item{LLA}{A vector with contributions to the complete likelihood of the non linked records from A.}
+\item{LLA}{Numeric vector of log-likelihood contributions for non-linked records from A.}
 
-\item{LLB}{A vector with contributions to the complete likelihood of the non linked records from B.}
+\item{LLB}{Numeric vector of log-likelihood contributions for non-linked records from B.}
 
-\item{links}{A matrix of 2 columns with indices of the linked records.}
+\item{links}{2-column matrix of indices (A, B) for the currently linked records.}
 
-\item{sumRowD}{A boolean vector indicating, for each row of the linkage matrix, i.e. for each record in the smallest file A, whether the record has a link in B or not.}
+\item{sumRowD}{Logical vector, one entry per record in A: does it have a link?}
 
-\item{sumColD}{A boolean vector indicating, for each column of the linkage matrix, i.e. for each record in the largest file B, whether the record has a link in A or not.}
+\item{sumColD}{Logical vector, one entry per record in B: does it have a link?}
 
-\item{gamma}{The proportion of linked records as a fraction of the smallest file.}
+\item{gamma}{Numeric, proportion of linked records as a fraction of the smaller file.}
 }
 \value{
-The Log(likelihood) of the linkage matrix.
+Numeric, the log-likelihood of the linkage matrix.
 }
 \description{
-Log(likelihood) of the linkage matrix.
+Log-likelihood of the linkage matrix
 }
 \examples{
-LLL = Matrix::Matrix(0, nrow=13, ncol=15, sparse=TRUE)
-LLA = c(0.001,0.001,0.001,0.001,1.43,0.02,0.007,0.001,2.1,0.0003,1.67,1.5,10)
-LLB = c(0.001,0.001,0.001,0.001,1.22,0.008,0.01,0.04,3.9,0.0002,1.99,0,2.4,0.009,12)
-linksR = as.matrix(base::data.frame(list(idxA=c(5,9,11,12,13), idxB=c(5,9,11,13,15))))
-LLL[linksR] = 0.67
-sumRowD = c(0,0,0,0,1,0,0,0,1,0,1,1,1)
-sumColD = c(0,0,0,0,1,0,0,0,1,0,1,0,1,0,1)
-gamma = 0.5
-LL0 = loglik(LLL=LLL, LLA=LLA, LLB=LLB, links=linksR, sumRowD=sumRowD, sumColD=sumColD,
-             gamma=gamma)
+LLL <- Matrix::Matrix(0, nrow = 13, ncol = 15, sparse = TRUE)
+LLA <- runif(13, 0, 2)
+LLB <- runif(15, 0, 2)
+links <- as.matrix(data.frame(idxA = c(5, 9, 11, 12, 13), idxB = c(5, 9, 11, 13, 15)))
+LLL[links] <- 0.67
+sumRowD <- (seq_len(13) \%in\% links[, 1])
+sumColD <- (seq_len(15) \%in\% links[, 2])
+gamma <- 0.5
+loglik(LLL, LLA, LLB, links, sumRowD, sumColD, gamma)
 }

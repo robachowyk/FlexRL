@@ -2,135 +2,95 @@
 % Please edit documentation in R/FlexRecordLinkage.r
 \name{stEM}
 \alias{stEM}
-\title{Stochastic Expectation Maximisation (StEM) for Record Linkage}
+\title{Stochastic Expectation-Maximisation for record linkage}
 \usage{
 stEM(
   data,
-  StEMIter,
-  StEMBurnin,
-  GibbsIter,
-  GibbsBurnin,
+  StEMIter = 30,
+  StEMBurnin = 15,
+  GibbsIter = 20,
+  GibbsBurnin = 10,
   musicOn = TRUE,
   newDirectory = NULL,
-  saveInfoIter = FALSE
+  saveInfoIter = FALSE,
+  gamma0 = NULL,
+  phiA0 = NULL,
+  phiB0 = NULL,
+  nPostSamp = 1000
 )
 }
 \arguments{
-\item{data}{A list with elements:
-\itemize{
-\item A: the smallest data source (encoded: the categorical values of the Partially Identifying Variables (PIVs) have to be mapped to sets of natural numbers and missing values are encoded as 0).
-\item B: the largest data source (encoded).
-\item Nvalues: A vector (of size number of PIVs) with the number fo unique values per PIVs (in the order of the PIVs defined in PIVs_config).
-\item PIVs_config: A list (of size number of PIVs) where element names are the PIVs and element values are lists with elements: stable (boolean for whether the PIV is stable), conditionalHazard (boolean for whether there are external covariates available to model instability, only required if stable is FALSE), pSameH.cov.A and pSameH.covB (vectors with strings corresponding to the names of the covariates to use to model instability from file A and file B, only required if stable is FALSE, empty vectors may be provided if conditionalHazard is FALSE).
-\item controlOnMistakes: A vector (of size number of PIVs) of booleans indicating potential bounds on the mistakes probabilities for each PIV. For each PIV, if TRUE there will be control on mistake and the mistake probability will not go above 10\%. If FALSE there is no bound on the probability of mistake. WATCH OUT, if you suspect that a variable is unstable but you do not have data to model its dynamics the boolean value should be set to FALSE to allow the parameter for mistake to adapt for the instability. However if you model this instability, the boolean value should be set to TRUE to help the algorithm differenciate the mistakes from the changes over time.
-\item sameMistakes: A boolean value for whether there should be one parameter for the mistakes in A and B or whether each source should have its own parameter. Setting sameMistakes=TRUE is recommended in case of small data sources; the estimation with 2 parameters in that case will fail to capture the mistakes correctly while 1 parameter will be more adapted.
-\item phiMistakesAFixed A vector (of size number of PIVs) of booleans indicating whether the parameters for mistakes should be fixed in case of instability. It should be FALSE, except for unstable PIVs for which it may be set to TRUE in order to avoid estimability problems between the parameter for mistake and the parameter for changes across time.
-\item phiMistakesBFixed A vector (of size number of PIVs) of booleans indicating whether the parameters for mistakes should be fixed in case of instability. It should be FALSE, except for unstable PIVs for which it may be set to TRUE in order to avoid estimability problems between the parameter for mistake and the parameter for changes across time.
-\item phiForMistakesA A vector (of size number of PIVs) of NA or fixed values for the parameters for mistakes. It should be NA, except for unstable PIVs for which one wants to fix the parameter to avoid estimability problem (as indicated with the boolean values in phiMistakesAFixed). In that case it should be set the the expected value for the probability of mistake. If you have no idea: you can put it to 0, the algorithm is quite robust to wrongly fixed parameters.
-\item phiForMistakesB A vector (of size number of PIVs) of NA or fixed values for the parameters for mistakes. It should be NA, except for unstable PIVs for which one wants to fix the parameter to avoid estimability problem (as indicated with the boolean values in phiMistakesBFixed). In that case it should be set the the expected value for the probability of mistake. If you have no idea: you can put it to 0, the algorithm is quite robust to wrongly fixed parameters.
-}}
+\item{data}{List, typically the output of \code{\link[=prepare_data]{prepare_data()}}, with:
+\code{encodedA} (smaller source, PIVs encoded to natural numbers, \code{0} = missing),
+\code{encodedB} (larger source, encoded), \code{Nvalues}, \code{sameMistakes} (logical:
+one mistake parameter shared by A and B?), \code{PIVs_config} (named list,
+one entry per PIV, each a list with: \code{dynamics} (\code{"stable"}, \code{"flexible"},
+or \code{"structured"}), \code{boundMistakes} (length-2 numeric/NA, upper bound on the
+mistake probability in file 1 / file 2), \code{fixMistakes} (length-2 numeric/NA,
+mistake probability fixed to this value in file 1 / file 2), and, only
+for \code{dynamics = "structured"}, \code{condHazardCov} (a list with \code{cov1} and
+\code{cov2}, the names of covariates in file 1 / file 2 used to model the
+hazard of change).}
 
-\item{StEMIter}{An integer with the total number of iterations of the Stochastic
-EM algorithm (including the period to discard as burn-in)}
+\item{StEMIter}{Integer, total number of StEM iterations (including burn-in).}
 
-\item{StEMBurnin}{An integer with the number of iterations to discard as burn-in}
+\item{StEMBurnin}{Integer, number of StEM iterations discarded as burn-in.}
 
-\item{GibbsIter}{An integer with the total number of iterations of the Gibbs sampler
-(done in each iteration of the StEM) (including the period to discard as burn-in)}
+\item{GibbsIter}{Integer, total number of Gibbs iterations per StEM step (including burn-in).}
 
-\item{GibbsBurnin}{An integer with the number of iterations to discard as burn-in}
+\item{GibbsBurnin}{Integer, number of Gibbs iterations discarded as burn-in
+(\code{0} lets the algorithm auto-detect burn-in from the stabilisation of the linked count).}
 
-\item{musicOn}{A boolean value, if TRUE the algorithm will play music at the end of
-the algorithm, useful if you have to wait for the record linkage to run and to act as
-an alarm when record linkage is done}
+\item{musicOn}{Logical; if \code{TRUE}, plays a short tune when the algorithm finishes.}
 
-\item{newDirectory}{A NULL value or: A string with the name of (or path to) the directory
-(which should already exist) where to save the environment variables at the end of each
-iteration (useful when record linkage is very long, to not loose everything and not restart
-from scratch in case your computer shut downs before record linkage is finished)}
+\item{newDirectory}{Path to an existing directory to save progress after
+each iteration, or \code{NULL} to disable.}
 
-\item{saveInfoIter}{A boolean value to indicate whether you want the environment variables
-to be saved at the end of each iteration (useful when record linkage is very long, to not
-loose everything and not restart from scratch in case your computer shut downs before
-record linkage is finished)}
+\item{saveInfoIter}{Logical; save the environment at the end of each iteration
+(only used if \code{newDirectory} is not \code{NULL}).}
+
+\item{gamma0, }{phiA0, phiB0 Optional starting values for \code{gamma}/\code{phi}; drawn
+at random if \code{NULL}.}
+
+\item{nPostSamp}{Integer, number of posterior draws used to estimate the
+final linkage probabilities \code{Delta}.}
 }
 \value{
 A list with:
 \itemize{
-\item Delta, the summary of a sparse matrix, i.e. a data frame with 3 columns: the indices from the first data source A, the indices from the second data source B, the non-zero probability that the records associated with this pair of indices are linked (i.e. the
-posterior probabilities to be linked). One has to select the pairs where this probability > 0.5 to get a valid set of linked records, (this threshold on the linkage probability is necessary to ensure the one-to-one assignment constraint of record linkage stating that one record in one file can at most be linked to one record in the other file).
-\item gamma, a vector with the chain of the parameter gamma representing
-the proportion of linked records as a fraction of the smallest file,
-\item eta, a vector with the
-chain of the parameter eta representing the distribution of the PIVs,
-\item alpha, a vector with
-the chain of the parameter alpha representing the hazard coefficient of the model for instability,
-\item phi, a vector with the chain of the parameter phi representing the registration errors parameters).
+\item{Delta}{sparse-matrix summary (\code{i}, \code{j}, \code{x}) of posterior linkage
+probabilities; a pair is a valid link candidate once \code{x > 0.5}
+(one-to-one constraint)}
+\item{gamma, eta, alpha, phi}{the StEM chains for each parameter}
 }
-
-There are more details to understand the method in our paper, or on the experiments repository of our paper, or in the vignettes.
 }
 \description{
-Stochastic Expectation Maximisation (StEM) for Record Linkage
+Fits the FlexRL model with a Stochastic EM algorithm: each iteration runs
+a Gibbs sampler (alternating between simulating the true PIV values and
+the linkage matrix D) and then updates the model parameters (\code{gamma},
+\code{eta}, \code{alpha}, \code{phi}) from the post-burn-in Gibbs draws. See the
+methodology paper (\doi{10.1093/jrsssc/qlaf016}) for details.
 }
 \examples{
-\donttest{
-PIVs_config = list( V1 = list(stable = TRUE),
-                    V2 = list(stable = TRUE),
-                    V3 = list(stable = TRUE),
-                    V4 = list(stable = TRUE),
-                    V5 = list( stable = FALSE,
-                               conditionalHazard = FALSE,
-                               pSameH.cov.A = c(),
-                               pSameH.cov.B = c()) )
-PIVs = names(PIVs_config)
-PIVs_stable = sapply(PIVs_config, function(x) x$stable)
-Nval = c(6, 7, 8, 9, 15)
-NRecords = c(500, 800)
-Nlinks = 300
-PmistakesA = c(0.02, 0.02, 0.02, 0.02, 0.02)
-PmistakesB = c(0.02, 0.02, 0.02, 0.02, 0.02)
-PmissingA = c(0.007, 0.007, 0.007, 0.007, 0.007)
-PmissingB = c(0.007, 0.007, 0.007, 0.007, 0.007)
-moving_params = list(V1=c(),V2=c(),V3=c(),V4=c(),V5=c(0.28))
-enforceEstimability = TRUE
-DATA = DataCreation( PIVs_config,
-                     Nval,
-                     NRecords,
-                     Nlinks,
-                     PmistakesA,
-                     PmistakesB,
-                     PmissingA,
-                     PmissingB,
-                     moving_params,
-                     enforceEstimability)
-A                    = DATA$A
-B                    = DATA$B
-Nvalues              = DATA$Nvalues
+PIVs_config <- list( V1 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                           ),
+                    V2 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                            ),
+                    V3 = list(dynamics = "flexible",    boundMistakes = c(NA,NA),      fixMistakes = c(NA,NA)                                                            ),
+                    V4 = list(dynamics = "structured",  boundMistakes = c(NA,NA),      fixMistakes = c(0.03,0.03),  condHazardCov = list(cov1=c("Xe", "Xf"), cov2=c())   )
+)
+Nval  <- c(6, 7, 8, 9)
+Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02), V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
+Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005), V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
 
-encodedA = A
-encodedB = B
+GenData <- DataCreation(
+  PIVs_config, Nval, NRecords = c(400, 600), Nlinks = 300,
+  Pmistake, Pmissing, condHazard_params, enforceEstimability = TRUE
+)
 
-encodedA[,PIVs][ is.na(encodedA[,PIVs]) ] = 0
-encodedB[,PIVs][ is.na(encodedB[,PIVs]) ] = 0
+PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
+                         PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
 
-data = list( A = encodedA,
-             B = encodedB,
-             Nvalues = Nvalues,
-             PIVs_config = PIVs_config,
-             controlOnMistakes = c(TRUE,TRUE,FALSE,FALSE,FALSE),
-             sameMistakes = TRUE,
-             phiMistakesAFixed = FALSE,
-             phiMistakesBFixed = FALSE,
-             phiForMistakesA = c(NA,NA,NA,NA,NA),
-             phiForMistakesB = c(NA,NA,NA,NA,NA))
- fit = stEM( data = data,
-             StEMIter = 50,
-             StEMBurnin = 30,
-             GibbsIter = 50,
-             GibbsBurnin = 30,
-             musicOn = TRUE,
-             newDirectory = NULL,
-             saveInfoIter = FALSE )
-}
+fit <- stEM(data = PrepData, StEMIter = 10, StEMBurnin = 5,
+           GibbsIter = 10, GibbsBurnin = 5, musicOn = FALSE)
+head(fit$Delta[fit$Delta$x > 0.5, ])
 }

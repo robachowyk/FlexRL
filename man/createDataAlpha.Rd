@@ -2,38 +2,34 @@
 % Please edit documentation in R/FlexRecordLinkage.r
 \name{createDataAlpha}
 \alias{createDataAlpha}
-\title{createDataAlpha}
+\title{Book-keeping data frame for parameters of PIVs dynamics}
 \usage{
 createDataAlpha(nCoefUnstable, stable)
 }
 \arguments{
-\item{nCoefUnstable}{An integer value with the number of covariates (including the intercept): number of cov from A + number of cov from B + 1.}
+\item{nCoefUnstable}{Integer, number of hazard coefficients for this PIV
+(1 for the baseline hazard, plus one per covariate from file A and file B).}
 
-\item{stable}{A boolean value indicating whether the Partially Identifying Variable (PIV) concerned is stable.}
+\item{stable}{Logical, whether this PIV is stable (\code{dynamics != "structured"}).}
 }
 \value{
-An empty data frame (if stable=FALSE) with nCoefUnstable + 2 columns for book keeping of the elements necessary to update the parameter for instability. There are
-nCoefUnstable + 2 of those elements: number of cov from A + number of cov from B + intercept + boolean vector indicating where the true values of the records (for the concerned PIV) are equal, vector of time gaps between records
+An empty data frame with \code{nCoefUnstable + 2} columns (the
+covariates/intercept, plus \code{Hequal} and \code{times}) if \code{stable} is \code{FALSE};
+\code{NULL} if the PIV is stable (nothing to accumulate).
 }
 \description{
-createDataAlpha
+Internal helper used by \code{\link[=stEM]{stEM()}} to accumulate, across Gibbs iterations,
+the covariates, true-value agreement indicator, and time gaps needed to
+re-estimate the survival (hazard) parameters of a dynamic structured PIV.
 }
 \examples{
-PIVs_config = list( V1 = list(stable = TRUE),
-                    V2 = list(stable = TRUE),
-                    V3 = list(stable = TRUE),
-                    V4 = list(stable = TRUE),
-                    V5 = list( stable = FALSE,
-                               conditionalHazard = FALSE,
-                               pSameH.cov.A = c(),
-                               pSameH.cov.B = c()) )
-
-PIVs_stable = sapply(PIVs_config, function(x) x$stable)
-
-nCoefUnstable = c(0,0,0,0,1)
-
-Valpha = mapply( createDataAlpha,
-                 nCoefUnstable = nCoefUnstable,
-                 stable = PIVs_stable,
-                 SIMPLIFY=FALSE)
+PIVs_config <- list( V1 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                           ),
+                    V2 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                            ),
+                    V3 = list(dynamics = "flexible",    boundMistakes = c(NA,NA),      fixMistakes = c(NA,NA)                                                            ),
+                    V4 = list(dynamics = "structured",  boundMistakes = c(NA,NA),      fixMistakes = c(0.03,0.03),  condHazardCov = list(cov1=c("Xe", "Xf"), cov2=c())   )
+)
+PIVs_stable <- sapply(PIVs_config, function(x) x$dynamics != "structured")
+nCoefUnstable = c(0,0,0,3)
+createDataAlpha(nCoefUnstable, PIVs_stable)
+Valpha <- mapply(createDataAlpha, nCoefUnstable = nCoefUnstable, stable = PIVs_stable, SIMPLIFY = FALSE)
 }

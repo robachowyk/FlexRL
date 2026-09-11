@@ -2,88 +2,87 @@
 % Please edit documentation in R/FlexRecordLinkage.r
 \name{DataCreation}
 \alias{DataCreation}
-\title{DataCreation}
+\title{Simulate two linked data sources for record linkage benchmarking}
 \usage{
 DataCreation(
   PIVs_config,
   Nval,
   NRecords,
   Nlinks,
-  PmistakesA,
-  PmistakesB,
-  PmissingA,
-  PmissingB,
-  moving_params,
+  Pmistake,
+  Pmissing,
+  condHazard_params,
   enforceEstimability
 )
 }
 \arguments{
-\item{PIVs_config}{A list (of size number of PIVs) where element names are the PIVs and element values are lists with elements: stable (boolean for whether the PIV is stable), conditionalHazard (boolean for whether there are external covariates available to model instability, only required if stable is FALSE), pSameH.cov.A and pSameH.covB (vectors with strings corresponding to the names of the covariates to use to model instability from file A and file B, only required if stable is FALSE, empty vectors may be provided if conditionalHazard is FALSE)}
+\item{PIVs_config}{Named list, one entry per PIV, each a list with:
+\code{dynamics} (\code{"stable"}, \code{"flexible"}, or \code{"structured"}),
+\code{boundMistakes} (length-2 numeric/NA, upper bound on the mistake
+probability in file 1 / file 2), \code{fixMistakes} (length-2 numeric/NA,
+mistake probability fixed to this value in file 1 / file 2), and, only
+for \code{dynamics = "structured"}, \code{condHazardCov} (a list with \code{cov1} and
+\code{cov2}, the names of covariates in file 1 / file 2 used to model the
+hazard of change).}
 
-\item{Nval}{A vector (of size number of PIVs) with the number fo unique values per PIVs (in the order of the PIVs defined in PIVs_config)}
+\item{Nval}{Integer vector, number of unique values per PIV (same order
+as \code{PIVs_config}).}
 
-\item{NRecords}{A vector (of size 2) with the number of records to be generated in file A and in file B}
+\item{NRecords}{Integer vector of length 2, number of records to generate
+in file 1 and file 2 (file 2 must be the larger of the two).}
 
-\item{Nlinks}{An integer with the number of links (record referring to the same entities) to be generated}
+\item{Nlinks}{Integer, number of records shared between the two files.}
 
-\item{PmistakesA}{A vector (of size number of PIVs) with the proportion of mistakes to be generated per PIVs in file A (in the order of the PIVs defined in PIVs_config)}
+\item{Pmistake}{Named list (one entry per PIV) of length-2 numeric vectors,
+proportion of mistakes to introduce in file 1 / file 2.}
 
-\item{PmistakesB}{A vector (of size number of PIVs) with the proportion of mistakes to be generated per PIVs in file B (in the order of the PIVs defined in PIVs_config)}
+\item{Pmissing}{Named list (one entry per PIV) of length-2 numeric vectors,
+proportion of missing values to introduce in file 1 / file 2.}
 
-\item{PmissingA}{A vector (of size number of PIVs) with the proportion of missing to be generated per PIVs in file A (in the order of the PIVs defined in PIVs_config)}
+\item{condHazard_params}{Named list (one entry per PIV) of numeric vectors
+with the log-hazard coefficients (baseline hazard, then the coefficients
+for the \code{cov1} covariates, then for the \code{cov2} covariates); only used for
+\code{dynamics = "structured"} PIVs, and must have length
+\code{1 + length(cov1) + length(cov2)}.}
 
-\item{PmissingB}{A vector (of size number of PIVs) with the proportion of missing to be generated per PIVs in file A (in the order of the PIVs defined in PIVs_config)}
-
-\item{moving_params}{A list (of size number of PIVs) where element names are the PIVs and element values are vectors (of size: 1 + number of covariates to use from A + number of covariates to use from B) with the log hazards coefficient (1st one: log baseline hazard, then: the coefficients for conditional hazard covariates from A, then: the coefficients for conditional hazard covariates from B)}
-
-\item{enforceEstimability}{A boolean value for whether half of the links should have near-0 time gaps (useful for modeling instability and avoiding estimability issues as discussed in the paper)}
+\item{enforceEstimability}{Logical; if \code{TRUE}, half of the linked pairs are
+given a near-zero time gap to help estimate the instability parameters.}
 }
 \value{
-A list with generated
+A list with:
 \itemize{
-\item dataframe A (encoded: the categorical values of the PIVs are matched to sets of natural numbers),
-\item dataframe B (encoded),
-\item vector of Nvalues (Nval),
-\item vector of TimeDifference (for the links, when thewre is instability),
-\item matrix proba_same_H (number of links, number fo PIVs) with the proba that true values coincide (e.g. 1 - proba of moving)
+\item{dataSet1, dataSet2}{the two simulated (encoded) data frames}
+\item{Nvalues}{number of unique values per PIV}
+\item{TimeDifference}{time gap between linked records (\code{NA} if no PIV is structured)}
+\item{proba_same_H}{matrix (n links x n PIVs) of probabilities that the true values coincide}
+\item{true_pairs}{data frame with the true \code{1}/\code{2} indices of the linked records}
 }
 }
 \description{
-This function is used to synthesise data for record linkage. It creates 2 data sources of specific sizes, with a common set of records of a specific size, with a certain amount of Partially Identifying Variables (PIVs).
-For each PIV, we specify the number of unique values, the desired proportion of mistakes and missing values. They can be stable or evolving over time (e.g. representing the postal code).
-For the unstable PIVs, we can specify the parameter(s) to be used in the survival exponential model that generates changes over time between the records referring to the same entities.
-When a PIV is unstable, it is later harder to estimate its parameters (probability of mistake vs. probability of change across time). Therefore we may want to enforce estimability in the synthetic data, which we do by
-enforcing half of the links to have a near-zero time gaps.
-}
-\details{
-There are more details to understand the method in our paper, or on the experiments repository of our paper, or in the vignettes.
+Creates two synthetic data sources of given sizes sharing a given number
+of common entities ("links"), each described by a set of Partially
+Identifying Variables (PIVs). For every PIV you choose the number of
+possible values, the proportion of mistakes and of missing values, and
+whether it is stable over time, flexible (may change but change is not
+modelled), or structured (expected to change over time, with a survival
+model for the hazard of change). For structured PIVs, \code{enforceEstimability}
+forces half of the linked pairs to have a near-zero time gap, which helps
+separate "mistake" from "genuine change over time" when fitting the model.
 }
 \examples{
-PIVs_config = list( V1 = list(stable = TRUE),
-                    V2 = list(stable = TRUE),
-                    V3 = list(stable = TRUE),
-                    V4 = list(stable = TRUE),
-                    V5 = list( stable = FALSE,
-                               conditionalHazard = FALSE,
-                               pSameH.cov.A = c(),
-                               pSameH.cov.B = c()) )
-Nval = c(6, 7, 8, 9, 15)
-NRecords = c(500, 800)
-Nlinks = 300
-PmistakesA = c(0.02, 0.02, 0.02, 0.02, 0.02)
-PmistakesB = c(0.02, 0.02, 0.02, 0.02, 0.02)
-PmissingA = c(0.007, 0.007, 0.007, 0.007, 0.007)
-PmissingB = c(0.007, 0.007, 0.007, 0.007, 0.007)
-moving_params = list(V1=c(),V2=c(),V3=c(),V4=c(),V5=c(0.28))
-enforceEstimability = TRUE
-DataCreation( PIVs_config,
-              Nval,
-              NRecords,
-              Nlinks,
-              PmistakesA,
-              PmistakesB,
-              PmissingA,
-              PmissingB,
-              moving_params,
-              enforceEstimability)
+PIVs_config <- list( V1 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                           ),
+                    V2 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                            ),
+                    V3 = list(dynamics = "flexible",    boundMistakes = c(NA,NA),      fixMistakes = c(NA,NA)                                                            ),
+                    V4 = list(dynamics = "structured",  boundMistakes = c(NA,NA),      fixMistakes = c(0.03,0.03),  condHazardCov = list(cov1=c("Xe", "Xf"), cov2=c())   )
+)
+Nval  <- c(6, 7, 8, 9)
+Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02), V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
+Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005), V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
+
+GenData <- DataCreation(
+  PIVs_config, Nval, NRecords = c(400, 600), Nlinks = 300,
+  Pmistake, Pmissing, condHazard_params, enforceEstimability = TRUE
+)
+str(GenData, max.level = 1)
 }
