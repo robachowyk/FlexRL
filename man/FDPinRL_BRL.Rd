@@ -7,7 +7,9 @@
 FDPinRL_BRL(NewA, NewB, arguments)
 }
 \arguments{
-\item{NewA, }{NewB Data sets as returned by \code{\link[=synthesise]{synthesise()}}.}
+\item{NewA}{Data set as returned by \code{\link[=synthesise]{synthesise()}}.}
+
+\item{NewB}{Data sets as returned by \code{\link[=synthesise]{synthesise()}}.}
 
 \item{arguments}{List of extra arguments forwarded to \code{BRL::compareRecords()}
 and \code{BRL::bipartiteGibbs()} (e.g. \code{flds}, \code{types}, \code{nIter}).}
@@ -16,5 +18,6 @@ and \code{BRL::bipartiteGibbs()} (e.g. \code{flds}, \code{types}, \code{nIter}).
 List with \code{result_index_linked_A}, \code{result_index_linked_B}, \code{result_vec_linked_scores}.
 }
 \description{
-More details about BRL on https://cran.r-project.org/web/packages/BRL/index.html
+More details about BRL on
+https://cran.r-project.org/web/packages/BRL/index.html
 }

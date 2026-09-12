@@ -2,7 +2,8 @@
 % Please edit documentation in R/FlexRecordLinkage.r
 \name{compute_FDP_RLwithSynth}
 \alias{compute_FDP_RLwithSynth}
-\title{Estimate the false discovery proportion of a record-linkage method via synthetic augmentation}
+\title{Estimate the false discovery proportion of a record-linkage method via
+synthetic augmentation}
 \usage{
 compute_FDP_RLwithSynth(
   SynthMethod,
@@ -18,9 +19,14 @@ compute_FDP_RLwithSynth(
 )
 }
 \arguments{
-\item{SynthMethod}{Passed to \code{\link[=synthesise]{synthesise()}}: \code{"arf"}, \code{"synthpop"}, or \code{"mice"}.}
+\item{SynthMethod}{Passed to \code{\link[=synthesise]{synthesise()}}: \code{"arf"}, \code{"synthpop"}, or
+\code{"mice"}.}
 
-\item{fileA, }{fileB The two prepared data sources (\code{fileA} must be the smaller one).}
+\item{fileA}{The prepared data source (\code{fileA} must be the
+smaller one).}
+
+\item{fileB}{The prepared data source (\code{fileB} must be the
+larger one).}
 
 \item{PIVs}{Character vector, names of the PIVs.}
 
@@ -29,7 +35,8 @@ iteration (default: 10\% of \code{nrow(fileB)}).}
 
 \item{restrict_support_intersection}{Passed to \code{\link[=synthesise]{synthesise()}}.}
 
-\item{maxIter4CV}{Integer, max number of retries per iteration if no valid FDP estimate is obtained.}
+\item{maxIter4CV}{Integer, max number of retries per iteration if no valid
+FDP estimate is obtained.}
 
 \item{NIter}{Integer, number of augmentation iterations to average over.}
 
@@ -51,14 +58,30 @@ the false discovery proportion, for a range of score thresholds
 (0.50 to 0.95). See https://doi.org/10.1002/sim.70292 for the method.
 }
 \examples{
-PIVs_config <- list( V1 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                           ),
-                    V2 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                            ),
-                    V3 = list(dynamics = "flexible",    boundMistakes = c(NA,NA),      fixMistakes = c(NA,NA)                                                            ),
-                    V4 = list(dynamics = "structured",  boundMistakes = c(NA,NA),      fixMistakes = c(0.03,0.03),  condHazardCov = list(cov1=c("Xe", "Xf"), cov2=c())   )
+PIVs_config <- list( V1 = list(dynamics = "stable",
+                                boundMistakes = c(0.10,0.10),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V2 = list(dynamics = "stable",
+                                boundMistakes = c(0.10,0.10),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V3 = list(dynamics = "flexible",
+                                boundMistakes = c(NA,NA),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V4 = list(dynamics = "structured",
+                                boundMistakes = c(NA,NA),
+                                fixMistakes = c(0.03,0.03),
+                                condHazardCov = list(cov1=c("Xe", "Xf"),
+                                                      cov2=c())
+                                )
 )
 Nval  <- c(10, 11, 12, 13)
-Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02), V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005), V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+                  V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
+Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+                  V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
 condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
 
 GenData <- DataCreation(
@@ -67,27 +90,14 @@ GenData <- DataCreation(
 )
 
 PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
-                         PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
+                     PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
 
-fileA <- PrepData$encodedA
-fileA$unique_key_A <- fileA$localID
-fileB <- PrepData$encodedB
-fileB$unique_key_B <- fileB$localID
-fdp_res_fedmatch <- compute_FDP_RLwithSynth("arf", fileA, fileB, names(PIVs_config),
-                        subsample_size=200, restrict_support_intersection=TRUE, maxIter4CV=3, NIter=5,
-                        RLMethod = "fedmatch",
-                        by = names(PIVs_config),
-                        match_type = "multivar",
-                        unique_key_1 = "unique_key_A",
-                        unique_key_2 = "unique_key_B",
-                        multivar_settings = fedmatch::build_multivar_settings( compare_type =
-                                rep("indicator", length(PIVs_config)), wgts = rep(1/length(PIVs_config), length(PIVs_config)) )
-                        )
-
-fdp_res_brl <- compute_FDP_RLwithSynth("arf", PrepData$encodedA, PrepData$encodedB, names(PIVs_config),
-                        subsample_size=NULL, restrict_support_intersection=TRUE, maxIter4CV=3, NIter=5,
-                        RLMethod = "BRL",
-                        flds = names(PIVs_config),
-                        types = rep("bi",length(PIVs_config))
-                        )
+fdp_res_brl <- compute_FDP_RLwithSynth("arf", PrepData$encodedA,
+      PrepData$encodedB, names(PIVs_config),
+      subsample_size=NULL, restrict_support_intersection=TRUE,
+      maxIter4CV=3, NIter=5,
+      RLMethod = "BRL",
+      flds = names(PIVs_config),
+      types = rep("bi",length(PIVs_config))
+      )
 }

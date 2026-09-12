@@ -10,7 +10,7 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Depends: R (>= 4.4.0)
-Imports: Matrix (>= 1.7), progress(>= 1.2.3), Rcpp(>= 1.0.13), 
+Imports: Matrix (>= 1.7), Rcpp(>= 1.0.13), cli, BRL, arf, diyar, fastLink, fedmatch, mice, multilink, rcompanion, reclin2, synthpop
 LinkingTo: Rcpp
 Suggests: 
     knitr,

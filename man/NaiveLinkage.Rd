@@ -7,15 +7,19 @@
 NaiveLinkage(PIVs, encodedA, encodedB, na.match = TRUE, na.is.zero = TRUE)
 }
 \arguments{
-\item{PIVs}{Character vector, names of the PIVs (columns present in both files).}
+\item{PIVs}{Character vector, names of the PIVs (columns present in both
+files).}
 
-\item{encodedA, }{encodedB The two data sources (PIVs encoded to natural numbers).}
+\item{encodedA}{The data source (PIVs encoded to natural numbers).}
+
+\item{encodedB}{The data source (PIVs encoded to natural numbers).}
 
 \item{na.match}{Logical; if \code{TRUE}, a missing PIV value is treated as
 matching any value in the other file (default \code{TRUE}).}
 
 \item{na.is.zero}{Logical; if \code{TRUE}, missing values are already coded as
-\code{0} (FlexRL's convention); if \code{FALSE}, \code{NA} will be recoded to \code{0} (default \code{TRUE}).}
+\code{0} (FlexRL's convention); if \code{FALSE}, \code{NA} will be recoded to \code{0}
+(default \code{TRUE}).}
 }
 \value{
 Data frame with columns \code{idxA}, \code{idxB}: pairs of record indices
@@ -28,13 +32,21 @@ gauge the difficulty of the linkage task (amount of duplication, and
 discriminative power of the PIVs together).
 }
 \examples{
-PIVs_config <- list(V1 = list(dynamics = "stable", boundMistakes = c(0.1, 0.1), fixMistakes = c(NA, NA)))
-GenData <- DataCreation(PIVs_config, Nval = 6, NRecords = c(30, 50), Nlinks = 15,
-                        Pmistake = list(V1 = c(0, 0)), Pmissing = list(V1 = c(0, 0)),
-                        condHazard_params = list(V1 = c()), enforceEstimability = FALSE)
+PIVs_config <- list(V1 = list(dynamics = "stable",
+                              boundMistakes = c(0.1, 0.1),
+                              fixMistakes = c(NA, NA)),
+                    V2 = list(dynamics = "stable",
+                              boundMistakes = c(0.1, 0.1),
+                              fixMistakes = c(NA, NA)))
+GenData <- DataCreation(PIVs_config, Nval = c(6,6), NRecords = c(30, 50),
+               Nlinks = 15, Pmistake = list(V1 = c(0, 0), V2 = c(0, 0)),
+               Pmissing = list(V1 = c(0, 0), V1 = c(0, 0)),
+               condHazard_params = list(V1 = c()),
+               enforceEstimability = FALSE)
+PIVs <- names(PIVs_config)
 encodedA <- GenData$dataSet1
 encodedA[,PIVs][ is.na(encodedA[,PIVs]) ] = 0
 encodedB <- GenData$dataSet2
 encodedB[,PIVs][ is.na(encodedB[,PIVs]) ] = 0
-NaiveLinkage("V1", encodedA, encodedB)
+NaiveLinkage(PIVs, encodedA, encodedB)
 }

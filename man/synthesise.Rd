@@ -17,7 +17,9 @@ synthesise(
 \item{method}{One of \code{"arf"} (\code{\link[arf:adversarial_rf]{arf::adversarial_rf()}}), \code{"synthpop"}
 (\code{\link[synthpop:syn]{synthpop::syn()}}), or \code{"mice"} (\code{\link[mice:mice]{mice::mice()}}).}
 
-\item{encodedA, }{encodedB The two (already prepared / encoded) data sources.}
+\item{encodedA}{The (already prepared / encoded) data source.}
+
+\item{encodedB}{The (already prepared / encoded) data source.}
 
 \item{PIVs}{Character vector, names of the PIVs to synthesise.}
 

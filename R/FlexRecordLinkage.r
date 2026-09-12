@@ -270,7 +270,6 @@ DataCreation <- function(PIVs_config, Nval, NRecords, Nlinks, Pmistake, Pmissing
 #' )
 #' PIVs_stable <- sapply(PIVs_config, function(x) x$dynamics != "structured")
 #' nCoefUnstable = c(0,0,0,3)
-#' createDataAlpha(nCoefUnstable, PIVs_stable)
 #' Valpha <- mapply(createDataAlpha, nCoefUnstable = nCoefUnstable,
 #'                   stable = PIVs_stable, SIMPLIFY = FALSE)
 createDataAlpha <- function(nCoefUnstable, stable) {
@@ -408,7 +407,7 @@ loglik <- function(LLL, LLA, LLB, links, sumRowD, sumColD, gamma) {
 #'                           TRUE)
 #' PIVs_stable <- sapply(Data4StEM$PIVs_config, function(x)
 #'                         x$dynamics != "structured")
-#' initDeltaMap()
+#' FlexRL:::initDeltaMap()
 #' linksR = base::matrix(0,0,2)
 #' linksCpp = linksR
 #' sumRowD = rep(0, nrow(Data4StEM$encodedA))
@@ -458,8 +457,8 @@ simulateH <- function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi) {
 #'   link?
 #' @param sumColD Logical vector, one entry per record in B: does it have a
 #'   link?
-#' @param truepivsA, truepivsB Matrices of true PIV values, as returned by
-#'   [simulateH()].
+#' @param truepivsA Matrix of true PIV values, as returned by [simulateH()].
+#' @param truepivsB Matrix of true PIV values, as returned by [simulateH()].
 #' @param gamma Numeric, proportion of linked records as a fraction of the
 #'   smaller file.
 #' @param eta List (one per PIV) of the distribution of true values.
@@ -515,7 +514,7 @@ simulateH <- function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi) {
 #'                           TRUE)
 #' PIVs_stable <- sapply(Data4StEM$PIVs_config, function(x)
 #'                         x$dynamics != "structured")
-#' initDeltaMap()
+#' FlexRL:::initDeltaMap()
 #' linksR = base::matrix(0,0,2)
 #' linksCpp = linksR
 #' sumRowD = rep(0, nrow(Data4StEM$encodedA))
@@ -737,8 +736,9 @@ SurvivalUnstable <- function(Xlinksk, alphask, times) {
 #'   each iteration, or `NULL` to disable.
 #' @param saveInfoIter Logical; save the environment at the end of each
 #'   iteration (only used if `newDirectory` is not `NULL`).
-#' @param gamma0, phiA0, phiB0 Optional starting values for `gamma`/`phi`; drawn
-#'   at random if `NULL`.
+#' @param gamma0 Optional starting values for `gamma`; at random if `NULL`.
+#' @param phiA0 Optional starting values for `phi`; at random if `NULL`.
+#' @param phiB0 Optional starting values for `phi`; at random if `NULL`.
 #' @param nPostSamp Integer, number of posterior draws used to estimate the
 #'   final linkage probabilities `Delta`.
 #'
@@ -1138,8 +1138,8 @@ stEM <- function(data, StEMIter = 30, StEMBurnin = 15, GibbsIter = 20, GibbsBurn
 #'
 #' @param PIVs Character vector, names of the PIVs (columns present in both
 #'   files).
-#' @param encodedA, encodedB The two data sources (PIVs encoded to natural
-#'   numbers).
+#' @param encodedA The data source (PIVs encoded to natural numbers).
+#' @param encodedB The data source (PIVs encoded to natural numbers).
 #' @param na.match Logical; if `TRUE`, a missing PIV value is treated as
 #'   matching any value in the other file (default `TRUE`).
 #' @param na.is.zero Logical; if `TRUE`, missing values are already coded as
@@ -1153,17 +1153,21 @@ stEM <- function(data, StEMIter = 30, StEMBurnin = 15, GibbsIter = 20, GibbsBurn
 #' @examples
 #' PIVs_config <- list(V1 = list(dynamics = "stable",
 #'                               boundMistakes = c(0.1, 0.1),
+#'                               fixMistakes = c(NA, NA)),
+#'                     V2 = list(dynamics = "stable",
+#'                               boundMistakes = c(0.1, 0.1),
 #'                               fixMistakes = c(NA, NA)))
-#' GenData <- DataCreation(PIVs_config, Nval = 6, NRecords = c(30, 50),
-#'                         Nlinks = 15, Pmistake = list(V1 = c(0, 0)),
-#'                         Pmissing = list(V1 = c(0, 0)),
-#'                         condHazard_params = list(V1 = c()),
-#'                         enforceEstimability = FALSE)
+#' GenData <- DataCreation(PIVs_config, Nval = c(6,6), NRecords = c(30, 50),
+#'                Nlinks = 15, Pmistake = list(V1 = c(0, 0), V2 = c(0, 0)),
+#'                Pmissing = list(V1 = c(0, 0), V1 = c(0, 0)),
+#'                condHazard_params = list(V1 = c()),
+#'                enforceEstimability = FALSE)
+#' PIVs <- names(PIVs_config)
 #' encodedA <- GenData$dataSet1
 #' encodedA[,PIVs][ is.na(encodedA[,PIVs]) ] = 0
 #' encodedB <- GenData$dataSet2
 #' encodedB[,PIVs][ is.na(encodedB[,PIVs]) ] = 0
-#' NaiveLinkage("V1", encodedA, encodedB)
+#' NaiveLinkage(PIVs, encodedA, encodedB)
 NaiveLinkage <- function(PIVs, encodedA, encodedB, na.match = TRUE, na.is.zero = TRUE) {
 
   if (!na.is.zero) {
@@ -1248,7 +1252,8 @@ NaiveLinkage <- function(PIVs, encodedA, encodedB, na.match = TRUE, na.is.zero =
 #' More details about FlexRL on
 #' https://cran.r-project.org/web/packages/FlexRL/index.html
 #'
-#' @param NewA, NewB Data sets as returned by [synthesise()].
+#' @param NewA Data set as returned by [synthesise()].
+#' @param NewB Data set as returned by [synthesise()].
 #' @param arguments List of extra arguments forwarded to [stEM()] (e.g.
 #'   `data`, `StEMIter`, `StEMBurnin`, `GibbsIter`, `GibbsBurnin`).
 #'
@@ -1271,7 +1276,8 @@ FDPinRL_FlexRL <- function(NewA, NewB, arguments) {
 #' More details about fedmatch on
 #' https://cran.r-project.org/web/packages/fedmatch/index.html
 #'
-#' @param NewA, NewB Data sets as returned by [synthesise()].
+#' @param NewA Data set as returned by [synthesise()].
+#' @param NewB Data sets as returned by [synthesise()].
 #' @param arguments List of extra arguments forwarded to
 #'   `fedmatch::merge_plus()` (e.g. `by`, `match_type`, `unique_key_1`,
 #'   `unique_key_2`, `multivar_settings`).
@@ -1294,7 +1300,8 @@ FDPinRL_fedmatch <- function(NewA, NewB, arguments) {
 #' More details about reclin2 on
 #' https://cran.r-project.org/web/packages/reclin2/index.html
 #'
-#' @param NewA, NewB Data sets as returned by [synthesise()].
+#' @param NewA Data set as returned by [synthesise()].
+#' @param NewB Data sets as returned by [synthesise()].
 #' @param arguments List of extra arguments forwarded across the `reclin2`
 #'   pipeline (`pair()`, `compare_pairs()`, `problink_em()`, `predict()`,
 #'   `select_threshold()`): e.g. `on`, `formula`, `type`, `add`, `variable`,
@@ -1332,7 +1339,8 @@ FDPinRL_reclin2 <- function(NewA, NewB, arguments) {
 #' More details about BRL on
 #' https://cran.r-project.org/web/packages/BRL/index.html
 #'
-#' @param NewA, NewB Data sets as returned by [synthesise()].
+#' @param NewA Data set as returned by [synthesise()].
+#' @param NewB Data sets as returned by [synthesise()].
 #' @param arguments List of extra arguments forwarded to `BRL::compareRecords()`
 #'   and `BRL::bipartiteGibbs()` (e.g. `flds`, `types`, `nIter`).
 #'
@@ -1377,7 +1385,8 @@ FDPinRL_BRL <- function(NewA, NewB, arguments) {
 #' More details about fastLink on
 #' https://cran.r-project.org/web/packages/fastLink/index.html
 #'
-#' @param NewA, NewB Data sets as returned by [synthesise()].
+#' @param NewA Data set as returned by [synthesise()].
+#' @param NewB Data sets as returned by [synthesise()].
 #' @param arguments List of extra arguments forwarded to `fastLink::fastLink()`
 #'   (e.g. `varnames`, `threshold.match`, `tol.em`, `return.all`).
 #'
@@ -1397,7 +1406,8 @@ FDPinRL_fastLink <- function(NewA, NewB, arguments) {
 #' More details about multilink on
 #' https://cran.r-project.org/web/packages/multilink/index.html
 #'
-#' @param NewA, NewB Data sets as returned by [synthesise()].
+#' @param NewA Data set as returned by [synthesise()].
+#' @param NewB Data sets as returned by [synthesise()].
 #' @param arguments List of extra arguments forwarded across the `multilink`
 #'   pipeline (`create_comparison_data()`, `reduce_comparison_data()`,
 #'   `specify_prior()`, `gibbs_sampler()`, `find_bayes_estimate()`,
@@ -1451,7 +1461,8 @@ FDPinRL_multilink <- function(NewA, NewB, arguments) {
 #' More details about diyar on
 #' https://cran.r-project.org/web/packages/diyar/index.html
 #'
-#' @param NewA, NewB Data sets as returned by [synthesise()].
+#' @param NewA Data set as returned by [synthesise()].
+#' @param NewB Data sets as returned by [synthesise()].
 #' @param arguments List of extra arguments forwarded to
 #'   `diyar::prob_score_range()` and `diyar::links_wf_probabilistic()` (e.g.
 #'   `attribute`, `probabilistic`, `return_weights`).
@@ -1486,7 +1497,8 @@ FDPinRL_diyar <- function(NewA, NewB, arguments) {
 #' For a set of linked pairs (and, optionally, the true pairs), computes how
 #' often the two records agree on each variable in `common_vars`.
 #'
-#' @param data1, data2 Data frames containing `common_vars`.
+#' @param data1 Data frame containing `common_vars`.
+#' @param data2 Data frame containing `common_vars`.
 #' @param common_vars Character vector, names of the variables to compare
 #'   (must exist in both `data1` and `data2`).
 #' @param linked_pairs Data frame/matrix/list with 2 columns of indices
@@ -1601,10 +1613,14 @@ rl_agreement <- function(data1, data2, common_vars, linked_pairs,
 #' performance), encodes every PIV to natural numbers using levels pooled
 #' across both sources, and recodes missing values to `0`.
 #'
-#' @param data1, data2 Data frames, the two raw data sources (whichever has
-#'   more rows becomes `B`).
-#' @param label1, label2 Character, labels recorded in the `source` column
-#'   for `data1`/`data2`.
+#' @param data1 Data frame, the raw data source (whichever has more rows
+#' becomes `B`).
+#' @param data2 Data frame, the raw data source (whichever has more rows
+#' becomes `B`).
+#' @param label1 Character, label recorded in the `source` column
+#'   for `data1`.
+#' @param label2 Character, label recorded in the `source` column
+#'   for `data2`.
 #' @param PIVs_config Named list describing each PIV — see [DataCreation()].
 #' @param sameMistakes Logical, will A and B share one mistake-probability
 #'   parameter per PIV.
@@ -2008,7 +2024,8 @@ mmd <- function(x, y) {
 
 #' Intersection-over-union of two histogram supports
 #'
-#' @param h1, h2 `histogram` objects (as returned by [graphics::hist()]).
+#' @param h1 `histogram` object (as returned by [graphics::hist()]).
+#' @param h2 `histogram` object (as returned by [graphics::hist()]).
 #'
 #' @return Numeric, IoU of the ranges over which `h1` and `h2`
 #'   have non-zero counts.
@@ -2051,7 +2068,8 @@ compute_proba_control <- function(df, var, level) {
 #'
 #' @param method One of `"arf"` ([arf::adversarial_rf()]), `"synthpop"`
 #'   ([synthpop::syn()]), or `"mice"` ([mice::mice()]).
-#' @param encodedA, encodedB The two (already prepared / encoded) data sources.
+#' @param encodedA The (already prepared / encoded) data source.
+#' @param encodedB The (already prepared / encoded) data source.
 #' @param PIVs Character vector, names of the PIVs to synthesise.
 #' @param syntheticSample Integer, number of synthetic records to generate.
 #' @param restrict_support_intersection Logical; drop synthetic records whose
@@ -2121,7 +2139,9 @@ synthesise <- function(method, encodedA, encodedB, PIVs, syntheticSample, restri
 
 #' Standardised mean difference between a selected set and a baseline
 #'
-#' @param dataSelect, dataBaseline Data frames to compare (e.g. the linked
+#' @param dataSelect Data frame to compare (e.g. the linked
+#'   set vs. the original file).
+#' @param dataBaseline Data frame to compare (e.g. the linked
 #'   set vs. the original file).
 #' @param var Character, column name to compare.
 #' @param continuous Logical; if `TRUE`, compares means of `var` directly; if
@@ -2279,8 +2299,10 @@ compute_FDP_RLmodelSpecific <- function(vec_link_scores, threshold) {
 #'
 #' @param SynthMethod Passed to [synthesise()]: `"arf"`, `"synthpop"`, or
 #'   `"mice"`.
-#' @param fileA, fileB The two prepared data sources (`fileA` must be the
+#' @param fileA The prepared data source (`fileA` must be the
 #'   smaller one).
+#' @param fileB The prepared data source (`fileB` must be the
+#'   larger one).
 #' @param PIVs Character vector, names of the PIVs.
 #' @param subsample_size Integer, number of synthetic records to generate per
 #'   iteration (default: 10% of `nrow(fileB)`).
@@ -2331,25 +2353,6 @@ compute_FDP_RLmodelSpecific <- function(vec_link_scores, threshold) {
 #'
 #' PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
 #'                      PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
-#'
-#' fileA <- PrepData$encodedA
-#' fileA$unique_key_A <- fileA$localID
-#' fileB <- PrepData$encodedB
-#' fileB$unique_key_B <- fileB$localID
-#' fdp_res_fedmatch <- compute_FDP_RLwithSynth("arf", fileA, fileB,
-#'       names(PIVs_config),
-#'       subsample_size=200,
-#'       restrict_support_intersection=TRUE,
-#'       maxIter4CV=3, NIter=5,
-#'       RLMethod = "fedmatch",
-#'       by = names(PIVs_config),
-#'       match_type = "multivar",
-#'       unique_key_1 = "unique_key_A",
-#'       unique_key_2 = "unique_key_B",
-#'       multivar_settings = fedmatch::build_multivar_settings( compare_type =
-#'               rep("indicator", length(PIVs_config)),
-#'               wgts = rep(1/length(PIVs_config), length(PIVs_config)) )
-#'       )
 #'
 #' fdp_res_brl <- compute_FDP_RLwithSynth("arf", PrepData$encodedA,
 #'       PrepData$encodedB, names(PIVs_config),

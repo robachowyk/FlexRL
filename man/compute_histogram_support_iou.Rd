@@ -7,10 +7,13 @@
 compute_histogram_support_iou(h1, h2)
 }
 \arguments{
-\item{h1, }{h2 \code{histogram} objects (as returned by \code{\link[graphics:hist]{graphics::hist()}}).}
+\item{h1}{\code{histogram} object (as returned by \code{\link[graphics:hist]{graphics::hist()}}).}
+
+\item{h2}{\code{histogram} object (as returned by \code{\link[graphics:hist]{graphics::hist()}}).}
 }
 \value{
-Numeric, IoU of the ranges over which \code{h1} and \code{h2} have non-zero counts.
+Numeric, IoU of the ranges over which \code{h1} and \code{h2}
+have non-zero counts.
 }
 \description{
 Intersection-over-union of two histogram supports

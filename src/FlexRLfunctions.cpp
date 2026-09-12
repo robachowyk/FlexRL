@@ -5,33 +5,33 @@
 
 using namespace Rcpp;
 
-// Use R random number generator to control seeds
-// Otherwise use the following:
-// static std::random_device rd;
-// initialize Mersennes' twister using rd to generate the seed
-// static std::mt19937 gen{rd()};
-// std::uniform_real_distribution<double> dist(0, 1);
+ // Use R random number generator to control seeds
+ // Otherwise use the following:
+ // static std::random_device rd;
+ // initialize Mersennes' twister using rd to generate the seed
+ // static std::mt19937 gen{rd()};
+ // std::uniform_real_distribution<double> dist(0, 1);
 
-// calls an arbitrary R function `f` on a numeric vector `x` and returns its result.
-NumericVector callFunction(NumericVector x, Function f) {
-  NumericVector res = f(x);
-  return res;
-}
+ // calls an arbitrary R function `f` on a numeric vector `x` and returns its result.
+ NumericVector callFunction(NumericVector x, Function f) {
+   NumericVector res = f(x);
+   return res;
+ }
 
-// Draws a single random number from Uniform(0,1). Separated to control from R.
-double drawUniform01() {
-  double randomnumber = R::runif(0,1);
-  return randomnumber;
-}
+ // Draws a single random number from Uniform(0,1). Separated to control from R.
+ double drawUniform01() {
+   double randomnumber = R::runif(0,1);
+   return randomnumber;
+ }
 
-// Draws a single value from `choiceset`, with sampling probabilities given
-// by `probavec`. Separated to control from R.
-double drawSample(IntegerVector choiceset, NumericVector probavec) {
-  double generatedrandom = Rcpp::sample(choiceset, 1, false, probavec)[0];
-  return generatedrandom;
-}
+ // Draws a single value from `choiceset`, with sampling probabilities given
+ // by `probavec`. Separated to control from R.
+ double drawSample(IntegerVector choiceset, NumericVector probavec) {
+   double generatedrandom = Rcpp::sample(choiceset, 1, false, probavec)[0];
+   return generatedrandom;
+ }
 
-//' indexPatterns
+ //' indexPatterns
  //'
  //' @param U IntegerVector with factor values corresponding to the patterns of Partially Identifying Variables (PIVs) observed among records in the concerned source
  //' @param nvals integer for the total number of possible patterns (among all sources)
@@ -59,7 +59,7 @@ double drawSample(IntegerVector choiceset, NumericVector probavec) {
    return out;
  }
 
-//' pairPatterns
+ //' pairPatterns
  //'
  //' @param A List with for each pattern in value, count of the records having the pattern in the concerned source
  //' @param B List with for each pattern in value, count of the records having the pattern in the concerned source
@@ -99,7 +99,7 @@ double drawSample(IntegerVector choiceset, NumericVector probavec) {
    return tmpC;
  }
 
-//' pasteIntoPattern
+ //' pasteIntoPattern
  //'
  //' @param A IntegerMatrix with values to form patterns
  //'
@@ -123,11 +123,9 @@ double drawSample(IntegerVector choiceset, NumericVector probavec) {
    return res;
  }
 
+ std::map<int, std::set<int>> _DeltaMap;
 
-
-std::map<int, std::set<int>> _DeltaMap;
-
-//' initDeltaMap
+ //' initDeltaMap
  //'
  //' @return void: Initialise the cpp map _DeltaMap representing the sparse linkage matrix Delta.
  //' @export

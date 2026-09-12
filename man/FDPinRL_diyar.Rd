@@ -7,7 +7,9 @@
 FDPinRL_diyar(NewA, NewB, arguments)
 }
 \arguments{
-\item{NewA, }{NewB Data sets as returned by \code{\link[=synthesise]{synthesise()}}.}
+\item{NewA}{Data set as returned by \code{\link[=synthesise]{synthesise()}}.}
+
+\item{NewB}{Data sets as returned by \code{\link[=synthesise]{synthesise()}}.}
 
 \item{arguments}{List of extra arguments forwarded to
 \code{diyar::prob_score_range()} and \code{diyar::links_wf_probabilistic()} (e.g.
@@ -18,5 +20,6 @@ List with \code{result_index_linked_A}, \code{result_index_linked_B},
 \code{result_vec_linked_scores} (\code{NULL}: not exposed per-pair by this wrapper).
 }
 \description{
-More details about diyar on https://cran.r-project.org/web/packages/diyar/index.html
+More details about diyar on
+https://cran.r-project.org/web/packages/diyar/index.html
 }

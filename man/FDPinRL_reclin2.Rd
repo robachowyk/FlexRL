@@ -7,7 +7,9 @@
 FDPinRL_reclin2(NewA, NewB, arguments)
 }
 \arguments{
-\item{NewA, }{NewB Data sets as returned by \code{\link[=synthesise]{synthesise()}}.}
+\item{NewA}{Data set as returned by \code{\link[=synthesise]{synthesise()}}.}
+
+\item{NewB}{Data sets as returned by \code{\link[=synthesise]{synthesise()}}.}
 
 \item{arguments}{List of extra arguments forwarded across the \code{reclin2}
 pipeline (\code{pair()}, \code{compare_pairs()}, \code{problink_em()}, \code{predict()},
@@ -18,5 +20,6 @@ pipeline (\code{pair()}, \code{compare_pairs()}, \code{problink_em()}, \code{pre
 List with \code{result_index_linked_A}, \code{result_index_linked_B}, \code{result_vec_linked_scores}.
 }
 \description{
-More details about reclin2 on https://cran.r-project.org/web/packages/reclin2/index.html
+More details about reclin2 on
+https://cran.r-project.org/web/packages/reclin2/index.html
 }

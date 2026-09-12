@@ -10,7 +10,8 @@ SurvivalUnstable(Xlinksk, alphask, times)
 \item{Xlinksk}{Matrix (n linked records x (1 + n covariates)), first column:
 intercept, remaining columns: covariates used to model instability.}
 
-\item{alphask}{Numeric vector, hazard coefficients matching the columns of \code{Xlinksk}.}
+\item{alphask}{Numeric vector, hazard coefficients matching the columns
+of \code{Xlinksk}.}
 
 \item{times}{Numeric vector, time gap between the linked records.}
 }

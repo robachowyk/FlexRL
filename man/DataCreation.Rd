@@ -49,14 +49,12 @@ for the \code{cov1} covariates, then for the \code{cov2} covariates); only used 
 given a near-zero time gap to help estimate the instability parameters.}
 }
 \value{
-A list with:
-\itemize{
-\item{dataSet1, dataSet2}{the two simulated (encoded) data frames}
-\item{Nvalues}{number of unique values per PIV}
-\item{TimeDifference}{time gap between linked records (\code{NA} if no PIV is structured)}
-\item{proba_same_H}{matrix (n links x n PIVs) of probabilities that the true values coincide}
-\item{true_pairs}{data frame with the true \code{1}/\code{2} indices of the linked records}
-}
+A list with: \code{dataSet1}, \code{dataSet2} the two simulated (encoded)
+data frames, \code{Nvalues} number of unique values per PIV, \code{TimeDifference}
+time gap between linked records (\code{NA} if no PIV is structured),
+\code{proba_same_H} matrix (n links x n PIVs) of probabilities that the true
+values coincide, \code{true_pairs} data frame with the true \code{1}/\code{2} indices
+of the linked records
 }
 \description{
 Creates two synthetic data sources of given sizes sharing a given number
@@ -70,14 +68,30 @@ forces half of the linked pairs to have a near-zero time gap, which helps
 separate "mistake" from "genuine change over time" when fitting the model.
 }
 \examples{
-PIVs_config <- list( V1 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                           ),
-                    V2 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                            ),
-                    V3 = list(dynamics = "flexible",    boundMistakes = c(NA,NA),      fixMistakes = c(NA,NA)                                                            ),
-                    V4 = list(dynamics = "structured",  boundMistakes = c(NA,NA),      fixMistakes = c(0.03,0.03),  condHazardCov = list(cov1=c("Xe", "Xf"), cov2=c())   )
+PIVs_config <- list( V1 = list(dynamics = "stable",
+                                boundMistakes = c(0.10,0.10),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V2 = list(dynamics = "stable",
+                                boundMistakes = c(0.10,0.10),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V3 = list(dynamics = "flexible",
+                                boundMistakes = c(NA,NA),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V4 = list(dynamics = "structured",
+                                boundMistakes = c(NA,NA),
+                                fixMistakes = c(0.03,0.03),
+                                condHazardCov = list(cov1=c("Xe", "Xf"),
+                                                      cov2=c())
+                                )
 )
 Nval  <- c(6, 7, 8, 9)
-Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02), V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005), V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+                  V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
+Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+                  V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
 condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
 
 GenData <- DataCreation(

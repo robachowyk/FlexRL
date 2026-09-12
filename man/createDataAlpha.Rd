@@ -10,7 +10,8 @@ createDataAlpha(nCoefUnstable, stable)
 \item{nCoefUnstable}{Integer, number of hazard coefficients for this PIV
 (1 for the baseline hazard, plus one per covariate from file A and file B).}
 
-\item{stable}{Logical, whether this PIV is stable (\code{dynamics != "structured"}).}
+\item{stable}{Logical, whether this PIV is stable
+(\code{dynamics != "structured"}).}
 }
 \value{
 An empty data frame with \code{nCoefUnstable + 2} columns (the
@@ -23,13 +24,27 @@ the covariates, true-value agreement indicator, and time gaps needed to
 re-estimate the survival (hazard) parameters of a dynamic structured PIV.
 }
 \examples{
-PIVs_config <- list( V1 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                           ),
-                    V2 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                            ),
-                    V3 = list(dynamics = "flexible",    boundMistakes = c(NA,NA),      fixMistakes = c(NA,NA)                                                            ),
-                    V4 = list(dynamics = "structured",  boundMistakes = c(NA,NA),      fixMistakes = c(0.03,0.03),  condHazardCov = list(cov1=c("Xe", "Xf"), cov2=c())   )
+PIVs_config <- list( V1 = list(dynamics = "stable",
+                                boundMistakes = c(0.10,0.10),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V2 = list(dynamics = "stable",
+                                boundMistakes = c(0.10,0.10),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V3 = list(dynamics = "flexible",
+                                boundMistakes = c(NA,NA),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V4 = list(dynamics = "structured",
+                                boundMistakes = c(NA,NA),
+                                fixMistakes = c(0.03,0.03),
+                                condHazardCov = list(cov1=c("Xe", "Xf"),
+                                                      cov2=c())
+                                )
 )
 PIVs_stable <- sapply(PIVs_config, function(x) x$dynamics != "structured")
 nCoefUnstable = c(0,0,0,3)
-createDataAlpha(nCoefUnstable, PIVs_stable)
-Valpha <- mapply(createDataAlpha, nCoefUnstable = nCoefUnstable, stable = PIVs_stable, SIMPLIFY = FALSE)
+Valpha <- mapply(createDataAlpha, nCoefUnstable = nCoefUnstable,
+                  stable = PIVs_stable, SIMPLIFY = FALSE)
 }

@@ -7,7 +7,9 @@
 FDPinRL_multilink(NewA, NewB, arguments)
 }
 \arguments{
-\item{NewA, }{NewB Data sets as returned by \code{\link[=synthesise]{synthesise()}}.}
+\item{NewA}{Data set as returned by \code{\link[=synthesise]{synthesise()}}.}
+
+\item{NewB}{Data sets as returned by \code{\link[=synthesise]{synthesise()}}.}
 
 \item{arguments}{List of extra arguments forwarded across the \code{multilink}
 pipeline (\code{create_comparison_data()}, \code{reduce_comparison_data()},
@@ -16,8 +18,10 @@ pipeline (\code{create_comparison_data()}, \code{reduce_comparison_data()},
 }
 \value{
 List with \code{result_index_linked_A}, \code{result_index_linked_B},
-\code{result_vec_linked_scores} (\code{NULL}: multilink does not return a per-pair score).
+\code{result_vec_linked_scores} (\code{NULL}: multilink does not return a
+per-pair score).
 }
 \description{
-More details about multilink on https://cran.r-project.org/web/packages/multilink/index.html
+More details about multilink on
+https://cran.r-project.org/web/packages/multilink/index.html
 }

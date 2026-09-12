@@ -16,7 +16,9 @@ rl_agreement(
 )
 }
 \arguments{
-\item{data1, }{data2 Data frames containing \code{common_vars}.}
+\item{data1}{Data frame containing \code{common_vars}.}
+
+\item{data2}{Data frame containing \code{common_vars}.}
 
 \item{common_vars}{Character vector, names of the variables to compare
 (must exist in both \code{data1} and \code{data2}).}
@@ -33,8 +35,8 @@ true matches; only used if \code{known_truth = TRUE}.}
 \item{na.rm}{Logical; if \code{TRUE} (default), pairs with a missing value on a
 variable are excluded from that variable's agreement rate.}
 
-\item{na.match}{Logical, required if \code{na.rm = FALSE}: should a missing
-value be treated as agreeing (\code{TRUE}) or disagreeing (\code{FALSE}) with any value?}
+\item{na.match}{Logical, required if \code{na.rm = FALSE}: should a missing value
+be treated as agreeing (\code{TRUE}) or disagreeing (\code{FALSE}) with any value?}
 }
 \value{
 List with \code{linked_agreements} (named numeric vector, one entry per
@@ -45,14 +47,30 @@ For a set of linked pairs (and, optionally, the true pairs), computes how
 often the two records agree on each variable in \code{common_vars}.
 }
 \examples{
-PIVs_config <- list( V1 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                           ),
-                    V2 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                            ),
-                    V3 = list(dynamics = "flexible",    boundMistakes = c(NA,NA),      fixMistakes = c(NA,NA)                                                            ),
-                    V4 = list(dynamics = "structured",  boundMistakes = c(NA,NA),      fixMistakes = c(0.03,0.03),  condHazardCov = list(cov1=c("Xe", "Xf"), cov2=c())   )
+PIVs_config <- list( V1 = list(dynamics = "stable",
+                                boundMistakes = c(0.10,0.10),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V2 = list(dynamics = "stable",
+                                boundMistakes = c(0.10,0.10),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V3 = list(dynamics = "flexible",
+                                boundMistakes = c(NA,NA),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V4 = list(dynamics = "structured",
+                                boundMistakes = c(NA,NA),
+                                fixMistakes = c(0.03,0.03),
+                                condHazardCov = list(cov1=c("Xe", "Xf"),
+                                                      cov2=c())
+                                )
 )
 Nval  <- c(6, 7, 8, 9)
-Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02), V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005), V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+                  V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
+Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+                  V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
 condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
 
 GenData <- DataCreation(
@@ -61,13 +79,14 @@ GenData <- DataCreation(
 )
 
 PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
-                         PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
+                     PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
 
 fit <- stEM(data = PrepData, StEMIter = 10, StEMBurnin = 5,
            GibbsIter = 10, GibbsBurnin = 5, musicOn = FALSE)
 linked_pairs <- fit$Delta[fit$Delta$x > 0.5, ]
 
-rl_agreement(PrepData$encodedA, PrepData$encodedB, names(PIVs_config), linked_pairs)
-rl_agreement(PrepData$encodedA, PrepData$encodedB, names(PIVs_config), linked_pairs,
-            TRUE, GenData$true_pairs)
+rl_agreement(PrepData$encodedA, PrepData$encodedB,
+               names(PIVs_config), linked_pairs)
+rl_agreement(PrepData$encodedA, PrepData$encodedB,
+               names(PIVs_config), linked_pairs, TRUE, GenData$true_pairs)
 }

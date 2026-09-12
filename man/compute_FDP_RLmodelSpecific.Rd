@@ -9,23 +9,41 @@ compute_FDP_RLmodelSpecific(vec_link_scores, threshold)
 \arguments{
 \item{vec_link_scores}{Numeric vector, linkage scores of the candidate pairs.}
 
-\item{threshold}{Numeric, score threshold above which a pair is declared linked.}
+\item{threshold}{Numeric, score threshold above which a pair is declared
+linked.}
 }
 \value{
-Numeric, \code{1 - mean(score | score > threshold)}, the estimated FDP at \code{threshold}.
+Numeric, \code{1 - mean(score | score > threshold)}, the estimated FDP at
+\code{threshold}.
 }
 \description{
 Model-based false discovery proportion at a given threshold
 }
 \examples{
-PIVs_config <- list( V1 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                           ),
-                    V2 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                            ),
-                    V3 = list(dynamics = "flexible",    boundMistakes = c(NA,NA),      fixMistakes = c(NA,NA)                                                            ),
-                    V4 = list(dynamics = "structured",  boundMistakes = c(NA,NA),      fixMistakes = c(0.03,0.03),  condHazardCov = list(cov1=c("Xe", "Xf"), cov2=c())   )
+PIVs_config <- list( V1 = list(dynamics = "stable",
+                                boundMistakes = c(0.10,0.10),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V2 = list(dynamics = "stable",
+                                boundMistakes = c(0.10,0.10),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V3 = list(dynamics = "flexible",
+                                boundMistakes = c(NA,NA),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V4 = list(dynamics = "structured",
+                                boundMistakes = c(NA,NA),
+                                fixMistakes = c(0.03,0.03),
+                                condHazardCov = list(cov1=c("Xe", "Xf"),
+                                                      cov2=c())
+                                )
 )
 Nval  <- c(6, 7, 8, 9)
-Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02), V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005), V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+                  V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
+Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+                  V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
 condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
 
 GenData <- DataCreation(
@@ -34,7 +52,7 @@ GenData <- DataCreation(
 )
 
 PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
-                         PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
+                     PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
 
 fit <- stEM(data = PrepData, StEMIter = 10, StEMBurnin = 5,
            GibbsIter = 10, GibbsBurnin = 5, musicOn = FALSE)

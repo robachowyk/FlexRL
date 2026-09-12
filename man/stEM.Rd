@@ -21,48 +21,51 @@ stEM(
 }
 \arguments{
 \item{data}{List, typically the output of \code{\link[=prepare_data]{prepare_data()}}, with:
-\code{encodedA} (smaller source, PIVs encoded to natural numbers, \code{0} = missing),
-\code{encodedB} (larger source, encoded), \code{Nvalues}, \code{sameMistakes} (logical:
-one mistake parameter shared by A and B?), \code{PIVs_config} (named list,
-one entry per PIV, each a list with: \code{dynamics} (\code{"stable"}, \code{"flexible"},
-or \code{"structured"}), \code{boundMistakes} (length-2 numeric/NA, upper bound on the
-mistake probability in file 1 / file 2), \code{fixMistakes} (length-2 numeric/NA,
-mistake probability fixed to this value in file 1 / file 2), and, only
-for \code{dynamics = "structured"}, \code{condHazardCov} (a list with \code{cov1} and
-\code{cov2}, the names of covariates in file 1 / file 2 used to model the
-hazard of change).}
+\code{encodedA} (smaller source, PIVs encoded to natural numbers,
+\code{0} = missing), \code{encodedB} (larger source, encoded), \code{Nvalues},
+\code{sameMistakes} (logical: one mistake parameter shared by A and B?),
+\code{PIVs_config} (named list, one entry per PIV, each a list with: \code{dynamics}
+(\code{"stable"}, \code{"flexible"}, or \code{"structured"}), \code{boundMistakes} (length-2
+numeric/NA, upper bound on the mistake probability in file 1 / file 2),
+\code{fixMistakes} (length-2 numeric/NA, mistake probability fixed to this
+value in file 1 / file 2), and, only for \code{dynamics = "structured"},
+\code{condHazardCov} (a list with \code{cov1} and \code{cov2}, the names of covariates
+in file 1 / file 2 used to model the hazard of change).}
 
 \item{StEMIter}{Integer, total number of StEM iterations (including burn-in).}
 
 \item{StEMBurnin}{Integer, number of StEM iterations discarded as burn-in.}
 
-\item{GibbsIter}{Integer, total number of Gibbs iterations per StEM step (including burn-in).}
+\item{GibbsIter}{Integer, total number of Gibbs iterations per StEM step
+(including burn-in).}
 
 \item{GibbsBurnin}{Integer, number of Gibbs iterations discarded as burn-in
-(\code{0} lets the algorithm auto-detect burn-in from the stabilisation of the linked count).}
+(\code{0} lets the algorithm auto-detect burn-in from the stabilisation of the
+linked count).}
 
-\item{musicOn}{Logical; if \code{TRUE}, plays a short tune when the algorithm finishes.}
+\item{musicOn}{Logical; if \code{TRUE}, plays a short tune when the algorithm
+inishes.}
 
 \item{newDirectory}{Path to an existing directory to save progress after
 each iteration, or \code{NULL} to disable.}
 
-\item{saveInfoIter}{Logical; save the environment at the end of each iteration
-(only used if \code{newDirectory} is not \code{NULL}).}
+\item{saveInfoIter}{Logical; save the environment at the end of each
+iteration (only used if \code{newDirectory} is not \code{NULL}).}
 
-\item{gamma0, }{phiA0, phiB0 Optional starting values for \code{gamma}/\code{phi}; drawn
-at random if \code{NULL}.}
+\item{gamma0}{Optional starting values for \code{gamma}; at random if \code{NULL}.}
+
+\item{phiA0}{Optional starting values for \code{phi}; at random if \code{NULL}.}
+
+\item{phiB0}{Optional starting values for \code{phi}; at random if \code{NULL}.}
 
 \item{nPostSamp}{Integer, number of posterior draws used to estimate the
 final linkage probabilities \code{Delta}.}
 }
 \value{
-A list with:
-\itemize{
-\item{Delta}{sparse-matrix summary (\code{i}, \code{j}, \code{x}) of posterior linkage
-probabilities; a pair is a valid link candidate once \code{x > 0.5}
-(one-to-one constraint)}
-\item{gamma, eta, alpha, phi}{the StEM chains for each parameter}
-}
+A list with: \code{Delta} sparse-matrix summary (\code{i}, \code{j}, \code{x}) of
+posterior linkage probabilities; a pair is a valid link candidate once
+\code{x > 0.5} (one-to-one constraint), \code{gamma}, \code{eta}, \code{alpha}, \code{phi} the StEM
+chains for each parameter
 }
 \description{
 Fits the FlexRL model with a Stochastic EM algorithm: each iteration runs
@@ -72,14 +75,30 @@ the linkage matrix D) and then updates the model parameters (\code{gamma},
 methodology paper (\doi{10.1093/jrsssc/qlaf016}) for details.
 }
 \examples{
-PIVs_config <- list( V1 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                           ),
-                    V2 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                            ),
-                    V3 = list(dynamics = "flexible",    boundMistakes = c(NA,NA),      fixMistakes = c(NA,NA)                                                            ),
-                    V4 = list(dynamics = "structured",  boundMistakes = c(NA,NA),      fixMistakes = c(0.03,0.03),  condHazardCov = list(cov1=c("Xe", "Xf"), cov2=c())   )
+PIVs_config <- list( V1 = list(dynamics = "stable",
+                                boundMistakes = c(0.10,0.10),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V2 = list(dynamics = "stable",
+                                boundMistakes = c(0.10,0.10),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V3 = list(dynamics = "flexible",
+                                boundMistakes = c(NA,NA),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V4 = list(dynamics = "structured",
+                                boundMistakes = c(NA,NA),
+                                fixMistakes = c(0.03,0.03),
+                                condHazardCov = list(cov1=c("Xe", "Xf"),
+                                                      cov2=c())
+                                )
 )
 Nval  <- c(6, 7, 8, 9)
-Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02), V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005), V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+                  V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
+Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+                  V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
 condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
 
 GenData <- DataCreation(
@@ -88,7 +107,7 @@ GenData <- DataCreation(
 )
 
 PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
-                         PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
+                     PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
 
 fit <- stEM(data = PrepData, StEMIter = 10, StEMBurnin = 5,
            GibbsIter = 10, GibbsBurnin = 5, musicOn = FALSE)

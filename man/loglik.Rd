@@ -7,19 +7,26 @@
 loglik(LLL, LLA, LLB, links, sumRowD, sumColD, gamma)
 }
 \arguments{
-\item{LLL}{(Sparse) matrix of log-likelihood contributions for linked records.}
+\item{LLL}{(Sparse) matrix of log-likelihood contributions for linked
+records.}
 
-\item{LLA}{Numeric vector of log-likelihood contributions for non-linked records from A.}
+\item{LLA}{Numeric vector of log-likelihood contributions for non-linked
+records from A.}
 
-\item{LLB}{Numeric vector of log-likelihood contributions for non-linked records from B.}
+\item{LLB}{Numeric vector of log-likelihood contributions for non-linked
+records from B.}
 
-\item{links}{2-column matrix of indices (A, B) for the currently linked records.}
+\item{links}{2-column matrix of indices (A, B) for the currently linked
+records.}
 
-\item{sumRowD}{Logical vector, one entry per record in A: does it have a link?}
+\item{sumRowD}{Logical vector, one entry per record in A: does it have a
+link?}
 
-\item{sumColD}{Logical vector, one entry per record in B: does it have a link?}
+\item{sumColD}{Logical vector, one entry per record in B: does it have a
+link?}
 
-\item{gamma}{Numeric, proportion of linked records as a fraction of the smaller file.}
+\item{gamma}{Numeric, proportion of linked records as a fraction of the
+smaller file.}
 }
 \value{
 Numeric, the log-likelihood of the linkage matrix.
@@ -31,7 +38,8 @@ Log-likelihood of the linkage matrix
 LLL <- Matrix::Matrix(0, nrow = 13, ncol = 15, sparse = TRUE)
 LLA <- runif(13, 0, 2)
 LLB <- runif(15, 0, 2)
-links <- as.matrix(data.frame(idxA = c(5, 9, 11, 12, 13), idxB = c(5, 9, 11, 13, 15)))
+links <- as.matrix(data.frame(idxA = c(5, 9, 11, 12, 13),
+                              idxB = c(5, 9, 11, 13, 15)))
 LLL[links] <- 0.67
 sumRowD <- (seq_len(13) \%in\% links[, 1])
 sumColD <- (seq_len(15) \%in\% links[, 2])

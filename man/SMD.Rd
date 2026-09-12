@@ -7,23 +7,30 @@
 SMD(dataSelect, dataBaseline, var, continuous = TRUE)
 }
 \arguments{
-\item{dataSelect, }{dataBaseline Data frames to compare (e.g. the linked
+\item{dataSelect}{Data frame to compare (e.g. the linked
+set vs. the original file).}
+
+\item{dataBaseline}{Data frame to compare (e.g. the linked
 set vs. the original file).}
 
 \item{var}{Character, column name to compare.}
 
 \item{continuous}{Logical; if \code{TRUE}, compares means of \code{var} directly; if
-\code{FALSE}, compares the proportion at each observed level of \code{var} (default \code{TRUE}).}
+\code{FALSE}, compares the proportion at each observed level of \code{var}
+(default \code{TRUE}).}
 }
 \value{
-Named list, one SMD per variable (\code{continuous = TRUE}) or per level (\code{continuous = FALSE}).
+Named list, one SMD per variable (\code{continuous = TRUE}) or per level
+(\code{continuous = FALSE}).
 }
 \description{
 Standardised mean difference between a selected set and a baseline
 }
 \examples{
-base <- data.frame(age = rnorm(200, 40, 10), sex = sample(c("M", "F"), 200, replace = TRUE))
-select <- data.frame(age = rnorm(80, 43, 10), sex = sample(c("M", "F"), 80, replace = TRUE, prob = c(0.6, 0.4)))
+base <- data.frame(age = rnorm(200, 40, 10), sex = sample(c("M", "F"),
+                    200, replace = TRUE))
+select <- data.frame(age = rnorm(80, 43, 10), sex = sample(c("M", "F"), 80,
+                    replace = TRUE, prob = c(0.6, 0.4)))
 SMD(select, base, "age")
 SMD(select, base, "sex", continuous = FALSE)
 }

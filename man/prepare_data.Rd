@@ -16,11 +16,17 @@ prepare_data(
 )
 }
 \arguments{
-\item{data1, }{data2 Data frames, the two raw data sources (whichever has
-more rows becomes \code{B}).}
+\item{data1}{Data frame, the raw data source (whichever has more rows
+becomes \code{B}).}
 
-\item{label1, }{label2 Character, labels recorded in the \code{source} column
-for \code{data1}/\code{data2}.}
+\item{data2}{Data frame, the raw data source (whichever has more rows
+becomes \code{B}).}
+
+\item{label1}{Character, label recorded in the \code{source} column
+for \code{data1}.}
+
+\item{label2}{Character, label recorded in the \code{source} column
+for \code{data2}.}
 
 \item{PIVs_config}{Named list describing each PIV — see \code{\link[=DataCreation]{DataCreation()}}.}
 
@@ -28,7 +34,8 @@ for \code{data1}/\code{data2}.}
 parameter per PIV.}
 
 \item{uniqID}{Optional column name (present in both files) with the true
-entity identifier, used to build \code{true_pairs} for evaluation; \code{NULL} if unavailable.}
+entity identifier, used to build \code{true_pairs} for evaluation; \code{NULL} if
+unavailable.}
 
 \item{restrict_support_intersection}{Logical; if \code{TRUE} (default), records
 with an out-of-common-support PIV value are dropped (and a warning issued);
@@ -50,14 +57,30 @@ performance), encodes every PIV to natural numbers using levels pooled
 across both sources, and recodes missing values to \code{0}.
 }
 \examples{
-PIVs_config <- list( V1 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                           ),
-                    V2 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                            ),
-                    V3 = list(dynamics = "flexible",    boundMistakes = c(NA,NA),      fixMistakes = c(NA,NA)                                                            ),
-                    V4 = list(dynamics = "structured",  boundMistakes = c(NA,NA),      fixMistakes = c(0.03,0.03),  condHazardCov = list(cov1=c("Xe", "Xf"), cov2=c())   )
+PIVs_config <- list( V1 = list(dynamics = "stable",
+                                boundMistakes = c(0.10,0.10),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V2 = list(dynamics = "stable",
+                                boundMistakes = c(0.10,0.10),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V3 = list(dynamics = "flexible",
+                                boundMistakes = c(NA,NA),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V4 = list(dynamics = "structured",
+                                boundMistakes = c(NA,NA),
+                                fixMistakes = c(0.03,0.03),
+                                condHazardCov = list(cov1=c("Xe", "Xf"),
+                                                      cov2=c())
+                                )
 )
 Nval  <- c(6, 7, 8, 9)
-Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02), V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005), V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+                  V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
+Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+                  V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
 condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
 
 GenData <- DataCreation(
@@ -66,6 +89,6 @@ GenData <- DataCreation(
 )
 
 PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
-                         PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
+                     PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
 str(PrepData, max.level = 1)
 }

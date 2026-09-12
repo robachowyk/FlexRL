@@ -7,7 +7,9 @@
 FDPinRL_FlexRL(NewA, NewB, arguments)
 }
 \arguments{
-\item{NewA, }{NewB Data sets as returned by \code{\link[=synthesise]{synthesise()}}.}
+\item{NewA}{Data set as returned by \code{\link[=synthesise]{synthesise()}}.}
+
+\item{NewB}{Data set as returned by \code{\link[=synthesise]{synthesise()}}.}
 
 \item{arguments}{List of extra arguments forwarded to \code{\link[=stEM]{stEM()}} (e.g.
 \code{data}, \code{StEMIter}, \code{StEMBurnin}, \code{GibbsIter}, \code{GibbsBurnin}).}
@@ -17,5 +19,6 @@ List with \code{result_index_linked_A}, \code{result_index_linked_B},
 \code{result_vec_linked_scores} (posterior linkage probabilities).
 }
 \description{
-More details about FlexRL on https://cran.r-project.org/web/packages/FlexRL/index.html
+More details about FlexRL on
+https://cran.r-project.org/web/packages/FlexRL/index.html
 }

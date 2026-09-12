@@ -9,14 +9,17 @@ loglikSurvival(alphas, X, times, Hequal)
 \arguments{
 \item{alphas}{Numeric vector of hazard coefficients (baseline + covariates).}
 
-\item{X}{Matrix (n linked records x length(alphas)), covariates used to model the hazard.}
+\item{X}{Matrix (n linked records x length(alphas)), covariates used to model
+the hazard.}
 
 \item{times}{Numeric vector, time gap between the linked records.}
 
-\item{Hequal}{Logical vector, whether the true PIV value agrees between the linked records.}
+\item{Hequal}{Logical vector, whether the true PIV value agrees between the
+linked records.}
 }
 \value{
-Numeric, the negative log-likelihood (the StEM algorithm minimises this).
+Numeric, the negative log-likelihood (the StEM algorithm minimises
+this).
 }
 \description{
 Used by \code{\link[=stEM]{stEM()}} to re-estimate the hazard coefficients \code{alpha} at every
@@ -28,5 +31,6 @@ alphaInit <- -0.05
 X <- matrix(runif(5,0,2), nrow = 5, ncol = 1)
 times <- c(0.001, 0.2, 1.3, 1.5, 2)
 Hequal <- c(TRUE, TRUE, TRUE, FALSE, FALSE)
-stats::nlminb(alphaInit, loglikSurvival, X = X, times = times, Hequal = Hequal)
+stats::nlminb(alphaInit, loglikSurvival, X = X, times = times,
+                Hequal = Hequal)
 }

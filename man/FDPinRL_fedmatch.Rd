@@ -7,14 +7,19 @@
 FDPinRL_fedmatch(NewA, NewB, arguments)
 }
 \arguments{
-\item{NewA, }{NewB Data sets as returned by \code{\link[=synthesise]{synthesise()}}.}
+\item{NewA}{Data set as returned by \code{\link[=synthesise]{synthesise()}}.}
 
-\item{arguments}{List of extra arguments forwarded to \code{fedmatch::merge_plus()}
-(e.g. \code{by}, \code{match_type}, \code{unique_key_1}, \code{unique_key_2}, \code{multivar_settings}).}
+\item{NewB}{Data sets as returned by \code{\link[=synthesise]{synthesise()}}.}
+
+\item{arguments}{List of extra arguments forwarded to
+\code{fedmatch::merge_plus()} (e.g. \code{by}, \code{match_type}, \code{unique_key_1},
+\code{unique_key_2}, \code{multivar_settings}).}
 }
 \value{
-List with \code{result_index_linked_A}, \code{result_index_linked_B}, \code{result_vec_linked_scores}.
+List with \code{result_index_linked_A}, \code{result_index_linked_B},
+\code{result_vec_linked_scores}.
 }
 \description{
-More details about fedmatch on https://cran.r-project.org/web/packages/fedmatch/index.html
+More details about fedmatch on
+https://cran.r-project.org/web/packages/fedmatch/index.html
 }

@@ -8,16 +8,20 @@ simulateH(data, links, survivalpSameH, sumRowD, sumColD, eta, phi)
 }
 \arguments{
 \item{data}{List with \code{encodedA}, \code{encodedB} (the two encoded data
-sources, missing values coded as \code{0}), \code{Nvalues}, and \code{PIVs_config} — see \code{\link[=stEM]{stEM()}}.}
+sources, missing values coded as \code{0}), \code{Nvalues}, and \code{PIVs_config};
+see \code{\link[=stEM]{stEM()}}.}
 
-\item{links}{2-column matrix of (A, B) indices for the currently linked records.}
+\item{links}{2-column matrix of (A, B) indices for the currently linked
+records.}
 
-\item{survivalpSameH}{Matrix (n links x n PIVs); \code{1} for stable PIVs, and
-the survival probability that the true value is unchanged for unstable PIVs.}
+\item{survivalpSameH}{Matrix (n links x n PIVs); \code{1} for stable PIVs, and the
+survival probability that the true value is unchanged for unstable PIVs.}
 
-\item{sumRowD}{Logical vector, one entry per record in A: does it have a link?}
+\item{sumRowD}{Logical vector, one entry per record in A: does it have a
+link?}
 
-\item{sumColD}{Logical vector, one entry per record in B: does it have a link?}
+\item{sumColD}{Logical vector, one entry per record in B: does it have a
+link?}
 
 \item{eta}{List (one per PIV) of the distribution of true values.}
 
@@ -34,14 +38,30 @@ true value of each PIV given the currently registered (possibly mistaken
 or missing) value, the current linkage status, and the current parameters.
 }
 \examples{
-PIVs_config <- list( V1 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                           ),
-                    V2 = list(dynamics = "stable",      boundMistakes = c(0.10,0.10),  fixMistakes = c(NA,NA)                                                            ),
-                    V3 = list(dynamics = "flexible",    boundMistakes = c(NA,NA),      fixMistakes = c(NA,NA)                                                            ),
-                    V4 = list(dynamics = "structured",  boundMistakes = c(NA,NA),      fixMistakes = c(0.03,0.03),  condHazardCov = list(cov1=c("Xe", "Xf"), cov2=c())   )
+PIVs_config <- list( V1 = list(dynamics = "stable",
+                                boundMistakes = c(0.10,0.10),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V2 = list(dynamics = "stable",
+                                boundMistakes = c(0.10,0.10),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V3 = list(dynamics = "flexible",
+                                boundMistakes = c(NA,NA),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V4 = list(dynamics = "structured",
+                                boundMistakes = c(NA,NA),
+                                fixMistakes = c(0.03,0.03),
+                                condHazardCov = list(cov1=c("Xe", "Xf"),
+                                                      cov2=c())
+                                )
 )
 Nval  <- c(6, 7, 8, 9)
-Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02), V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005), V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+                  V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
+Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+                  V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
 condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
 
 GenData <- DataCreation(
@@ -57,8 +77,9 @@ Data4StEM <- prepare_data(GenData$dataSet1,
                           TRUE,
                           "entityID",
                           TRUE)
-PIVs_stable <- sapply(Data4StEM$PIVs_config, function(x) x$dynamics != "structured")
-initDeltaMap()
+PIVs_stable <- sapply(Data4StEM$PIVs_config, function(x)
+                        x$dynamics != "structured")
+FlexRL:::initDeltaMap()
 linksR = base::matrix(0,0,2)
 linksCpp = linksR
 sumRowD = rep(0, nrow(Data4StEM$encodedA))
@@ -68,18 +89,17 @@ survivalpSameH = base::matrix(1, nrow(linksR), length(Data4StEM$Nvalues))
 gamma = 0.5
 eta = lapply(Data4StEM$Nvalues, function(x) rep(1/x,x))
 phi = lapply(Data4StEM$Nvalues, function(x)  c(0.9,0.9,0.1,0.1))
-nCoefUnstable = lapply( seq_along(PIVs_stable),
-                        function(idx) if(PIVs_stable[idx]){ 0 }
-                        else{
-                        ncol(Data4StEM$encodedA[, Data4StEM$PIVs_config[[idx]]$condHazardCov$covA,
+nCoefUnstable = lapply( seq_along(PIVs_stable), function(idx)
+ if(PIVs_stable[idx]){ 0 }else{
+   ncol(Data4StEM$encodedA[, Data4StEM$PIVs_config[[idx]]$condHazardCov$covA,
                              drop=FALSE]) +
-                        ncol(Data4StEM$encodedB[, Data4StEM$PIVs_config[[idx]]$condHazardCov$covB,
-                             drop=FALSE]) +
-                        1 } )
+   ncol(Data4StEM$encodedB[, Data4StEM$PIVs_config[[idx]]$condHazardCov$covB,
+                             drop=FALSE]) + 1 } )
 alpha = lapply( seq_along(PIVs_stable),
                 function(idx) if(PIVs_stable[idx]){ c(-Inf) }else{
                   rep(log(0.05), nCoefUnstable[[idx]]) })
-newTruePivs = simulateH(data=Data4StEM, links=linksCpp, survivalpSameH=survivalpSameH,
+newTruePivs = simulateH(data=Data4StEM, links=linksCpp,
+                        survivalpSameH=survivalpSameH,
                         sumRowD=sumRowD, sumColD=sumColD, eta=eta, phi=phi)
 truepivsA = newTruePivs$truepivsA
 truepivsB = newTruePivs$truepivsB
