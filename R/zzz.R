@@ -58,7 +58,6 @@
 #'   chains for each parameter
 #'
 #' @examples
-#' \donttest{
 #' PIVs_config <- list( V1 = list(dynamics = "stable",
 #'                                 boundMistakes = c(0.10,0.10),
 #'                                 fixMistakes = c(NA,NA)
@@ -101,19 +100,30 @@
 #' colnames(DeltaResult) = c("idxA","idxB","LinkageScores")
 #' DeltaResult = DeltaResult[DeltaResult$LinkageScores>0.5,]
 #'
-#' results = data.frame( Results=matrix(NA, nrow=5, ncol=0) )
+#' results = data.frame( matrix(NA, nrow=5, ncol=0) )
 #' rownames(results) = c("tp","fp","fn","fdp","sensitivity")
 #' if(nrow(DeltaResult)>1){
 #'   linked_pairs    = do.call(paste, c(DeltaResult[,c("idxA","idxB")], list(sep="_")))
-#'   truepositive    = length( intersect(linked_pairs, GenData$true_pairs) )
-#'   falsepositive   = length( setdiff(linked_pairs, GenData$true_pairs) )
-#'   falsenegative   = length( setdiff(GenData$true_pairs, linked_pairs) )
+#'   true_pairs      = do.call(paste, c(PrepData$true_pairs, list(sep="_")))
+#'   truepositive    = length( intersect(linked_pairs, true_pairs) )
+#'   falsepositive   = length( setdiff(linked_pairs, true_pairs) )
+#'   falsenegative   = length( setdiff(true_pairs, linked_pairs) )
 #'   fdp             = falsepositive / (truepositive + falsepositive)
 #'   sensitivity     = truepositive / (truepositive + falsenegative)
 #'   results[,"FlexRL"] = c(truepositive,falsepositive,falsenegative,fdp,sensitivity)
 #' }
 #'
-#' }
+#' rl_agreement(PrepData$encodedA, PrepData$encodedB, names(PIVs_config),
+#'                        DeltaResult[,c("idxA","idxB")], PrepData$true_pairs)
+#'
+#' diag <- rl_diagnostics(fit, PrepData$encodedA, PrepData$encodedB,
+#'                           names(PIVs_config), 0.75, PrepData$true_pairs, 5)
+#' diag
+#' summary(diag)
+#' plot(diag,"scores")
+#' plot(diag,"distributions")
+#' plot(diag,"smd")
+#' plot(diag,"convergence", ask=FALSE)
 #'
 NULL
 

@@ -19,7 +19,7 @@ have non-zero counts.
 Intersection-over-union of two histogram supports
 }
 \examples{
-h1 <- hist(rnorm(200), plot = FALSE)
-h2 <- hist(rnorm(200) + 1, plot = FALSE)
+h1 <- graphics::hist(rnorm(200), plot = FALSE)
+h2 <- graphics::hist(rnorm(200) + 1, plot = FALSE)
 compute_histogram_support_iou(h1, h2)
 }

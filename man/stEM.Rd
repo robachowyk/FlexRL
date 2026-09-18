@@ -10,7 +10,7 @@ stEM(
   StEMBurnin = 15,
   GibbsIter = 20,
   GibbsBurnin = 10,
-  musicOn = TRUE,
+  musicOn = FALSE,
   newDirectory = NULL,
   saveInfoIter = FALSE,
   gamma0 = NULL,
@@ -59,7 +59,8 @@ iteration (only used if \code{newDirectory} is not \code{NULL}).}
 \item{phiB0}{Optional starting values for \code{phi}; at random if \code{NULL}.}
 
 \item{nPostSamp}{Integer, number of posterior draws used to estimate the
-final linkage probabilities \code{Delta}.}
+final linkage probabilities \code{Delta}. Default is set to 1000, we recommend
+not lowering it.}
 }
 \value{
 A list with: \code{Delta} sparse-matrix summary (\code{i}, \code{j}, \code{x}) of
@@ -71,7 +72,8 @@ chains for each parameter
 Fits the FlexRL model with a Stochastic EM algorithm: each iteration runs
 a Gibbs sampler (alternating between simulating the true PIV values and
 the linkage matrix D) and then updates the model parameters (\code{gamma},
-\code{eta}, \code{alpha}, \code{phi}) from the post-burn-in Gibbs draws. See the
+\code{eta}, \code{alpha}, \code{phi}) from the post-burn-in Gibbs draws. If there is
+only one PIV, error might appear due to incorrect dimensions. See the
 methodology paper (\doi{10.1093/jrsssc/qlaf016}) for details.
 }
 \examples{

@@ -1,0 +1,190 @@
+---
+title: "FlexRL-RL-vignette"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{FlexRL-RL-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(FlexRL)
+```
+
+`FlexRL` is a package proposing flexible probabilistic **R**ecord **L**inkage with diagnostic tools for downstream inference on linked data. The record linkage algorithm `[stEM()]` uses a **St**ochastic **E**xpectation **M**aximisation approach to combine 2 data sources and outputs the set of records referring to the same entities.
+
+More details on the [record linkage methodology](https://doi.org/10.1093/jrsssc/qlaf016); on the [false discovery proportion estimation](https://doi.org/10.1002/sim.70292); on the potential risks of [downstream inference on linked data](TODO).
+
+This vignette uses example subsets from the [SHIW](https://github.com/robachowyk/FlexRL-experiments/tree/main/SHIWApplication/SHIWData) data.
+
+```{r}
+df2016 = read.csv("exSHIW16.csv", row.names = 1)
+df2020 = read.csv("exSHIW20.csv", row.names = 1)
+```
+
+```{r}
+head(df2016)
+```
+
+```{r}
+head(df2020)
+```
+
+We will use several **P**artially **I**dentifying **V**ariable**s** to link the records: birth year, sex, marital status, education level. Birth year and sex are `stable`, marital status and education level may change over time but we cannot model these changes so we set these variables as `flexible`.
+
+```{r}
+PIVs_config = list( 
+  ANASCI     = list(dynamics = "stable", boundMistakes = c(0.10,0.10), fixMistakes = c(NA,NA)),
+  SESSO      = list(dynamics = "stable", boundMistakes = c(0.10,0.10), fixMistakes = c(NA,NA)),
+  STACIV     = list(dynamics = "flexible", boundMistakes = c(NA,NA), fixMistakes = c(NA,NA)),
+  STUDIO     = list(dynamics = "flexible", boundMistakes = c(NA,NA), fixMistakes = c(NA,NA))
+  )
+PIVs = names(PIVs_config)
+PIVs_stable = sapply(PIVs_config, function(x) x$dynamics != "structured")
+```
+
+We pre-process the data for the record linkage task: remove the records for which the linking variables are outside of the common support, check that PIVs are not strongly associated with each other (which may degrade record linkage performance).
+
+`[stEM()]` needs PIVs to be mapped to natural numbers and missing values encoded as 0. The algorithm denotes the smallest source as `A` and the largest as `B`.
+
+```{r}
+PrepData <- prepare_data(df2016, df2020, "2016", "2020", PIVs_config, sameMistakes = TRUE, uniqID = "ID")
+```
+
+For this example we know the true linkage structure.
+
+```{r}
+Nlinks <- nrow(PrepData$true_pairs)
+PrepData$true_pairs
+```
+
+We can look at the discriminating power of all PIVs together using a naive linkage approach: matching records on exact agreement of identifying information.
+
+```{r}
+naivefit <- NaiveLinkage(PIVs, PrepData$encodedA, PrepData$encodedB)
+
+results = data.frame( matrix(NA, nrow=5, ncol=0) )
+rownames(results) = c("tp","fp","fn","fdp","sensitivity")
+
+linked_pairs    = do.call(paste, c(naivefit, list(sep="_")))
+true_pairs      = do.call(paste, c(PrepData$true_pairs, list(sep="_")))
+truepositive    = length( intersect(linked_pairs, true_pairs) ) 
+falsepositive   = length( setdiff(linked_pairs, true_pairs) ) 
+falsenegative   = length( setdiff(true_pairs, linked_pairs) )
+fdp             = falsepositive / (truepositive + falsepositive) 
+sensitivity     = truepositive / (truepositive + falsenegative) 
+results[,"Naive"] = c(truepositive,falsepositive,falsenegative,fdp,sensitivity)
+
+results
+```
+
+The number of unique values per **PIV** also gives information on their discriminating power:
+
+```{r}
+PrepData$Nvalues
+```
+
+We can look at the level of agreement of the **PIVs** in the set of true links, and the proportion of missing values:
+
+```{r}
+rl_agreement(PrepData$encodedA, PrepData$encodedB, PIVs, PrepData$true_pairs)
+```
+```{r}
+colSums( PrepData$encodedA[PrepData$true_pairs[,1],PIVs]==0 ) / Nlinks
+```
+
+```{r}
+colSums( PrepData$encodedB[PrepData$true_pairs[,2],PIVs]==0 ) / Nlinks
+```
+
+We can now run record linkage:
+
+We elaborate on all the parameters below.
+
+```{r}
+fit = stEM(data = PrepData, StEMIter = 20, StEMBurnin = 10, GibbsIter = 20, GibbsBurnin = 10, musicOn = TRUE)
+```
+    
+The `data` should contain encodedA, encodedB, Nvalues, PIVs_config, sameMistakes. `StEMIter`, `StEMBurnin` and `GibbsIter`, `GibbsBurnin` are total number of iterations (including burn-in) and iterations to be discarded as burn-in. If `musicOn` the algorithm plays a short tune when it finishes. You can `saveInfoIter` (save environment information at each iteration) to `newDirectory`. You can set starting values of the algorithm for parameters gamma and phi with `gamma0`, `phiA0`, `phiB0`, and change the number of samples drawn a posteriori to provide a linkage estimate with `nPostSamp` (set to 1000 as default).
+
+The algorithm returns: `Delta`, `gamma`, `eta`, `alpha`, `phi`.
+
+```{r}
+DeltaResult = fit$Delta
+colnames(DeltaResult) = c("A","B","LinkageScores")
+DeltaResult = DeltaResult[DeltaResult$LinkageScores>0.5, ]
+DeltaResult
+```
+
+We can then compare the linked records with the true links:
+
+```{r}
+linked_pairs    = do.call(paste, c(DeltaResult[,c("A","B")], list(sep="_")))
+truepositive    = length( intersect(linked_pairs, true_pairs) ) 
+falsepositive   = length( setdiff(linked_pairs, true_pairs) ) 
+falsenegative   = length( setdiff(true_pairs, linked_pairs) )
+fdp             = falsepositive / (truepositive + falsepositive) 
+sensitivity     = truepositive / (truepositive + falsenegative) 
+results[,"FlexRL"] = c(truepositive,falsepositive,falsenegative,fdp,sensitivity)
+
+results
+```
+The level of agreement among the linked records differs from the one in the true links:
+
+```{r}
+rl_agreement(PrepData$encodedA, PrepData$encodedB, PIVs, DeltaResult[,c("A","B")], PrepData$true_pairs)
+```
+
+The missing values and potential mistakes in the registration, the size of the overlapping set of records between the files, the total number of entities in the population, the low discriminative power of PIVs, PIVs potential dynamics across time, PIVs distribution, dependencies among PIVs, are obstacles to the linkage.
+
+Several other algorithms for **R**ecord **L**inkage have been developed so far in the literature. Each has its own qualities and flaws. `[stEM()]` usually outperforms in scenarios where the **PIVs** have low discriminative power with few expected registration errors; it is particularly efficient when there is enough information to model the dynamics of some **PIV** changing across time (such as postal code). More can be found on this topic in the simulation setting of the [methodology paper](https://doi.org/10.1093/jrsssc/qlaf016), code is provided in [`FlexRL-experiments`](https://github.com/robachowyk/FlexRL-experiments).
+
+We developed diagnostic tools to prepare for downstream inference on linked data:
+
+```{r}
+diag <- rl_diagnostics(fit, PrepData$encodedA, PrepData$encodedB, names(PIVs_config), 0.75, PrepData$true_pairs, 5)
+diag # print(diag)
+```
+
+```{r}
+summary(diag)
+```
+
+```{r}
+plot(diag,"scores")
+```
+
+```{r}
+plot(diag,"distributions")
+```
+
+```{r}
+plot(diag,"smd")
+```
+
+```{r}
+plot(diag,"convergence")
+```
+
+The False Discovery Proportion presented so far is model-based. We implemented another method based on synthetic data:
+
+```{r}
+compute_FDP_RLwithSynth("arf", 
+                        PrepData$encodedA, PrepData$encodedB, 
+                        names(PIVs_config),
+                        subsample_size=NULL, 
+                        restrict_support_intersection=TRUE,
+                        maxIter4CV=3, NIter=5,
+                        RLMethod = "FlexRL",
+                        data = PrepData,
+                        StEMIter = 20, StEMBurnin = 10, 
+                        GibbsIter = 20, GibbsBurnin = 10
+)
+```

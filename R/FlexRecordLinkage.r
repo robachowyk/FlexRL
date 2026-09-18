@@ -709,7 +709,8 @@ SurvivalUnstable <- function(Xlinksk, alphask, times) {
 #' Fits the FlexRL model with a Stochastic EM algorithm: each iteration runs
 #' a Gibbs sampler (alternating between simulating the true PIV values and
 #' the linkage matrix D) and then updates the model parameters (`gamma`,
-#' `eta`, `alpha`, `phi`) from the post-burn-in Gibbs draws. See the
+#' `eta`, `alpha`, `phi`) from the post-burn-in Gibbs draws. If there is
+#' only one PIV, error might appear due to incorrect dimensions. See the
 #' methodology paper (\doi{10.1093/jrsssc/qlaf016}) for details.
 #'
 #' @param data List, typically the output of [prepare_data()], with:
@@ -740,7 +741,8 @@ SurvivalUnstable <- function(Xlinksk, alphask, times) {
 #' @param phiA0 Optional starting values for `phi`; at random if `NULL`.
 #' @param phiB0 Optional starting values for `phi`; at random if `NULL`.
 #' @param nPostSamp Integer, number of posterior draws used to estimate the
-#'   final linkage probabilities `Delta`.
+#'   final linkage probabilities `Delta`. Default is set to 1000, we recommend
+#'   not lowering it.
 #'
 #' @return A list with: `Delta` sparse-matrix summary (`i`, `j`, `x`) of
 #'   posterior linkage probabilities; a pair is a valid link candidate once
@@ -787,7 +789,7 @@ SurvivalUnstable <- function(Xlinksk, alphask, times) {
 #'            GibbsIter = 10, GibbsBurnin = 5, musicOn = FALSE)
 #' head(fit$Delta[fit$Delta$x > 0.5, ])
 stEM <- function(data, StEMIter = 30, StEMBurnin = 15, GibbsIter = 20, GibbsBurnin = 10,
-                 musicOn = TRUE, newDirectory = NULL, saveInfoIter = FALSE,
+                 musicOn = FALSE, newDirectory = NULL, saveInfoIter = FALSE,
                  gamma0 = NULL, phiA0 = NULL, phiB0 = NULL, nPostSamp = 1000) {
 
   message("Running FlexRL")
@@ -922,7 +924,7 @@ stEM <- function(data, StEMIter = 30, StEMBurnin = 15, GibbsIter = 20, GibbsBurn
       nlinkrec <- step$nlinkrec
       cli::cli_progress_update(id = burnin_id)
       if (Burnin_total >= 500) {
-        # cli::cli_progress_done(id = burnin_id)
+        cli::cli_progress_done(id = burnin_id)
         stop("Auto burn-in exceeded 500 iterations without stabilising; set `GibbsBurnin` explicitly.", call. = FALSE)
       }
     }
@@ -1038,25 +1040,25 @@ stEM <- function(data, StEMIter = 30, StEMBurnin = 15, GibbsIter = 20, GibbsBurn
       Ntotal  <- NtotalA + NtotalB
 
       if (data$sameMistakes) {
-        phi[[k]][1] <- phi[[k]][2] <-
-          (sum(Vphi[[k]][, 1]) + sum(Vphi[[k]][, 2])) / (Ntotal - sum(Vphi[[k]][, 3]) - sum(Vphi[[k]][, 4]))
+        phi[[k]][1] <- (sum(Vphi[[k]][, 1]) + sum(Vphi[[k]][, 2])) / (Ntotal - sum(Vphi[[k]][, 3]) - sum(Vphi[[k]][, 4]))
+        phi[[k]][2] <-(sum(Vphi[[k]][, 1]) + sum(Vphi[[k]][, 2])) / (Ntotal - sum(Vphi[[k]][, 3]) - sum(Vphi[[k]][, 4]))
       } else {
         phi[[k]][1] <- sum(Vphi[[k]][, 1]) / (NtotalA - sum(Vphi[[k]][, 3]))
         phi[[k]][2] <- sum(Vphi[[k]][, 2]) / (NtotalB - sum(Vphi[[k]][, 4]))
       }
 
-      if (!is.na(PIVs_fixMistakes[k][1])) phi[[k]][1] <- 1 - PIVs_fixMistakes[k][1]
-      if (!is.na(PIVs_fixMistakes[k][2])) phi[[k]][2] <- 1 - PIVs_fixMistakes[k][2]
+      if (!is.na(PIVs_fixMistakes[,k][1])) phi[[k]][1] <- 1 - PIVs_fixMistakes[,k][1]
+      if (!is.na(PIVs_fixMistakes[,k][2])) phi[[k]][2] <- 1 - PIVs_fixMistakes[,k][2]
 
-      if (!is.na(PIVs_boundMistakes[k][1])) {
-        if (phi[[k]][1] < 1 - PIVs_boundMistakes[k][1]) {
-          phi[[k]][1] <- 1 - PIVs_boundMistakes[k][1]
+      if (!is.na(PIVs_boundMistakes[,k][1])) {
+        if (phi[[k]][1] < 1 - PIVs_boundMistakes[,k][1]) {
+          phi[[k]][1] <- 1 - PIVs_boundMistakes[,k][1]
           boundHitCountA[k] <- boundHitCountA[k] + 1L
         }
       }
-      if (!is.na(PIVs_boundMistakes[k][2])) {
-        if (phi[[k]][2] < 1 - PIVs_boundMistakes[k][2]) {
-          phi[[k]][2] <- 1 - PIVs_boundMistakes[k][2]
+      if (!is.na(PIVs_boundMistakes[,k][2])) {
+        if (phi[[k]][2] < 1 - PIVs_boundMistakes[,k][2]) {
+          phi[[k]][2] <- 1 - PIVs_boundMistakes[,k][2]
           boundHitCountB[k] <- boundHitCountB[k] + 1L
         }
       }
@@ -1419,7 +1421,7 @@ FDPinRL_fastLink <- function(NewA, NewB, arguments) {
 #' @export
 #'
 FDPinRL_multilink <- function(NewA, NewB, arguments) {
-  PIVs <- names(arguments$records)
+  PIVs <- names(arguments$breaks)
   arguments$records <- as.data.frame(lapply(rbind(NewA[, PIVs], NewB[, PIVs]), as.character))
   arguments$file_sizes <- c(nrow(NewA), nrow(NewB))
   comparison_list <- do.call(multilink::create_comparison_data, arguments[intersect(names(arguments), names(formals(multilink::create_comparison_data)))])
@@ -1473,7 +1475,7 @@ FDPinRL_multilink <- function(NewA, NewB, arguments) {
 #'
 FDPinRL_diyar <- function(NewA, NewB, arguments) {
   allrecords <- rbind(NewA, NewB)
-  PIVs <- names(arguments$attribute)
+  PIVs <- setdiff(names(allrecords),c("localID", "source"))
   arguments$attribute <- as.list(allrecords[, PIVs])
   linkscores <- do.call(diyar::prob_score_range, arguments[intersect(names(arguments), names(formals(diyar::prob_score_range)))])
 
@@ -1503,16 +1505,14 @@ FDPinRL_diyar <- function(NewA, NewB, arguments) {
 #'   (must exist in both `data1` and `data2`).
 #' @param linked_pairs Data frame/matrix/list with 2 columns of indices
 #'   (into `data1`, `data2`) for the pairs to evaluate.
-#' @param known_truth Logical; if `TRUE` and `true_pairs` is supplied, also
-#'   compute the agreement rate for the true pairs.
 #' @param true_pairs Data frame/matrix/list with 2 columns of indices for the
-#'   true matches; only used if `known_truth = TRUE`.
+#'   true matches.
 #' @param na.rm Logical; if `TRUE` (default), pairs with a missing value on a
 #'   variable are excluded from that variable's agreement rate.
 #' @param na.match Logical, required if `na.rm = FALSE`: should a missing value
 #'   be treated as agreeing (`TRUE`) or disagreeing (`FALSE`) with any value?
 #'
-#' @return List with `linked_agreements` (named numeric vector, one entry per
+#' @return List with `agreements` (named numeric vector, one entry per
 #'   variable in `common_vars`) and, if available, `true_agreements`.
 #' @export
 #'
@@ -1558,9 +1558,9 @@ FDPinRL_diyar <- function(NewA, NewB, arguments) {
 #' rl_agreement(PrepData$encodedA, PrepData$encodedB,
 #'                names(PIVs_config), linked_pairs)
 #' rl_agreement(PrepData$encodedA, PrepData$encodedB,
-#'                names(PIVs_config), linked_pairs, TRUE, GenData$true_pairs)
+#'                names(PIVs_config), linked_pairs, PrepData$true_pairs)
 rl_agreement <- function(data1, data2, common_vars, linked_pairs,
-                         known_truth = FALSE, true_pairs = NULL, na.rm = TRUE, na.match = NULL) {
+                         true_pairs = NULL, na.rm = TRUE, na.match = NULL) {
 
   stopifnot(is.data.frame(data1), is.data.frame(data2))
   if (!is.character(common_vars) || length(common_vars) == 0) {
@@ -1575,12 +1575,10 @@ rl_agreement <- function(data1, data2, common_vars, linked_pairs,
   linked_pairs <- as.data.frame(linked_pairs)
   if (ncol(linked_pairs) < 2) stop("`linked_pairs` must have two columns.", call. = FALSE)
 
-  out <- list(linked_agreements = .rl_agreement_rates(data1, data2, common_vars, linked_pairs, na.rm, na.match))
-  if (isTRUE(known_truth) && !is.null(true_pairs)) {
+  out <- list(agreements = .rl_agreement_rates(data1, data2, common_vars, linked_pairs, na.rm, na.match))
+  if (!is.null(true_pairs)) {
     true_pairs <- as.data.frame(true_pairs)
     out$true_agreements <- .rl_agreement_rates(data1, data2, common_vars, true_pairs, na.rm, na.match)
-  } else if (isTRUE(known_truth)) {
-    message("`known_truth = TRUE` but `true_pairs` is NULL: returning `linked_agreements` only.")
   }
   out
 }
@@ -1862,9 +1860,11 @@ prepare_data <- function(data1, data2, label1, label2, PIVs_config,
     )
   }
 
-  # --- source column + assign the larger file as B --------------------------
+  # --- source column + localID column + assign the larger file as B --------------------------
   if (!"source" %in% names(data1)) data1$source <- label1
   if (!"source" %in% names(data2)) data2$source <- label2
+  if (!"localID" %in% names(data1)) data1$localID <- seq_len(nrow(data1))
+  if (!"localID" %in% names(data2)) data2$localID <- seq_len(nrow(data2))
 
   swap <- nrow(data1) > nrow(data2)
   encodedA <- if (swap) data2 else data1
@@ -1877,6 +1877,9 @@ prepare_data <- function(data1, data2, label1, label2, PIVs_config,
     for (k in seq_len(n_pivs)) {
       PIVs_config[[k]]$boundMistakes <- rev(PIVs_config[[k]]$boundMistakes)
       PIVs_config[[k]]$fixMistakes <- rev(PIVs_config[[k]]$fixMistakes)
+    }
+    if (!is.null(true_Delta)) {
+      true_Delta <- true_Delta[c(label2, label1)]
     }
   } else {
     for (p in modelDynaPIVs) {
@@ -2032,8 +2035,8 @@ mmd <- function(x, y) {
 #' @export
 #'
 #' @examples
-#' h1 <- hist(rnorm(200), plot = FALSE)
-#' h2 <- hist(rnorm(200) + 1, plot = FALSE)
+#' h1 <- graphics::hist(rnorm(200), plot = FALSE)
+#' h2 <- graphics::hist(rnorm(200) + 1, plot = FALSE)
 #' compute_histogram_support_iou(h1, h2)
 compute_histogram_support_iou <- function(h1, h2) {
   r1 <- range(h1$breaks[h1$counts > 0])
@@ -2354,7 +2357,7 @@ compute_FDP_RLmodelSpecific <- function(vec_link_scores, threshold) {
 #' PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
 #'                      PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
 #'
-#' fdp_res_brl <- compute_FDP_RLwithSynth("arf", PrepData$encodedA,
+#' compute_FDP_RLwithSynth("arf", PrepData$encodedA,
 #'       PrepData$encodedB, names(PIVs_config),
 #'       subsample_size=NULL, restrict_support_intersection=TRUE,
 #'       maxIter4CV=3, NIter=5,
@@ -2453,10 +2456,13 @@ compute_FDP_RLwithSynth <- function(SynthMethod, fileA, fileB, PIVs, subsample_s
     }
 
     if (countTmp == maxIter4CV && !anyValidEstimate) {
-      stop(sprintf(
+      FDP_RLwithSynth_results[FDP_RLwithSynth_results>1] <- NA
+      FDP_RLmodelSpecific_results[FDP_RLmodelSpecific_results>1] <- NA
+      warning(sprintf(
         "No valid FDP estimate after %s attempts at iteration %s. Increase `maxIter4CV`, or the estimator may be unreliable for this method/data.",
         maxIter4CV, i
       ), call. = FALSE)
+      break
     }
   }
 
@@ -2475,3 +2481,398 @@ compute_FDP_RLwithSynth <- function(SynthMethod, fileA, fileB, PIVs, subsample_s
     Linked_obs_pairs = Real_linked_results
   )
 }
+
+# ============================================================================
+# S3 class for post-linkage diagnostics
+#
+# Building on mmd(), rl_agreement(), compute_histogram_support_iou(), SMD(),
+# compute_FDP_RLmodelSpecific(), hist_comp(), plot_linkage_score().
+# Wrapping them in an S3 class: gives print()/plot()/summary()
+#
+# Usage:
+#   diag <- rl_diagnostics(fit, encodedA, encodedB, PIVs,
+#                            threshold = 0.5, burnin = StEMBurnin)
+#   diag                           # print(): 1-paragraph summary
+#   summary(diag)                  # per-variable table: SMD, IoU, agreements
+#   plot(diag, "scores")           # linkage score histogram
+#   plot(diag, "distributions")    # hist_comp() over the shared PIVs
+#   plot(diag, "smd")              # Love plot (SMD per variable)
+#   plot(diag, "convergence")      # StEM trace plots (gamma/eta/alpha/phi)
+# ============================================================================
+
+#' Monte Carlo convergence (trace) plots for a fitted StEM model
+#'
+#' Trace-plots the raw StEM chains of `gamma`, `eta`, `alpha` and `phi`
+#' across iterations, to visually judge whether the chains have stabilised
+#' and pick an adequate `StEMBurnin` for [stEM()]. One plot per parameter:
+#' `gamma` (proportion linked), then one panel per PIV for `eta` (true-value
+#' distribution), `alpha` (hazard coefficients, unstable PIVs only), and
+#' `phi` (agreement/missing rates).
+#'
+#' @param fit List as returned by [stEM()], containing the raw chains
+#'   `gamma`, `eta`, `alpha`, `phi` (StEMIter rows each).
+#' @param burnin Optional integer; if supplied, a vertical dashed line is
+#'   drawn at this iteration on every panel (e.g. the `StEMBurnin` you used
+#'   or are considering).
+#' @param PIVs Optional character vector naming the PIVs, for panel titles;
+#'   defaults to `names(fit$eta)` if present, else `V1, V2, ...`.
+#' @param ask Logical, passed to `graphics::par(ask = )` so you can page
+#'   through the plots interactively (default `interactive()`).
+#'
+#' @return `NULL`, invisibly; called for its plotting side effect.
+#' @export
+#'
+#' @examples
+#' PIVs_config <- list( V1 = list(dynamics = "stable",
+#'                                 boundMistakes = c(0.10,0.10),
+#'                                 fixMistakes = c(NA,NA)
+#'                                 ),
+#'                     V2 = list(dynamics = "stable",
+#'                                 boundMistakes = c(0.10,0.10),
+#'                                 fixMistakes = c(NA,NA)
+#'                                 ),
+#'                     V3 = list(dynamics = "flexible",
+#'                                 boundMistakes = c(NA,NA),
+#'                                 fixMistakes = c(NA,NA)
+#'                                 ),
+#'                     V4 = list(dynamics = "structured",
+#'                                 boundMistakes = c(NA,NA),
+#'                                 fixMistakes = c(0.03,0.03),
+#'                                 condHazardCov = list(cov1=c("Xe", "Xf"),
+#'                                                       cov2=c())
+#'                                 )
+#' )
+#' Nval  <- c(6, 7, 8, 9)
+#' Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
+#' Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+#' condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
+#'
+#' GenData <- DataCreation(
+#'   PIVs_config, Nval, NRecords = c(400, 600), Nlinks = 300,
+#'   Pmistake, Pmissing, condHazard_params, enforceEstimability = TRUE
+#' )
+#'
+#' PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
+#'                      PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
+#'
+#' fit <- stEM(data = PrepData, StEMIter = 10, StEMBurnin = 5,
+#'            GibbsIter = 10, GibbsBurnin = 5, musicOn = FALSE)
+#'
+#' plot_stem_convergence(fit, burnin = 10)
+plot_stem_convergence <- function(fit, burnin = NULL, PIVs = NULL, ask = interactive()) {
+  required <- c("gamma", "eta", "alpha", "phi")
+  if (!all(required %in% names(fit))) {
+    stop("`fit` must contain the StEM chains: ", paste(required, collapse = ", "), ".", call. = FALSE)
+  }
+  if (is.null(PIVs)) PIVs <- names(fit$eta)
+
+  old_ask <- graphics::par("ask")
+  on.exit(graphics::par(ask = old_ask), add = TRUE)
+  graphics::par(ask = ask)
+
+  add_burnin <- function() if (!is.null(burnin)) graphics::abline(v = burnin, lty = 2, col = "grey40")
+
+  # gamma: proportion of linked records (a fraction of the smaller file)
+  graphics::matplot(fit$gamma, type = "l", lty = 1, col = "steelblue",
+                    main = "Convergence: gamma (proportion linked)",
+                    xlab = "StEM iteration", ylab = expression(gamma))
+  add_burnin()
+
+  # eta: distribution of true values, one panel per PIV
+  for (k in seq_along(fit$eta)) {
+    graphics::matplot(fit$eta[[k]], type = "l", lty = 1,
+                      main = sprintf("Convergence: eta['%s']", PIVs[k]),
+                      xlab = "StEM iteration", ylab = expression(eta),
+                      ylim=c(0,0.5))
+    add_burnin()
+  }
+
+  # alpha: hazard coefficients (structured/unstable PIVs only; skip stable ones)
+  for (k in seq_along(fit$alpha)) {
+    ak <- fit$alpha[[k]]
+    if (is.null(ncol(ak)) || ncol(ak) == 0 || all(!is.finite(ak))) next
+    graphics::matplot(ak, type = "l", lty = 1,
+                      main = sprintf("Convergence: alpha['%s']", PIVs[k]),
+                      xlab = "StEM iteration", ylab = expression(alpha))
+    add_burnin()
+  }
+
+  # phi: registration-error parameters (agreement A, agreement B, missing A, missing B)
+  for (k in seq_along(fit$phi)) {
+    graphics::matplot(fit$phi[[k]], type = "l", lty = 1,
+                      col = c("steelblue", "firebrick", "darkgreen", "orange"),
+                      main = sprintf("Convergence: phi['%s']", PIVs[k]),
+                      xlab = "StEM iteration", ylab = expression(phi),
+                      ylim=c(0,1))
+    graphics::legend("topright", c("agree A", "agree B", "missing A", "missing B"),
+                     col = c("steelblue", "firebrick", "darkgreen", "orange"), lty = 1, cex = 0.7, bty = "n")
+    add_burnin()
+  }
+
+  invisible(NULL)
+}
+
+#' Build a set of post-linkage diagnostics
+#'
+#' Collects, from a fitted FlexRL model (or any method returning the same
+#' `Delta`-style output), a coherent set of diagnostics for judging the
+#' quality of the linked set and its suitability as an input to downstream
+#' inference: the estimated false discovery proportion, and comparisons of
+#' the linked subset of A (or B) against the un-linked baseline on the shared
+#' variables (agreement rate, standardised mean difference, distributional
+#' overlap via MMD and histogram IoU).
+#'
+#' @param fit List as returned by [stEM()] (or another `FDPinRL_*`-style
+#'   wrapper), i.e. containing `Delta` (`data.frame(i, j, x)`).
+#' @param encodedA,encodedB The two data sources used for linkage (same
+#'   encoding/order as passed to [stEM()]).
+#' @param compare_vars Character vector of variables (PIVs or otherwise) to
+#'   compare between the linked subset and the baseline. Defaults to the PIVs
+#'   in `fit$PIVs_config` if not supplied and available.
+#' @param threshold Numeric in `(0, 1)`; a pair is treated as linked once its
+#'   posterior score exceeds this value (default `0.5`, the natural threshold
+#'   enforcing the one-to-one assignment constraint).
+#' @param true_pairs Optional data frame/matrix with 2 columns of true (A, B)
+#'   indices, if known (e.g. from simulated data), to additionally report the
+#'   realised FDP and sensitivity.
+#' @param burnin Optional integer, the `StEMBurnin` used (or considered) when
+#'   fitting `fit`; only used to draw a reference line on
+#'   `plot(type = "convergence")`, not for any of the other diagnostics.
+#'
+#' @return An object of class `"rl_diagnostics"`, a list with:
+#'   \item{linked}{data frame `i`, `j`, `x` of pairs above `threshold`}
+#'   \item{fdp_model}{model-based FDP at `threshold`,
+#'      see [compute_FDP_RLmodelSpecific()]}
+#'   \item{fdp_realised, sensitivity}{only if `true_pairs` supplied}
+#'   \item{agreement}{per-variable agreement rate among linked pairs,
+#'      see [rl_agreement()]}
+#'   \item{smd}{per-variable standardised mean difference, linked-A vs. all-A,
+#'      see [SMD()]}
+#'   \item{mmd}{multivariate discrepancy (linked-A vs. all-A) over
+#'      `compare_vars`, see [mmd()]}
+#'   \item{iou}{per-variable histogram support IoU (linked-A vs. all-A),
+#'      see [compute_histogram_support_iou()]}
+#'   \item{gamma, eta, alpha, phi}{the raw StEM chains from `fit`,
+#'      for `plot(type = "convergence")` (see [plot_stem_convergence()])}
+#' @export
+#'
+#' @examples
+#' PIVs_config <- list( V1 = list(dynamics = "stable",
+#'                                 boundMistakes = c(0.10,0.10),
+#'                                 fixMistakes = c(NA,NA)
+#'                                 ),
+#'                     V2 = list(dynamics = "stable",
+#'                                 boundMistakes = c(0.10,0.10),
+#'                                 fixMistakes = c(NA,NA)
+#'                                 ),
+#'                     V3 = list(dynamics = "flexible",
+#'                                 boundMistakes = c(NA,NA),
+#'                                 fixMistakes = c(NA,NA)
+#'                                 ),
+#'                     V4 = list(dynamics = "structured",
+#'                                 boundMistakes = c(NA,NA),
+#'                                 fixMistakes = c(0.03,0.03),
+#'                                 condHazardCov = list(cov1=c("Xe", "Xf"),
+#'                                                       cov2=c())
+#'                                 )
+#' )
+#' Nval  <- c(6, 7, 8, 9)
+#' Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
+#' Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+#' condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
+#'
+#' GenData <- DataCreation(
+#'   PIVs_config, Nval, NRecords = c(400, 600), Nlinks = 300,
+#'   Pmistake, Pmissing, condHazard_params, enforceEstimability = TRUE
+#' )
+#'
+#' PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
+#'                      PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
+#'
+#' fit <- stEM(data = PrepData, StEMIter = 10, StEMBurnin = 5,
+#'            GibbsIter = 10, GibbsBurnin = 5, musicOn = FALSE)
+#'
+#' diag <- rl_diagnostics(fit, PrepData$encodedA, PrepData$encodedB, names(PIVs_config),
+#'                        0.75, PrepData$true_pairs, 5)
+#' diag # print(diag)
+#'
+#' summary(diag)
+#'
+#' plot(diag,"scores")
+#' plot(diag,"distributions")
+#' plot(diag,"smd")
+#' plot(diag,"convergence")
+rl_diagnostics <- function(fit, encodedA, encodedB, compare_vars,
+                           threshold = 0.5, true_pairs = NULL, burnin = NULL) {
+
+  linked <- fit$Delta[fit$Delta$x > threshold, , drop = FALSE]
+  linkedA <- encodedA[linked$i, , drop = FALSE]
+  linkedB <- encodedB[linked$j, , drop = FALSE]
+
+  fdp_model <- if (nrow(linked) > 0) compute_FDP_RLmodelSpecific(fit$Delta$x, threshold) else NA_real_
+
+  fdp_realised <- NULL
+  sensitivity <- NULL
+  if (!is.null(true_pairs)) {
+    true_key <- paste(true_pairs[[1]], true_pairs[[2]], sep = "_")
+    linked_key <- paste(linked$i, linked$j, sep = "_")
+    tp <- length(intersect(linked_key, true_key))
+    fp <- length(setdiff(linked_key, true_key))
+    fn <- length(setdiff(true_key, linked_key))
+    fdp_realised <- if (tp + fp > 0) fp / (tp + fp) else NA_real_
+    sensitivity  <- if (tp + fn > 0) tp / (tp + fn) else NA_real_
+  }
+
+  agreement <- if (nrow(linked) > 0) {
+    rl_agreement(encodedA, encodedB, compare_vars, linked[, c("i", "j")])$agreements
+  } else {
+    stats::setNames(rep(NA_real_, length(compare_vars)), compare_vars)
+  }
+
+  # incorrect continuous approximation for all compare_vars to show one metric per variable
+  smdA <- stats::setNames(
+    vapply(compare_vars, function(v) {
+      if (nrow(linked) == 0) return(NA_real_)
+      unlist(SMD(linkedA, encodedA, v, continuous = is.numeric(encodedA[[v]])))[1]
+    }, numeric(1)),
+    compare_vars
+  )
+  smdB <- stats::setNames(
+    vapply(compare_vars, function(v) {
+      if (nrow(linked) == 0) return(NA_real_)
+      unlist(SMD(linkedB, encodedB, v, continuous = is.numeric(encodedB[[v]])))[1]
+    }, numeric(1)),
+    compare_vars
+  )
+
+  iouA <- stats::setNames(
+    vapply(compare_vars, function(v) {
+      if (nrow(linked) < 2) return(NA_real_)
+      h1 <- graphics::hist(as.numeric(linkedA[[v]]), plot = FALSE)
+      h2 <- graphics::hist(as.numeric(encodedA[[v]]), plot = FALSE)
+      compute_histogram_support_iou(h1, h2)
+    }, numeric(1)),
+    compare_vars
+  )
+  iouB <- stats::setNames(
+    vapply(compare_vars, function(v) {
+      if (nrow(linked) < 2) return(NA_real_)
+      h1 <- graphics::hist(as.numeric(linkedB[[v]]), plot = FALSE)
+      h2 <- graphics::hist(as.numeric(encodedB[[v]]), plot = FALSE)
+      compute_histogram_support_iou(h1, h2)
+    }, numeric(1)),
+    compare_vars
+  )
+
+  mmdA <- if (nrow(linked) >= 2) {
+    mmd(as.matrix(linkedA[, compare_vars, drop = FALSE]), as.matrix(encodedA[, compare_vars, drop = FALSE]))
+  } else NA_real_
+  mmdB <- if (nrow(linked) >= 2) {
+    mmd(as.matrix(linkedB[, compare_vars, drop = FALSE]), as.matrix(encodedB[, compare_vars, drop = FALSE]))
+  } else NA_real_
+
+  structure(
+    list(
+      linked = linked, n_linked = nrow(linked), threshold = threshold,
+      compare_vars = compare_vars, all_scores = fit$Delta$x,
+      total_pairs = nrow(encodedA) * nrow(encodedB),
+      fdp_model = fdp_model, fdp_realised = fdp_realised,
+      sensitivity = sensitivity, agreement = agreement, smdA = smdA,
+      smdB = smdB, iouA = iouA, iouB = iouB, mmdA = mmdA, mmdB = mmdB,
+      A = encodedA[, compare_vars, drop = FALSE],
+      B = encodedB[, compare_vars, drop = FALSE],
+      linkedA = linkedA[, compare_vars, drop = FALSE],
+      linkedB = linkedB[, compare_vars, drop = FALSE],
+      gamma = fit$gamma, eta = fit$eta, alpha = fit$alpha, phi = fit$phi,
+      burnin = burnin
+    ),
+    class = "rl_diagnostics"
+  )
+}
+
+#' Display RL diagnostics
+#'
+#' @param x An `rl_diagnostics` object.
+#' @param ... Extra arguments.
+#'
+#' @return An object of class `"rl_diagnostics"`, a list with:
+#'
+#' @export
+print.rl_diagnostics <- function(x, ...) {
+  cat("<rl_diagnostics>\n")
+  cat(sprintf("  Linked pairs (score > %.2f):       %d\n", x$threshold, x$n_linked))
+  cat(sprintf("  Model-based FDP:                   %.3f\n", x$fdp_model))
+  if (!is.null(x$fdp_realised)) {
+    cat(sprintf("  Realised FDP (true_pairs):         %.3f\n", x$fdp_realised))
+    cat(sprintf("  Sensitivity  (true_pairs):         %.3f\n", x$sensitivity))
+  }
+  cat(sprintf("  Multivariate MMD (linked A vs. A): %.4f\n", x$mmdA))
+  cat(sprintf("  Multivariate MMD (linked B vs. B): %.4f\n", x$mmdB))
+  cat("  Use summary() for the per-variable table, plot() for diagnostic plots.\n")
+  invisible(x)
+}
+
+#' Summarises RL diagnostics
+#'
+#' @param object An `rl_diagnostics` object.
+#' @param ... Extra arguments.
+#'
+#' @export
+summary.rl_diagnostics <- function(object, ...) {
+  out <- data.frame(
+    variable              = object$compare_vars,
+    smd.A                 = round(object$smdA[object$compare_vars], 3),
+    smd.B                 = round(object$smdB[object$compare_vars], 3),
+    IoU.A                 = round(object$iouA[object$compare_vars], 3),
+    IoU.B                 = round(object$iouB[object$compare_vars], 3),
+    agreement.linked.A.B  = round(object$agreement[object$compare_vars], 3),
+    row.names = NULL
+  )
+  cat(sprintf("Per-variable diagnostics (linked subset vs. data source), n = %d linked pairs\n", object$n_linked))
+  print(out)
+  invisible(out)
+}
+
+#' Plot RL diagnostics
+#'
+#' @param x An `rl_diagnostics` object.
+#' @param type One of `"scores"` (linkage score histogram),
+#'   `"distributions"` (linked subset vs. baseline, per variable), `"smd"`
+#'   (Love-style plot of standardised mean differences), or `"convergence"`
+#'   (StEM trace plots for gamma/eta/alpha/phi, see [plot_stem_convergence()]).
+#' @param ... Passed on to the underlying plotting helper.
+#'
+#' @export
+plot.rl_diagnostics <- function(x, type, ...) {
+  types <- c("scores", "distributions", "smd", "convergence")
+  if (!type %in% types) {
+    stop("`type` must be one of: ", paste(types, collapse = ", "), ".", call. = FALSE)
+  }
+  if (type == "scores") {
+    plot_linkage_score(x$total_pairs, x$all_scores[x$all_scores > 0])
+  } else if (type == "distributions") {
+    hist_comp(list(A = x$A, linkedA = x$linkedA), x$compare_vars, ...)
+    hist_comp(list(B = x$B, linkedB = x$linkedB), x$compare_vars, ...)
+  } else if (type == "smd") {
+    vA <- x$smdA[x$compare_vars]
+    vB <- x$smdB[x$compare_vars]
+    minv <- min(c(vA,vB)) - 0.05
+    maxv <- max(c(vA,vB)) + 0.05
+    graphics::dotchart(vA, xlab = "Standardised mean difference (linked A vs. A) (continuous approximation)", xlim=c(minv,maxv), ...)
+    graphics::abline(v = 0, lty = 2)
+    graphics::dotchart(vB, xlab = "Standardised mean difference (linked B vs. B) (continuous approximation)", xlim=c(minv,maxv), ...)
+    graphics::abline(v = 0, lty = 2)
+  } else if (type == "convergence") {
+    if (is.null(x$gamma)) {
+      stop("No StEM chains stored on this object (the `fit` passed to `rl_diagnostics()` had no `gamma`/`eta`/`alpha`/`phi`).", call. = FALSE)
+    }
+    plot_stem_convergence(list(gamma = x$gamma, eta = x$eta, alpha = x$alpha, phi = x$phi),
+                          burnin = x$burnin, PIVs = x$compare_vars, ...)
+  }
+  invisible(x)
+}
+

@@ -1,0 +1,319 @@
+---
+title: "FlexRL-diagnostics-RL-vignette"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{FlexRL-diagnostics-RL-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(FlexRL)
+```
+
+`FlexRL` is a package proposing flexible probabilistic **R**ecord **L**inkage with diagnostic tools for downstream inference on linked data. The record linkage algorithm `[stEM()]` uses a **St**ochastic **E**xpectation **M**aximisation approach to combine 2 data sources and outputs the set of records referring to the same entities.
+
+More details on the [record linkage methodology](https://doi.org/10.1093/jrsssc/qlaf016); on the [false discovery proportion estimation](https://doi.org/10.1002/sim.70292); on the potential risks of [downstream inference on linked data](TODO).
+
+This vignette uses example subsets from the [NLTCS](https://www.icpsr.umich.edu/web/NACDA/studies/9681/versions/V5) data.
+
+```{r}
+df1982 = read.csv("exNLTCS82.csv", row.names = 1)
+df1994 = read.csv("exNLTCS94.csv", row.names = 1)
+```
+
+```{r}
+head(df1982)
+```
+
+```{r}
+head(df1994)
+```
+
+We will use several **P**artially **I**dentifying **V**ariable**s** to link the records: birth month, birth year, sex, state code. Birth month and year, and sex are `stable`, state code may change over time but we cannot model these changes so we set this variable as `flexible`.
+
+```{r}
+PIVs_config = list( 
+  SEX         = list(dynamics = "stable", boundMistakes = c(0.10,0.10), fixMistakes = c(NA,NA)),
+  DOB_MONTH   = list(dynamics = "stable", boundMistakes = c(0.10,0.10), fixMistakes = c(NA,NA)),
+  DOB_YEAR    = list(dynamics = "stable", boundMistakes = c(0.10,0.10), fixMistakes = c(NA,NA)),
+  STATE       = list(dynamics = "flexible", boundMistakes = c(NA,NA), fixMistakes = c(NA,NA))
+  )
+PIVs = names(PIVs_config)
+PIVs_stable = sapply(PIVs_config, function(x) x$dynamics != "structured")
+```
+
+We pre-process the data for the record linkage task: remove the records for which the linking variables are outside of the common support, check that PIVs are not strongly associated with each other (which may degrade record linkage performance).
+
+`[stEM()]` needs PIVs to be mapped to natural numbers and missing values encoded as 0. The algorithm denotes the smallest source as `A` and the largest as `B`.
+
+```{r}
+PrepData <- prepare_data(df1982, df1994, "1982", "1994", PIVs_config, sameMistakes = TRUE, uniqID = "ID")
+```
+
+For this example we know the true linkage structure.
+
+```{r}
+PrepData$true_pairs
+true_pairs <- do.call(paste, c(PrepData$true_pairs, list(sep="_")))
+```
+
+The number of unique values per **PIV** gives information on their discriminating power:
+
+```{r}
+PrepData$Nvalues
+```
+
+We gauge how hard the record linkage task is using a naive linkage approach: matching records on exact agreement of identifying information.
+
+```{r}
+naivefit <- NaiveLinkage(PIVs, PrepData$encodedA, PrepData$encodedB)
+
+DFresults = data.frame( matrix(NA, nrow=7, ncol=0) )
+rownames(DFresults) = c("tp","fp","fn","fdp","sensitivity","hat fdp synth","hat fdp score")
+
+linked_pairs    = do.call(paste, c(naivefit, list(sep="_")))
+truepositive    = length( intersect(linked_pairs, true_pairs) ) 
+falsepositive   = length( setdiff(linked_pairs, true_pairs) ) 
+falsenegative   = length( setdiff(true_pairs, linked_pairs) )
+fdp             = falsepositive / (truepositive + falsepositive) 
+sensitivity     = truepositive / (truepositive + falsenegative) 
+DFresults[1:5,"Naive"] = c(truepositive,falsepositive,falsenegative,fdp,sensitivity)
+
+DFresults
+```
+
+We run record linkage with `multilink`:
+
+```{r}
+records <- rbind(PrepData$encodedA[,PIVs], PrepData$encodedB[,PIVs])
+records <- as.data.frame(lapply(records, as.character))
+types <- rep("bi",length(PIVs))
+breaks <- list(SEX = NA, DOB_MONTH = NA, DOB_YEAR = NA, STATE = NA)
+file_sizes <- c(nrow(PrepData$encodedA), nrow(PrepData$encodedB))
+duplicates <- c(0,0)
+comparison_list <- multilink::create_comparison_data(records = records, types = types, breaks = breaks, file_sizes = file_sizes, duplicates = duplicates)
+pairs_to_keep <- rep(TRUE, nrow(PrepData$encodedA)*nrow(PrepData$encodedB))
+cc <- 1
+reduced_comparison_list <- multilink::reduce_comparison_data(comparison_list = comparison_list, pairs_to_keep = pairs_to_keep, cc = cc)
+dup_upper_bound <- c(1, 1)
+dup_count_prior_family <- rep(NA,reduced_comparison_list$K)
+dup_count_prior_pars <- rep(NA,reduced_comparison_list$K)
+prior_list <- multilink::specify_prior(comparison_list = reduced_comparison_list, mus = NA, nus = NA, flat = 0, alphas = NA, 
+                                       dup_upper_bound = dup_upper_bound, dup_count_prior_family = dup_count_prior_family,
+                                       dup_count_prior_pars = dup_count_prior_pars, n_prior_family = NA, n_prior_pars = NA)
+n_iter <- 500
+results <- multilink::gibbs_sampler(comparison_list = reduced_comparison_list, prior_list = prior_list, n_iter = n_iter)
+plot(1:n_iter, colSums(results$contingency_tables), ylab="nbr clusters", xlab="iter")
+burn_in <- 300
+max_cc_size <- 50
+full_estimate <- multilink::find_bayes_estimate(partitions = results$partitions, burn_in = burn_in, max_cc_size = max_cc_size)
+full_estimate_relabel <- multilink::relabel_bayes_estimate(reduced_comparison_list = reduced_comparison_list, bayes_estimate = full_estimate)
+linked_pairs <- c()
+for(i in 1:length(full_estimate_relabel$link_id)){
+  if(full_estimate_relabel$link_id[i]>0){
+    l = full_estimate_relabel$link_id[i]
+    if(length(which(full_estimate_relabel$link_id == l))>1){
+      idx_in_A <- which(full_estimate_relabel$link_id == l)[1]
+      idx_in_B <- which(full_estimate_relabel$link_id == l)[2] - nrow(PrepData$encodedA)
+      linked_pairs <- c(linked_pairs, sprintf("%s_%s", idx_in_A, idx_in_B))
+    }
+  }
+}
+linked_pairs <- unique(linked_pairs)
+truepositive = length( intersect(linked_pairs, true_pairs) )
+falsepositive = length( setdiff(linked_pairs, true_pairs) )
+falsenegative = length( setdiff(true_pairs, linked_pairs) )
+fdp = falsepositive / (truepositive + falsepositive)
+sensitivity = truepositive / (truepositive + falsenegative)
+DFresults[1:5,"multilink"] = c(truepositive,falsepositive,falsenegative,fdp,sensitivity)
+fdp_res <- compute_FDP_RLwithSynth("arf", PrepData$encodedA, PrepData$encodedB, PIVs, maxIter4CV=2, NIter=3,
+                                   RLMethod = "multilink", types = rep("bi",length(PIVs)), 
+                                   breaks = setNames(as.list(rep(NA, length(PIVs))), PIVs), duplicates = c(0,0), n_iter=500)
+DFresults["hat fdp synth","multilink"] <- mean(fdp_res$FDP_synth_estimator[,1], na.rm=TRUE)
+DFresults["hat fdp score","multilink"] <- mean(fdp_res$FDP_scoring_estimator[,1], na.rm=TRUE)
+```
+
+We run record linkage with `fastlink`:
+
+```{r}
+# do not run (error during CRAN check due to n.cores, check_ncores)
+# matches.out = fastLink::fastLink(PrepData$encodedA[,PIVs], PrepData$encodedB[,PIVs], PIVs, n.cores=1, threshold.match=0.5, 
+#                                  tol.em=1e-06, return.all=TRUE)
+# idxA = matches.out$matches$inds.a
+# idxB = matches.out$matches$inds.b
+# DeltaResult = data.frame(cbind(idxA=idxA,idxB=idxB,probaLink=matches.out$posterior))
+# linked_pairs = do.call(paste, c(DeltaResult[,c("idxA","idxB")], list(sep="_")))
+# truepositive = length( intersect(linked_pairs, true_pairs) )
+# falsepositive = length( setdiff(linked_pairs, true_pairs) )
+# falsenegative = length( setdiff(true_pairs, linked_pairs) )
+# fdp = falsepositive / (truepositive + falsepositive)
+# sensitivity = truepositive / (truepositive + falsenegative)
+# DFresults[1:5,"fastLink"] = c(truepositive,falsepositive,falsenegative,fdp,sensitivity)
+# fdp_res <- compute_FDP_RLwithSynth("arf", PrepData$encodedA, PrepData$encodedB, PIVs, maxIter4CV=2, NIter=3,
+#                                    RLMethod = "fastLink", return.all=TRUE, tol.em=1e-06, threshold.match=0.5, n.cores=4, varnames=PIVs)
+# DFresults["hat fdp synth","fastLink"] <- mean(fdp_res$FDP_synth_estimator[,1], na.rm=TRUE)
+# DFresults["hat fdp score","fastLink"] <- mean(fdp_res$FDP_scoring_estimator[,1], na.rm=TRUE)
+```
+
+We run record linkage with `BRL`:
+
+```{r}
+myCompData <- BRL::compareRecords(PrepData$encodedB[,PIVs], PrepData$encodedA[,PIVs], flds=PIVs, types=rep("bi",length(PIVs)))
+chain <- BRL::bipartiteGibbs(myCompData, nIter=1000, a=1, b=1, aBM=1, bBM=1)
+Zchain = chain$Z[,setdiff(1:1000,seq_len(100)),drop=FALSE]
+n1 = nrow(PrepData$encodedB)
+n2 = nrow(PrepData$encodedA)
+Zchain[Zchain > n1+1] <- n1+1
+tableLabels <- apply(Zchain, 1, tabulate, nbins=(n1+1)) / ncol(Zchain)
+probNoLink <- tableLabels[n1+1,]
+maxProbOption <- apply(tableLabels, 2, which.max)
+probMaxProbOption <- apply(tableLabels, 2, max)
+maxProbOptionIsLink <- maxProbOption <= n1
+lFM1 = 1
+lFM2 = 2
+lFNM = 1
+Zhat <- (n1+1):(n1+n2)
+tholdLink <- lFM1/(lFM1+lFNM) + (lFM2-lFM1-lFNM)*(1 - probNoLink - probMaxProbOption)/(lFM1+lFNM)
+isLink <- maxProbOptionIsLink & (probMaxProbOption > tholdLink)
+Zhat[isLink] <- maxProbOption[isLink]
+idxA = which( Zhat <= n2 )
+idxB = Zhat[ Zhat <= n2 ]
+LinkScore = probMaxProbOption[isLink]
+DeltaResult = data.frame(cbind(idxA=idxA,idxB=idxB,probaLink=LinkScore))
+linked_pairs = do.call(paste, c(DeltaResult[,c("idxA","idxB")], list(sep="_")))
+truepositive = length( intersect(linked_pairs, true_pairs) )
+falsepositive = length( setdiff(linked_pairs, true_pairs) )
+falsenegative = length( setdiff(true_pairs, linked_pairs) )
+fdp = falsepositive / (truepositive + falsepositive)
+sensitivity = truepositive / (truepositive + falsenegative)
+DFresults[1:5,"BRL"] = c(truepositive,falsepositive,falsenegative,fdp,sensitivity)
+fdp_res <- compute_FDP_RLwithSynth("arf", PrepData$encodedA, PrepData$encodedB, PIVs, maxIter4CV=2, NIter=3,
+                                   RLMethod = "BRL", flds = PIVs, types = rep("bi",length(PIVs)))
+DFresults["hat fdp synth","BRL"] <- mean(fdp_res$FDP_synth_estimator[,1], na.rm=TRUE)
+DFresults["hat fdp score","BRL"] <- mean(fdp_res$FDP_scoring_estimator[,1], na.rm=TRUE)
+```
+
+We run record linkage with `diyar`:
+
+```{r}
+allrecords <- rbind(PrepData$encodedA, PrepData$encodedB)
+linkscores <- diyar::prob_score_range(attribute = as.list(allrecords[,PIVs])) 
+idlinkage <- diyar::links_wf_probabilistic(attribute = as.list(allrecords[,PIVs]), probabilistic = TRUE, return_weights = TRUE,
+                                           score_threshold = linkscores$mid_scorce, data_source = allrecords$source)
+linked_pairs <- c()
+for(i in 1:length(unique(idlinkage$pid))){
+  clusterid <- idlinkage$pid[i]
+  clusterelements <- idlinkage$pid[ idlinkage$pid==clusterid ]
+  if(length(clusterelements)==2){
+    indices <- which(idlinkage$pid==clusterid)
+    if(indices[1] <= nrow(PrepData$encodedA) & indices[2] > nrow(PrepData$encodedA)){
+      # link between A and B
+      idx_in_A <- indices[1]
+      idx_in_B <- indices[2] - nrow(PrepData$encodedA)
+      linked_pairs <- rbind( linked_pairs, c(idx_in_A, idx_in_B) ) # c(linked_pairs, sprintf("%s_%s", idx_in_A, idx_in_B))
+    }
+  }
+}
+linked_pairs <- linked_pairs[!duplicated(linked_pairs),]
+truepositive = length( intersect(linked_pairs, true_pairs) )
+falsepositive = length( setdiff(linked_pairs, true_pairs) )
+falsenegative = length( setdiff(true_pairs, linked_pairs) )
+fdp = falsepositive / (truepositive + falsepositive)
+sensitivity = truepositive / (truepositive + falsenegative)
+DFresults[1:5,"diyar"] = c(truepositive,falsepositive,falsenegative,fdp,sensitivity)
+fdp_res <- compute_FDP_RLwithSynth("arf", PrepData$encodedA, PrepData$encodedB, PIVs, maxIter4CV=2, NIter=3,
+                                   RLMethod = "diyar", probabilistic = TRUE, return_weights = TRUE)
+DFresults["hat fdp synth","diyar"] <- mean(fdp_res$FDP_synth_estimator[,1], na.rm=TRUE)
+DFresults["hat fdp score","diyar"] <- mean(fdp_res$FDP_scoring_estimator[,1], na.rm=TRUE)
+```
+
+We run record linkage with `fedmatch`:
+
+```{r}
+PrepData$encodedA$unique_key_A <- rownames(PrepData$encodedA)
+PrepData$encodedB$unique_key_B <- rownames(PrepData$encodedB)
+results <- fedmatch::merge_plus(data1 = PrepData$encodedA, 
+                                data2 = PrepData$encodedB,
+                                by = PIVs,
+                                match_type = "multivar", 
+                                unique_key_1 = "unique_key_A",
+                                unique_key_2 = "unique_key_B",
+                                multivar_settings = fedmatch::build_multivar_settings(compare_type = rep("indicator", length(PIVs)),
+                                                                            wgts = rep(1/length(PIVs), length(PIVs))))
+linked_pairs = do.call(paste, c(as.data.frame(list(idxA=results$matches$unique_key_A, idxB=results$matches$unique_key_B)), list(sep="_")))
+truepositive = length( intersect(linked_pairs, true_pairs) )
+falsepositive = length( setdiff(linked_pairs, true_pairs) )
+falsenegative = length( setdiff(true_pairs, linked_pairs) )
+fdp = falsepositive / (truepositive + falsepositive)
+sensitivity = truepositive / (truepositive + falsenegative)
+DFresults[1:5,"fedmatch"] = c(truepositive,falsepositive,falsenegative,fdp,sensitivity)
+fdp_res <- compute_FDP_RLwithSynth("arf", PrepData$encodedA, PrepData$encodedB, PIVs, maxIter4CV=2, NIter=3,
+                                   RLMethod = "fedmatch", by = PIVs, match_type = "multivar", unique_key_1 = "unique_key_A",
+                                   unique_key_2 = "unique_key_B", multivar_settings = fedmatch::build_multivar_settings( 
+                                     compare_type = rep("indicator", length(PIVs)), 
+                                     wgts = rep(1/length(PIVs), length(PIVs)) ))
+DFresults["hat fdp synth","fedmatch"] <- mean(fdp_res$FDP_synth_estimator[,1], na.rm=TRUE)
+DFresults["hat fdp score","fedmatch"] <- mean(fdp_res$FDP_scoring_estimator[,1], na.rm=TRUE)
+```
+
+We run record linkage with `FlexRL`:
+
+```{r}
+fit = stEM(data = PrepData, StEMIter = 20, StEMBurnin = 10, GibbsIter = 20, GibbsBurnin = 10)
+DeltaResult = fit$Delta
+colnames(DeltaResult) = c("idxA","idxB","probaLink")
+DeltaResult = DeltaResult[DeltaResult$probaLink>0.5,]
+linked_pairs = do.call(paste, c(DeltaResult[,c("idxA","idxB")], list(sep="_")))
+truepositive = length( intersect(linked_pairs, true_pairs) )
+falsepositive = length( setdiff(linked_pairs, true_pairs) )
+falsenegative = length( setdiff(true_pairs, linked_pairs) )
+fdp = falsepositive / (truepositive + falsepositive)
+sensitivity = truepositive / (truepositive + falsenegative)
+DFresults[1:5,"FlexRL"] = c(truepositive,falsepositive,falsenegative,fdp,sensitivity)
+fdp_res <- compute_FDP_RLwithSynth("arf", PrepData$encodedA, PrepData$encodedB, PIVs, maxIter4CV=2, NIter=3,
+                                   RLMethod = "FlexRL", data = PrepData,
+                                   StEMIter = 20, StEMBurnin = 10, GibbsIter = 20, GibbsBurnin = 10)
+DFresults["hat fdp synth","FlexRL"] <- mean(fdp_res$FDP_synth_estimator[,1], na.rm=TRUE)
+DFresults["hat fdp score","FlexRL"] <- mean(fdp_res$FDP_scoring_estimator[,1], na.rm=TRUE)
+```
+
+We run record linkage with `reclin2`:
+
+```{r}
+pairs <- reclin2::pair(PrepData$encodedA, PrepData$encodedB)
+pairs <- reclin2::compare_pairs(pairs, on = PIVs)
+model <- reclin2::problink_em(~ SEX+DOB_MONTH+DOB_YEAR+STATE, data = pairs)
+pairs <- predict(model, pairs = pairs, type = "mpost", add = TRUE)
+selected_pairs <- reclin2::select_threshold(pairs, "selected", "mpost", 0.5)
+selected_pairs <- selected_pairs[selected_pairs$selected == TRUE,]
+idx_A = selected_pairs$.x
+idx_B = selected_pairs$.y
+mpost_scores = selected_pairs$mpost
+DeltaResult = data.frame(cbind(idxA=idx_A,idxB=idx_B,probaLink=mpost_scores))
+linked_pairs = do.call(paste, c(DeltaResult[,c("idxA","idxB")], list(sep="_")))
+truepositive = length( intersect(linked_pairs, true_pairs) )
+falsepositive = length( setdiff(linked_pairs, true_pairs) )
+falsenegative = length( setdiff(true_pairs, linked_pairs) )
+fdp = falsepositive / (truepositive + falsepositive)
+sensitivity = truepositive / (truepositive + falsenegative)
+DFresults[1:5,"reclin2"] = c(truepositive,falsepositive,falsenegative,fdp,sensitivity)
+fdp_res <- compute_FDP_RLwithSynth("arf", PrepData$encodedA, PrepData$encodedB, PIVs, maxIter4CV=2, NIter=3,
+                                   RLMethod = "reclin2", on = PIVs,
+                                   formula = as.formula( paste( c("~", paste(PIVs, collapse="+")), collapse = " ") ),
+                                   type = "mpost", add = TRUE, variable = "selected", score = "mpost", threshold = 0.5)
+DFresults["hat fdp synth","reclin2"] <- mean(fdp_res$FDP_synth_estimator[,1], na.rm=TRUE)
+DFresults["hat fdp score","reclin2"] <- mean(fdp_res$FDP_scoring_estimator[,1], na.rm=TRUE)
+```
+
+```{r}
+options(digits = 2)
+DFresults
+```
