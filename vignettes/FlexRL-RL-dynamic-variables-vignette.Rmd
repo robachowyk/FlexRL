@@ -1,0 +1,168 @@
+---
+title: "FlexRL-RL-dynamic-variables-vignette"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{FlexRL-RL-dynamic-variables-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(FlexRL)
+```
+
+`FlexRL` is a package proposing flexible probabilistic **R**ecord **L**inkage with diagnostic tools for downstream inference on linked data. The record linkage algorithm `[stEM()]` uses a **St**ochastic **E**xpectation **M**aximisation approach to combine 2 data sources and outputs the set of records referring to the same entities.
+
+More details on the [record linkage methodology](https://doi.org/10.1093/jrsssc/qlaf016); on the [false discovery proportion estimation](https://doi.org/10.1002/sim.70292); on the potential risks of [downstream inference on linked data](TODO).
+
+This vignette uses synthetic data to showcase how `stEM` adapts to dynamic PIVs. 
+
+We use 4 **P**artially **I**dentifying **V**ariable**s** to link the records: 2 variables such that `dynamics = "stable"` and 2 variables that may change over time. Among these 2 dynamic PIVs, we will model the changes of one (`dynamics = "structured"`) and we will let the algorithm flexible about the other (`dynamics = "flexible"`).
+
+```{r}
+PIVs_config <- list( V1 = list(dynamics = "stable",
+                                boundMistakes = c(0.10,0.10),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V2 = list(dynamics = "stable",
+                                boundMistakes = c(0.10,0.10),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V3 = list(dynamics = "flexible",
+                                boundMistakes = c(NA,NA),
+                                fixMistakes = c(NA,NA)
+                                ),
+                    V4 = list(dynamics = "structured",
+                                boundMistakes = c(NA,NA),
+                                fixMistakes = c(0.02,0.02),
+                                condHazardCov = list(cov1=c("Xe", "Xf"),
+                                                      cov2=c())
+                                )
+)
+```
+
+With PIVs that evolve over time, when modelling is possible, it is natural to parametrise the probability that underlying true values of the registered data for a pair of linked records coincide using a survival function. Currently, it is possible to use an exponential survival model with a positive constant baseline hazard or, with a conditional hazard with some covariates (assuming proportional hazards). It is not yet possible to use a personalised survival model. If the covariates for the conditional hazard are categorical, make sure to encode them into dummies and drop one category (as an intercept is automatically considered in our exponential survival model).
+
+```{r}
+Nval  <- c(6, 7, 10, 10)
+Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+                  V3 = c(0.02, 0.02), V4 = c(0.02, 0.02))
+Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+                  V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
+
+GenData <- DataCreation(
+  PIVs_config, Nval, NRecords = c(420, 500), Nlinks = 400,
+  Pmistake, Pmissing, condHazard_params, enforceEstimability = TRUE
+)
+
+PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
+                     PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
+```
+
+```{r}
+head(PrepData$encodedA)
+```
+
+```{r}
+head(PrepData$encodedB)
+```
+
+We can look at the discriminating power of all PIVs together using a naive linkage approach: matching records on exact agreement of identifying information.
+
+```{r}
+PIVs <- names(PIVs_config)
+naivefit <- NaiveLinkage(PIVs, PrepData$encodedA, PrepData$encodedB)
+
+results = data.frame( matrix(NA, nrow=5, ncol=0) )
+rownames(results) = c("tp","fp","fn","fdp","sensitivity")
+
+linked_pairs    = do.call(paste, c(naivefit, list(sep="_")))
+true_pairs      = do.call(paste, c(PrepData$true_pairs, list(sep="_")))
+truepositive    = length( intersect(linked_pairs, true_pairs) ) 
+falsepositive   = length( setdiff(linked_pairs, true_pairs) ) 
+falsenegative   = length( setdiff(true_pairs, linked_pairs) )
+fdp             = falsepositive / (truepositive + falsepositive) 
+sensitivity     = truepositive / (truepositive + falsenegative) 
+results[,"Naive"] = c(truepositive,falsepositive,falsenegative,fdp,sensitivity)
+
+results
+```
+
+```{r}
+fit <- stEM(data = PrepData, StEMIter = 30, StEMBurnin = 15,
+           GibbsIter = 20, GibbsBurnin = 10, musicOn = FALSE)
+```
+
+The algorithm returns: `Delta`, `gamma`, `eta`, `alpha`, `phi`.
+
+```{r}
+DeltaResult = fit$Delta
+colnames(DeltaResult) = c("A","B","LinkageScores")
+DeltaResult = DeltaResult[DeltaResult$LinkageScores>0.5, ]
+DeltaResult
+```
+
+We can then compare the linked records with the true links:
+
+```{r}
+linked_pairs    = do.call(paste, c(DeltaResult[,c("A","B")], list(sep="_")))
+truepositive    = length( intersect(linked_pairs, true_pairs) ) 
+falsepositive   = length( setdiff(linked_pairs, true_pairs) ) 
+falsenegative   = length( setdiff(true_pairs, linked_pairs) )
+fdp             = falsepositive / (truepositive + falsepositive) 
+sensitivity     = truepositive / (truepositive + falsenegative) 
+results[,"FlexRL"] = c(truepositive,falsepositive,falsenegative,fdp,sensitivity)
+
+results
+```
+
+The level of agreement among the linked records differs from the one in the true links:
+
+```{r}
+rl_agreement(PrepData$encodedA, PrepData$encodedB, PIVs, DeltaResult[,c("A","B")], PrepData$true_pairs)
+```
+Let look at the convergence of the algorithm parameters:
+
+```{r}
+diag <- rl_diagnostics(fit, PrepData$encodedA, PrepData$encodedB, names(PIVs_config),
+                       0.50, PrepData$true_pairs, 15)
+```
+
+True gamma is: 0.95. 
+
+(For true eta see the data distribution).
+
+True alpha for changes of the 4th PIV over time are: -0.36 = log(0.7) (intercept), -0.51 = log(0.6) (covariate Xe), -0.69 = log(0.5) (covariate Xf).
+
+True phi for all PIVs, for mistakes and missing values are: 0.02 and 0.005. 
+
+```{r}
+plot(diag,"convergence", ask=FALSE)
+```
+
+For downstream inference it is important to look at the FDP (available here) of the estimated FDP (see FlexRL-diagnostics-RL-vignette.Rmd), the divergence between linked sample and data sources (MMD, SMD, IOU, data distribution ...).
+
+```{r}
+diag
+
+summary(diag)
+
+plot(diag,"smd")
+
+plot(diag,"distributions")
+```
+It may be of interest to look at the linkage score distribution and the distribution of 
+
+```{r}
+plot(diag,"scores")
+```
+
+Several other algorithms for **R**ecord **L**inkage have been developed so far in the literature. Each has its own qualities and flaws. `[stEM()]` usually outperforms in scenarios where the **PIVs** have low discriminative power with few expected registration errors; it is particularly efficient when there is enough information to model the dynamics of some **PIV** changing across time (such as postal code). In 2026, it is the only package taking account of dynamic PIVs. More can be found on this topic in the simulation setting of the [methodology paper](https://doi.org/10.1093/jrsssc/qlaf016), code is provided in [`FlexRL-experiments`](https://github.com/robachowyk/FlexRL-experiments).

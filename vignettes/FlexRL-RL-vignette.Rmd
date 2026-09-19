@@ -136,6 +136,7 @@ results[,"FlexRL"] = c(truepositive,falsepositive,falsenegative,fdp,sensitivity)
 
 results
 ```
+
 The level of agreement among the linked records differs from the one in the true links:
 
 ```{r}

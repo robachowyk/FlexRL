@@ -92,12 +92,9 @@ GenData <- DataCreation(
 PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
                      PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
 
-compute_FDP_RLwithSynth("arf", PrepData$encodedA,
-      PrepData$encodedB, names(PIVs_config),
-      subsample_size=NULL, restrict_support_intersection=TRUE,
-      maxIter4CV=3, NIter=5,
-      RLMethod = "BRL",
-      flds = names(PIVs_config),
-      types = rep("bi",length(PIVs_config))
-      )
+compute_FDP_RLwithSynth("arf", PrepData$encodedA, PrepData$encodedB,
+                  names(PIVs_config), subsample_size=NULL,
+                  restrict_support_intersection=TRUE, maxIter4CV=3, NIter=5,
+                  RLMethod = "BRL", flds = names(PIVs_config),
+                  types = rep("bi",length(PIVs_config)))
 }

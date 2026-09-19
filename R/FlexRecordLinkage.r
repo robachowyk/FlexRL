@@ -219,8 +219,16 @@ DataCreation <- function(PIVs_config, Nval, NRecords, Nlinks, Pmistake, Pmissing
 
   dataSet1$localID <- seq_len(nrow(dataSet1))
   dataSet2$localID <- seq_len(nrow(dataSet2))
-  dataSet1$entityID <- c(seq_len(Nlinks), seq.int(Nlinks + 1, nrow(dataSet1)))
-  dataSet2$entityID <- c(seq_len(Nlinks), seq.int(nrow(dataSet1) + 1, nrow(dataSet1) + nrow(dataSet2) - Nlinks))
+  if(nrow(dataSet1) > Nlinks){
+    dataSet1$entityID <- c(seq_len(Nlinks), seq.int(Nlinks + 1, nrow(dataSet1)))
+  }else{
+    dataSet1$entityID <- seq_len(Nlinks)
+  }
+  if(nrow(dataSet2) > Nlinks){
+    dataSet2$entityID <- c(seq_len(Nlinks), seq.int(nrow(dataSet1) + 1, nrow(dataSet1) + nrow(dataSet2) - Nlinks))
+  }else{
+    dataSet2$entityID <- seq_len(Nlinks)
+  }
   dataSet1$source <- "1"
   dataSet2$source <- "2"
 
@@ -435,10 +443,11 @@ simulateH <- function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi) {
   PIVs <- names(data$PIVs_config)
   PIVs_stable <- sapply(data$PIVs_config, function(x) x$dynamics != "structured")
   truePIVs <- sampleH(
-    nA = dim(data$encodedA[, PIVs]), nB = dim(data$encodedB[, PIVs]),
+    nA = dim(data$encodedA[, PIVs, drop=FALSE]), nB = dim(data$encodedB[, PIVs, drop=FALSE]),
     links = links, survivalpSameH = as.matrix(survivalpSameH), pivs_stable = PIVs_stable,
-    pivsA = data$encodedA[, PIVs], pivsB = data$encodedB[, PIVs], nvalues = data$Nvalues,
-    nonlinkedA = sumRowD == 0, nonlinkedB = sumColD == 0, eta = eta, phi = phi
+    pivsA = data$encodedA[, PIVs, drop=FALSE], pivsB = data$encodedB[, PIVs, drop=FALSE],
+    nvalues = data$Nvalues, nonlinkedA = sumRowD == 0, nonlinkedB = sumColD == 0,
+    eta = eta, phi = phi
   )
   list(truepivsA = truePIVs$truepivsA, truepivsB = truePIVs$truepivsB)
 }
@@ -557,36 +566,36 @@ simulateD <- function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamm
   tmpB <- indexPatterns(UB, length(valuesU))
   select <- pairPatterns(tmpA, tmpB, length(tmpA))
 
-  pLink <- rep(gamma, nrow(data$encodedA[, PIVs]))
+  pLink <- rep(gamma, nrow(data$encodedA[, PIVs, drop=FALSE]))
 
   # Contribution to the log-likelihood if a record from A is NOT linked
-  LLA <- rep(0, nrow(data$encodedA[, PIVs]))
+  LLA <- rep(0, nrow(data$encodedA[, PIVs, drop=FALSE]))
   for (k in seq_along(data$Nvalues)) {
     logpTrue <- log(eta[[k]])[truepivsA[, k]]
     pMissingA <- phi[[k]][3]
     pTypoA <- (1 - pMissingA) * (1 - phi[[k]][1]) / (data$Nvalues[k] - 1)
     pAgreeA <- (1 - pMissingA) * phi[[k]][1]
-    contr <- rep(pAgreeA, nrow(data$encodedA[, PIVs]))
-    contr[data$encodedA[, PIVs][, k] != truepivsA[, k]] <- pTypoA
-    contr[data$encodedA[, PIVs][, k] == 0] <- pMissingA
+    contr <- rep(pAgreeA, nrow(data$encodedA[, PIVs, drop=FALSE]))
+    contr[data$encodedA[, PIVs, drop=FALSE][, k] != truepivsA[, k]] <- pTypoA
+    contr[data$encodedA[, PIVs, drop=FALSE][, k] == 0] <- pMissingA
     LLA <- LLA + logpTrue + log(contr)
   }
 
   # Contribution to the log-likelihood if a record from B is NOT linked
-  LLB <- rep(0, nrow(data$encodedB[, PIVs]))
+  LLB <- rep(0, nrow(data$encodedB[, PIVs, drop=FALSE]))
   for (k in seq_along(data$Nvalues)) {
     logpTrue <- log(eta[[k]])[truepivsB[, k]]
     pMissingB <- phi[[k]][4]
     pTypoB <- (1 - pMissingB) * (1 - phi[[k]][2]) / (data$Nvalues[k] - 1)
     pAgreeB <- (1 - pMissingB) * phi[[k]][2]
-    contr <- rep(pAgreeB, nrow(data$encodedB[, PIVs]))
-    contr[data$encodedB[, PIVs][, k] != truepivsB[, k]] <- pTypoB
-    contr[data$encodedB[, PIVs][, k] == 0] <- pMissingB
+    contr <- rep(pAgreeB, nrow(data$encodedB[, PIVs, drop=FALSE]))
+    contr[data$encodedB[, PIVs, drop=FALSE][, k] != truepivsB[, k]] <- pTypoB
+    contr[data$encodedB[, PIVs, drop=FALSE][, k] == 0] <- pMissingB
     LLB <- LLB + logpTrue + log(contr)
   }
 
   # Contribution to the log-likelihood if a candidate pair IS linked
-  LLL <- Matrix::Matrix(0, nrow = nrow(data$encodedA[, PIVs]), ncol = nrow(data$encodedB[, PIVs]), sparse = TRUE)
+  LLL <- Matrix::Matrix(0, nrow = nrow(data$encodedA[, PIVs, drop=FALSE]), ncol = nrow(data$encodedB[, PIVs, drop=FALSE]), sparse = TRUE)
   for (k in seq_along(data$Nvalues)) {
     HA <- truepivsA[select[, 1], k]
     HB <- truepivsB[select[, 2], k]
@@ -599,12 +608,12 @@ simulateD <- function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamm
     pAgreeB <- (1 - pMissingB) * phi[[k]][2]
     # Contribution to the likelihood of linked observation from A
     helpA <- rep(pAgreeA, length(HA))
-    helpA[data$encodedA[, PIVs][select[, 1], k] != HA] <- pTypoA
-    helpA[data$encodedA[, PIVs][select[, 1], k] == 0] <- pMissingA
+    helpA[data$encodedA[, PIVs, drop=FALSE][select[, 1], k, drop=FALSE] != HA] <- pTypoA
+    helpA[data$encodedA[, PIVs, drop=FALSE][select[, 1], k, drop=FALSE] == 0] <- pMissingA
     # Contribution to the likelihood of linked observation from B
     helpB <- rep(pAgreeB, length(HB))
-    helpB[data$encodedB[, PIVs][select[, 2], k] != HB] <- pTypoB
-    helpB[data$encodedB[, PIVs][select[, 2], k] == 0] <- pMissingB
+    helpB[data$encodedB[, PIVs, drop=FALSE][select[, 2], k, drop=FALSE] != HB] <- pTypoB
+    helpB[data$encodedB[, PIVs, drop=FALSE][select[, 2], k, drop=FALSE] == 0] <- pMissingB
 
     LLL[select] <- LLL[select] + logpTrue + log(helpA) + log(helpB)
 
@@ -864,8 +873,8 @@ stEM <- function(data, StEMIter = 30, StEMBurnin = 15, GibbsIter = 20, GibbsBurn
     phi <- lapply(data$Nvalues, function(x) c(stats::runif(1, 0.8, 0.97), stats::runif(1, 0.8, 0.97), 0.1, 0.1))
   }
 
-  NmissingA <- lapply(seq_along(data$Nvalues), function(k) sum(fileA[, PIVs][, k] == 0))
-  NmissingB <- lapply(seq_along(data$Nvalues), function(k) sum(fileB[, PIVs][, k] == 0))
+  NmissingA <- lapply(seq_along(data$Nvalues), function(k) sum(fileA[, PIVs, drop=FALSE][, k] == 0))
+  NmissingB <- lapply(seq_along(data$Nvalues), function(k) sum(fileB[, PIVs, drop=FALSE][, k] == 0))
 
   gamma.iter <- array(NA, c(StEMIter, length(gamma)))
   eta.iter   <- lapply(data$Nvalues, function(x) array(NA, c(StEMIter, x)))
@@ -1006,8 +1015,8 @@ stEM <- function(data, StEMIter = 30, StEMBurnin = 15, GibbsIter = 20, GibbsBurn
         facpivsB <- factor(truepivsB[, k], levels = 1:data$Nvalues[k])
         Veta[[k]] <- rbind(Veta[[k]], table(facpivsA[sumRowD == 0]) + table(facpivsB[sumColD == 0]) + table(facpivsA[sumRowD == 1]))
         Vphi[[k]] <- rbind(Vphi[[k]], c(
-          sum(truepivsA[, k] == fileA[, PIVs][, k]),
-          sum(truepivsB[, k] == fileB[, PIVs][, k]),
+          sum(truepivsA[, k] == fileA[, PIVs, drop=FALSE][, k, drop=FALSE]),
+          sum(truepivsB[, k] == fileB[, PIVs, drop=FALSE][, k, drop=FALSE]),
           NmissingA[[k]], NmissingB[[k]]
         ))
       }
@@ -1179,6 +1188,10 @@ NaiveLinkage <- function(PIVs, encodedA, encodedB, na.match = TRUE, na.is.zero =
   if (!isTRUE(na.match) && !isFALSE(na.match)) {
     stop("`na.match` must be TRUE or FALSE.", call. = FALSE)
   }
+  if (isTRUE(na.match) && length(PIVs)==1){
+    na.match = FALSE
+    warning("`na.match` is set to FALSE with one PIV.", call. = FALSE)
+  }
 
   rownames(encodedA) <- seq_len(nrow(encodedA))
   rownames(encodedB) <- seq_len(nrow(encodedB))
@@ -1196,17 +1209,17 @@ NaiveLinkage <- function(PIVs, encodedA, encodedB, na.match = TRUE, na.is.zero =
   }
 
   # A (non-missing) vs. B (exact match on all PIVs), and vice versa
-  isNotMissingA <- apply(encodedA[, PIVs] != 0, 1, all)
-  isNotMissingB <- apply(encodedB[, PIVs] != 0, 1, all)
+  isNotMissingA <- apply(encodedA[, PIVs, drop=FALSE] != 0, 1, all)
+  isNotMissingB <- apply(encodedB[, PIVs, drop=FALSE] != 0, 1, all)
   DeltaNaiveLinked <- rbind(
     DeltaNaiveLinked,
     match_block(
-      list(U = pasteIntoPattern(as.matrix(encodedA[isNotMissingA, PIVs])), ID = rownames(encodedA)[isNotMissingA]),
-      list(U = pasteIntoPattern(as.matrix(encodedB[, PIVs])), ID = rownames(encodedB))
+      list(U = pasteIntoPattern(as.matrix(encodedA[isNotMissingA, PIVs, drop=FALSE])), ID = rownames(encodedA)[isNotMissingA]),
+      list(U = pasteIntoPattern(as.matrix(encodedB[, PIVs, drop=FALSE])), ID = rownames(encodedB))
     ),
     match_block(
-      list(U = pasteIntoPattern(as.matrix(encodedA[, PIVs])), ID = rownames(encodedA)),
-      list(U = pasteIntoPattern(as.matrix(encodedB[isNotMissingB, PIVs])), ID = rownames(encodedB)[isNotMissingB])
+      list(U = pasteIntoPattern(as.matrix(encodedA[, PIVs, drop=FALSE])), ID = rownames(encodedA)),
+      list(U = pasteIntoPattern(as.matrix(encodedB[isNotMissingB, PIVs, drop=FALSE])), ID = rownames(encodedB)[isNotMissingB])
     )
   )
 
@@ -1215,17 +1228,17 @@ NaiveLinkage <- function(PIVs, encodedA, encodedB, na.match = TRUE, na.is.zero =
   # as matches), (there is no match when several values are missing)
   if (isTRUE(na.match)) {
     for (k in seq_along(PIVs)) {
-      isMissingA_k <- encodedA[, PIVs][, k] == 0
-      isMissingB_k <- encodedB[, PIVs][, k] == 0
+      isMissingA_k <- encodedA[, PIVs, drop=FALSE][, k] == 0
+      isMissingB_k <- encodedB[, PIVs, drop=FALSE][, k] == 0
       DeltaNaiveLinked <- rbind(
         DeltaNaiveLinked,
         match_block(
-          list(U = pasteIntoPattern(as.matrix(encodedA[isMissingA_k, PIVs][, -k])), ID = rownames(encodedA)[isMissingA_k]),
-          list(U = pasteIntoPattern(as.matrix(encodedB[, PIVs][, -k])), ID = rownames(encodedB))
+          list(U = pasteIntoPattern(as.matrix(encodedA[isMissingA_k, PIVs, drop=FALSE][, -k])), ID = rownames(encodedA)[isMissingA_k]),
+          list(U = pasteIntoPattern(as.matrix(encodedB[, PIVs, drop=FALSE][, -k])), ID = rownames(encodedB))
         ),
         match_block(
-          list(U = pasteIntoPattern(as.matrix(encodedA[, PIVs][, -k])), ID = rownames(encodedA)),
-          list(U = pasteIntoPattern(as.matrix(encodedB[isMissingB_k, PIVs][, -k])), ID = rownames(encodedB)[isMissingB_k])
+          list(U = pasteIntoPattern(as.matrix(encodedA[, PIVs, drop=FALSE][, -k])), ID = rownames(encodedA)),
+          list(U = pasteIntoPattern(as.matrix(encodedB[isMissingB_k, PIVs, drop=FALSE][, -k])), ID = rownames(encodedB)[isMissingB_k])
         )
       )
     }
@@ -1422,7 +1435,7 @@ FDPinRL_fastLink <- function(NewA, NewB, arguments) {
 #'
 FDPinRL_multilink <- function(NewA, NewB, arguments) {
   PIVs <- names(arguments$breaks)
-  arguments$records <- as.data.frame(lapply(rbind(NewA[, PIVs], NewB[, PIVs]), as.character))
+  arguments$records <- as.data.frame(lapply(rbind(NewA[, PIVs, drop=FALSE], NewB[, PIVs, drop=FALSE]), as.character))
   arguments$file_sizes <- c(nrow(NewA), nrow(NewB))
   comparison_list <- do.call(multilink::create_comparison_data, arguments[intersect(names(arguments), names(formals(multilink::create_comparison_data)))])
 
@@ -1476,7 +1489,7 @@ FDPinRL_multilink <- function(NewA, NewB, arguments) {
 FDPinRL_diyar <- function(NewA, NewB, arguments) {
   allrecords <- rbind(NewA, NewB)
   PIVs <- setdiff(names(allrecords),c("localID", "source"))
-  arguments$attribute <- as.list(allrecords[, PIVs])
+  arguments$attribute <- as.list(allrecords[, PIVs, drop=FALSE])
   linkscores <- do.call(diyar::prob_score_range, arguments[intersect(names(arguments), names(formals(diyar::prob_score_range)))])
 
   arguments$score_threshold <- linkscores$mid_scorce
@@ -2089,8 +2102,8 @@ synthesise <- function(method, encodedA, encodedB, PIVs, syntheticSample, restri
   }
 
   if (method == "arf") {
-    arf_model <- arf::adversarial_rf(encodedB[, PIVs])
-    psi <- arf::forde(arf_model, encodedB[, PIVs])
+    arf_model <- arf::adversarial_rf(encodedB[, PIVs, drop=FALSE])
+    psi <- arf::forde(arf_model, encodedB[, PIVs, drop=FALSE])
     syntheticNewB <- arf::forge(psi, syntheticSample)
   } else {
     # synthpop / mice work better with continuous coding for
@@ -2100,10 +2113,10 @@ synthesise <- function(method, encodedA, encodedB, PIVs, syntheticSample, restri
       if (length(unique(encodedA[, p])) >= 60) encodedA[, p] <- as.numeric(encodedA[, p])
     }
     if (method == "synthpop") {
-      syntheticNewB <- synthpop::syn(encodedB[, PIVs], k = syntheticSample)$syn
+      syntheticNewB <- synthpop::syn(encodedB[, PIVs, drop=FALSE], k = syntheticSample)$syn
     } else {
       empty <- matrix(NA, nrow = syntheticSample, ncol = length(PIVs), dimnames = list(NULL, PIVs))
-      imputed <- mice::complete(mice::mice(rbind(encodedB[, PIVs], empty), m = 1))
+      imputed <- mice::complete(mice::mice(rbind(encodedB[, PIVs, drop=FALSE], empty), m = 1))
       syntheticNewB <- imputed[(nrow(encodedB) + 1):nrow(imputed), ]
     }
   }
@@ -2292,7 +2305,7 @@ compute_FDP_RLmodelSpecific <- function(vec_link_scores, threshold) {
 
 
 #' Estimate the false discovery proportion of a record-linkage method via
-#'synthetic augmentation
+#' synthetic augmentation
 #'
 #' Repeatedly augments file B with synthetic records ([synthesise()]), runs
 #' the chosen record-linkage method ([FDPinRL_FlexRL()] and siblings), and
@@ -2357,14 +2370,11 @@ compute_FDP_RLmodelSpecific <- function(vec_link_scores, threshold) {
 #' PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
 #'                      PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
 #'
-#' compute_FDP_RLwithSynth("arf", PrepData$encodedA,
-#'       PrepData$encodedB, names(PIVs_config),
-#'       subsample_size=NULL, restrict_support_intersection=TRUE,
-#'       maxIter4CV=3, NIter=5,
-#'       RLMethod = "BRL",
-#'       flds = names(PIVs_config),
-#'       types = rep("bi",length(PIVs_config))
-#'       )
+#' compute_FDP_RLwithSynth("arf", PrepData$encodedA, PrepData$encodedB,
+#'                   names(PIVs_config), subsample_size=NULL,
+#'                   restrict_support_intersection=TRUE, maxIter4CV=3, NIter=5,
+#'                   RLMethod = "BRL", flds = names(PIVs_config),
+#'                   types = rep("bi",length(PIVs_config)))
 compute_FDP_RLwithSynth <- function(SynthMethod, fileA, fileB, PIVs, subsample_size = NULL,
                                     restrict_support_intersection = TRUE, maxIter4CV = 10, NIter = 10,
                                     RLMethod, ...) {
