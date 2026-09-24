@@ -92,7 +92,7 @@
 #' PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
 #'                      PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
 #'
-#' fit <- stEM(data = PrepData, StEMIter = 20, StEMBurnin = 10,
+#' fit <- StEM(data = PrepData, StEMIter = 20, StEMBurnin = 10,
 #'            GibbsIter = 20, GibbsBurnin = 10, musicOn = FALSE)
 #' head(fit$Delta[fit$Delta$x > 0.5, ])
 #'

@@ -48,6 +48,7 @@ PIVs_config = list(
   )
 PIVs = names(PIVs_config)
 PIVs_stable = sapply(PIVs_config, function(x) x$dynamics != "structured")
+PIVs_type = list( ANASCI = TRUE, SESSO = FALSE, STACIV = FALSE, STUDIO = FALSE )
 ```
 
 We pre-process the data for the record linkage task: remove the records for which the linking variables are outside of the common support, check that PIVs are not strongly associated with each other (which may degrade record linkage performance).
@@ -150,7 +151,8 @@ Several other algorithms for **R**ecord **L**inkage have been developed so far i
 We developed diagnostic tools to prepare for downstream inference on linked data:
 
 ```{r}
-diag <- rl_diagnostics(fit, PrepData$encodedA, PrepData$encodedB, names(PIVs_config), 0.75, PrepData$true_pairs, 5)
+diag <- rl_diagnostics(fit, PrepData$encodedA, PrepData$encodedB, names(PIVs_config), PIVs_type, 0.75, PrepData$true_pairs, 5)
+
 diag # print(diag)
 ```
 

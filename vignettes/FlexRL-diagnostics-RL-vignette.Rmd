@@ -48,6 +48,7 @@ PIVs_config = list(
   )
 PIVs = names(PIVs_config)
 PIVs_stable = sapply(PIVs_config, function(x) x$dynamics != "structured")
+PIVs_type = list( SEX = FALSE, DOB_MONTH = TRUE, DOB_YEAR = TRUE, STATE = FALSE )
 ```
 
 We pre-process the data for the record linkage task: remove the records for which the linking variables are outside of the common support, check that PIVs are not strongly associated with each other (which may degrade record linkage performance).
@@ -184,8 +185,8 @@ Zhat <- (n1+1):(n1+n2)
 tholdLink <- lFM1/(lFM1+lFNM) + (lFM2-lFM1-lFNM)*(1 - probNoLink - probMaxProbOption)/(lFM1+lFNM)
 isLink <- maxProbOptionIsLink & (probMaxProbOption > tholdLink)
 Zhat[isLink] <- maxProbOption[isLink]
-idxA = which( Zhat <= n2 )
-idxB = Zhat[ Zhat <= n2 ]
+idxA = which( Zhat <= n1 )
+idxB = Zhat[ Zhat <= n1 ]
 LinkScore = probMaxProbOption[isLink]
 DeltaResult = data.frame(cbind(idxA=idxA,idxB=idxB,probaLink=LinkScore))
 linked_pairs = do.call(paste, c(DeltaResult[,c("idxA","idxB")], list(sep="_")))
@@ -194,6 +195,17 @@ falsepositive = length( setdiff(linked_pairs, true_pairs) )
 falsenegative = length( setdiff(true_pairs, linked_pairs) )
 fdp = falsepositive / (truepositive + falsepositive)
 sensitivity = truepositive / (truepositive + falsenegative)
+# res_brl <- FDPinRL_BRL(PrepData$encodedA, PrepData$encodedB, list(flds = names(PIVs_config), types = rep("bi",length(PIVs_config))))
+#' # example with BRL
+#' fitBRL <- FDPinRL_BRL( PrepData$encodedA, PrepData$encodedB, 
+#'                        list( flds = names(PIVs_config), 
+#'                              types = rep("bi",length(PIVs_config)) ) )
+#' plot_linkage_score( nrow(PrepData$encodedA)*nrow(PrepData$encodedB), 
+#'                     fitBRL[[3]] )
+#'                     arguments <- list(data = PrepData, StEMIter = 10, StEMBurnin = 5, 
+#'                GibbsIter = 10, GibbsBurnin = 5)
+#' 
+#' fit <- FDPinRL_FlexRL(PrepData$encodedA, PrepData$encodedB, list(data = PrepData, StEMIter = 10, StEMBurnin = 5, GibbsIter = 10, GibbsBurnin = 5))  
 DFresults[1:5,"BRL"] = c(truepositive,falsepositive,falsenegative,fdp,sensitivity)
 fdp_res <- compute_FDP_RLwithSynth("arf", PrepData$encodedA, PrepData$encodedB, PIVs, maxIter4CV=2, NIter=3,
                                    RLMethod = "BRL", flds = PIVs, types = rep("bi",length(PIVs)))

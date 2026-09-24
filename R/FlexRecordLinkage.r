@@ -52,35 +52,27 @@
 #'
 #' @examples
 #' PIVs_config <- list( V1 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V2 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V3 = list(dynamics = "flexible",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V4 = list(dynamics = "structured",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(0.03,0.03),
-#'                                 condHazardCov = list(cov1=c("Xe", "Xf"),
-#'                                                       cov2=c())
-#'                                 )
-#' )
-#' Nval  <- c(6, 7, 8, 9)
-#' Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
-#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-#' Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
-#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V2 = list(dynamics = "stable",
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V3 = list(dynamics = "flexible",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V4 = list(dynamics = "structured",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(0.03,0.03),
+#'                                condHazardCov = list(cov1=c("Xe", "Xf"),
+#'                                                     cov2=c())) )
+#' Nval  <- c( 5, 6, 7, 12 )
+#' Pmistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+#' Pmissing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
-#'
-#' GenData <- DataCreation(
-#'   PIVs_config, Nval, NRecords = c(400, 600), Nlinks = 300,
-#'   Pmistake, Pmissing, condHazard_params, enforceEstimability = TRUE
-#' )
+#' GenData <- DataCreation( PIVs_config, Nval, c(250, 300), 200, Pmistake, 
+#'                          Pmissing, condHazard_params, TRUE )
 #' str(GenData, max.level = 1)
 DataCreation <- function(PIVs_config, Nval, NRecords, Nlinks, Pmistake, Pmissing,
                          condHazard_params, enforceEstimability) {
@@ -242,7 +234,7 @@ DataCreation <- function(PIVs_config, Nval, NRecords, Nlinks, Pmistake, Pmissing
 
 #' Book-keeping data frame for parameters of PIVs dynamics
 #'
-#' Internal helper used by [stEM()] to accumulate, across Gibbs iterations,
+#' Internal helper used by [StEM()] to accumulate, across Gibbs iterations,
 #' the covariates, true-value agreement indicator, and time gaps needed to
 #' re-estimate the survival (hazard) parameters of a dynamic structured PIV.
 #'
@@ -258,24 +250,19 @@ DataCreation <- function(PIVs_config, Nval, NRecords, Nlinks, Pmistake, Pmissing
 #'
 #' @examples
 #' PIVs_config <- list( V1 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V2 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V3 = list(dynamics = "flexible",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V4 = list(dynamics = "structured",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(0.03,0.03),
-#'                                 condHazardCov = list(cov1=c("Xe", "Xf"),
-#'                                                       cov2=c())
-#'                                 )
-#' )
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V2 = list(dynamics = "stable",
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V3 = list(dynamics = "flexible",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V4 = list(dynamics = "structured",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(0.03,0.03),
+#'                                condHazardCov = list(cov1=c("Xe", "Xf"),
+#'                                                     cov2=c())) )
 #' PIVs_stable <- sapply(PIVs_config, function(x) x$dynamics != "structured")
 #' nCoefUnstable = c(0,0,0,3)
 #' Valpha <- mapply(createDataAlpha, nCoefUnstable = nCoefUnstable,
@@ -295,7 +282,8 @@ createDataAlpha <- function(nCoefUnstable, stable) {
 #' @param Brecords Integer, number of records in the larger data source (B).
 #' @param sumD Integer, number of currently linked records.
 #'
-#' @return Numeric, `sum(log((Brecords - sumD + 1):Brecords))`, or `0` if `sumD == 0`.
+#' @return Numeric, `sum(log((Brecords - sumD + 1):Brecords))`, or `0` if 
+#'   `sumD == 0`.
 #' @export
 #'
 #' @examples
@@ -356,7 +344,7 @@ loglik <- function(LLL, LLA, LLB, links, sumRowD, sumColD, gamma) {
 #'
 #' @param data List with `encodedA`, `encodedB` (the two encoded data
 #'   sources, missing values coded as `0`), `Nvalues`, and `PIVs_config`;
-#'   see [stEM()].
+#'   see [StEM()].
 #' @param links 2-column matrix of (A, B) indices for the currently linked
 #'   records.
 #' @param survivalpSameH Matrix (n links x n PIVs); `1` for stable PIVs, and the
@@ -375,44 +363,29 @@ loglik <- function(LLL, LLA, LLB, links, sumRowD, sumColD, gamma) {
 #'
 #' @examples
 #' PIVs_config <- list( V1 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V2 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V3 = list(dynamics = "flexible",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V4 = list(dynamics = "structured",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(0.03,0.03),
-#'                                 condHazardCov = list(cov1=c("Xe", "Xf"),
-#'                                                       cov2=c())
-#'                                 )
-#' )
-#' Nval  <- c(6, 7, 8, 9)
-#' Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
-#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-#' Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
-#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V2 = list(dynamics = "stable",
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V3 = list(dynamics = "flexible",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V4 = list(dynamics = "structured",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(0.03,0.03),
+#'                                condHazardCov = list(cov1=c("Xe", "Xf"),
+#'                                                     cov2=c())) )
+#' Nval  <- c( 5, 6, 7, 12 )
+#' Pmistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+#' Pmissing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
-#'
-#' GenData <- DataCreation(
-#'   PIVs_config, Nval, NRecords = c(400, 600), Nlinks = 300,
-#'   Pmistake, Pmissing, condHazard_params, enforceEstimability = TRUE
-#' )
-#'
-#' Data4StEM <- prepare_data(GenData$dataSet1,
-#'                           GenData$dataSet2,
-#'                           "1",
-#'                           "2",
-#'                           PIVs_config,
-#'                           TRUE,
-#'                           "entityID",
-#'                           TRUE)
+#' GenData <- DataCreation( PIVs_config, Nval, c(250, 300), 200, Pmistake, 
+#'                          Pmissing, condHazard_params, TRUE )
+#' Data4StEM <- prepare_data( GenData$dataSet1, GenData$dataSet2, "1", "2",
+#'                            PIVs_config, TRUE, "entityID", TRUE )
 #' PIVs_stable <- sapply(Data4StEM$PIVs_config, function(x)
 #'                         x$dynamics != "structured")
 #' FlexRL:::initDeltaMap()
@@ -459,7 +432,7 @@ simulateH <- function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi) {
 #' conditional distribution, and returns the updated log-likelihood.
 #'
 #' @param data List with `encodedA`, `encodedB`, `Nvalues`, `PIVs_config`;
-#'   see [stEM()].
+#'   see [StEM()].
 #' @param linksR 2-column matrix (1-indexed) of the currently linked (A, B)
 #'   indices.
 #' @param sumRowD Logical vector, one entry per record in A: does it have a
@@ -483,44 +456,29 @@ simulateH <- function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi) {
 #'
 #' @examples
 #' PIVs_config <- list( V1 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V2 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V3 = list(dynamics = "flexible",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V4 = list(dynamics = "structured",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(0.03,0.03),
-#'                                 condHazardCov = list(cov1=c("Xe", "Xf"),
-#'                                                       cov2=c())
-#'                                 )
-#' )
-#' Nval  <- c(6, 7, 8, 9)
-#' Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
-#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-#' Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
-#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V2 = list(dynamics = "stable",
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V3 = list(dynamics = "flexible",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V4 = list(dynamics = "structured",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(0.03,0.03),
+#'                                condHazardCov = list(cov1=c("Xe", "Xf"),
+#'                                                     cov2=c())) )
+#' Nval  <- c( 5, 6, 7, 12 )
+#' Pmistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+#' Pmissing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
-#'
-#' GenData <- DataCreation(
-#'   PIVs_config, Nval, NRecords = c(400, 600), Nlinks = 300,
-#'   Pmistake, Pmissing, condHazard_params, enforceEstimability = TRUE
-#' )
-#'
-#' Data4StEM <- prepare_data(GenData$dataSet1,
-#'                           GenData$dataSet2,
-#'                           "1",
-#'                           "2",
-#'                           PIVs_config,
-#'                           TRUE,
-#'                           "entityID",
-#'                           TRUE)
+#' GenData <- DataCreation( PIVs_config, Nval, c(250, 300), 200, Pmistake, 
+#'                          Pmissing, condHazard_params, TRUE )
+#' Data4StEM <- prepare_data( GenData$dataSet1, GenData$dataSet2, "1", "2",
+#'                            PIVs_config, TRUE, "entityID", TRUE )
 #' PIVs_stable <- sapply(Data4StEM$PIVs_config, function(x)
 #'                         x$dynamics != "structured")
 #' FlexRL:::initDeltaMap()
@@ -660,7 +618,7 @@ simulateD <- function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamm
 
 #' Negative log-likelihood of the exponential survival model for instability
 #'
-#' Used by [stEM()] to re-estimate the hazard coefficients `alpha` at every
+#' Used by [StEM()] to re-estimate the hazard coefficients `alpha` at every
 #' iteration (via `stats::nlminb`). To use a different survival model, adapt
 #' this function together with [SurvivalUnstable()].
 #'
@@ -761,47 +719,37 @@ SurvivalUnstable <- function(Xlinksk, alphask, times) {
 #'
 #' @examples
 #' PIVs_config <- list( V1 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V2 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V3 = list(dynamics = "flexible",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V4 = list(dynamics = "structured",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(0.03,0.03),
-#'                                 condHazardCov = list(cov1=c("Xe", "Xf"),
-#'                                                       cov2=c())
-#'                                 )
-#' )
-#' Nval  <- c(6, 7, 8, 9)
-#' Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
-#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-#' Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
-#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V2 = list(dynamics = "stable",
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V3 = list(dynamics = "flexible",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V4 = list(dynamics = "structured",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(0.03,0.03),
+#'                                condHazardCov = list(cov1=c("Xe", "Xf"),
+#'                                                     cov2=c())) )
+#' Nval  <- c( 5, 6, 7, 12 )
+#' Pmistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+#' Pmissing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
-#'
-#' GenData <- DataCreation(
-#'   PIVs_config, Nval, NRecords = c(400, 600), Nlinks = 300,
-#'   Pmistake, Pmissing, condHazard_params, enforceEstimability = TRUE
-#' )
-#'
-#' PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
-#'                      PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
-#'
-#' fit <- stEM(data = PrepData, StEMIter = 10, StEMBurnin = 5,
-#'            GibbsIter = 10, GibbsBurnin = 5, musicOn = FALSE)
+#' GenData <- DataCreation( PIVs_config, Nval, c(250, 300), 200, Pmistake, 
+#'                          Pmissing, condHazard_params, TRUE )
+#' PrepData <- prepare_data( GenData$dataSet1, GenData$dataSet2, "1", "2",
+#'                           PIVs_config, TRUE, "entityID", TRUE )
+#' fit <- StEM( data = PrepData, StEMIter = 10, StEMBurnin = 5, GibbsIter = 10, 
+#'              GibbsBurnin = 5, musicOn = FALSE )
 #' head(fit$Delta[fit$Delta$x > 0.5, ])
-stEM <- function(data, StEMIter = 30, StEMBurnin = 15, GibbsIter = 20, GibbsBurnin = 10,
+StEM <- function(data, StEMIter = 30, StEMBurnin = 15, GibbsIter = 20, GibbsBurnin = 10,
                  musicOn = FALSE, newDirectory = NULL, saveInfoIter = FALSE,
                  gamma0 = NULL, phiA0 = NULL, phiB0 = NULL, nPostSamp = 1000) {
 
-  message("Running FlexRL")
+  message("FlexRL")
 
   required <- c("encodedA", "encodedB", "PIVs_config", "Nvalues", "sameMistakes")
   if (!all(required %in% names(data))) {
@@ -1162,23 +1110,32 @@ stEM <- function(data, StEMIter = 30, StEMBurnin = 15, GibbsIter = 20, GibbsBurn
 #' @export
 #'
 #' @examples
-#' PIVs_config <- list(V1 = list(dynamics = "stable",
-#'                               boundMistakes = c(0.1, 0.1),
-#'                               fixMistakes = c(NA, NA)),
-#'                     V2 = list(dynamics = "stable",
-#'                               boundMistakes = c(0.1, 0.1),
-#'                               fixMistakes = c(NA, NA)))
-#' GenData <- DataCreation(PIVs_config, Nval = c(6,6), NRecords = c(30, 50),
-#'                Nlinks = 15, Pmistake = list(V1 = c(0, 0), V2 = c(0, 0)),
-#'                Pmissing = list(V1 = c(0, 0), V1 = c(0, 0)),
-#'                condHazard_params = list(V1 = c()),
-#'                enforceEstimability = FALSE)
-#' PIVs <- names(PIVs_config)
-#' encodedA <- GenData$dataSet1
-#' encodedA[,PIVs][ is.na(encodedA[,PIVs]) ] = 0
-#' encodedB <- GenData$dataSet2
-#' encodedB[,PIVs][ is.na(encodedB[,PIVs]) ] = 0
-#' NaiveLinkage(PIVs, encodedA, encodedB)
+#' PIVs_config <- list( V1 = list(dynamics = "stable",
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V2 = list(dynamics = "stable",
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V3 = list(dynamics = "flexible",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V4 = list(dynamics = "structured",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(0.03,0.03),
+#'                                condHazardCov = list(cov1=c("Xe", "Xf"),
+#'                                                     cov2=c())) )
+#' Nval  <- c( 5, 6, 7, 12 )
+#' Pmistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+#' Pmissing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
+#' condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
+#' GenData <- DataCreation( PIVs_config, Nval, c(250, 300), 200, Pmistake, 
+#'                          Pmissing, condHazard_params, TRUE )
+#' PrepData <- prepare_data( GenData$dataSet1, GenData$dataSet2, "1", "2",
+#'                           PIVs_config, TRUE, "entityID", TRUE )
+#' NaiveLinkage( names(PrepData$PIVs_config), 
+#'               PrepData$encodedA, PrepData$encodedB )
 NaiveLinkage <- function(PIVs, encodedA, encodedB, na.match = TRUE, na.is.zero = TRUE) {
 
   if (!na.is.zero) {
@@ -1247,20 +1204,22 @@ NaiveLinkage <- function(PIVs, encodedA, encodedB, na.match = TRUE, na.is.zero =
   DeltaNaiveLinked[!duplicated(DeltaNaiveLinked), ]
 }
 
-# ============================================================================
-# FDP ("false discovery proportion") estimation via synthetic-record
-# augmentation, for a range of external record-linkage packages.
-#
-# Every FDPinRL_* wrapper below has the same contract: take the two data
-# sets (`NewA`, `NewB`, as produced by [synthesise()]) and an `arguments`
-# list of extra parameters forwarded to the underlying package, run that
-# package's linkage pipeline, and return
-#   list(result_index_linked_A, result_index_linked_B, result_vec_linked_scores)
-# so that [compute_FDP_RLwithSynth()] can treat every method uniformly.
-# `result_vec_linked_scores` may be `NULL` for methods that don't return a
-# continuous linkage score (in which case only the default threshold is used).
-# Details about this FDP estimation method in https://doi.org/10.1002/sim.70292.
-# ============================================================================
+#' ============================================================================
+#' FDP ("false discovery proportion") estimation via synthetic-record
+#' augmentation, for a range of external record-linkage packages.
+#'
+#' Every FDPinRL_* wrapper below: takes the two data sets (`NewA`, `NewB`, 
+#' as produced by [synthesise()]) and an `arguments` list of extra parameters 
+#' forwarded to the underlying package, run that package linkage pipeline, 
+#' and return list(result_index_linked_A, result_index_linked_B, 
+#' result_vec_linked_scores) so that [compute_augmRL_FDP_synth()] can treat every 
+#' method uniformly. `result_vec_linked_scores` may be `NULL` for methods that 
+#' do not return a continuous linkage score (in which case only the default 
+#' threshold is used).
+#' Every FDPinRL_* may also be used with the initial encodedA, encodedB data 
+#' sources as a wrapper for these external record-linkage packages.
+#' Details about this FDP estimation method in https://doi.org/10.1002/sim.70292.
+#' ============================================================================
 
 #' FDP estimation with FlexRL
 #'
@@ -1269,20 +1228,20 @@ NaiveLinkage <- function(PIVs, encodedA, encodedB, na.match = TRUE, na.is.zero =
 #'
 #' @param NewA Data set as returned by [synthesise()].
 #' @param NewB Data set as returned by [synthesise()].
-#' @param arguments List of extra arguments forwarded to [stEM()] (e.g.
+#' @param arguments List of extra arguments forwarded to [StEM()] (e.g.
 #'   `data`, `StEMIter`, `StEMBurnin`, `GibbsIter`, `GibbsBurnin`).
 #'
 #' @return List with `result_index_linked_A`, `result_index_linked_B`,
 #'   `result_vec_linked_scores` (posterior linkage probabilities).
 #' @export
 #'
-FDPinRL_FlexRL <- function(NewA, NewB, arguments) {
+FDPinRL_FlexRL <- function(NewA, NewB, arguments, ...) {
   PIVs <- names(arguments$data$PIVs_config)
   NewA[PIVs][is.na(NewA[PIVs])] <- 0 # FlexRL sentinel for missing values
   NewB[PIVs][is.na(NewB[PIVs])] <- 0
-  arguments$data[["A"]] <- NewA
-  arguments$data[["B"]] <- NewB
-  fit <- do.call(stEM, arguments)
+  arguments$data[["encodedA"]] <- NewA
+  arguments$data[["encodedB"]] <- NewB
+  fit <- do.call(StEM, arguments[intersect(names(arguments), names(formals(StEM)))])
   list(fit$Delta$i, fit$Delta$j, fit$Delta$x)
 }
 
@@ -1301,12 +1260,12 @@ FDPinRL_FlexRL <- function(NewA, NewB, arguments) {
 #'   `result_vec_linked_scores`.
 #' @export
 #'
-FDPinRL_fedmatch <- function(NewA, NewB, arguments) {
+FDPinRL_fedmatch <- function(NewA, NewB, arguments, ...) {
   NewA[, arguments$unique_key_1] <- rownames(NewA)
   NewB[, arguments$unique_key_2] <- rownames(NewB)
   arguments$data1 <- NewA
   arguments$data2 <- NewB
-  results <- do.call(fedmatch::merge_plus, arguments)
+  results <- do.call(fedmatch::merge_plus, arguments[intersect(names(arguments), names(formals(fedmatch::merge_plus)))])
   list(results$matches$unique_key_A, results$matches$unique_key_B, results$matches$multivar_score)
 }
 
@@ -1322,10 +1281,11 @@ FDPinRL_fedmatch <- function(NewA, NewB, arguments) {
 #'   `select_threshold()`): e.g. `on`, `formula`, `type`, `add`, `variable`,
 #'   `score`, `threshold`.
 #'
-#' @return List with `result_index_linked_A`, `result_index_linked_B`, `result_vec_linked_scores`.
+#' @return List with `result_index_linked_A`, `result_index_linked_B`, 
+#'   `result_vec_linked_scores`.
 #' @export
 #'
-FDPinRL_reclin2 <- function(NewA, NewB, arguments) {
+FDPinRL_reclin2 <- function(NewA, NewB, arguments, ...) {
   arguments$x <- NewA
   arguments$y <- NewB
   pairs <- do.call(reclin2::pair, arguments[intersect(names(arguments), names(formals(reclin2::pair)))])
@@ -1359,10 +1319,12 @@ FDPinRL_reclin2 <- function(NewA, NewB, arguments) {
 #' @param arguments List of extra arguments forwarded to `BRL::compareRecords()`
 #'   and `BRL::bipartiteGibbs()` (e.g. `flds`, `types`, `nIter`).
 #'
-#' @return List with `result_index_linked_A`, `result_index_linked_B`, `result_vec_linked_scores`.
+#' @return List with `result_index_linked_A`, `result_index_linked_B`, 
+#'   `result_vec_linked_scores`.
 #' @export
 #'
-FDPinRL_BRL <- function(NewA, NewB, arguments) {
+FDPinRL_BRL <- function(NewA, NewB, arguments, ...) {
+
   arguments$df1 <- NewB
   arguments$df2 <- NewA
   myCompData <- do.call(BRL::compareRecords, arguments[intersect(names(arguments), names(formals(BRL::compareRecords)))])
@@ -1381,13 +1343,14 @@ FDPinRL_BRL <- function(NewA, NewB, arguments) {
   maxProbOption <- apply(tableLabels, 2, which.max)
   probMaxProbOption <- apply(tableLabels, 2, max)
   maxProbOptionIsLink <- maxProbOption <= n1
-
+  
   # Bayes-optimal decision rule under a symmetric loss
   # (see BRL package documentation)
   lFM1 <- 1
   lFM2 <- 2
   lFNM <- 1
-  tholdLink <- lFM1 / (lFM1 + lFNM) + (lFM2 - lFM1 - lFNM) * (1 - probNoLink - probMaxProbOption) / (lFM1 + lFNM)
+  defaulttholdLink <- lFM1 / (lFM1 + lFNM) + (lFM2 - lFM1 - lFNM) * (1 - probNoLink - probMaxProbOption) / (lFM1 + lFNM)
+  tholdLink <- 0 # rep(0,n2)
   isLink <- maxProbOptionIsLink & (probMaxProbOption > tholdLink)
   Zhat <- (n1+1):(n1+n2)
   Zhat[isLink] <- maxProbOption[isLink]
@@ -1409,10 +1372,10 @@ FDPinRL_BRL <- function(NewA, NewB, arguments) {
 #'   `result_vec_linked_scores`.
 #' @export
 #'
-FDPinRL_fastLink <- function(NewA, NewB, arguments) {
+FDPinRL_fastLink <- function(NewA, NewB, arguments, ...) {
   arguments$dfA <- NewA
   arguments$dfB <- NewB
-  out <- do.call(fastLink::fastLink, arguments)
+  out <- do.call(fastLink::fastLink, arguments[intersect(names(arguments), names(formals(fastLink::fastLink)))])
   list(out$matches$inds.a, out$matches$inds.b, out$posterior)
 }
 
@@ -1426,14 +1389,14 @@ FDPinRL_fastLink <- function(NewA, NewB, arguments) {
 #' @param arguments List of extra arguments forwarded across the `multilink`
 #'   pipeline (`create_comparison_data()`, `reduce_comparison_data()`,
 #'   `specify_prior()`, `gibbs_sampler()`, `find_bayes_estimate()`,
-#'   `relabel_bayes_estimate()`): e.g. `records`, `types`, `breaks`, `duplicates`, `n_iter`.
+#'   `relabel_bayes_estimate()`): e.g. `records`, `types`, `breaks`, 
+#'   `duplicates`, `n_iter`.
 #'
 #' @return List with `result_index_linked_A`, `result_index_linked_B`,
-#'   `result_vec_linked_scores` (`NULL`: multilink does not return a
-#'   per-pair score).
+#'   `result_vec_linked_scores` (`NULL`: does not return a per-pair score).
 #' @export
 #'
-FDPinRL_multilink <- function(NewA, NewB, arguments) {
+FDPinRL_multilink <- function(NewA, NewB, arguments, ...) {
   PIVs <- names(arguments$breaks)
   arguments$records <- as.data.frame(lapply(rbind(NewA[, PIVs, drop=FALSE], NewB[, PIVs, drop=FALSE]), as.character))
   arguments$file_sizes <- c(nrow(NewA), nrow(NewB))
@@ -1483,10 +1446,10 @@ FDPinRL_multilink <- function(NewA, NewB, arguments) {
 #'   `attribute`, `probabilistic`, `return_weights`).
 #'
 #' @return List with `result_index_linked_A`, `result_index_linked_B`,
-#'   `result_vec_linked_scores` (`NULL`: not exposed per-pair by this wrapper).
+#'   `result_vec_linked_scores` (`NULL`: does not return a per-pair score).
 #' @export
 #'
-FDPinRL_diyar <- function(NewA, NewB, arguments) {
+FDPinRL_diyar <- function(NewA, NewB, arguments, ...) {
   allrecords <- rbind(NewA, NewB)
   PIVs <- setdiff(names(allrecords),c("localID", "source"))
   arguments$attribute <- as.list(allrecords[, PIVs, drop=FALSE])
@@ -1531,47 +1494,36 @@ FDPinRL_diyar <- function(NewA, NewB, arguments) {
 #'
 #' @examples
 #' PIVs_config <- list( V1 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V2 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V3 = list(dynamics = "flexible",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V4 = list(dynamics = "structured",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(0.03,0.03),
-#'                                 condHazardCov = list(cov1=c("Xe", "Xf"),
-#'                                                       cov2=c())
-#'                                 )
-#' )
-#' Nval  <- c(6, 7, 8, 9)
-#' Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
-#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-#' Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
-#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V2 = list(dynamics = "stable",
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V3 = list(dynamics = "flexible",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V4 = list(dynamics = "structured",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(0.03,0.03),
+#'                                condHazardCov = list(cov1=c("Xe", "Xf"),
+#'                                                     cov2=c())) )
+#' Nval  <- c( 5, 6, 7, 12 )
+#' Pmistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+#' Pmissing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
-#'
-#' GenData <- DataCreation(
-#'   PIVs_config, Nval, NRecords = c(400, 600), Nlinks = 300,
-#'   Pmistake, Pmissing, condHazard_params, enforceEstimability = TRUE
-#' )
-#'
-#' PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
-#'                      PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
-#'
-#' fit <- stEM(data = PrepData, StEMIter = 10, StEMBurnin = 5,
-#'            GibbsIter = 10, GibbsBurnin = 5, musicOn = FALSE)
+#' GenData <- DataCreation( PIVs_config, Nval, c(250, 300), 200, Pmistake, 
+#'                          Pmissing, condHazard_params, TRUE )
+#' PrepData <- prepare_data( GenData$dataSet1, GenData$dataSet2, "1", "2",
+#'                           PIVs_config, TRUE, "entityID", TRUE )
+#' fit <- StEM( data = PrepData, StEMIter = 10, StEMBurnin = 5,
+#'              GibbsIter = 10, GibbsBurnin = 5, musicOn = FALSE )
 #' linked_pairs <- fit$Delta[fit$Delta$x > 0.5, ]
-#'
-#' rl_agreement(PrepData$encodedA, PrepData$encodedB,
-#'                names(PIVs_config), linked_pairs)
-#' rl_agreement(PrepData$encodedA, PrepData$encodedB,
-#'                names(PIVs_config), linked_pairs, PrepData$true_pairs)
+#' rl_agreement( PrepData$encodedA, PrepData$encodedB,
+#'               names(PIVs_config), linked_pairs )
+#' rl_agreement( PrepData$encodedA, PrepData$encodedB,
+#'               names(PIVs_config), linked_pairs, PrepData$true_pairs )
 rl_agreement <- function(data1, data2, common_vars, linked_pairs,
                          true_pairs = NULL, na.rm = TRUE, na.match = NULL) {
 
@@ -1598,7 +1550,7 @@ rl_agreement <- function(data1, data2, common_vars, linked_pairs,
 
 # Proportion of agreement, one value per variable, for the pairs given by
 # (idx1[k], idx2[k]). Compared as character so that factor level sets differing
-# across sources don't produce spurious mismatches.
+# across sources do not produce spurious mismatches.
 .rl_agreement_rates <- function(data1, data2, common_vars, pairs, na.rm = TRUE, na.match = NULL) {
   idx1 <- pairs[[1]]
   idx2 <- pairs[[2]]
@@ -1613,9 +1565,9 @@ rl_agreement <- function(data1, data2, common_vars, linked_pairs,
   }, numeric(1))
 }
 
-#' Prepare two data sources for [stEM()]
+#' Prepare two data sources for [StEM()]
 #'
-#' Wraps the data-preparation steps needed before calling [stEM()]: tags each
+#' Wraps the data-preparation steps needed before calling [StEM()]: tags each
 #' source with a `source` column, relabels the larger source as `B` (FlexRL
 #' requires B to be the larger file — adjusting `condHazardCov`/`boundMistakes`/
 #' `fixMistakes` accordingly if A and B are swapped), drops records whose PIV
@@ -1642,45 +1594,36 @@ rl_agreement <- function(data1, data2, common_vars, linked_pairs,
 #'   with an out-of-common-support PIV value are dropped (and a warning issued);
 #'   if `FALSE`, only the warning is issued.
 #'
-#' @return A list ready to use as the `data` argument of [stEM()]: `encodedA`,
+#' @return A list ready to use as the `data` argument of [StEM()]: `encodedA`,
 #'   `encodedB`, `Nvalues`, `PIVs_config`, `sameMistakes`, and `true_pairs`
 #'   (`NULL` if `uniqID` was not supplied).
 #' @export
 #'
 #' @examples
 #' PIVs_config <- list( V1 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V2 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V3 = list(dynamics = "flexible",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V4 = list(dynamics = "structured",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(0.03,0.03),
-#'                                 condHazardCov = list(cov1=c("Xe", "Xf"),
-#'                                                       cov2=c())
-#'                                 )
-#' )
-#' Nval  <- c(6, 7, 8, 9)
-#' Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
-#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-#' Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
-#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V2 = list(dynamics = "stable",
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V3 = list(dynamics = "flexible",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V4 = list(dynamics = "structured",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(0.03,0.03),
+#'                                condHazardCov = list(cov1=c("Xe", "Xf"),
+#'                                                     cov2=c())) )
+#' Nval  <- c( 5, 6, 7, 12 )
+#' Pmistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+#' Pmissing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
-#'
-#' GenData <- DataCreation(
-#'   PIVs_config, Nval, NRecords = c(400, 600), Nlinks = 300,
-#'   Pmistake, Pmissing, condHazard_params, enforceEstimability = TRUE
-#' )
-#'
-#' PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
-#'                      PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
+#' GenData <- DataCreation( PIVs_config, Nval, c(250, 300), 200, Pmistake, 
+#'                          Pmissing, condHazard_params, TRUE )
+#' PrepData <- prepare_data( GenData$dataSet1, GenData$dataSet2, "1", "2",
+#'                           PIVs_config, TRUE, "entityID", TRUE )
 #' str(PrepData, max.level = 1)
 prepare_data <- function(data1, data2, label1, label2, PIVs_config,
                          sameMistakes = TRUE, uniqID = NULL,
@@ -1931,41 +1874,31 @@ prepare_data <- function(data1, data2, label1, label2, PIVs_config,
 #'
 #' @examples
 #' PIVs_config <- list( V1 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V2 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V3 = list(dynamics = "flexible",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V4 = list(dynamics = "structured",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(0.03,0.03),
-#'                                 condHazardCov = list(cov1=c("Xe", "Xf"),
-#'                                                       cov2=c())
-#'                                 )
-#' )
-#' Nval  <- c(6, 7, 8, 9)
-#' Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
-#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-#' Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
-#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V2 = list(dynamics = "stable",
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V3 = list(dynamics = "flexible",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V4 = list(dynamics = "structured",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(0.03,0.03),
+#'                                condHazardCov = list(cov1=c("Xe", "Xf"),
+#'                                                     cov2=c())) )
+#' Nval  <- c( 5, 6, 7, 12 )
+#' Pmistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+#' Pmissing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
-#'
-#' GenData <- DataCreation(
-#'   PIVs_config, Nval, NRecords = c(400, 600), Nlinks = 300,
-#'   Pmistake, Pmissing, condHazard_params, enforceEstimability = TRUE
-#' )
-#'
-#' PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
-#'                      PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
-#'
-#' fit <- stEM(data = PrepData, StEMIter = 10, StEMBurnin = 5,
-#'            GibbsIter = 10, GibbsBurnin = 5, musicOn = FALSE)
+#' GenData <- DataCreation( PIVs_config, Nval, c(250, 300), 200, Pmistake, 
+#'                          Pmissing, condHazard_params, TRUE )
+#' PrepData <- prepare_data( GenData$dataSet1, GenData$dataSet2, "1", "2",
+#'                           PIVs_config, TRUE, "entityID", TRUE )
+#' fit <- StEM( data = PrepData, StEMIter = 10, StEMBurnin = 5,
+#'              GibbsIter = 10, GibbsBurnin = 5, musicOn = FALSE )
 #' threshold_strict <- stats::quantile(fit$Delta$x, 0.95)
 #' DFLinkedStrict = data.frame( cbind( data.frame(
 #'       PrepData$encodedA[fit$Delta[fit$Delta$x > threshold_strict, "i"],]),
@@ -2079,7 +2012,7 @@ compute_proba_control <- function(df, var, level) {
 #'
 #' Fits a generative model on `encodedB[, PIVs]` and draws `syntheticSample`
 #' new synthetic records from it, appended to `encodedB` with `source =
-#' "synthetic"`; used by [compute_FDP_RLwithSynth()] to estimate the false
+#' "synthetic"`; used by [compute_augmRL_FDP_synth()] to estimate the false
 #' discovery proportion of a record-linkage method without ground truth.
 #'
 #' @param method One of `"arf"` ([arf::adversarial_rf()]), `"synthpop"`
@@ -2201,44 +2134,33 @@ SMD <- function(dataSelect, dataBaseline, var, continuous = TRUE) {
 #'
 #' @examples
 #' PIVs_config <- list( V1 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V2 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V3 = list(dynamics = "flexible",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V4 = list(dynamics = "structured",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(0.03,0.03),
-#'                                 condHazardCov = list(cov1=c("Xe", "Xf"),
-#'                                                       cov2=c())
-#'                                 )
-#' )
-#' Nval  <- c(6, 7, 8, 9)
-#' Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
-#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-#' Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
-#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V2 = list(dynamics = "stable",
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V3 = list(dynamics = "flexible",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V4 = list(dynamics = "structured",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(0.03,0.03),
+#'                                condHazardCov = list(cov1=c("Xe", "Xf"),
+#'                                                     cov2=c())) )
+#' Nval  <- c( 5, 6, 7, 12 )
+#' Pmistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+#' Pmissing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
-#'
-#' GenData <- DataCreation(
-#'   PIVs_config, Nval, NRecords = c(400, 600), Nlinks = 300,
-#'   Pmistake, Pmissing, condHazard_params, enforceEstimability = TRUE
-#' )
-#'
-#' PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
-#'                      PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
-#'
-#' fit <- stEM(data = PrepData, StEMIter = 10, StEMBurnin = 5,
-#'            GibbsIter = 10, GibbsBurnin = 5, musicOn = FALSE)
-#'
-#' plot_linkage_score(nrow(PrepData$encodedA)*nrow(PrepData$encodedB),
-#'                     fit$Delta$x)
+#' GenData <- DataCreation( PIVs_config, Nval, c(250, 300), 200, Pmistake, 
+#'                          Pmissing, condHazard_params, TRUE )
+#' PrepData <- prepare_data( GenData$dataSet1, GenData$dataSet2, "1", "2",
+#'                           PIVs_config, TRUE, "entityID", TRUE )
+#' fit <- StEM( data = PrepData, StEMIter = 10, StEMBurnin = 5,
+#'              GibbsIter = 10, GibbsBurnin = 5, musicOn = FALSE )
+#' plot_linkage_score( nrow(PrepData$encodedA)*nrow(PrepData$encodedB),
+#'                     fit$Delta$x )
 plot_linkage_score <- function(total_nbr_pairs, vec_linked_scores) {
   breaks <- seq(0, 1, by = 0.05)
   h <- graphics::hist(vec_linked_scores, plot = FALSE, breaks = breaks)
@@ -2249,60 +2171,269 @@ plot_linkage_score <- function(total_nbr_pairs, vec_linked_scores) {
   invisible(NULL)
 }
 
-#' Model-based false discovery proportion at a given threshold
+#' Model specific, linkage score based, false discovery proportion at 
+#' a given threshold
 #'
-#' @param vec_link_scores Numeric vector, linkage scores of the candidate pairs.
+#' @param vec_linked_scores Numeric vector, linkage scores of the candidate pairs.
 #' @param threshold Numeric, score threshold above which a pair is declared
 #'   linked.
 #'
-#' @return Numeric, `1 - mean(score | score > threshold)`, the estimated FDP at
-#'   `threshold`.
+#' @return A list with `fdp_score` Numeric, `1 - mean(score | score > threshold)`, 
+#'   the estimated FDP at `threshold` and `n_linked` Integer, number of linked
+#'   records.
 #' @export
 #'
 #' @examples
 #' PIVs_config <- list( V1 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V2 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V3 = list(dynamics = "flexible",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V4 = list(dynamics = "structured",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(0.03,0.03),
-#'                                 condHazardCov = list(cov1=c("Xe", "Xf"),
-#'                                                       cov2=c())
-#'                                 )
-#' )
-#' Nval  <- c(6, 7, 8, 9)
-#' Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
-#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-#' Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
-#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V2 = list(dynamics = "stable",
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V3 = list(dynamics = "flexible",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V4 = list(dynamics = "structured",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(0.03,0.03),
+#'                                condHazardCov = list(cov1=c("Xe", "Xf"),
+#'                                                     cov2=c())) )
+#' Nval  <- c( 5, 6, 7, 12 )
+#' Pmistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+#' Pmissing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
-#'
-#' GenData <- DataCreation(
-#'   PIVs_config, Nval, NRecords = c(400, 600), Nlinks = 300,
-#'   Pmistake, Pmissing, condHazard_params, enforceEstimability = TRUE
-#' )
-#'
-#' PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
-#'                      PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
-#'
-#' fit <- stEM(data = PrepData, StEMIter = 10, StEMBurnin = 5,
-#'            GibbsIter = 10, GibbsBurnin = 5, musicOn = FALSE)
-#'
-#' compute_FDP_RLmodelSpecific(fit$Delta$x, 0.5)
-compute_FDP_RLmodelSpecific <- function(vec_link_scores, threshold) {
-  linked <- vec_link_scores > threshold
-  1 - sum(vec_link_scores[linked]) / sum(linked)
+#' GenData <- DataCreation( PIVs_config, Nval, c(250, 300), 200, Pmistake, 
+#'                          Pmissing, condHazard_params, TRUE )
+#' PrepData <- prepare_data( GenData$dataSet1, GenData$dataSet2, "1", "2",
+#'                           PIVs_config, TRUE, "entityID", TRUE )
+#' fit <- StEM( data = PrepData, StEMIter = 10, StEMBurnin = 5,
+#'              GibbsIter = 10, GibbsBurnin = 5, musicOn = FALSE )
+#' FDP_score(fit$Delta$x, 0.5)
+FDP_score <- function(vec_linked_scores, threshold) {
+  linked <- vec_linked_scores > threshold
+  list(
+     fdp_score = 1 - sum(vec_linked_scores[linked]) / sum(linked),
+     n_linked = sum(linked)
+   )
 }
 
+#' Model agnostic, based on synthetic data, false discovery proportion at 
+#' a given threshold
+#'
+#' @param index_linked_A Integer vector, indices in A of linked records (for a 
+#'   previously set threshold). 
+#' @param index_linked_B Integer vector, indices in B of linked records (for a 
+#'   previously set threshold). 
+#' @param vec_linked_scores Numeric vector, linkage scores of the candidate 
+#'   pairs. If `NULL`, consider all given pairs as linked.
+#' @param threshold Numeric, score threshold above which a pair is declared
+#'   linked.
+#' @param nbrRealRecordsA Integer, number of records in A.
+#' @param nbrRealRecordsB Integer, number of records in B.
+#' @param subsample_size Integer, number of synthetic records to generate per
+#'   iteration.
+#'
+#' @return A list with `fdp_synth` Numeric, proportion of synthetic falsely
+#'   linked records, `n_linked_real` Integer, number of real linked records and
+#'   `n_linked_all` Integer, total number of linked records (real and synthetic).
+#' @export
+#'
+#' @examples
+#' PIVs_config <- list( V1 = list(dynamics = "stable",
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V2 = list(dynamics = "stable",
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V3 = list(dynamics = "flexible",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V4 = list(dynamics = "structured",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(0.03,0.03),
+#'                                condHazardCov = list(cov1=c("Xe", "Xf"),
+#'                                                     cov2=c())) )
+#' Nval  <- c( 5, 6, 7, 12 )
+#' Pmistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+#' Pmissing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
+#' condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
+#' GenData <- DataCreation( PIVs_config, Nval, c(250, 300), 200, Pmistake, 
+#'                          Pmissing, condHazard_params, TRUE )
+#' PrepData <- prepare_data( GenData$dataSet1, GenData$dataSet2, "1", "2",
+#'                           PIVs_config, TRUE, "entityID", TRUE )
+#' PIVs <- names(PIVs_config)
+#' NsynthSample <-as.integer(0.10 * nrow(PrepData$encodedB))
+#' Newdata <- synthesise("arf", PrepData$encodedA[, c(PIVs,"localID","source",
+#'                       "date",PrepData$PIVs_config$V4$condHazardCov$covA)],
+#'                       PrepData$encodedB[, c(PIVs,"localID","source","date",
+#'                       PrepData$PIVs_config$V4$condHazardCov$covB)], PIVs, 
+#'                       NsynthSample, TRUE)
+#' Newdata$NewA[PIVs][is.na(Newdata$NewA[PIVs])] <- 0
+#' Newdata$NewB[PIVs][is.na(Newdata$NewB[PIVs])] <- 0
+#' # cannot model dynamics for synthetic data, set dates to 0
+#' Newdata$NewA$date[is.na(Newdata$NewA$date)] <- 0
+#' Newdata$NewB$date[is.na(Newdata$NewB$date)] <- 0
+#' arguments <- list(data = PrepData, StEMIter = 10, StEMBurnin = 5, 
+#'                GibbsIter = 10, GibbsBurnin = 5)
+#' fitflexrl <- FDPinRL_FlexRL(Newdata$NewA, Newdata$NewB, arguments)  
+#' FDP_synth(fitflexrl[[1]], fitflexrl[[2]], fitflexrl[[3]], 0.5,
+#'           nrow(PrepData$encodedA), nrow(PrepData$encodedB), 
+#'           NsynthSample)
+FDP_synth <- function(index_linked_A, index_linked_B, vec_linked_scores, threshold,
+                      nbrRealRecordsA, nbrRealRecordsB, subsample_size) {
+  if (!is.null(vec_linked_scores)){
+    keep <- vec_linked_scores > threshold
+    index_linked_A <- index_linked_A[keep]
+    index_linked_B <- index_linked_B[keep]
+  }
+  
+  real <- index_linked_B <= nbrRealRecordsB & index_linked_A <= nbrRealRecordsA
+  synthfp <- sum(!real)
+  n_linked <- length(index_linked_A)
+  list(
+    fdp_synth = (synthfp * (nbrRealRecordsB / subsample_size)) / (n_linked - synthfp),
+    n_linked_real = sum(real),
+    n_linked_all = n_linked
+  )
+}
+
+#' Estimate the false discovery proportion of a record-linkage method via
+#' model specific linkage scores
+#'
+#' @param fileA The prepared data source (`fileA` must be the
+#'   smaller one).
+#' @param fileB The prepared data source (`fileB` must be the
+#'   larger one).
+#' @param PIVs Character vector, names of the PIVs.
+#' @param maxIter4CV Integer, max number of retries per iteration if no valid
+#'   FDP estimate is obtained.
+#' @param NIter Integer, number of augmentation iterations to average over.
+#' @param RLMethod One of `"multilink"`, `"fastLink"`, `"BRL"`,
+#'   `"reclin2"`, `"diyar"`, `"fedmatch"`, `"FlexRL"`.
+#' @param ... Extra arguments forwarded to the chosen `FDPinRL_*()` wrapper
+#'   (i.e. to the underlying record-linkage package).
+#'
+#' @return List with `FDP_score_estimator`, `Linked_pairs`: 
+#'   data frames (`NIter` rows x 10 thresholds).
+#' @export
+#'
+#' @examples
+#' PIVs_config <- list( V1 = list(dynamics = "stable",
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V2 = list(dynamics = "stable",
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V3 = list(dynamics = "flexible",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V4 = list(dynamics = "structured",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(0.03,0.03),
+#'                                condHazardCov = list(cov1=c("Xe", "Xf"),
+#'                                                     cov2=c())) )
+#' Nval  <- c( 5, 6, 7, 12 )
+#' Pmistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+#' Pmissing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
+#' condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
+#' GenData <- DataCreation( PIVs_config, Nval, c(250, 300), 200, Pmistake, 
+#'                          Pmissing, condHazard_params, TRUE )
+#' PrepData <- prepare_data( GenData$dataSet1, GenData$dataSet2, "1", "2",
+#'                           PIVs_config, TRUE, "entityID", TRUE )
+#' PIVs <- names(PIVs_config)                          
+#' compute_RL_FDP_score( PrepData$encodedA, PrepData$encodedB, PIVs, 1, 2,
+#'                       "BRL", flds = PIVs, types = rep("bi",length(PIVs)) )
+#' compute_RL_FDP_score( PrepData$encodedA, PrepData$encodedB, PIVs, 1, 2,
+#'                       "FlexRL", data = PrepData, StEMIter = 10, 
+#'                       StEMBurnin = 5, GibbsIter = 10, GibbsBurnin = 5 )
+compute_RL_FDP_score <- function(fileA, fileB, PIVs, maxIter4CV = 10, NIter = 10,
+                                 RLMethod, ...) {
+  nbrRealRecordsA <- nrow(fileA)
+  nbrRealRecordsB <- nrow(fileB)
+  if (nbrRealRecordsA > nbrRealRecordsB) stop("`fileA` must be smaller than `fileB`.", call. = FALSE)
+  
+  supported <- c("multilink", "fastLink", "BRL", "reclin2", "diyar", "fedmatch", "FlexRL")
+  if (!RLMethod %in% supported) stop("`RLMethod` must be one of: ", paste(supported, collapse = ", "), ".", call. = FALSE)
+  
+  thresholds <- seq(0.5, 0.95, by = 0.05)
+  th_names <- c("thresholds: 0.50", sprintf("%.2f", thresholds[-1]))
+  FDP_RLmodelSpecific_results <- stats::setNames(data.frame(matrix(NA, NIter, 10)), th_names)
+  NLinked_RLmodelSpecific_results <- stats::setNames(data.frame(matrix(NA, NIter, 10)), th_names)
+  arguments <- list(...)
+  
+  run_RL <- function(fileA, fileB) {
+    switch(RLMethod,
+           FlexRL     = FDPinRL_FlexRL(fileA, fileB, arguments),
+           fedmatch   = FDPinRL_fedmatch(fileA, fileB, arguments),
+           reclin2    = FDPinRL_reclin2(fileA, fileB, arguments),
+           BRL        = FDPinRL_BRL(fileA, fileB, arguments),
+           fastLink   = FDPinRL_fastLink(fileA, fileB, arguments),
+           multilink  = FDPinRL_multilink(fileA, fileB, arguments),
+           diyar      = FDPinRL_diyar(fileA, fileB, arguments)
+    )
+  }
+  
+  for (i in seq_len(NIter)) {
+    
+    anyValidEstimate <- FALSE
+    countTmp <- 0
+    
+    while (countTmp < maxIter4CV && !anyValidEstimate) {
+      res <- run_RL(fileA, fileB)
+      result_index_linked_A <- res[[1]]
+      result_index_linked_B <- res[[2]]
+      result_vec_linked_scores <- res[[3]]
+      
+      if (!is.null(result_vec_linked_scores)) {
+        for (j in seq_along(thresholds)) {
+          keep <- result_vec_linked_scores > thresholds[j]
+          N_linked <- sum(keep, na.rm = TRUE)
+          if (N_linked > 0) {
+            est_score <- FDP_score(result_vec_linked_scores, thresholds[j])
+            FDP_RLmodelSpecific_results[i, j] <- est_score$fdp_score
+            NLinked_RLmodelSpecific_results[i, j] <- est_score$n_linked
+          } else {
+            if (j == 1) warning(sprintf("Nothing linked at iteration %s at threshold 0.50.", i), call. = FALSE)
+            FDP_RLmodelSpecific_results[i, j:10] <- 0
+            NLinked_RLmodelSpecific_results[i, j:10] <- 0
+            break
+          }
+        }
+      }
+      
+      countTmp <- countTmp + 1
+      anyValidEstimate <- any(!is.na(FDP_RLmodelSpecific_results[i, ]) & FDP_RLmodelSpecific_results[i, ] <= 1 & NLinked_RLmodelSpecific_results[i, ] > 0)
+    }
+    
+    if (countTmp == maxIter4CV && !anyValidEstimate) {
+      FDP_RLmodelSpecific_results[FDP_RLmodelSpecific_results>1] <- NA
+      warning(sprintf(
+        "No valid FDP estimate after %s attempts at iteration %s. Increase `maxIter4CV`, or the estimator may be unreliable for this method/data.",
+        maxIter4CV, i
+      ), call. = FALSE)
+      break
+    }
+  }
+  
+  ToShow <- data.frame(
+    `FDP model score estimator`     = round(colMeans(FDP_RLmodelSpecific_results, na.rm = TRUE), 2),
+    `Linked obs. pairs (RL)`        = round(colMeans(NLinked_RLmodelSpecific_results, na.rm = TRUE)),
+    check.names = FALSE
+  )
+  message(sprintf("%s results (average over %s iterations):", RLMethod, NIter))
+  print(t(ToShow))
+  
+  list(
+    FDP_score_estimator = FDP_RLmodelSpecific_results,
+    Linked_pairs        = NLinked_RLmodelSpecific_results
+  )
+}
 
 #' Estimate the false discovery proportion of a record-linkage method via
 #' synthetic augmentation
@@ -2331,51 +2462,45 @@ compute_FDP_RLmodelSpecific <- function(vec_link_scores, threshold) {
 #' @param ... Extra arguments forwarded to the chosen `FDPinRL_*()` wrapper
 #'   (i.e. to the underlying record-linkage package).
 #'
-#' @return List with `FDP_scoring_estimator`, `FDP_synth_estimator`,
-#'   `Linked_obs_pairs`: data frames (`NIter` rows x 10 thresholds).
+#' @return List with `FDP_score_estimator`, `FDP_synth_estimator`,
+#'   `Linked_pairs_augm`, `Linked_pairs`: data frames (`NIter` rows x 10 
+#'   thresholds). 
 #' @export
 #'
 #' @examples
 #' PIVs_config <- list( V1 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V2 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V3 = list(dynamics = "flexible",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V4 = list(dynamics = "structured",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(0.03,0.03),
-#'                                 condHazardCov = list(cov1=c("Xe", "Xf"),
-#'                                                       cov2=c())
-#'                                 )
-#' )
-#' Nval  <- c(10, 11, 12, 13)
-#' Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
-#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-#' Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
-#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V2 = list(dynamics = "stable",
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V3 = list(dynamics = "flexible",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V4 = list(dynamics = "structured",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(0.03,0.03),
+#'                                condHazardCov = list(cov1=c("Xe", "Xf"),
+#'                                                     cov2=c())) )
+#' Nval  <- c( 5, 6, 7, 12 )
+#' Pmistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+#' Pmissing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
-#'
-#' GenData <- DataCreation(
-#'   PIVs_config, Nval, NRecords = c(400, 600), Nlinks = 300,
-#'   Pmistake, Pmissing, condHazard_params, enforceEstimability = TRUE
-#' )
-#'
-#' PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
-#'                      PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
-#'
-#' compute_FDP_RLwithSynth("arf", PrepData$encodedA, PrepData$encodedB,
-#'                   names(PIVs_config), subsample_size=NULL,
-#'                   restrict_support_intersection=TRUE, maxIter4CV=3, NIter=5,
-#'                   RLMethod = "BRL", flds = names(PIVs_config),
-#'                   types = rep("bi",length(PIVs_config)))
-compute_FDP_RLwithSynth <- function(SynthMethod, fileA, fileB, PIVs, subsample_size = NULL,
+#' GenData <- DataCreation( PIVs_config, Nval, c(250, 300), 200, Pmistake, 
+#'                          Pmissing, condHazard_params, TRUE )
+#' PrepData <- prepare_data( GenData$dataSet1, GenData$dataSet2, "1", "2",
+#'                           PIVs_config, TRUE, "entityID", TRUE )
+#' PIVs <- names(PIVs_config)                          
+#' compute_augmRL_FDP_synth( "arf", PrepData$encodedA, PrepData$encodedB, PIVs, 
+#'                           NULL, TRUE, 1, 2, "BRL", flds = PIVs, 
+#'                           types = rep("bi",length(PIVs)) )
+#' compute_augmRL_FDP_synth( "arf", PrepData$encodedA, PrepData$encodedB, PIVs, 
+#'                           NULL, TRUE, 1, 2, "FlexRL", data = PrepData, 
+#'                           StEMIter = 10, StEMBurnin = 5, 
+#'                           GibbsIter = 10, GibbsBurnin = 5 )
+compute_augmRL_FDP_synth <- function(SynthMethod, fileA, fileB, PIVs, subsample_size = NULL,
                                     restrict_support_intersection = TRUE, maxIter4CV = 10, NIter = 10,
                                     RLMethod, ...) {
 
@@ -2392,7 +2517,8 @@ compute_FDP_RLwithSynth <- function(SynthMethod, fileA, fileB, PIVs, subsample_s
   th_names <- c("thresholds: 0.50", sprintf("%.2f", thresholds[-1]))
   FDP_RLwithSynth_results <- stats::setNames(data.frame(matrix(NA, NIter, 10)), th_names)
   FDP_RLmodelSpecific_results <- stats::setNames(data.frame(matrix(NA, NIter, 10)), th_names)
-  Real_linked_results <- stats::setNames(data.frame(matrix(NA, NIter, 10)), th_names)
+  NLinkedReal_RLwithSynth_results <- stats::setNames(data.frame(matrix(NA, NIter, 10)), th_names)
+  NLinked_RLmodelSpecific_results <- stats::setNames(data.frame(matrix(NA, NIter, 10)), th_names)
   arguments <- list(...)
 
   run_RL <- function(NewA, NewB) {
@@ -2409,8 +2535,35 @@ compute_FDP_RLwithSynth <- function(SynthMethod, fileA, fileB, PIVs, subsample_s
 
   for (i in seq_len(NIter)) {
 
-    Newdata <- synthesise(SynthMethod, fileA[, c(PIVs, "localID", "source")],
-                          fileB[, c(PIVs, "localID", "source")], PIVs, subsample_size, restrict_support_intersection)
+    if (RLMethod == "FlexRL") {
+      PIVs_stable <- sapply(arguments$data$PIVs_config, function(x) x$dynamics != "structured")
+      if (any(!PIVs_stable)) {
+        covariates_to_add_A <- c()
+        covariates_to_add_B <- c()
+        for (k in seq_len(length(arguments$data$PIVs_config))){
+          if (!PIVs_stable[k]){
+            covariates_to_add_A <- c(covariates_to_add_A, arguments$data$PIVs_config[[k]]$condHazardCov$covA)
+            covariates_to_add_B <- c(covariates_to_add_B, arguments$data$PIVs_config[[k]]$condHazardCov$covB)
+          }
+        }
+        Newdata <- synthesise(SynthMethod, 
+                              fileA[, c(PIVs, "localID", "source", "date", covariates_to_add_A)],
+                              fileB[, c(PIVs, "localID", "source", "date", covariates_to_add_B)], 
+                              PIVs, subsample_size, 
+                              restrict_support_intersection)
+        # cannot model dynamics for synthetic data, set dates to 0
+        Newdata$NewA$date[is.na(Newdata$NewA$date)] <- 0
+        Newdata$NewB$date[is.na(Newdata$NewB$date)] <- 0
+      } else {
+        Newdata <- synthesise(SynthMethod, fileA[, c(PIVs, "localID", "source")],
+                              fileB[, c(PIVs, "localID", "source")], PIVs, subsample_size, 
+                              restrict_support_intersection)
+      }
+    } else {
+      Newdata <- synthesise(SynthMethod, fileA[, c(PIVs, "localID", "source")],
+                            fileB[, c(PIVs, "localID", "source")], PIVs, subsample_size, 
+                            restrict_support_intersection)
+    }
 
     anyValidEstimate <- FALSE
     countTmp <- 0
@@ -2421,48 +2574,40 @@ compute_FDP_RLwithSynth <- function(SynthMethod, fileA, fileB, PIVs, subsample_s
       result_index_linked_B <- res[[2]]
       result_vec_linked_scores <- res[[3]]
 
-      synth_fdp <- function(index_linked_A, index_linked_B) {
-        real <- index_linked_B <= nbrRealRecordsB & index_linked_A <= nbrRealRecordsA
-        synthfp <- sum(!real)
-        N_linked <- length(index_linked_A)
-        list(
-          fdp_synth = (synthfp * (nbrRealRecordsB / subsample_size)) / (N_linked - synthfp),
-          n_real = sum(real)
-        )
-      }
-
       if (is.null(result_vec_linked_scores)) {
         N_linked <- length(result_index_linked_A)
         if (N_linked > 0) {
-          est <- synth_fdp(result_index_linked_A, result_index_linked_B)
+          est <- FDP_synth(result_index_linked_A, result_index_linked_B, result_vec_linked_scores, NULL, nbrRealRecordsA, nbrRealRecordsB, subsample_size)
           FDP_RLwithSynth_results[i, 1] <- est$fdp_synth
-          Real_linked_results[i, 1] <- est$n_real
+          NLinkedReal_RLwithSynth_results[i, 1] <- est$n_linked_real
         } else {
           warning(sprintf("Nothing linked at iteration %s with default parameters.", i), call. = FALSE)
           FDP_RLwithSynth_results[i, 1] <- 0
-          Real_linked_results[i, 1] <- 0
+          NLinkedReal_RLwithSynth_results[i, 1] <- 0
         }
       } else {
         for (j in seq_along(thresholds)) {
-          keep <- result_vec_linked_scores > thresholds[j]
-          N_linked <- sum(keep, na.rm = TRUE)
+          N_linked <- sum(result_vec_linked_scores > thresholds[j], na.rm = TRUE)
           if (N_linked > 0) {
-            est <- synth_fdp(result_index_linked_A[keep], result_index_linked_B[keep])
-            FDP_RLwithSynth_results[i, j] <- est$fdp_synth
-            FDP_RLmodelSpecific_results[i, j] <- compute_FDP_RLmodelSpecific(result_vec_linked_scores, thresholds[j])
-            Real_linked_results[i, j] <- est$n_real
+            est_synth <- FDP_synth(result_index_linked_A, result_index_linked_B, result_vec_linked_scores, thresholds[j], nbrRealRecordsA, nbrRealRecordsB, subsample_size)
+            est_score <- FDP_score(result_vec_linked_scores, thresholds[j])
+            FDP_RLwithSynth_results[i, j] <- est_synth$fdp_synth
+            FDP_RLmodelSpecific_results[i, j] <- est_score$fdp_score
+            NLinkedReal_RLwithSynth_results[i, j] <- est_synth$n_linked_real
+            NLinked_RLmodelSpecific_results[i, j] <- est_score$n_linked
           } else {
             if (j == 1) warning(sprintf("Nothing linked at iteration %s at threshold 0.50.", i), call. = FALSE)
             FDP_RLwithSynth_results[i, j:10] <- 0
             FDP_RLmodelSpecific_results[i, j:10] <- 0
-            Real_linked_results[i, j:10] <- 0
+            NLinkedReal_RLwithSynth_results[i, j:10] <- 0
+            NLinked_RLmodelSpecific_results[i, j:10] <- 0
             break
           }
         }
       }
 
       countTmp <- countTmp + 1
-      anyValidEstimate <- any(!is.na(FDP_RLwithSynth_results[i, ]) & FDP_RLwithSynth_results[i, ] <= 1 & Real_linked_results[i, ] > 0)
+      anyValidEstimate <- any(!is.na(FDP_RLwithSynth_results[i, ]) & FDP_RLwithSynth_results[i, ] <= 1 & NLinkedReal_RLwithSynth_results[i, ] > 0)
     }
 
     if (countTmp == maxIter4CV && !anyValidEstimate) {
@@ -2477,49 +2622,51 @@ compute_FDP_RLwithSynth <- function(SynthMethod, fileA, fileB, PIVs, subsample_s
   }
 
   ToShow <- data.frame(
-    `FDP model score estimator` = round(colMeans(FDP_RLmodelSpecific_results, na.rm = TRUE), 2),
-    `FDP synth data estimator`  = round(colMeans(FDP_RLwithSynth_results, na.rm = TRUE), 2),
-    `Linked obs. pairs`         = round(colMeans(Real_linked_results, na.rm = TRUE), 2),
+    `FDP model score estimator`     = round(colMeans(FDP_RLmodelSpecific_results, na.rm = TRUE), 2),
+    `FDP synth data estimator`      = round(colMeans(FDP_RLwithSynth_results, na.rm = TRUE), 2),
+    `Linked obs. pairs (augm. RL)`  = round(colMeans(NLinkedReal_RLwithSynth_results, na.rm = TRUE)),
+    `Linked obs. pairs (RL)`        = round(colMeans(NLinked_RLmodelSpecific_results, na.rm = TRUE)),
     check.names = FALSE
   )
   message(sprintf("%s results (average over %s iterations):", RLMethod, NIter))
   print(t(ToShow))
 
   list(
-    FDP_scoring_estimator = FDP_RLmodelSpecific_results,
+    FDP_score_estimator = FDP_RLmodelSpecific_results,
     FDP_synth_estimator = FDP_RLwithSynth_results,
-    Linked_obs_pairs = Real_linked_results
+    Linked_pairs_augm   = NLinkedReal_RLwithSynth_results,
+    Linked_pairs        = NLinked_RLmodelSpecific_results
   )
 }
 
-# ============================================================================
-# S3 class for post-linkage diagnostics
-#
-# Building on mmd(), rl_agreement(), compute_histogram_support_iou(), SMD(),
-# compute_FDP_RLmodelSpecific(), hist_comp(), plot_linkage_score().
-# Wrapping them in an S3 class: gives print()/plot()/summary()
-#
-# Usage:
-#   diag <- rl_diagnostics(fit, encodedA, encodedB, PIVs,
-#                            threshold = 0.5, burnin = StEMBurnin)
-#   diag                           # print(): 1-paragraph summary
-#   summary(diag)                  # per-variable table: SMD, IoU, agreements
-#   plot(diag, "scores")           # linkage score histogram
-#   plot(diag, "distributions")    # hist_comp() over the shared PIVs
-#   plot(diag, "smd")              # Love plot (SMD per variable)
-#   plot(diag, "convergence")      # StEM trace plots (gamma/eta/alpha/phi)
-# ============================================================================
+#' ============================================================================
+#' S3 class for post-record-linkage diagnostics
+#'
+#' Building on [mmd()], [rl_agreement()], [compute_histogram_support_iou()], 
+#' [SMD()], [FDP_score()], [FDP_synth()], [hist_comp()], [plot_linkage_score()].
+#' Wrapping them in an S3 class: gives print() and plot()
+#'
+#' Usage:
+#'   diag <- rl_diagnostics(fit, encodedA, encodedB, PIVs,
+#'                            threshold = 0.5, burnin = StEMBurnin)
+#'   diag                           # print(): 1-paragraph summary
+#'   summary(diag)                  # per-variable table: SMD, IoU, agreements
+#'   plot(diag, "scores")           # linkage score histogram
+#'   plot(diag, "distributions")    # hist_comp() over the shared PIVs
+#'   plot(diag, "smd")              # Love plot (SMD per variable)
+#'   plot(diag, "convergence")      # StEM trace plots (gamma/eta/alpha/phi)
+#' ============================================================================
 
 #' Monte Carlo convergence (trace) plots for a fitted StEM model
 #'
 #' Trace-plots the raw StEM chains of `gamma`, `eta`, `alpha` and `phi`
 #' across iterations, to visually judge whether the chains have stabilised
-#' and pick an adequate `StEMBurnin` for [stEM()]. One plot per parameter:
+#' and pick an adequate `StEMBurnin` for [StEM()]. One plot per parameter:
 #' `gamma` (proportion linked), then one panel per PIV for `eta` (true-value
 #' distribution), `alpha` (hazard coefficients, unstable PIVs only), and
 #' `phi` (agreement/missing rates).
 #'
-#' @param fit List as returned by [stEM()], containing the raw chains
+#' @param fit List as returned by [StEM()], containing the raw chains
 #'   `gamma`, `eta`, `alpha`, `phi` (StEMIter rows each).
 #' @param burnin Optional integer; if supplied, a vertical dashed line is
 #'   drawn at this iteration on every panel (e.g. the `StEMBurnin` you used
@@ -2534,44 +2681,33 @@ compute_FDP_RLwithSynth <- function(SynthMethod, fileA, fileB, PIVs, subsample_s
 #'
 #' @examples
 #' PIVs_config <- list( V1 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V2 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V3 = list(dynamics = "flexible",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V4 = list(dynamics = "structured",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(0.03,0.03),
-#'                                 condHazardCov = list(cov1=c("Xe", "Xf"),
-#'                                                       cov2=c())
-#'                                 )
-#' )
-#' Nval  <- c(6, 7, 8, 9)
-#' Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
-#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-#' Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
-#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V2 = list(dynamics = "stable",
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V3 = list(dynamics = "flexible",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V4 = list(dynamics = "structured",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(0.03,0.03),
+#'                                condHazardCov = list(cov1=c("Xe", "Xf"),
+#'                                                     cov2=c())) )
+#' Nval  <- c( 5, 6, 7, 12 )
+#' Pmistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+#' Pmissing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
-#'
-#' GenData <- DataCreation(
-#'   PIVs_config, Nval, NRecords = c(400, 600), Nlinks = 300,
-#'   Pmistake, Pmissing, condHazard_params, enforceEstimability = TRUE
-#' )
-#'
-#' PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
-#'                      PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
-#'
-#' fit <- stEM(data = PrepData, StEMIter = 10, StEMBurnin = 5,
-#'            GibbsIter = 10, GibbsBurnin = 5, musicOn = FALSE)
-#'
-#' plot_stem_convergence(fit, burnin = 10)
-plot_stem_convergence <- function(fit, burnin = NULL, PIVs = NULL, ask = interactive()) {
+#' GenData <- DataCreation( PIVs_config, Nval, c(250, 300), 200, Pmistake, 
+#'                          Pmissing, condHazard_params, TRUE )
+#' PrepData <- prepare_data( GenData$dataSet1, GenData$dataSet2, "1", "2",
+#'                           PIVs_config, TRUE, "entityID", TRUE )
+#' fit <- StEM( data = PrepData, StEMIter = 20, StEMBurnin = 10,
+#'              GibbsIter = 20, GibbsBurnin = 10, musicOn = FALSE)
+#' plot_StEM_convergence(fit, burnin = 5)
+plot_StEM_convergence <- function(fit, burnin = NULL, PIVs = NULL, ask = interactive()) {
   required <- c("gamma", "eta", "alpha", "phi")
   if (!all(required %in% names(fit))) {
     stop("`fit` must contain the StEM chains: ", paste(required, collapse = ", "), ".", call. = FALSE)
@@ -2624,7 +2760,7 @@ plot_stem_convergence <- function(fit, burnin = NULL, PIVs = NULL, ask = interac
   invisible(NULL)
 }
 
-#' Build a set of post-linkage diagnostics
+#' Build a set of post-record-linkage diagnostics
 #'
 #' Collects, from a fitted FlexRL model (or any method returning the same
 #' `Delta`-style output), a coherent set of diagnostics for judging the
@@ -2634,10 +2770,10 @@ plot_stem_convergence <- function(fit, burnin = NULL, PIVs = NULL, ask = interac
 #' variables (agreement rate, standardised mean difference, distributional
 #' overlap via MMD and histogram IoU).
 #'
-#' @param fit List as returned by [stEM()] (or another `FDPinRL_*`-style
+#' @param fit List as returned by [StEM()] (or another `FDPinRL_*`-style
 #'   wrapper), i.e. containing `Delta` (`data.frame(i, j, x)`).
 #' @param encodedA,encodedB The two data sources used for linkage (same
-#'   encoding/order as passed to [stEM()]).
+#'   encoding/order as passed to [StEM()]).
 #' @param compare_vars Character vector of variables (PIVs or otherwise) to
 #'   compare between the linked subset and the baseline. Defaults to the PIVs
 #'   in `fit$PIVs_config` if not supplied and available.
@@ -2654,7 +2790,7 @@ plot_stem_convergence <- function(fit, burnin = NULL, PIVs = NULL, ask = interac
 #' @return An object of class `"rl_diagnostics"`, a list with:
 #'   \item{linked}{data frame `i`, `j`, `x` of pairs above `threshold`}
 #'   \item{fdp_model}{model-based FDP at `threshold`,
-#'      see [compute_FDP_RLmodelSpecific()]}
+#'      see [FDP_score()]}
 #'   \item{fdp_realised, sensitivity}{only if `true_pairs` supplied}
 #'   \item{agreement}{per-variable agreement rate among linked pairs,
 #'      see [rl_agreement()]}
@@ -2665,71 +2801,107 @@ plot_stem_convergence <- function(fit, burnin = NULL, PIVs = NULL, ask = interac
 #'   \item{iou}{per-variable histogram support IoU (linked-A vs. all-A),
 #'      see [compute_histogram_support_iou()]}
 #'   \item{gamma, eta, alpha, phi}{the raw StEM chains from `fit`,
-#'      for `plot(type = "convergence")` (see [plot_stem_convergence()])}
+#'      for `plot(type = "convergence")` (see [plot_StEM_convergence()])}
 #' @export
 #'
 #' @examples
 #' PIVs_config <- list( V1 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V2 = list(dynamics = "stable",
-#'                                 boundMistakes = c(0.10,0.10),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V3 = list(dynamics = "flexible",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(NA,NA)
-#'                                 ),
-#'                     V4 = list(dynamics = "structured",
-#'                                 boundMistakes = c(NA,NA),
-#'                                 fixMistakes = c(0.03,0.03),
-#'                                 condHazardCov = list(cov1=c("Xe", "Xf"),
-#'                                                       cov2=c())
-#'                                 )
-#' )
-#' Nval  <- c(6, 7, 8, 9)
-#' Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
-#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-#' Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
-#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V2 = list(dynamics = "stable",
+#'                                boundMistakes = c(0.10,0.10),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V3 = list(dynamics = "flexible",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(NA,NA)),
+#'                      V4 = list(dynamics = "structured",
+#'                                boundMistakes = c(NA,NA),
+#'                                fixMistakes = c(0.03,0.03),
+#'                                condHazardCov = list(cov1=c("Xe", "Xf"),
+#'                                                     cov2=c())) )
+#' Nval  <- c( 5, 6, 7, 12 )
+#' Pmistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+#'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+#' Pmissing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+#'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
-#'
-#' GenData <- DataCreation(
-#'   PIVs_config, Nval, NRecords = c(400, 600), Nlinks = 300,
-#'   Pmistake, Pmissing, condHazard_params, enforceEstimability = TRUE
-#' )
-#'
-#' PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
-#'                      PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
-#'
-#' fit <- stEM(data = PrepData, StEMIter = 10, StEMBurnin = 5,
-#'            GibbsIter = 10, GibbsBurnin = 5, musicOn = FALSE)
-#'
-#' diag <- rl_diagnostics(fit, PrepData$encodedA, PrepData$encodedB, names(PIVs_config),
-#'                        0.75, PrepData$true_pairs, 5)
-#' diag # print(diag)
-#'
-#' summary(diag)
-#'
-#' plot(diag,"scores")
-#' plot(diag,"distributions")
-#' plot(diag,"smd")
-#' plot(diag,"convergence")
-rl_diagnostics <- function(fit, encodedA, encodedB, compare_vars,
-                           threshold = 0.5, true_pairs = NULL, burnin = NULL) {
+#' GenData <- DataCreation( PIVs_config, Nval, c(250, 300), 200, Pmistake, 
+#'                          Pmissing, condHazard_params, TRUE )
+#' PrepData <- prepare_data( GenData$dataSet1, GenData$dataSet2, "1", "2",
+#'                           PIVs_config, TRUE, "entityID", TRUE )
+#' PIVs <- names(PIVs_config)  
+#' typePIVs <- list(V1=FALSE, V2=FALSE, V3=FALSE, V4=TRUE)  
+#' fitflexrl <- StEM( data = PrepData, StEMIter = 10, StEMBurnin = 5,
+#'                    GibbsIter = 10, GibbsBurnin = 5, musicOn = FALSE)
+#' diagflexrl <- rl_diagnostics(fitflexrl, PrepData$encodedA, PrepData$encodedB,
+#'                              PIVs, typePIVs, 0.6, PrepData$true_pairs, 5,
+#'                              TRUE, RLMethod = "FlexRL", data = PrepData,
+#'                              StEMIter = 10, StEMBurnin = 5, 
+#'                              GibbsIter = 10, GibbsBurnin = 5,
+#'                              maxIter4CV = 1, NIter = 2)
+#' diagflexrl
+#' plot(diagflexrl,"scores")
+#' plot(diagflexrl,"distributions")
+#' plot(diagflexrl,"smd")
+#' plot(diagflexrl,"convergence",ask=FALSE)
+#' plot(diagflexrl,"fdp")
+#' fitbrl <- FDPinRL_BRL( PrepData$encodedA, PrepData$encodedB, 
+#'                        list( flds = PIVs, 
+#'                              types = rep("bi",length(PIVs)) ) )
+#' fitbrl <- list(idxA = fitbrl[[1]], idxB = fitbrl[[2]], LinkScore = fitbrl[[3]])
+#' diagbrl <- rl_diagnostics(fitbrl, PrepData$encodedA, PrepData$encodedB,
+#'                           PIVs, typePIVs, 0.6, PrepData$true_pairs, 5,
+#'                           TRUE, RLMethod = "BRL", flds = PIVs,
+#'                           types = rep("bi",length(PIVs)),
+#'                           maxIter4CV = 1, NIter = 2)
+#' diagbrl
+#' plot(diagbrl,"scores")
+#' plot(diagbrl,"distributions")
+#' plot(diagbrl,"smd")
+#' plot(diagbrl,"fdp")
+rl_diagnostics <- function(fit, encodedA, encodedB, compare_vars, vars_type_cont,
+                           threshold = 0.5, true_pairs = NULL, burnin = NULL,
+                           FDP_estimation = FALSE, ...) {
 
-  linked <- fit$Delta[fit$Delta$x > threshold, , drop = FALSE]
-  linkedA <- encodedA[linked$i, , drop = FALSE]
-  linkedB <- encodedB[linked$j, , drop = FALSE]
-
-  fdp_model <- if (nrow(linked) > 0) compute_FDP_RLmodelSpecific(fit$Delta$x, threshold) else NA_real_
+  if ("Delta" %in% names(fit)) {
+    if (all(c("i", "j", "x") %in% names(fit$Delta))){
+      fit$idxA <- fit$Delta$i
+      fit$idxB <- fit$Delta$j
+      fit$LinkScore <- fit$Delta$x
+    }
+  }
+  
+  true_fdp_evol <- NULL
+  if (!is.null(true_pairs)) {
+    th <- seq(0.5, 0.99, by = 0.01) 
+    glued_linked_pairs <- lapply(th, function(t) {
+      keep <- fit$LinkScore > t
+      paste(fit$idxA[keep], fit$idxB[keep], sep = "_")
+    })
+    glued_true_pairs <- paste(true_pairs[[1]], true_pairs[[2]], sep = "_")
+    true_fdp_evol <- c()
+    for (t in seq_along(th)){
+      tp <- length(intersect(glued_linked_pairs[[t]], glued_true_pairs))
+      fp <- length(setdiff(glued_linked_pairs[[t]], glued_true_pairs))
+      fn <- length(setdiff(glued_true_pairs, glued_linked_pairs[[t]]))
+      true_fdp <- fp / (tp+fp)
+      true_fdp_evol <- c(true_fdp_evol, true_fdp)
+    }
+  }
+  
+  if (!all(c("idxA", "idxB", "LinkScore") %in% names(fit))) {
+    stop("No idxA, idxB, LinkScore (or $Delta$i, $Delta$j, $Delta$x) in the `fit` passed to `rl_diagnostics()`.", call. = FALSE)
+  }
+  
+  linked <- fit$LinkScore > threshold
+  linkedA <- encodedA[fit$idxA[linked], , drop = FALSE]
+  linkedB <- encodedB[fit$idxB[linked], , drop = FALSE]
 
   fdp_realised <- NULL
   sensitivity <- NULL
   if (!is.null(true_pairs)) {
     true_key <- paste(true_pairs[[1]], true_pairs[[2]], sep = "_")
-    linked_key <- paste(linked$i, linked$j, sep = "_")
+    linked_key <- paste(fit$idxA[linked], fit$idxB[linked], sep = "_")
     tp <- length(intersect(linked_key, true_key))
     fp <- length(setdiff(linked_key, true_key))
     fn <- length(setdiff(true_key, linked_key))
@@ -2737,31 +2909,28 @@ rl_diagnostics <- function(fit, encodedA, encodedB, compare_vars,
     sensitivity  <- if (tp + fn > 0) tp / (tp + fn) else NA_real_
   }
 
-  agreement <- if (nrow(linked) > 0) {
-    rl_agreement(encodedA, encodedB, compare_vars, linked[, c("i", "j")])$agreements
+  agreement <- if (sum(linked) > 0) {
+    rl_agreement(encodedA, encodedB, compare_vars, data.frame(fit$idxA[linked], fit$idxB[linked]))$agreements
   } else {
     stats::setNames(rep(NA_real_, length(compare_vars)), compare_vars)
   }
 
-  # incorrect continuous approximation for all compare_vars to show one metric per variable
   smdA <- stats::setNames(
-    vapply(compare_vars, function(v) {
-      if (nrow(linked) == 0) return(NA_real_)
-      unlist(SMD(linkedA, encodedA, v, continuous = is.numeric(encodedA[[v]])))[1]
-    }, numeric(1)),
-    compare_vars
-  )
+    lapply(compare_vars, function(v) {
+      if (sum(linked) == 0) return(NA_real_)
+      res <- SMD(linkedA, encodedA, v, continuous = vars_type_cont[[v]])
+      if (vars_type_cont[[v]]) res[[1]] else res
+    }), compare_vars)
   smdB <- stats::setNames(
-    vapply(compare_vars, function(v) {
-      if (nrow(linked) == 0) return(NA_real_)
-      unlist(SMD(linkedB, encodedB, v, continuous = is.numeric(encodedB[[v]])))[1]
-    }, numeric(1)),
-    compare_vars
-  )
-
+    lapply(compare_vars, function(v) {
+      if (sum(linked) == 0) return(NA_real_)
+      res <- SMD(linkedB, encodedB, v, continuous = vars_type_cont[[v]])
+      if (vars_type_cont[[v]]) res[[1]] else res
+    }), compare_vars)
+  
   iouA <- stats::setNames(
     vapply(compare_vars, function(v) {
-      if (nrow(linked) < 2) return(NA_real_)
+      if (sum(linked) < 2) return(NA_real_)
       h1 <- graphics::hist(as.numeric(linkedA[[v]]), plot = FALSE)
       h2 <- graphics::hist(as.numeric(encodedA[[v]]), plot = FALSE)
       compute_histogram_support_iou(h1, h2)
@@ -2770,7 +2939,7 @@ rl_diagnostics <- function(fit, encodedA, encodedB, compare_vars,
   )
   iouB <- stats::setNames(
     vapply(compare_vars, function(v) {
-      if (nrow(linked) < 2) return(NA_real_)
+      if (sum(linked) < 2) return(NA_real_)
       h1 <- graphics::hist(as.numeric(linkedB[[v]]), plot = FALSE)
       h2 <- graphics::hist(as.numeric(encodedB[[v]]), plot = FALSE)
       compute_histogram_support_iou(h1, h2)
@@ -2778,19 +2947,37 @@ rl_diagnostics <- function(fit, encodedA, encodedB, compare_vars,
     compare_vars
   )
 
-  mmdA <- if (nrow(linked) >= 2) {
+  mmdA <- if (sum(linked) >= 2) {
     mmd(as.matrix(linkedA[, compare_vars, drop = FALSE]), as.matrix(encodedA[, compare_vars, drop = FALSE]))
   } else NA_real_
-  mmdB <- if (nrow(linked) >= 2) {
+  mmdB <- if (sum(linked) >= 2) {
     mmd(as.matrix(linkedB[, compare_vars, drop = FALSE]), as.matrix(encodedB[, compare_vars, drop = FALSE]))
   } else NA_real_
+  
+  fdp_curves <- NULL
+  if (isTRUE(FDP_estimation)){
+    arguments <- list(...)
+    
+    if (!"RLMethod" %in% names(arguments)){
+      stop("`RLMethod` must be given when FDP_estimation is `TRUE`, see [compute_augmRL_FDP_synth()].", call. = FALSE)
+    }
+    
+    arguments$SynthMethod <- if ("SynthMethod" %in% names(arguments)) arguments$SynthMethod else "arf"
+    arguments$fileA <- encodedA
+    arguments$fileB <- encodedB
+    arguments$PIVs <- if ("PIVs" %in% names(arguments)) arguments$PIVs else compare_vars
+
+    fdp_synth_res <- do.call(compute_augmRL_FDP_synth, arguments)
+    fdp_score_res <- do.call(compute_RL_FDP_score, arguments)
+    
+    fdp_curves <- fdp_estimation(fdp_score_res, fdp_synth_res, true_fdp_evol)
+  }
 
   structure(
     list(
-      linked = linked, n_linked = nrow(linked), threshold = threshold,
-      compare_vars = compare_vars, all_scores = fit$Delta$x,
-      total_pairs = nrow(encodedA) * nrow(encodedB),
-      fdp_model = fdp_model, fdp_realised = fdp_realised,
+      n_linked = sum(linked), threshold = threshold,
+      compare_vars = compare_vars, all_scores = fit$LinkScore,
+      total_pairs = nrow(encodedA) * nrow(encodedB), fdp_realised = fdp_realised,
       sensitivity = sensitivity, agreement = agreement, smdA = smdA,
       smdB = smdB, iouA = iouA, iouB = iouB, mmdA = mmdA, mmdB = mmdB,
       A = encodedA[, compare_vars, drop = FALSE],
@@ -2798,67 +2985,77 @@ rl_diagnostics <- function(fit, encodedA, encodedB, compare_vars,
       linkedA = linkedA[, compare_vars, drop = FALSE],
       linkedB = linkedB[, compare_vars, drop = FALSE],
       gamma = fit$gamma, eta = fit$eta, alpha = fit$alpha, phi = fit$phi,
-      burnin = burnin
+      burnin = burnin, fdp_curves = fdp_curves
     ),
     class = "rl_diagnostics"
   )
 }
 
-#' Display RL diagnostics
+#' Display RL diagnostics summary
 #'
 #' @param x An `rl_diagnostics` object.
 #' @param ... Extra arguments.
 #'
-#' @return An object of class `"rl_diagnostics"`, a list with:
-#'
 #' @export
 print.rl_diagnostics <- function(x, ...) {
-  cat("<rl_diagnostics>\n")
-  cat(sprintf("  Linked pairs (score > %.2f):       %d\n", x$threshold, x$n_linked))
-  cat(sprintf("  Model-based FDP:                   %.3f\n", x$fdp_model))
+  cat("<rl_diagnostics>\n\n")
+  
+  cat(sprintf("  Linked pairs  (score > %.2f):  %d\n", x$threshold, x$n_linked))
   if (!is.null(x$fdp_realised)) {
-    cat(sprintf("  Realised FDP (true_pairs):         %.3f\n", x$fdp_realised))
-    cat(sprintf("  Sensitivity  (true_pairs):         %.3f\n", x$sensitivity))
+  cat(sprintf("  FDP           (true_pairs):    %.3f\n", x$fdp_realised))
+  cat(sprintf("  Sensitivity   (true_pairs):    %.3f\n\n", x$sensitivity))
   }
-  cat(sprintf("  Multivariate MMD (linked A vs. A): %.4f\n", x$mmdA))
-  cat(sprintf("  Multivariate MMD (linked B vs. B): %.4f\n", x$mmdB))
-  cat("  Use summary() for the per-variable table, plot() for diagnostic plots.\n")
+  
+  if (!is.null(x$fdp_curves)) {
+    valid <- !apply(apply(x$fdp_curves$curve, 2, is.na),1,any)
+    first <- x$fdp_curves$curve[valid, ][1, ]
+    idx <- which.min(abs(x$fdp_curves$curve$xi - x$threshold))
+    middle <- x$fdp_curves$curve[idx, ]
+    last <- x$fdp_curves$curve[valid, ][sum(valid), ]
+    cat(sprintf("  FDP score estimate (RL task):            min threshold %.2f: FDP ~ %.3f\n%-*s     threshold %.2f: FDP ~ %.3f\n%-*s max threshold %.2f: FDP ~ %.3f\n",     first$xi, first$RL_fdp_score,     42, "", x$threshold, middle$RL_fdp_score    , 42, "", last$xi, last$RL_fdp_score     ))
+    cat(sprintf("  FDP score estimate (augmented RL task):  min threshold %.2f: FDP ~ %.3f\n%-*s     threshold %.2f: FDP ~ %.3f\n%-*s max threshold %.2f: FDP ~ %.3f\n",     first$xi, first$augmRL_fdp_score, 42, "", x$threshold, middle$augmRL_fdp_score, 42, "", last$xi, last$augmRL_fdp_score ))
+    cat(sprintf("  FDP synth estimate (augmented RL task):  min threshold %.2f: FDP ~ %.3f\n%-*s     threshold %.2f: FDP ~ %.3f\n%-*s max threshold %.2f: FDP ~ %.3f\n",     first$xi, first$augmRL_fdp_synth, 42, "", x$threshold, middle$augmRL_fdp_synth, 42, "", last$xi, last$augmRL_fdp_synth ))
+    cat(sprintf("  The score-based estimator is valid when the linkage model is well calibrated to the data. The\n  synthetic-data estimator is valid when the augmented task is equivalent to the original one,\n  which requires links and non-links to have similar distributions; similar score-based FDP\n  estimates on the original and augmented tasks support this prerequisite.\n\n" ))
+  }
+  
+  cat(sprintf("  Multivariate MMD  (linked A vs. A):  %.4f\n", x$mmdA))
+  cat(sprintf("  Multivariate MMD  (linked B vs. B):  %.4f\n\n", x$mmdB))
+  
+  v <- unlist(x$iouA)
+  w <- max(nchar(names(v)))
+  cat(sprintf("  IoU support %-*s  (linked A vs. A): %8.4f\n", w, names(v), v), sep = "")
+  v <- unlist(x$iouB)
+  w <- max(nchar(names(v)))
+  cat(sprintf("  IoU support %-*s  (linked B vs. B): %8.4f\n", w, names(v), v), sep = "")
+  cat(sprintf("\n"))
+  
+  v <- unlist(x$agreement)
+  w <- max(nchar(names(v)))
+  cat(sprintf("  Agreements linked data %-*s  (linked A vs. linked B): %8.4f\n", w, names(v), v), sep = "")
+  cat(sprintf("\n"))
+  
+  v <- unlist(x$smdA)
+  w <- max(nchar(names(v)))
+  cat(sprintf("  SMD %-*s  (linked A vs. A): %8.4f\n", w, names(v), v), sep = "")
+  v <- unlist(x$smdB)
+  w <- max(nchar(names(v)))
+  cat(sprintf("  SMD %-*s  (linked B vs. B): %8.4f\n", w, names(v), v), sep = "")
+  cat("\n  Use plot() for diagnostic plots.\n")
   invisible(x)
-}
-
-#' Summarises RL diagnostics
-#'
-#' @param object An `rl_diagnostics` object.
-#' @param ... Extra arguments.
-#'
-#' @export
-summary.rl_diagnostics <- function(object, ...) {
-  out <- data.frame(
-    variable              = object$compare_vars,
-    smd.A                 = round(object$smdA[object$compare_vars], 3),
-    smd.B                 = round(object$smdB[object$compare_vars], 3),
-    IoU.A                 = round(object$iouA[object$compare_vars], 3),
-    IoU.B                 = round(object$iouB[object$compare_vars], 3),
-    agreement.linked.A.B  = round(object$agreement[object$compare_vars], 3),
-    row.names = NULL
-  )
-  cat(sprintf("Per-variable diagnostics (linked subset vs. data source), n = %d linked pairs\n", object$n_linked))
-  print(out)
-  invisible(out)
 }
 
 #' Plot RL diagnostics
 #'
 #' @param x An `rl_diagnostics` object.
 #' @param type One of `"scores"` (linkage score histogram),
-#'   `"distributions"` (linked subset vs. baseline, per variable), `"smd"`
-#'   (Love-style plot of standardised mean differences), or `"convergence"`
-#'   (StEM trace plots for gamma/eta/alpha/phi, see [plot_stem_convergence()]).
+#'   `"distributions"` (linked subset vs. data sources, per variable), `"smd"`
+#'   (Love plots of standardised mean differences), or `"convergence"`
+#'   (StEM trace plots for gamma/eta/alpha/phi, see [plot_StEM_convergence()]).
 #' @param ... Passed on to the underlying plotting helper.
 #'
 #' @export
 plot.rl_diagnostics <- function(x, type, ...) {
-  types <- c("scores", "distributions", "smd", "convergence")
+  types <- c("scores", "distributions", "smd", "convergence", "fdp")
   if (!type %in% types) {
     stop("`type` must be one of: ", paste(types, collapse = ", "), ".", call. = FALSE)
   }
@@ -2870,19 +3067,73 @@ plot.rl_diagnostics <- function(x, type, ...) {
   } else if (type == "smd") {
     vA <- x$smdA[x$compare_vars]
     vB <- x$smdB[x$compare_vars]
-    minv <- min(c(vA,vB)) - 0.05
-    maxv <- max(c(vA,vB)) + 0.05
-    graphics::dotchart(vA, xlab = "Standardised mean difference (linked A vs. A) (continuous approximation)", xlim=c(minv,maxv), ...)
+    minv <- min(c(unlist(vA),unlist(vB))) - 0.05
+    maxv <- max(c(unlist(vA),unlist(vB))) + 0.05
+    graphics::dotchart(unlist(vA), xlab = "Standardised mean difference (linked A vs. A)", xlim=c(minv,maxv), ...)
     graphics::abline(v = 0, lty = 2)
-    graphics::dotchart(vB, xlab = "Standardised mean difference (linked B vs. B) (continuous approximation)", xlim=c(minv,maxv), ...)
+    graphics::dotchart(unlist(vB), xlab = "Standardised mean difference (linked B vs. B)", xlim=c(minv,maxv), ...)
     graphics::abline(v = 0, lty = 2)
   } else if (type == "convergence") {
     if (is.null(x$gamma)) {
       stop("No StEM chains stored on this object (the `fit` passed to `rl_diagnostics()` had no `gamma`/`eta`/`alpha`/`phi`).", call. = FALSE)
     }
-    plot_stem_convergence(list(gamma = x$gamma, eta = x$eta, alpha = x$alpha, phi = x$phi),
+    plot_StEM_convergence(list(gamma = x$gamma, eta = x$eta, alpha = x$alpha, phi = x$phi),
                           burnin = x$burnin, PIVs = x$compare_vars, ...)
+  } else if (type == "fdp") {
+    # should check that we have some fdp curve to plot object
+    if (!is.null(x$fdp_curves$true_fdp_evol)) {
+      plot(x$fdp_curves)
+    } else {
+      warning(
+        "Cannot provide a plot for `fdp` since `FDP_estimation = FALSE` in [rl_diagnostic()].",
+        call. = FALSE
+      )
+    }
   }
+  invisible(x)
+}
+
+fdp_estimation <- function(fdp_score_res, fdp_synth_res, true_fdp_evol,
+                           grid = seq(0.5, 0.95, by = 0.05)) {
+  # thresholds for fdp_res elements
+  th <- seq(0.5, 0.95, by = 0.05) 
+  # FDP model-based on RL task
+  RL_n_linked_score <- approx(th, colMeans(fdp_score_res$Linked_pairs, na.rm=TRUE), xout = grid, rule = 2)$y
+  RL_fdp_score <- approx(th, colMeans(fdp_score_res$FDP_score_estimator, na.rm = TRUE), xout = grid, rule = 2)$y
+  curve <- data.frame(xi = grid, RL_n_linked_score = RL_n_linked_score, RL_fdp_score = RL_fdp_score)
+  curve[curve$RL_n_linked_score == 0, "RL_fdp_score"] <- NA
+  # FDP model-based / scores on augmented RL task
+  curve$augmRL_n_linked_score <- approx(th, colMeans(fdp_synth_res$Linked_pairs, na.rm=TRUE), xout = grid, rule = 2)$y
+  curve$augmRL_fdp_score <- approx(th, colMeans(fdp_synth_res$FDP_score_estimator, na.rm = TRUE), xout = grid, rule = 2)$y
+  curve[curve$augmRL_n_linked_score == 0, "augmRL_fdp_score"] <- NA
+  # FDP synth-based on augmented RL task
+  curve$augmRL_n_linked_synth <- approx(th, colMeans(fdp_synth_res$Linked_pairs_augm, na.rm=TRUE), xout = grid, rule = 2)$y
+  curve$augmRL_fdp_synth <- approx(th, colMeans(fdp_synth_res$FDP_synth_estimator, na.rm = TRUE), xout = grid, rule = 2)$y
+  curve[curve$augmRL_n_linked_synth == 0, "augmRL_fdp_synth"] <- NA
+  structure(list(curve = curve, true_fdp_evol = true_fdp_evol), class = "fdp_curve")
+}
+
+plot.fdp_curve <- function(x, ...) {
+  op <- par(mar = c(4, 4, 2, 4))
+  on.exit(par(op))
+  plot(x$curve$xi, x$curve$RL_fdp_score, type = "l", lwd = 2, ylim = c(0, max(0.5, x$curve$RL_fdp_score, x$curve$augmRL_fdp_score, x$curve$augmRL_fdp_synth, na.rm = TRUE)),
+       xlab = "decision rule threshold", ylab = "estimated FDP", main = "FDP versus linkage decision rule")
+  if (!is.null(x$curve$augmRL_fdp_synth)) lines(x$curve$xi, x$curve$augmRL_fdp_synth, lwd = 2, lty = 2)
+  if (!is.null(x$curve$augmRL_fdp_score)) lines(x$curve$xi, x$curve$augmRL_fdp_score, lwd = 2, lty = 3)
+  if (!is.null(x$true_fdp_evol)){
+    lines(seq(0.5, 0.95, by = 0.05), x$true_fdp_evol, type = "l", col = "grey50")
+  }
+  par(new = TRUE)
+  plot(x$curve$xi, x$curve$RL_n_linked_score, type = "l", col = "firebrick", axes = FALSE, xlab = "", ylab = "")
+  lines(x$curve$xi, x$curve$augmRL_n_linked_synth, type = "l", col = "red")
+  lines(x$curve$xi, x$curve$augmRL_n_linked_score, type = "l", col = "orange")
+  axis(4, col = "firebrick", col.axis = "firebrick"); mtext("number of links", side = 4, line = 2.5, col = "firebrick")
+  if (!is.null(x$true_fdp_evol)){
+    legend("topright", c("rl-score", "augm-rl-synth", "augm-rl-score", "rl-linked", "augm-rl-linked", "augm-rl-linked", "truth"), lty = c(1, 2, 3, 1, 1, 1, 1),
+           col = c("black", "black", "black", "firebrick", "red", "orange", "grey50"), bty = "n", cex = 0.8)
+  }
+  legend("topright", c("rl-score", "augm-rl-synth", "augm-rl-score", "rl-linked", "augm-rl-linked", "augm-rl-linked"), lty = c(1, 2, 3, 1, 1, 1),
+         col = c("black", "black", "black", "firebrick", "red", "orange"), bty = "n", cex = 0.8)
   invisible(x)
 }
 
