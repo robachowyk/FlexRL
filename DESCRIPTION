@@ -4,12 +4,12 @@ Version: 0.1.1
 Authors@R: c(
     person("Kayané", "ROBACH", email = "k.c.robach@amsterdamumc.nl", role = c("aut", "cre", "cph"), comment = c(ORCID = "0000-0002-5725-623X")),
     person(c("Michel", "H."), "HOF", email = "m.h.hof@amsterdamumc.nl", role = c("aut", "cph")))
-Description: Implementation of a Stochastic Expectation Maximisation (StEM) approach to Record Linkage with diagnostic tools for downstream inference on linked data; see citation("FlexRL") for details. This is a record linkage method, for finding the common set of records among 2 data sources based on Partially Identifying Variables (PIVs) available in both sources. It includes modelling of dynamic Partially Identifying Variables (e.g. postal code) that may evolve over time and registration errors (missing values and mistakes in the registration). Low memory footprint.
+Description: Probabilistically link records that refer to the same entities across two data sources without a unique identifier, using partially identifying variables such as product code, brand, category, birth year, sex or postal code. 'FlexRL' implements a Stochastic Expectation Maximisation (StEM) approach to Record Linkage (Robach et al., 2025, <doi:10.1093/jrsssc/qlaf016>). The model accounts for registration errors (missing values and mistakes) and for variables that change over time, enforces one-to-one assignment, and has a low memory footprint. The package also provides tools for inference on linked data: two estimators of the false discovery proportion of a linkage (Robach et al., 2025, <doi:10.1002/sim.70292>), based on linkage scores and on synthetic data, and diagnostics comparing the linked sample with the source data. These tools also apply on the linkage output of other record linkage packages.
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-Depends: R (>= 4.4.0)
-Imports: Matrix (>= 1.7), Rcpp(>= 1.0.13), cli, BRL, arf, diyar, fastLink, fedmatch, mice, multilink, rcompanion, reclin2, synthpop
+Depends: R (>= 4.1.0)
+Imports: Matrix (>= 1.7), Rcpp (>= 1.0.13), cli, graphics, grDevices, stats, utils, BRL, arf, diyar, fastLink, fedmatch, mice, multilink, reclin2, synthpop
 LinkingTo: Rcpp
 Suggests: 
     knitr,

@@ -2,7 +2,7 @@
 % Please edit documentation in R/FlexRecordLinkage.r
 \name{prepare_data}
 \alias{prepare_data}
-\title{Prepare two data sources for \code{\link[=stEM]{stEM()}}}
+\title{Prepare two data sources for \code{\link[=StEM]{StEM()}}}
 \usage{
 prepare_data(
   data1,
@@ -10,8 +10,8 @@ prepare_data(
   label1,
   label2,
   PIVs_config,
-  sameMistakes = TRUE,
-  uniqID = NULL,
+  same_mistakes = TRUE,
+  uniq_id = NULL,
   restrict_support_intersection = TRUE
 )
 }
@@ -28,12 +28,12 @@ for \code{data1}.}
 \item{label2}{Character, label recorded in the \code{source} column
 for \code{data2}.}
 
-\item{PIVs_config}{Named list describing each PIV — see \code{\link[=DataCreation]{DataCreation()}}.}
+\item{PIVs_config}{Named list describing each PIV — see \code{\link[=simulate_data]{simulate_data()}}.}
 
-\item{sameMistakes}{Logical, will A and B share one mistake-probability
+\item{same_mistakes}{Logical, will A and B share one mistake-probability
 parameter per PIV.}
 
-\item{uniqID}{Optional column name (present in both files) with the true
+\item{uniq_id}{Optional column name (present in both files) with the true
 entity identifier, used to build \code{true_pairs} for evaluation; \code{NULL} if
 unavailable.}
 
@@ -42,53 +42,45 @@ with an out-of-common-support PIV value are dropped (and a warning issued);
 if \code{FALSE}, only the warning is issued.}
 }
 \value{
-A list ready to use as the \code{data} argument of \code{\link[=stEM]{stEM()}}: \code{encodedA},
-\code{encodedB}, \code{Nvalues}, \code{PIVs_config}, \code{sameMistakes}, and \code{true_pairs}
-(\code{NULL} if \code{uniqID} was not supplied).
+A list ready to use as the \code{data} argument of \code{\link[=StEM]{StEM()}}: \code{encodedA},
+\code{encodedB}, \code{n_values}, \code{PIVs_config}, \code{same_mistakes}, and \code{true_pairs}
+(\code{NULL} if \code{uniq_id} was not supplied).
 }
 \description{
-Wraps the data-preparation steps needed before calling \code{\link[=stEM]{stEM()}}: tags each
-source with a \code{source} column, relabels the larger source as \code{B} (FlexRL
-requires B to be the larger file — adjusting \code{condHazardCov}/\code{boundMistakes}/
-\code{fixMistakes} accordingly if A and B are swapped), drops records whose PIV
-values fall outside the support shared by both files, warns if two PIVs
-are strongly associated (Cramer's V > 0.3, which may degrade record linkage
-performance), encodes every PIV to natural numbers using levels pooled
-across both sources, and recodes missing values to \code{0}.
+Wraps the data-preparation steps needed before calling \code{\link[=StEM]{StEM()}}: tags each
+source with a \code{source} column, labels the larger source as \code{B}, adjusting
+\code{cond_hazard_cov}/\code{bound_mistakes}/\code{fix_mistakes} accordingly if A and
+B are swapped), drops records whose PIV values fall outside the support
+shared by both files, warns if two PIVs are strongly associated
+(Cramer's V > 0.3), which may degrade record linkage performance, encodes
+every PIV to natural numbers using levels pooled across both sources, and
+encodes missing values to \code{0}.
 }
 \examples{
 PIVs_config <- list( V1 = list(dynamics = "stable",
-                                boundMistakes = c(0.10,0.10),
-                                fixMistakes = c(NA,NA)
-                                ),
-                    V2 = list(dynamics = "stable",
-                                boundMistakes = c(0.10,0.10),
-                                fixMistakes = c(NA,NA)
-                                ),
-                    V3 = list(dynamics = "flexible",
-                                boundMistakes = c(NA,NA),
-                                fixMistakes = c(NA,NA)
-                                ),
-                    V4 = list(dynamics = "structured",
-                                boundMistakes = c(NA,NA),
-                                fixMistakes = c(0.03,0.03),
-                                condHazardCov = list(cov1=c("Xe", "Xf"),
-                                                      cov2=c())
-                                )
-)
-Nval  <- c(6, 7, 8, 9)
-Pmistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
-                  V3 = c(0.05, 0.05), V4 = c(0.02, 0.02))
-Pmissing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
-                  V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
-condHazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(0.7,0.6,0.5))
-
-GenData <- DataCreation(
-  PIVs_config, Nval, NRecords = c(400, 600), Nlinks = 300,
-  Pmistake, Pmissing, condHazard_params, enforceEstimability = TRUE
-)
-
-PrepData <- prepare_data(GenData$dataSet1, GenData$dataSet2, "1", "2",
-                     PIVs_config, sameMistakes = TRUE, uniqID = "entityID")
-str(PrepData, max.level = 1)
+                               bound_mistakes = c(0.10,0.10),
+                               fix_mistakes = c(NA,NA)),
+                     V2 = list(dynamics = "stable",
+                               bound_mistakes = c(0.10,0.10),
+                               fix_mistakes = c(NA,NA)),
+                     V3 = list(dynamics = "flexible",
+                               bound_mistakes = c(NA,NA),
+                               fix_mistakes = c(NA,NA)),
+                     V4 = list(dynamics = "structured",
+                               bound_mistakes = c(NA,NA),
+                               fix_mistakes = c(0.03,0.03),
+                               cond_hazard_cov = list(cov1=c("Xe", "Xf"),
+                                                      cov2=c())) )
+n_values  <- c( 5, 6, 7, 12 )
+p_mistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
+                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
+                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
+cond_hazard_params <- list( V1 = c(), V2 = c(), 
+                             V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
+gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+                           p_mistake, p_missing, cond_hazard_params, TRUE )
+prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
+                           PIVs_config, TRUE, "entity_id", TRUE )
+str(prep_data, max.level = 1)
 }

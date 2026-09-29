@@ -4,13 +4,13 @@
 [![](https://cranlogs.r-pkg.org/badges/grand-total/FlexRL)](https://cran.r-project.org/web/packages/FlexRL/index.html)
 <!-- badges: end -->
 
-FlexRL is a package for Flexible Record Linkage, to find the common set of records among 2 data sources. The area of applications of Record Linkage is broad, it can be used to link data from any sources where an overlap in the populations is expected, like healthcare monitoring studies at 2 different time points, registries of casualties in conflict zones collected by distinct organisations, ...
+FlexRL is an R package for Flexible Record Linkage: it probabilistically link records that refer to the same entities across two data sources without a unique identifier, using Partially Identifying Variables (PIVs) such as product code, brand, category, birth year, sex or postal code. It applies wherever two sources are expected to overlap: healthcare monitoring studies at two time points, registries of casualties in conflict zones collected by distinct organisations, customer or product files of two retailers, survey waves, ...
 
-FlexRL models registration errors (missing values and mistakes in the data) and handles dynamic **P**artially **I**dentifying **V**ariable**s** that evolve over time (e.g. postal code can change between the 2 data collections) in order to identify a final set of linked records (and their posterior probabilities to be linked).
+FlexRL implements the [Stochastic Expectation Maximisation (StEM) approach to record linkage](https://doi.org/10.1093/jrsssc/qlaf016) of Robach et al. (2025). The model accounts for registration errors (missing values and mistakes) and for dynamic PIVs that evolve over time (e.g. postal code may change between data collections), and enforces one-to-one assignment. It returns the set of linked records together with their posterior linkage scores.
 
-The algorithm can take time to run on large data sets but has a low memory footprint and can easily run on standard computers.
+Since record linkage is rarely the end of the analysis, the package also provides tools for inference on the linked data: [estimators of the false discovery proportion of a linkage](https://doi.org/10.1002/sim.70292) and diagnostics comparing the linked sample with the source data. These tools also apply to the linkage output of other record linkage packages.
 
-This package implements the **St**ochastic **EM** approach to Record Linkage described in '[A flexible model for Record Linkage](https://arxiv.org/abs/2407.06835)'. The main article and the supplementary material are available on arxiv.
+The algorithm can take time to run on large data sets, but it has a low memory footprint and runs on a standard computer.
 
 Please [open an issue](https://github.com/robachowyk/FlexRL/issues) to report any bug, to make a request, or to ask for help :-)
 
@@ -41,262 +41,54 @@ FlexRL relies on Rcpp; when imported from Github, it may require gfortran and gc
 
 ## How to use `FlexRL`
 
-Here is a basic example which shows how to solve a common record linkage task:
+A minimal example shipped with the package vignettes:
 
 ```r
 library(FlexRL)
 
-# load real data subsets from the vignettes
-df2016 = read.csv("FlexRL/vignettes/exA.csv", row.names = 1)
-df2020 = read.csv("FlexRL/vignettes/exB.csv", row.names = 1)
+df2016 <- read.csv("FlexRL/vignettes/exSHIW16.csv", row.names = 1)
+df2020 <- read.csv("FlexRL/vignettes/exSHIW20.csv", row.names = 1)
 
-# use 5 PIVs birth year, sex, marital status, educational level, regional code;
-# we do not have enough information to model instability
-# all PIVs are considered stable
-PIVs_config = list(
-  ANASCI     = list(stable = TRUE),
-  SESSO      = list(stable = TRUE),
-  STACIV     = list(stable = TRUE),
-  STUDIO     = list(stable = TRUE),
-  IREG       = list(stable = TRUE)
+# one entry per PIV: stable (does not change over time), flexible (may change, change not modelled) or structured (change modelled with a survival model)
+PIVs_config <- list(
+  ANASCI = list(dynamics = "stable",   bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
+  SESSO  = list(dynamics = "stable",   bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
+  STACIV = list(dynamics = "flexible", bound_mistakes = c(NA, NA),     fix_mistakes = c(NA, NA)),
+  STUDIO = list(dynamics = "flexible", bound_mistakes = c(NA, NA),     fix_mistakes = c(NA, NA))
 )
-PIVs = names(PIVs_config)
-PIVs_stable = sapply(PIVs_config, function(x) x$stable)
+PIVs <- names(PIVs_config)
 
-# we put bounds on the probability of mistakes:
-# there should realistically be less than 10% of mistakes in the PIVs
-# however for some PIVs which are probably dynamic (though we cannot model it here) it is good to
-# not bound the mistakes parameter, which will adapt to the dynamics not taken into account
-boundMistakes = c(TRUE, TRUE, FALSE, FALSE, FALSE)
+# encode the PIVs, restrict to the common support, put the smaller file in A
+prep_data <- prepare_data(df2016, df2020, "2016", "2020", PIVs_config,
+                         same_mistakes = TRUE, uniq_id = "ID")
 
-# filter the data to their common support
-for(i in 1:length(PIVs)){
-  intersect_support_piv = intersect( unique(df2016[,PIVs[i]]), unique(df2020[,PIVs[i]]) )
-  df2016 = df2016[df2016[,PIVs[i]] %in% c(NA,intersect_support_piv),]
-  df2020 = df2020[df2020[,PIVs[i]] %in% c(NA,intersect_support_piv),]
-}
+# gauge the difficulty of the task with exact matching
+naive_linkage(PIVs, prep_data$encodedA, prep_data$encodedB)
 
-# reset the rownames
-rownames(df2016) = 1:nrow(df2016)
-rownames(df2020) = 1:nrow(df2020)
+# fit the model
+fit <- StEM(data = prep_data, StEM_iter = 20, StEM_burnin = 10,
+            gibbs_iter = 20, gibbs_burnin = 10)
 
-# we know the true linkage structure so we know the true links
-links = intersect(df2016$ID, df2020$ID)
-Nlinks = length(links)
+# linked pairs: rows of encodedA (i), rows of encodedB (j), linkage score (x); a score > 0.5 enforces one-to-one assignment
+linked <- fit$Delta[fit$Delta$x > 0.5, ]
 
-TrueDelta = data.frame( matrix(0, nrow=0, ncol=2) )
-for (i in 1:Nlinks)
-{
-  id = links[i]
-  id16 = which(df2016$ID == id)
-  id20 = which(df2020$ID == id)
-  TrueDelta = rbind(TrueDelta, cbind(rownames(df2016[id16,]),rownames(df2020[id20,])))
-}
-true_pairs = do.call(paste, c(TrueDelta, list(sep="_")))
-
-# we need a source column
-df2016$source = "df2016"
-df2020$source = "df2020"
-
-# the first dataset (namely source A) has to be the smallest one
-# i.e. the second dataset (namely source B) has to be the largest one
-if(nrow(df2020)>nrow(df2016)){
-  encodedA = df2016
-  encodedB = df2020
-  cat("df2020 is the largest file, denoted encodedB")
-}else{
-  encodedB = df2016
-  encodedA = df2020
-  cat("df2016 is the largest file, denoted encodedB")
-}
-
-# encode the PIVs
-levels_PIVs = lapply(PIVs, function(x) levels(factor(as.character(c(encodedA[,x], encodedB[,x])))))
-
-for(i in 1:length(PIVs))
-{
-  encodedA[,PIVs[i]] = as.numeric(factor(as.character(encodedA[,PIVs[i]]), levels=levels_PIVs[[i]]))
-  encodedB[,PIVs[i]] = as.numeric(factor(as.character(encodedB[,PIVs[i]]), levels=levels_PIVs[[i]]))
-}
-nvalues = sapply(levels_PIVs, length)
-names(nvalues) = PIVs
-
-encodedA[,PIVs][ is.na(encodedA[,PIVs]) ] = 0
-encodedB[,PIVs][ is.na(encodedB[,PIVs]) ] = 0
-
-data = list( A                    = encodedA,
-             B                    = encodedB,
-             Nvalues              = nvalues,
-             PIVs_config          = PIVs_config,
-             controlOnMistakes    = boundMistakes,
-             sameMistakes         = TRUE,
-             phiMistakesAFixed    = FALSE,
-             phiMistakesBFixed    = FALSE,
-             phiForMistakesA      = c(NA, NA, NA, NA, NA),
-             phiForMistakesB      = c(NA, NA, NA, NA, NA)
-)
-
-# launch FlexRL algorithm
-fit = stEM(  data                 = data,
-             StEMIter             = 50,
-             StEMBurnin           = 30,
-             GibbsIter            = 50,
-             GibbsBurnin          = 30,
-             musicOn              = TRUE,
-             newDirectory         = NULL,
-             saveInfoIter         = FALSE
-)
-
-# collect the output and build the final set of linked records with posterior probability > 0.5
-# to ensure that the one-to-one assignment constraint is fulfilled
-DeltaResult = fit$Delta
-colnames(DeltaResult) = c("idx20","idx16","probaLink")
-DeltaResult = DeltaResult[DeltaResult$probaLink>0.5,]
-DeltaResult
-
-# compute the results by comparing the true links to the linked records
-# watch out for the order of the source in the outcome, source A here corresponds to df2020
-# and source B corresponds to df2016
-# in the set of true links we ordered pairs with first df2016 and then df2020
-results = data.frame( Results=matrix(NA, nrow=6, ncol=1) )
-rownames(results) = c("tp","fp","fn","f1score","fdr","sens.")
-if(nrow(DeltaResult)>1){
-  linked_pairs    = do.call(paste, c(DeltaResult[,c("idx16","idx20")], list(sep="_")))
-  truepositive    = length( intersect(linked_pairs, true_pairs) )
-  falsepositive   = length( setdiff(linked_pairs, true_pairs) )
-  falsenegative   = length( setdiff(true_pairs, linked_pairs) )
-  precision       = truepositive / (truepositive + falsepositive)
-  fdr             = 1 - precision
-  sensitivity     = truepositive / (truepositive + falsenegative)
-  f1score         = 2 * (precision * sensitivity) / (precision + sensitivity)
-  results[,"FlexRL"] = c(truepositive,falsepositive,falsenegative,f1score,fdr,sensitivity)
-}
-results
-
-# one can use the simplistic method to assess the difficulty of the task
-DeltaResult = launchNaive(PIVs, encodedA, encodedB)
-
-if(nrow(DeltaResult)>1){
-  linked_pairs    = do.call(paste, c(DeltaResult[,c("idxB","idxA)], list(sep="_")))
-  truepositive    = length( intersect(linked_pairs, true_pairs) )
-  falsepositive   = length( setdiff(linked_pairs, true_pairs) )
-  falsenegative   = length( setdiff(true_pairs, linked_pairs) )
-  precision       = truepositive / (truepositive + falsepositive)
-  fdr             = 1 - precision
-  sensitivity     = truepositive / (truepositive + falsenegative)
-  f1score         = 2 * (precision * sensitivity) / (precision + sensitivity)
-  results[,"Naive"] = c(truepositive,falsepositive,falsenegative,f1score,fdr,sensitivity)
-}
-results
+# diagnostics for inference on the linked data
+diag <- RL_diagnostics(fit, prep_data$encodedA, prep_data$encodedB, PIVs,
+                       list(ANASCI = TRUE, SESSO = FALSE, STACIV = FALSE, STUDIO = FALSE),
+                       true_pairs = prep_data$true_pairs, FDP_estimation = TRUE, 
+                       RL_method = "FlexRL", data = prep_data,
+                       StEM_iter = 10, StEM_burnin = 5, 
+                       gibbs_iter = 10, gibbs_burnin = 5,
+                       maxIter4CV = 3, n_repeats = 5)
+diag # print(diag)
+print(diag, threshold = 0.75)
+plot(diag, "scores")
+plot(diag, "distributions", threshold = 0.75)
+plot(diag, "convergence")
+plot(diag, "FDP")
+plot(diag, "discrepancy")
 ```
 
-Here is another example (using synthetic data to illustrate more elaborated options) which shows you how to solve a common record linkage problem:
+More documentation is available on [CRAN](https://cran.r-project.org/web/packages/FlexRL/index.html) and in the repository [FlexRL-experiments](https://github.com/robachowyk/FlexRL-experiments).
 
-```r
-library(FlexRL)
-
-PIVs_config = list( V1 = list(stable = TRUE),
-                    V2 = list(stable = TRUE),
-                    V3 = list(stable = TRUE),
-                    V4 = list(stable = TRUE),
-                    V5 = list( stable = FALSE,
-                               conditionalHazard = FALSE,
-                               pSameH.cov.A = c(),
-                               pSameH.cov.B = c()) )
-PIVs = names(PIVs_config)
-PIVs_stable = sapply(PIVs_config, function(x) x$stable)
-Nval = c(6, 7, 8, 9, 15)
-NRecords = c(500, 800)
-Nlinks = 300
-PmistakesA = c(0.02, 0.02, 0.02, 0.02, 0.02)
-PmistakesB = c(0.02, 0.02, 0.02, 0.02, 0.02)
-PmissingA = c(0.007, 0.007, 0.007, 0.007, 0.007)
-PmissingB = c(0.007, 0.007, 0.007, 0.007, 0.007)
-moving_params = list(V1=c(),V2=c(),V3=c(),V4=c(),V5=c(0.28))
-enforceEstimability = TRUE
-DATA = DataCreation( PIVs_config,
-                     Nval,
-                     NRecords,
-                     Nlinks,
-                     PmistakesA,
-                     PmistakesB,
-                     PmissingA,
-                     PmissingB,
-                     moving_params,
-                     enforceEstimability)
-A                    = DATA$A
-B                    = DATA$B
-Nvalues              = DATA$Nvalues
-TimeDifference       = DATA$TimeDifference
-proba_same_H         = DATA$proba_same_H
-
-# we generate data with an unstable PIV (representing that people move for instance)
-proba_same_H_5 = proba_same_H[,5]
-plot( sort(proba_same_H_5, decreasing=TRUE), ylim=c(0,1) )
-plot( TimeDifference, proba_same_H_5, ylim=c(0,1) )
-
-# it is realistic to bound the parameter for mistakes to not exceeds 10%
-# (also for the unstable PIV since we model its dynamics)
-boundMistakes = c(TRUE, TRUE, TRUE, TRUE, TRUE)
-
-# the first 1:Nlinks records of each files created are links
-TrueDelta = data.frame( matrix(0, nrow=0, ncol=2) )
-for (i in 1:Nlinks)
-{
-  TrueDelta = rbind(TrueDelta, cbind(rownames(A[i,]),rownames(B[i,])))
-}
-true_pairs = do.call(paste, c(TrueDelta, list(sep="_")))
-
-encodedA = A
-encodedB = B
-
-encodedA[,PIVs][ is.na(encodedA[,PIVs]) ] = 0
-encodedB[,PIVs][ is.na(encodedB[,PIVs]) ] = 0
-
-data = list( A                    = encodedA,
-             B                    = encodedB,
-             Nvalues              = Nvalues,
-             PIVs_config          = PIVs_config,
-             controlOnMistakes    = boundMistakes,
-             sameMistakes         = TRUE,
-             phiMistakesAFixed    = TRUE,
-             phiMistakesBFixed    = TRUE,
-             phiForMistakesA      = c(NA, NA, NA, NA, 0),
-             phiForMistakesB      = c(NA, NA, NA, NA, 0)
-           )
-
-fit = stEM(  data                 = data,
-             StEMIter             = 100,
-             StEMBurnin           = 70,
-             GibbsIter            = 200,
-             GibbsBurnin          = 100,
-             musicOn              = TRUE,
-             newDirectory         = NULL,
-             saveInfoIter         = FALSE
-          )
-
-DeltaResult = fit$Delta
-colnames(DeltaResult) = c("idxA","idxB","probaLink")
-DeltaResult = DeltaResult[DeltaResult$probaLink>0.5,]
-
-results = data.frame( Results=matrix(NA, nrow=6, ncol=1) )
-rownames(results) = c("tp","fp","fn","f1score","fdr","sens.")
-if(nrow(DeltaResult)>1){
-  linked_pairs    = do.call(paste, c(DeltaResult[,c("idxA","idxB")], list(sep="_")))
-  truepositive    = length( intersect(linked_pairs, true_pairs) )
-  falsepositive   = length( setdiff(linked_pairs, true_pairs) )
-  falsenegative   = length( setdiff(true_pairs, linked_pairs) )
-  precision       = truepositive / (truepositive + falsepositive)
-  fdr             = 1 - precision
-  sensitivity     = truepositive / (truepositive + falsenegative)
-  f1score         = 2 * (precision * sensitivity) / (precision + sensitivity)
-  results[,"FlexRL"] = c(truepositive,falsepositive,falsenegative,f1score,fdr,sensitivity)
-}
-results
-```
-
-More documentation is accessible on CRAN.
-
-More examples are available in the vignette and in the repository [FlexRL-experiments](https://github.com/robachowyk/FlexRL-experiments).
-
-For support requests, contact _k dot c dot robach at amsterdamumc dot nl_.
+For support requests, contact _robachowyk@gmail.com_.

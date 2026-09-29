@@ -9,7 +9,7 @@ synthesise(
   encodedA,
   encodedB,
   PIVs,
-  syntheticSample,
+  n_synth,
   restrict_support_intersection = TRUE
 )
 }
@@ -23,17 +23,17 @@ synthesise(
 
 \item{PIVs}{Character vector, names of the PIVs to synthesise.}
 
-\item{syntheticSample}{Integer, number of synthetic records to generate.}
+\item{n_synth}{Integer, number of synthetic records to generate.}
 
 \item{restrict_support_intersection}{Logical; drop synthetic records whose
 PIV values fall outside the support shared with \code{encodedA} (default \code{TRUE}).}
 }
 \value{
-List with \code{NewA} (unchanged \code{encodedA}, support-restricted) and
-\code{NewB} (\code{encodedB} plus the synthetic records).
+List with \code{dataA} (unchanged \code{encodedA}, support-restricted) and
+\code{dataB} (\code{encodedB} plus the synthetic records).
 }
 \description{
-Fits a generative model on \code{encodedB[, PIVs]} and draws \code{syntheticSample}
-new synthetic records from it, appended to \code{encodedB} with \code{source = "synthetic"}; used by \code{\link[=compute_FDP_RLwithSynth]{compute_FDP_RLwithSynth()}} to estimate the false
+Fits a generative model on \code{encodedB[, PIVs]} and draws \code{n_synth}
+new synthetic records from it, appended to \code{encodedB} with \code{source = "synthetic"}; used by \code{\link[=compute_augmRL_FDP_synth]{compute_augmRL_FDP_synth()}} to estimate the false
 discovery proportion of a record-linkage method without ground truth.
 }
