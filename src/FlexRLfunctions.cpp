@@ -162,7 +162,7 @@ using namespace Rcpp;
    }
    if(index != length)
    {
-     Rf_error("Something went wrong creating Δ.");
+     Rcpp::stop("Something went wrong creating Δ.");
    }
    return found;
  }
