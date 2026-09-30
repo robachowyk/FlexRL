@@ -101,22 +101,23 @@ p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 cond_hazard_params <- list( V1 = c(), V2 = c(), 
                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
                            p_mistake, p_missing, cond_hazard_params, TRUE )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
 PIVs <- names(PIVs_config)  
 PIVs_type <- list(V1=FALSE, V2=FALSE, V3=FALSE, V4=TRUE)
 
-fit_flexrl <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 5,
-                    gibbs_iter = 10, gibbs_burnin = 5, music_on = FALSE )
+fit_flexrl <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2,
+                    gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 10 )
 diag_flexrl <- RL_diagnostics(fit_flexrl, prep_data$encodedA, prep_data$encodedB,
                               PIVs, PIVs_type, true_pairs = prep_data$true_pairs,
                               FDP_estimation = TRUE, RL_method = "FlexRL", 
                               data = prep_data,
-                              StEM_iter = 10, StEM_burnin = 5, 
-                              gibbs_iter = 10, gibbs_burnin = 5,
-                              maxIter4CV = 1, n_repeats = 2)
+                              StEM_iter = 5, StEM_burnin = 2, 
+                              gibbs_iter = 5, gibbs_burnin = 2,
+                              n_post_samp = 10,
+                              maxIter4CV = 1, n_repeats = 1)
 diag_flexrl # print(diag_flexrl)
 print(diag_flexrl, threshold = 0.75)
 plot(diag_flexrl, "scores")
@@ -132,39 +133,11 @@ diag_brl <- RL_diagnostics(fit_brl, prep_data$encodedA, prep_data$encodedB,
                            PIVs, PIVs_type, true_pairs = prep_data$true_pairs,
                            FDP_estimation = TRUE, RL_method = "BRL", 
                            flds = PIVs, types = rep("bi",length(PIVs)),
-                           maxIter4CV = 1, n_repeats = 2)
+                           maxIter4CV = 1, n_repeats = 1)
 diag_brl # print(diag_brl)
 print(diag_brl, threshold = 0.75)
 plot(diag_brl, "scores")
 plot(diag_brl, "distributions", threshold = 0.75)
 plot(diag_brl, "FDP")
 plot(diag_brl, "discrepancy")
-
-reclin2_args <- list( on = PIVs,
-                      formula = stats::as.formula(paste("~", paste(PIVs, collapse = "+"))),
-                      type = "mpost", add = TRUE, variable = "selected",
-                      score = "mpost", threshold = 0.5 )
-fit_rl2 <- link_with_reclin2( prep_data$encodedA, prep_data$encodedB, reclin2_args )
-diag_rl2 <- do.call(RL_diagnostics, c(list(fit_rl2, prep_data$encodedA, 
-       prep_data$encodedB, PIVs, PIVs_type,
-       true_pairs = prep_data$true_pairs, FDP_estimation = TRUE,
-       RL_method = "reclin2", maxIter4CV = 1, n_repeats = 2), reclin2_args))
-diag_rl2 # print(diag_rl2)
-print(diag_rl2, threshold = 0.6)
-plot(diag_rl2, "scores")
-plot(diag_rl2, "distributions", threshold = 0.6)
-
-names4diag <- c(PIVs, "local_id", "source")
-diyar_args <- list( probabilistic = TRUE, return_weights = TRUE )
-fit_diyar <- link_with_diyar( prep_data$encodedA[, PIVs], prep_data$encodedB[, PIVs],
-                              diyar_args )
-diag_diyar <- RL_diagnostics(fit_diyar, prep_data$encodedA[, names4diag],
-                             prep_data$encodedB[, names4diag],
-                             PIVs, PIVs_type, true_pairs = prep_data$true_pairs,
-                             FDP_estimation = TRUE, RL_method = "diyar",
-                             probabilistic = TRUE, return_weights = TRUE,
-                             maxIter4CV = 1, n_repeats = 2 )
-diag_diyar # print(diag_diyar)
-print(diag_diyar, threshold = 0.6)
-plot(diag_diyar, "distributions", threshold = 0.6)
 }

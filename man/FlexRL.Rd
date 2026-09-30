@@ -46,13 +46,13 @@ p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 cond_hazard_params <- list(V1 = c(), V2 = c(), 
                            V3 = c(), V4 = log(c(0.7, 0.6, 0.5)))
-gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
                            p_mistake, p_missing, cond_hazard_params, 
                            TRUE, survival_model("exponential") )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
 fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 5,
-             gibbs_iter = 10, gibbs_burnin = 5, music_on = FALSE )
+             gibbs_iter = 10, gibbs_burnin = 5, n_post_samp = 10 )
 
 # linked pairs and performance against the true pairs
 linked <- fit$Delta[fit$Delta$x > 0.5, ]
@@ -69,9 +69,9 @@ diag <- RL_diagnostics(fit, prep_data$encodedA, prep_data$encodedB,
                        list(V1 = FALSE, V2 = FALSE, V3 = FALSE, V4 = TRUE),
                        true_pairs = prep_data$true_pairs, FDP_estimation = TRUE, 
                        RL_method = "FlexRL", data = prep_data,
-                       StEM_iter = 10, StEM_burnin = 5, 
-                       gibbs_iter = 10, gibbs_burnin = 5,
-                       maxIter4CV = 3, n_repeats = 5)
+                       StEM_iter = 5, StEM_burnin = 2, 
+                       gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5,
+                       maxIter4CV = 1, n_repeats = 2)
 diag # print(diag_flexrl)
 print(diag, threshold = 0.75)
 plot(diag, "scores")

@@ -46,7 +46,7 @@ gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200,
                            p_mistake, p_missing, cond_hazard_params, TRUE )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
-fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 5,
-             gibbs_iter = 10, gibbs_burnin = 5, music_on = FALSE )
+fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 3,
+             gibbs_iter = 10, gibbs_burnin = 3, n_post_samp = 10 )
 plot_StEM_convergence(fit)
 }

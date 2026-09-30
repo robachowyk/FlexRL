@@ -74,8 +74,8 @@ new_data$dataB[PIVs][is.na(new_data$dataB[PIVs])] <- 0
 # cannot model dynamics for synthetic data, set dates to 0
 new_data$dataA$date[is.na(new_data$dataA$date)] <- 0
 new_data$dataB$date[is.na(new_data$dataB$date)] <- 0
-arguments <- list(data = prep_data, StEM_iter = 10, StEM_burnin = 5, 
-                  gibbs_iter = 10, gibbs_burnin = 5)
+arguments <- list(data = prep_data, StEM_iter = 5, StEM_burnin = 1, 
+                  gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5)
 fit_flexrl <- link_with_FlexRL(new_data$dataA, new_data$dataB, arguments)  
 FDP_synth(fit_flexrl$idxA, fit_flexrl$idxB, fit_flexrl$LinkScore, 0.5,
           nrow(prep_data$encodedA), nrow(prep_data$encodedB), 

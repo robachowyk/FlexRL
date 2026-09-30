@@ -106,10 +106,10 @@ gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200,
                            p_mistake, p_missing, cond_hazard_params1, TRUE )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
-fit1 <- StEM( data = prep_data, StEM_iter = 20, StEM_burnin = 10, 
-              gibbs_iter = 20, gibbs_burnin = 10, music_on = FALSE,
+fit1 <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
+              gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5,
               model_dynamics = survival_model("exponential") )
-apply(fit1$alpha$V4[10:20,], 2, mean)
+apply(fit1$alpha$V4[2:5,], 2, mean)
 cond_hazard_params1$V4
 head(fit1$Delta[fit1$Delta$x > 0.5, ])
 
@@ -120,10 +120,10 @@ gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200,
                            model_dynamics = survival_model("weibull") )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
-fit2 <- StEM( data = prep_data, StEM_iter = 20, StEM_burnin = 10, 
-              gibbs_iter = 20, gibbs_burnin = 10, music_on = FALSE,
-             model_dynamics = survival_model("weibull"))
-apply(fit2$alpha$V4[10:20,], 2, mean)
+fit2 <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
+              gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5,
+              model_dynamics = survival_model("weibull"))
+apply(fit2$alpha$V4[2:5,], 2, mean)
 cond_hazard_params2$V4
 head(fit2$Delta[fit2$Delta$x > 0.5, ])
 
@@ -134,10 +134,10 @@ gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200,
                            model_dynamics = survival_model("gompertz") )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
-fit3 <- StEM( data = prep_data, StEM_iter = 20, StEM_burnin = 10, 
-              gibbs_iter = 20, gibbs_burnin = 10, music_on = FALSE,
-             model_dynamics = survival_model("gompertz"))
-apply(fit3$alpha$V4[10:20,], 2, mean)
+fit3 <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
+              gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5,
+              model_dynamics = survival_model("gompertz"))
+apply(fit3$alpha$V4[2:5,], 2, mean)
 cond_hazard_params3$V4
 head(fit3$Delta[fit3$Delta$x > 0.5, ])
 
@@ -148,10 +148,10 @@ gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200,
                            model_dynamics = survival_model("piecewise", cuts = c(1,2,3)) )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
-fit4 <- StEM( data = prep_data, StEM_iter = 20, StEM_burnin = 10, 
-              gibbs_iter = 20, gibbs_burnin = 10, music_on = FALSE,
+fit4 <- StEM( data = prep_data, StEM_iter = 2, StEM_burnin = 1, 
+              gibbs_iter = 2, gibbs_burnin = 1, n_post_samp = 2,
               model_dynamics = survival_model("piecewise", cuts = c(1,2,3)))
-apply(fit4$alpha$V4[10:20,], 2, mean)
+apply(fit4$alpha$V4, 2, mean)
 cond_hazard_params4$V4
 head(fit4$Delta[fit4$Delta$x > 0.5, ])
 }

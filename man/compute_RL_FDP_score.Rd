@@ -73,6 +73,7 @@ PIVs <- names(PIVs_config)
 compute_RL_FDP_score( prep_data$encodedA, prep_data$encodedB, PIVs, 1, 2,
                       "BRL", flds = PIVs, types = rep("bi",length(PIVs)) )
 compute_RL_FDP_score( prep_data$encodedA, prep_data$encodedB, PIVs, 1, 2,
-                      "FlexRL", data = prep_data, StEM_iter = 10, 
-                      StEM_burnin = 5, gibbs_iter = 10, gibbs_burnin = 5 )
+                      "FlexRL", data = prep_data, StEM_iter = 5, 
+                      StEM_burnin = 2, gibbs_iter = 5, gibbs_burnin = 2,
+                      n_post_samp = 5 )
 }
