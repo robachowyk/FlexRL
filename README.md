@@ -18,7 +18,7 @@ These tools apply to the output of any record linkage method, including other pa
 
 The StEM algorithm may take time to run on large data sets, but it has a low memory footprint and runs on a standard computer.
 
-More details are in the [software article](...) (Robach et al., arXiv, 2026) and on [CRAN](https://cran.r-project.org/web/packages/FlexRL/index.html).
+More details are in the [software article](...) (Robach et al., arXiv, 2026) and on [CRAN](https://CRAN.R-project.org/package=FlexRL).
 
 Please [open an issue](https://github.com/robachowyk/FlexRL/issues) to report any bug, to make a request, or to ask for help :-)
 
