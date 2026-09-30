@@ -4,15 +4,21 @@
 [![](https://cranlogs.r-pkg.org/badges/grand-total/FlexRL)](https://cran.r-project.org/web/packages/FlexRL/index.html)
 <!-- badges: end -->
 
-FlexRL is an R package for Flexible Record Linkage: it probabilistically link records that refer to the same entities across two data sources without a unique identifier, using Partially Identifying Variables (PIVs) such as product code, brand, category, birth year, sex or postal code. It applies wherever two sources are expected to overlap: healthcare monitoring studies at two time points, registries of casualties in conflict zones collected by distinct organisations, customer or product files of two retailers, survey waves, ...
+Linking cohort studies, census data, surveys or administrative records opens research opportunities with existing data and broadens the capabilities of statistical offices. It enables the reuse of existing data and supports sharing data without unique identifiers, giving access to more variables across wider populations and longer time periods. Without unique identifiers, however, probabilistic record linkage makes errors that propagate into subsequent analyses.
 
-FlexRL implements the [Stochastic Expectation Maximisation (StEM) approach to record linkage](https://doi.org/10.1093/jrsssc/qlaf016) from Robach et al. (JRSS-C, 2025). The model accounts for registration errors (missing values and mistakes) and for dynamic PIVs that evolve over time (e.g. postal code may change between data collections), and enforces one-to-one assignment. It returns the set of linked records together with their posterior linkage scores.
+FlexRL is an open-source R package for Flexible Record Linkage. It links records that refer to the same entities across two data sources without a unique identifier, using Partially Identifying Variables (PIVs) such as birth year, sex, postal code, or product code, brand, category. It applies wherever two sources are expected to overlap: health monitoring studies at two time points, survey waves, customer or product files of two retailers...
 
-Since record linkage is rarely the end of the analysis, the package also provides tools for inference on the linked data. Namely, it implements [estimators of the false discovery proportion in record linkage](https://doi.org/10.1002/sim.70292) from Robach et al. (Statistics in Medicine, 2025) and [diagnostics for assessing the divergence between linked sample and source population](https://kayanerobach.github.io/blog/2025/causal-record-linkage/) from Robach et al. (Arxiv, 2026). These tools also apply to the linkage output of other record linkage packages.
+FlexRL implements the [Stochastic Expectation Maximisation (StEM) approach to record linkage](https://doi.org/10.1093/jrsssc/qlaf016) of Robach et al. (JRSS-C, 2025). The model accounts for registration errors (missing values and mistakes) and for dynamic PIVs that change over time (e.g. a postal code between two data collections), and it enforces one-to-one assignment. It returns the linked records together with their posterior linkage scores.
 
-More details on the [software article]() from Robach et al. (Arxiv, 2026) and on [CRAN](https://cran.r-project.org/web/packages/FlexRL/index.html).
+Since record linkage is rarely the end of the analysis, FlexRL also provides tools for inference on linked data. They make the quality of linked data transparent:
+- [estimators of the false discovery proportion in record linkage](https://doi.org/10.1002/sim.70292) (Robach et al., Statistics in Medicine, 2025);
+- [diagnostics for assessing the divergence between linked sample and source population](https://kayanerobach.github.io/blog/2025/causal-record-linkage/) (Robach et al., arXiv, 2026).
 
-The StEM algorithm for record linkage can take time to run on large data sets, but it has a low memory footprint and runs on a standard computer.
+These tools apply to the output of any record linkage method, including other packages, so any study using linked data can report linkage quality alongside its results.
+
+The StEM algorithm may take time to run on large data sets, but it has a low memory footprint and runs on a standard computer.
+
+More details are in the [software article](...) (Robach et al., arXiv, 2026) and on [CRAN](https://cran.r-project.org/web/packages/FlexRL/index.html).
 
 Please [open an issue](https://github.com/robachowyk/FlexRL/issues) to report any bug, to make a request, or to ask for help :-)
 
