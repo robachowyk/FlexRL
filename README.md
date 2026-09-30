@@ -1,7 +1,7 @@
 # FlexRL
 
 <!-- badges: start -->
-[![](https://cranlogs.r-pkg.org/badges/grand-total/FlexRL)](https://cran.r-project.org/web/packages/FlexRL/index.html)
+[![](https://cranlogs.r-pkg.org/badges/grand-total/FlexRL)](https://CRAN.R-project.org/package=FlexRL)
 <!-- badges: end -->
 
 Linking cohort studies, census data, surveys or administrative records opens research opportunities with existing data and broadens the capabilities of statistical offices. It enables the reuse of existing data and supports sharing data without unique identifiers, giving access to more variables across wider populations and longer time periods. Without unique identifiers, however, probabilistic record linkage makes errors that propagate into subsequent analyses.
