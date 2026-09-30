@@ -71,11 +71,19 @@ prep_data <- prepare_data(df2016, df2020, "2016", "2020", PIVs_config,
                          same_mistakes = TRUE, uniq_id = "ID")
 
 # gauge the difficulty of the task with exact matching
-naive_linkage(PIVs, prep_data$encodedA, prep_data$encodedB)
+naive_fit <- naive_linkage(PIVs, prep_data$encodedA, prep_data$encodedB)
+true_pairs <- do.call(paste, c(prep_data$true_pairs, list(sep="_")))
+linked_pairs <- do.call(paste, c(naive_fit, list(sep = "_")))
+tp <- length( intersect(linked_pairs, true_pairs) ) 
+fp <- length( setdiff(linked_pairs, true_pairs) ) 
+fn <- length( setdiff(true_pairs, linked_pairs) )
+sensitivity <- tp / (tp + fn) 
+fdp <- fp / (tp + fp) 
+sprintf("Matching records on the exact agreement of their identifying information yields a false discovery proportion of: %s and a sensitivity of: %s.", round(fdp,2), round(sensitivity,2))
 
 # fit the model
-fit <- StEM(data = prep_data, StEM_iter = 20, StEM_burnin = 10,
-            gibbs_iter = 20, gibbs_burnin = 10)
+fit <- StEM(data = prep_data, StEM_iter = 10, StEM_burnin = 5,
+            gibbs_iter = 10, gibbs_burnin = 5, n_post_samp = 10)
 
 # linked pairs: rows of encodedA (i), rows of encodedB (j), linkage score (x); a score > 0.5 enforces one-to-one assignment
 linked <- fit$Delta[fit$Delta$x > 0.5, ]
@@ -86,7 +94,7 @@ diag <- RL_diagnostics(fit, prep_data$encodedA, prep_data$encodedB, PIVs,
                        true_pairs = prep_data$true_pairs, FDP_estimation = TRUE, 
                        RL_method = "FlexRL", data = prep_data,
                        StEM_iter = 10, StEM_burnin = 5, 
-                       gibbs_iter = 10, gibbs_burnin = 5,
+                       gibbs_iter = 10, gibbs_burnin = 5, n_post_samp = 10,
                        maxIter4CV = 3, n_repeats = 5)
 diag # print(diag)
 print(diag, threshold = 0.75)
