@@ -6,11 +6,13 @@
 
 FlexRL is an R package for Flexible Record Linkage: it probabilistically link records that refer to the same entities across two data sources without a unique identifier, using Partially Identifying Variables (PIVs) such as product code, brand, category, birth year, sex or postal code. It applies wherever two sources are expected to overlap: healthcare monitoring studies at two time points, registries of casualties in conflict zones collected by distinct organisations, customer or product files of two retailers, survey waves, ...
 
-FlexRL implements the [Stochastic Expectation Maximisation (StEM) approach to record linkage](https://doi.org/10.1093/jrsssc/qlaf016) of Robach et al. (2025). The model accounts for registration errors (missing values and mistakes) and for dynamic PIVs that evolve over time (e.g. postal code may change between data collections), and enforces one-to-one assignment. It returns the set of linked records together with their posterior linkage scores.
+FlexRL implements the [Stochastic Expectation Maximisation (StEM) approach to record linkage](https://doi.org/10.1093/jrsssc/qlaf016) from Robach et al. (JRSS-C, 2025). The model accounts for registration errors (missing values and mistakes) and for dynamic PIVs that evolve over time (e.g. postal code may change between data collections), and enforces one-to-one assignment. It returns the set of linked records together with their posterior linkage scores.
 
-Since record linkage is rarely the end of the analysis, the package also provides tools for inference on the linked data: [estimators of the false discovery proportion of a linkage](https://doi.org/10.1002/sim.70292) and diagnostics comparing the linked sample with the source data. These tools also apply to the linkage output of other record linkage packages.
+Since record linkage is rarely the end of the analysis, the package also provides tools for inference on the linked data. Namely, it implements [estimators of the false discovery proportion in record linkage](https://doi.org/10.1002/sim.70292) from Robach et al. (Statistics in Medicine, 2025) and [diagnostics for assessing the divergence between linked sample and source population](https://kayanerobach.github.io/blog/2025/causal-record-linkage/) from Robach et al. (Arxiv, 2026). These tools also apply to the linkage output of other record linkage packages.
 
-The algorithm can take time to run on large data sets, but it has a low memory footprint and runs on a standard computer.
+More details on the [software article]() from Robach et al. (Arxiv, 2026) and on [CRAN](https://cran.r-project.org/web/packages/FlexRL/index.html).
+
+The StEM algorithm for record linkage can take time to run on large data sets, but it has a low memory footprint and runs on a standard computer.
 
 Please [open an issue](https://github.com/robachowyk/FlexRL/issues) to report any bug, to make a request, or to ask for help :-)
 
@@ -46,8 +48,8 @@ A minimal example shipped with the package vignettes:
 ```r
 library(FlexRL)
 
-df2016 <- read.csv("FlexRL/vignettes/exSHIW16.csv", row.names = 1)
-df2020 <- read.csv("FlexRL/vignettes/exSHIW20.csv", row.names = 1)
+df2016 <- read.csv("FlexRL/vignettes/ex-reg-SHIW-16.csv", row.names = 1)
+df2020 <- read.csv("FlexRL/vignettes/ex-reg-SHIW-20.csv", row.names = 1)
 
 # one entry per PIV: stable (does not change over time), flexible (may change, change not modelled) or structured (change modelled with a survival model)
 PIVs_config <- list(
@@ -88,7 +90,5 @@ plot(diag, "convergence")
 plot(diag, "FDP")
 plot(diag, "discrepancy")
 ```
-
-More documentation is available on [CRAN](https://cran.r-project.org/web/packages/FlexRL/index.html) and in the repository [FlexRL-experiments](https://github.com/robachowyk/FlexRL-experiments).
 
 For support requests, contact _robachowyk@gmail.com_.
