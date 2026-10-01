@@ -2602,8 +2602,8 @@ compute_RL_FDP_score <- function(encodedA, encodedB, PIVs, maxIter4CV = 10, n_re
       if (!is.null(res_LinkScore)) {
         for (j in seq_along(thresholds)) {
           keep <- res_LinkScore > thresholds[j]
-          N_linked <- sum(keep, na.rm = TRUE)
-          if (N_linked > 0) {
+          n_linked <- sum(keep, na.rm = TRUE)
+          if (n_linked > 0) {
             est_score <- FDP_score(res_LinkScore, thresholds[j])
             FDP_score_res[i, j] <- est_score$FDP_score
             n_linked_score_res[i, j] <- est_score$n_linked
@@ -2783,8 +2783,8 @@ compute_augmRL_FDP_synth <- function(synth_method, encodedA, encodedB, PIVs, n_s
       res_LinkScore <- res$LinkScore
 
       if (is.null(res_LinkScore)) {
-        N_linked <- length(res_idxA)
-        if (N_linked > 0) {
+        n_linked <- length(res_idxA)
+        if (n_linked > 0) {
           est <- FDP_synth(res_idxA, res_idxB, res_LinkScore, NULL, n_records_A, n_records_B, n_synth)
           FDP_synth_res[i, 1] <- est$FDP_synth
           n_linked_synth_res[i, 1] <- est$n_linked_real
@@ -2795,8 +2795,8 @@ compute_augmRL_FDP_synth <- function(synth_method, encodedA, encodedB, PIVs, n_s
         }
       } else {
         for (j in seq_along(thresholds)) {
-          N_linked <- sum(res_LinkScore > thresholds[j], na.rm = TRUE)
-          if (N_linked > 0) {
+          n_linked <- sum(res_LinkScore > thresholds[j], na.rm = TRUE)
+          if (n_linked > 0) {
             est_synth <- FDP_synth(res_idxA, res_idxB, res_LinkScore, thresholds[j], n_records_A, n_records_B, n_synth)
             est_score <- FDP_score(res_LinkScore, thresholds[j])
             FDP_synth_res[i, j] <- est_synth$FDP_synth
