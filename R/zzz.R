@@ -73,7 +73,7 @@
 #'                        StEM_iter = 5, StEM_burnin = 2, 
 #'                        gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5,
 #'                        maxIter4CV = 1, n_repeats = 2)
-#' diag # print(diag_flexrl)
+#' diag # print(diag)
 #' print(diag, threshold = 0.75)
 #' plot(diag, "scores")
 #' plot(diag, "distributions", threshold = 0.75)
