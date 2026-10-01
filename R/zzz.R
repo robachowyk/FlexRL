@@ -80,6 +80,9 @@
 #' plot(diag, "convergence")
 #' plot(diag, "FDP")
 #' plot(diag, "discrepancy")
+
+"_PACKAGE"
+
 NULL
 
 .onAttach <- function(libname, pkgname) {
