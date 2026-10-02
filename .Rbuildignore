@@ -8,3 +8,6 @@
 ^\.DS_Store$
 ^.*/\.DS_Store$
 ^README\.md$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
