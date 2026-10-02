@@ -76,9 +76,6 @@ prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 5, 
              gibbs_iter = 10, gibbs_burnin = 5, n_post_samp = 10 )                         
 #> FlexRL
-#> Running StEM algorithm ■■■■■■■■■■■■■■■■                  50% | iter 5/10 [1s]
-#> Running StEM algorithm ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | iter 10/10 [1.8s]
-#> 
 linked_pairs <- fit$Delta[fit$Delta$x > 0.5, ]
 RL_agreement( prep_data$encodedA, prep_data$encodedB,
               names(PIVs_config), linked_pairs )

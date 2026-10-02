@@ -13,6 +13,7 @@
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="A Flexible Model for Record Linkage">
 <meta name="description" content="Probabilistically link records that refer to the same entities across two data sources without a unique identifier, using partially identifying variables such as product code, brand, category, birth year, sex or postal code. FlexRL implements a Stochastic Expectation Maximisation (StEM) approach to Record Linkage (Robach et al., 2025, &lt;doi:10.1093/jrsssc/qlaf016&gt;). The model accounts for registration errors (missing values and mistakes) and for variables that change over time, enforces one-to-one assignment, and has a low memory footprint. The package also provides tools for inference on linked data: two estimators of the false discovery proportion of a linkage (Robach et al., 2025, &lt;doi:10.1002/sim.70292&gt;), based on linkage scores and on synthetic data, and diagnostics comparing the linked sample with the source data. These tools also apply on the linkage output of other record linkage packages.">
 <meta property="og:description" content="Probabilistically link records that refer to the same entities across two data sources without a unique identifier, using partially identifying variables such as product code, brand, category, birth year, sex or postal code. FlexRL implements a Stochastic Expectation Maximisation (StEM) approach to Record Linkage (Robach et al., 2025, &lt;doi:10.1093/jrsssc/qlaf016&gt;). The model accounts for registration errors (missing values and mistakes) and for variables that change over time, enforces one-to-one assignment, and has a low memory footprint. The package also provides tools for inference on linked data: two estimators of the false discovery proportion of a linkage (Robach et al., 2025, &lt;doi:10.1002/sim.70292&gt;), based on linkage scores and on synthetic data, and diagnostics comparing the linked sample with the source data. These tools also apply on the linkage output of other record linkage packages.">
+<meta property="og:image" content="/logo.png">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -53,46 +54,133 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="flexrl">FlexRL<a class="anchor" aria-label="anchor" href="#flexrl"></a>
-</h1></div>
+<div class="page-header">
+<img src="logo.png" class="logo" alt=""><h1 id="flexrl-">FlexRL <a class="anchor" aria-label="anchor" href="#flexrl-"></a>
+</h1>
+</div>
 <!-- badges: start -->
 
-<p>Linking cohort studies, census data, surveys or administrative records opens research opportunities with existing data and broadens the capabilities of statistical offices. It enables the reuse of existing data and supports sharing data without unique identifiers, giving access to more variables across wider populations and longer time periods. Without unique identifiers, however, probabilistic record linkage makes errors that propagate into subsequent analyses.</p>
-<p>FlexRL is an open-source R package for Flexible Record Linkage. It links records that refer to the same entities across two data sources without a unique identifier, using Partially Identifying Variables (PIVs) such as birth year, sex, postal code, or product code, brand, category. It applies wherever two sources are expected to overlap: health monitoring studies at two time points, survey waves, customer or product files of two retailers…</p>
-<p>FlexRL implements the <a href="https://doi.org/10.1093/jrsssc/qlaf016" class="external-link">Stochastic Expectation Maximisation (StEM) approach to record linkage</a> of Robach et al. (JRSS-C, 2025). The model accounts for registration errors (missing values and mistakes) and for dynamic PIVs that change over time (e.g. a postal code between two data collections), and it enforces one-to-one assignment. It returns the linked records together with their posterior linkage scores.</p>
-<p>Since record linkage is rarely the end of the analysis, FlexRL also provides tools for inference on linked data. They make the quality of linked data transparent: - <a href="https://doi.org/10.1002/sim.70292" class="external-link">estimators of the false discovery proportion in record linkage</a> (Robach et al., Statistics in Medicine, 2025); - <a href="https://kayanerobach.github.io/blog/2025/causal-record-linkage/" class="external-link">diagnostics for assessing the divergence between linked sample and source population</a> (Robach et al., soon on arXiv, 2026).</p>
-<p>These tools apply to the output of any record linkage method, including other packages, so any study using linked data can report linkage quality alongside its results.</p>
-<p>The StEM algorithm may take time to run on large data sets, but it has a low memory footprint and runs on a standard computer.</p>
-<p>More details are in the <a href="...">software article</a> (Robach et al., soon on arXiv, 2026) and on <a href="https://CRAN.R-project.org/package=FlexRL" class="external-link">CRAN</a>.</p>
-<p>Please <a href="https://github.com/robachowyk/FlexRL/issues" class="external-link">open an issue</a> to report any bug, to make a request, or to ask for help :-)</p>
 <div class="section level2">
-<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p>You can install FlexRL from CRAN with:</p>
+<p><strong>FlexRL</strong> is an open-source R package for <strong>Flexible Record Linkage and inference on linked data</strong>. It links records that refer to the same entity across two data sources sharing no unique identifier but rather partially identifying variables such as birth year, sex, postal code, or product code, brand and category.</p>
+<p>It applies wherever two sources are expected to overlap: health monitoring studies at two time points, survey waves, census and administrative records, or customer and product files from two retailers.</p>
+<p>Without a unique identifier, probabilistic record linkage makes errors, and these errors propagate into the analysis that follows. FlexRL therefore does two things:</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>It links the sources</strong> with a hierarchical model of how the data were generated, and returns the linked records with their posterior linkage scores.</li>
+<li>
+<strong>It makes the quality of the linked data transparent</strong>, with tools that tell you how many of the linked pairs are likely to be false, and how much the linked sample differs from the sources it comes from.</li>
+</ol>
+<p>Those tools work on the output of <strong>any</strong> record linkage method, so you can report linkage quality alongside your results even if you did not use FlexRL for linkage.</p>
+</div>
+<div class="section level2">
+<h2 id="microscope-flexrl-contributions-hierarchical-modelling--diagnostics">🔬 FlexRL contributions: hierarchical modelling &amp; diagnostics<a class="anchor" aria-label="anchor" href="#microscope-flexrl-contributions-hierarchical-modelling--diagnostics"></a>
+</h2>
+<ul>
+<li>A <strong>hierarchical model of the data generation process</strong> for two sources, with one-to-one assignment built in.</li>
+<li>
+<strong>Dynamic PIVs</strong> that change over time (for example, a postal code between two data collections), modelled with a survival model.</li>
+<li>
+<strong>Registration errors</strong>, missing values and mistakes, modelled.</li>
+<li>
+<strong>Linkage quality tools that work with any method</strong>: estimated false discovery proportion, and divergence between the linked sample and the sources, as functions of the decision rule.</li>
+<li>A <strong>low memory footprint</strong>: memory grows with the number of records and candidate pairs, not with the number of all pairs.</li>
+</ul>
+<p>Existing record linkage methods reduces every pair of records to a vector of agreements and disagreements and classifies the pairs. FlexRL instead models the data generation process: the registered values are distorted versions of latent true values, and the linkage structure determines which records share the same true values. Parameters estimation of this hierarchical modelling is done with Stochastic Expectation Maximisation (StEM) algorithm.</p>
+<p>The model is introduced in: &gt; <em>A flexible model for record linkage</em> &gt; K. Robach, S.L. van der Pas, M.A. van de Wiel, M.H. Hof &gt; <em>Journal of the Royal Statistical Society: Series C</em>, 2025. &gt; <a href="https://doi.org/10.1093/jrsssc/qlaf016" class="external-link uri">https://doi.org/10.1093/jrsssc/qlaf016</a></p>
+</div>
+<div class="section level2">
+<h2 id="jigsaw-flexible-by-design">🧩 Flexible by design<a class="anchor" aria-label="anchor" href="#jigsaw-flexible-by-design"></a>
+</h2>
+<p>FlexRL adapts to the data you have, rather than the other way round.</p>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr>
+<th>You want to…</th>
+<th>How FlexRL does it</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>Link variables that never change (birth year, sex)</td>
+<td>Declare the PIV as <code>"stable"</code>, optionally bounding its probability of a mistake</td>
+</tr>
+<tr>
+<td>Link variables that may change but whose registration dates are unknown (marital status, education)</td>
+<td>Declare it <code>"flexible"</code>: changes are absorbed by the registration error model</td>
+</tr>
+<tr>
+<td>Link variables that change over time and model the change</td>
+<td>Declare it <code>"structured"</code>: changes follow a survival model (exponential, Weibull, Gompertz, piecewise constant, or any user-defined model), optionally with covariates</td>
+</tr>
+<tr>
+<td>Control the registration errors</td>
+<td>Bound or fix the probability of a mistake per PIV, and choose whether both sources share the same error parameters (<code>same_mistakes</code>)</td>
+</tr>
+<tr>
+<td>Handle missing values</td>
+<td>Missing values are modelled explicitly per PIV and per source, not dropped</td>
+</tr>
+<tr>
+<td>Get a quick baseline</td>
+<td>
+<code><a href="reference/naive_linkage.html">naive_linkage()</a></code> links records agreeing exactly on all PIVs, to gauge how hard the task is</td>
+</tr>
+<tr>
+<td>Try methods on simulated data</td>
+<td>
+<code><a href="reference/simulate_data.html">simulate_data()</a></code> generates two overlapping sources with chosen overlap, error rates and hazards of change</td>
+</tr>
+<tr>
+<td>Assess another package’s linkage</td>
+<td>Wrappers for <strong>fastLink, BRL, reclin2, multilink, diyar and fedmatch</strong> feed their output into the same diagnostics</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level2">
+<h2 id="mag-inference-on-linked-data">🔍 Inference on linked data<a class="anchor" aria-label="anchor" href="#mag-inference-on-linked-data"></a>
+</h2>
+<p>Record linkage is rarely the end of the analysis. A stricter decision rule produces fewer falsely linked pairs, but it also select fewer and more atypical records, and both can bias what you estimate. <code><a href="reference/rl_diagnostics.html">RL_diagnostics()</a></code> gathers the tools that make this trade-off visible, as a function of the decision rule:</p>
+<ul>
+<li>
+<a href="https://doi.org/10.1002/sim.70292" class="external-link"><strong>Estimators of the false discovery proportion</strong></a> (Robach et al., <em>Statistics in Medicine</em>, 2025): one computed from the linkage scores, and one based on synthetic records that does not rely on the linkage model.</li>
+<li>
+<a href="https://kayanerobach.github.io/blog/2025/causal-record-linkage/" class="external-link"><strong>Diagnostics of the divergence between the linked sample and the sources</strong></a> (Robach et al., soon on arXiv, 2026): standardised mean differences, overlap of supports, maximum mean discrepancy, and agreement rates.</li>
+<li>
+<strong>Convergence and score plots</strong> for the StEM chains and the linkage scores.</li>
+</ul>
+<p>You can choose the decision rule so that the estimated false discovery proportion stays below a target, and see what that choice costs in sample size and representativeness.</p>
+</div>
+<div class="section level2">
+<h2 id="package-installation">📦 Installation<a class="anchor" aria-label="anchor" href="#package-installation"></a>
+</h2>
+<p>The released version of FlexRL can be installed from <a href="https://CRAN.R-project.org/package=FlexRL" class="external-link">CRAN</a>:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"FlexRL"</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/robachowyk/FlexRL" class="external-link">FlexRL</a></span><span class="op">)</span></span></code></pre></div>
-<p>Or you can install the development version of FlexRL from its <a href="https://github.com/robachowyk/FlexRL" class="external-link">GitHub</a> with one of the following:</p>
+<p>The development version is available from <a href="https://github.com/robachowyk/FlexRL" class="external-link">GitHub</a>, with one of:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"robachowyk/FlexRL"</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"robachowyk/FlexRL"</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"robachowyk/FlexRL"</span><span class="op">)</span></span></code></pre></div>
-<p>FlexRL relies on Rcpp; when imported from Github, it may require gfortran and gcc.</p>
+<code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"robachowyk/FlexRL"</span><span class="op">)</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"robachowyk/FlexRL"</span><span class="op">)</span></span>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"robachowyk/FlexRL"</span><span class="op">)</span></span></code></pre></div>
+<p>FlexRL relies on Rcpp. When installed from GitHub, it may require gfortran and gcc.</p>
 </div>
 <div class="section level2">
-<h2 id="how-to-use-flexrl">How to use <code>FlexRL</code>
-<a class="anchor" aria-label="anchor" href="#how-to-use-flexrl"></a>
+<h2 id="rocket-quick-start">🚀 Quick start<a class="anchor" aria-label="anchor" href="#rocket-quick-start"></a>
 </h2>
-<p>A minimal example shipped with the package vignettes:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/robachowyk/FlexRL" class="external-link">FlexRL</a></span><span class="op">)</span></span>
+<p>The example below uses the <a href="https://www.bancaditalia.it/statistiche/tematiche/indagini-famiglie-imprese/bilanci-famiglie/distribuzione-microdati/index.html" class="external-link">Bank of Italy Survey on Household Income and Wealth</a> (SHIW), whose waves can be linked with a known identifier, so that you can check the linkage against the truth. A small extract is shipped with the package vignettes. The number of iterations is kept very small so that it runs in a few seconds; use larger values for real analyses and check the convergence plots.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Two sources (here: two survey waves)</span></span>
+<span><span class="co">#   system.file()</span></span>
+<span><span class="va">df2016</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="st">"vignettes/ex-reg-SHIW-16.csv"</span>, row.names <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">df2020</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="st">"vignettes/ex-reg-SHIW-20.csv"</span>, row.names <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">df2016</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="st">"FlexRL/vignettes/ex-reg-SHIW-16.csv"</span>, row.names <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="va">df2020</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="st">"FlexRL/vignettes/ex-reg-SHIW-20.csv"</span>, row.names <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># one entry per PIV: stable (does not change over time), flexible (may change, change not modelled) or structured (change modelled with a survival model)</span></span>
+<span><span class="co"># Describe each PIV: stable, flexible (may change, change not modelled)</span></span>
+<span><span class="co">#    or structured (change modelled with a survival model)</span></span>
 <span><span class="va">PIVs_config</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  ANASCI <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>dynamics <span class="op">=</span> <span class="st">"stable"</span>,   bound_mistakes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.10</span>, <span class="fl">0.10</span><span class="op">)</span>, fix_mistakes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  SESSO  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>dynamics <span class="op">=</span> <span class="st">"stable"</span>,   bound_mistakes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.10</span>, <span class="fl">0.10</span><span class="op">)</span>, fix_mistakes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -101,44 +189,94 @@
 <span><span class="op">)</span></span>
 <span><span class="va">PIVs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">PIVs_config</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># encode the PIVs, restrict to the common support, put the smaller file in A</span></span>
+<span><span class="co"># Encode the PIVs, restrict to the common support, label the smaller source A</span></span>
 <span><span class="va">prep_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/prepare_data.html">prepare_data</a></span><span class="op">(</span><span class="va">df2016</span>, <span class="va">df2020</span>, <span class="st">"2016"</span>, <span class="st">"2020"</span>, <span class="va">PIVs_config</span>,</span>
-<span>                         same_mistakes <span class="op">=</span> <span class="cn">TRUE</span>, uniq_id <span class="op">=</span> <span class="st">"ID"</span><span class="op">)</span></span>
+<span>                          same_mistakes <span class="op">=</span> <span class="cn">TRUE</span>, uniq_id <span class="op">=</span> <span class="st">"ID"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># gauge the difficulty of the task with exact matching</span></span>
-<span><span class="va">naive_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/naive_linkage.html">naive_linkage</a></span><span class="op">(</span><span class="va">PIVs</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedA</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span><span class="op">)</span></span>
-<span><span class="va">true_pairs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">paste</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">prep_data</span><span class="op">$</span><span class="va">true_pairs</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sep<span class="op">=</span><span class="st">"_"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co"># Gauge the difficulty of the task with exact agreement on all PIVs</span></span>
+<span><span class="va">naive_fit</span>    <span class="op">&lt;-</span> <span class="fu"><a href="reference/naive_linkage.html">naive_linkage</a></span><span class="op">(</span><span class="va">PIVs</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedA</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span><span class="op">)</span></span>
+<span><span class="va">true_pairs</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">paste</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">prep_data</span><span class="op">$</span><span class="va">true_pairs</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sep <span class="op">=</span> <span class="st">"_"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">linked_pairs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">paste</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">naive_fit</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sep <span class="op">=</span> <span class="st">"_"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">tp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="va">linked_pairs</span>, <span class="va">true_pairs</span><span class="op">)</span> <span class="op">)</span> </span>
-<span><span class="va">fp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="va">linked_pairs</span>, <span class="va">true_pairs</span><span class="op">)</span> <span class="op">)</span> </span>
-<span><span class="va">fn</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="va">true_pairs</span>, <span class="va">linked_pairs</span><span class="op">)</span> <span class="op">)</span></span>
-<span><span class="va">sensitivity</span> <span class="op">&lt;-</span> <span class="va">tp</span> <span class="op">/</span> <span class="op">(</span><span class="va">tp</span> <span class="op">+</span> <span class="va">fn</span><span class="op">)</span> </span>
-<span><span class="va">fdp</span> <span class="op">&lt;-</span> <span class="va">fp</span> <span class="op">/</span> <span class="op">(</span><span class="va">tp</span> <span class="op">+</span> <span class="va">fp</span><span class="op">)</span> </span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Matching records on the exact agreement of their identifying information yields a false discovery proportion of: %s and a sensitivity of: %s."</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">fdp</span>,<span class="fl">2</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">sensitivity</span>,<span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">tp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="va">linked_pairs</span>, <span class="va">true_pairs</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">fp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="va">linked_pairs</span>, <span class="va">true_pairs</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">fn</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="va">true_pairs</span>, <span class="va">linked_pairs</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Linking records on the exact agreement of their PIVs gives a false discovery proportion of %.2f and a sensitivity of %.2f."</span>,</span>
+<span>        <span class="va">fp</span> <span class="op">/</span> <span class="op">(</span><span class="va">tp</span> <span class="op">+</span> <span class="va">fp</span><span class="op">)</span>, <span class="va">tp</span> <span class="op">/</span> <span class="op">(</span><span class="va">tp</span> <span class="op">+</span> <span class="va">fn</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># fit the model</span></span>
+<span><span class="co"># Fit the model</span></span>
 <span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/stEM.html">StEM</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">prep_data</span>, StEM_iter <span class="op">=</span> <span class="fl">10</span>, StEM_burnin <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>            gibbs_iter <span class="op">=</span> <span class="fl">10</span>, gibbs_burnin <span class="op">=</span> <span class="fl">5</span>, n_post_samp <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># linked pairs: rows of encodedA (i), rows of encodedB (j), linkage score (x); a score &gt; 0.5 enforces one-to-one assignment</span></span>
+<span><span class="co"># Linked pairs: row of A (i), row of B (j), linkage score (x).</span></span>
+<span><span class="co">#    A score above 0.5 guarantees one-to-one assignment.</span></span>
 <span><span class="va">linked</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="va">Delta</span><span class="op">[</span><span class="va">fit</span><span class="op">$</span><span class="va">Delta</span><span class="op">$</span><span class="va">x</span> <span class="op">&gt;</span> <span class="fl">0.5</span>, <span class="op">]</span></span>
 <span></span>
-<span><span class="co"># diagnostics for inference on the linked data</span></span>
+<span><span class="co"># Assess linked data quality</span></span>
 <span><span class="va">diag</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/rl_diagnostics.html">RL_diagnostics</a></span><span class="op">(</span><span class="va">fit</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedA</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span>, <span class="va">PIVs</span>,</span>
 <span>                       <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>ANASCI <span class="op">=</span> <span class="cn">TRUE</span>, SESSO <span class="op">=</span> <span class="cn">FALSE</span>, STACIV <span class="op">=</span> <span class="cn">FALSE</span>, STUDIO <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>,</span>
-<span>                       true_pairs <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">true_pairs</span>, FDP_estimation <span class="op">=</span> <span class="cn">TRUE</span>, </span>
+<span>                       true_pairs <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">true_pairs</span>, FDP_estimation <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                       RL_method <span class="op">=</span> <span class="st">"FlexRL"</span>, data <span class="op">=</span> <span class="va">prep_data</span>,</span>
-<span>                       StEM_iter <span class="op">=</span> <span class="fl">10</span>, StEM_burnin <span class="op">=</span> <span class="fl">5</span>, </span>
+<span>                       StEM_iter <span class="op">=</span> <span class="fl">10</span>, StEM_burnin <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>                       gibbs_iter <span class="op">=</span> <span class="fl">10</span>, gibbs_burnin <span class="op">=</span> <span class="fl">5</span>, n_post_samp <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>                       maxIter4CV <span class="op">=</span> <span class="fl">3</span>, n_repeats <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
-<span><span class="va">diag</span> <span class="co"># print(diag)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">diag</span>, threshold <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"scores"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"distributions"</span>, threshold <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"convergence"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"FDP"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"discrepancy"</span><span class="op">)</span></span></code></pre></div>
-<p>For support requests, contact <em><a href="mailto:robachowyk@gmail.com" class="email">robachowyk@gmail.com</a></em>.</p>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">diag</span>, threshold <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span>                  <span class="co"># summary at one specific decision rule</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"FDP"</span><span class="op">)</span>                              <span class="co"># estimated false discovery proportion vs threshold</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"discrepancy"</span><span class="op">)</span>                      <span class="co"># divergence of the linked sample vs threshold</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"scores"</span><span class="op">)</span>                           <span class="co"># linkage scores</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"distributions"</span>, threshold <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span>  <span class="co"># linked versus source data distributions</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"convergence"</span><span class="op">)</span>                      <span class="co"># StEM chains</span></span></code></pre></div>
+<p><img src="reference/figures/diag-FDP.png" align="right" height="139" alt="FlexRL FDP diagnostic"><img src="reference/figures/diag-discr.png" align="right" height="139" alt="FlexRL discrepancy diagnostic"><!-- TODO: add files in man/figures/ for display --></p>
+<div class="section level3">
+<h3 id="compare-record-linkage-methodologies">Compare record linkage methodologies<a class="anchor" aria-label="anchor" href="#compare-record-linkage-methodologies"></a>
+</h3>
+<p>The diagnostics only need the declared linked pairs and, if available, their scores. To assess another package, name it in <code>RL_method</code>; the wrapper <code>link_with_&lt;pkg&gt;()</code> runs it and returns <code>idxA</code>, <code>idxB</code> and <code>LinkScore</code>.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">brl_args</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>flds <span class="op">=</span> <span class="va">PIVs</span>, types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"bi"</span>,<span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">PIVs</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">fit_brl</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/link_with_BRL.html">link_with_BRL</a></span><span class="op">(</span><span class="va">prep_data</span><span class="op">$</span><span class="va">encodedA</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span>, <span class="va">brl_args</span><span class="op">)</span></span>
+<span><span class="va">diag_brl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">RL_diagnostics</span>, </span>
+<span>                       <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">fit_brl</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedA</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span>,</span>
+<span>                       <span class="va">PIVs</span>, <span class="va">PIVs_type</span>, true_pairs <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">true_pairs</span>,</span>
+<span>                       FDP_estimation <span class="op">=</span> <span class="cn">TRUE</span>, RL_method <span class="op">=</span> <span class="st">"BRL"</span>, </span>
+<span>                       maxIter4CV <span class="op">=</span> <span class="fl">1</span>, n_repeats <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>, <span class="va">brl_args</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">diag_brl</span>, threshold <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag_brl</span>, <span class="st">"FDP"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag_brl</span>, <span class="st">"discrepancy"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag_brl</span>, <span class="st">"scores"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag_brl</span>, <span class="st">"distributions"</span>, threshold <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="bar_chart-learn-more">📊 Learn more<a class="anchor" aria-label="anchor" href="#bar_chart-learn-more"></a>
+</h2>
+<ul>
+<li>
+<strong>Vignettes</strong>: step-by-step examples on simulated and real data.</li>
+<li>
+<strong>Documentation in R</strong>: <code><a href="reference/simulate_data.html">?simulate_data</a></code>, <code><a href="reference/prepare_data.html">?prepare_data</a></code>, <code><a href="reference/naive_linkage.html">?naive_linkage</a></code>, <code><a href="reference/stEM.html">?StEM</a></code>, <code><a href="reference/rl_diagnostics.html">?RL_diagnostics</a></code>.</li>
+<li>
+<strong>Software article</strong>: <!-- TODO: link when on arXiv --> (Robach et al., 2026).</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="handshake-contributing">🤝 Contributing<a class="anchor" aria-label="anchor" href="#handshake-contributing"></a>
+</h2>
+<p>Contributions are welcome! Please <a href="https://github.com/robachowyk/FlexRL/issues" class="external-link">open an issue</a> to report a bug, make a request, ask for help, or submit a pull request :-)</p>
+<p>New survival models for dynamic PIVs and wrappers for other linkage packages are especially easy to add.</p>
+<p>For other requests, contact <em><a href="mailto:robachowyk@gmail.com" class="email">robachowyk@gmail.com</a></em>.</p>
+</div>
+<div class="section level2">
+<h2 id="pencil-how-to-cite">📝 How to cite<a class="anchor" aria-label="anchor" href="#pencil-how-to-cite"></a>
+</h2>
+<p>If you use FlexRL, please cite the software article and the methodological papers:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="va">@article</span>{<span class="ot">RLrobachetal25</span>,</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="dt">author</span>  = {Robach, Kayan<span class="ch">\'</span>e and van der Pas, St<span class="ch">\'</span>ephanie L. and van de Wiel, Mark A. and Hof, Michel H.},</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="dt">title</span>   = {A flexible model for record linkage},</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="dt">journal</span> = {Journal of the Royal Statistical Society Series C: Applied Statistics},</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="dt">year</span>    = {2025},</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="dt">doi</span>     = {10.1093/jrsssc/qlaf016}</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>}</span></code></pre></div>
+<!-- TODO: add the software article once on arXiv, and a CITATION file so GitHub shows "Cite this repository" -->
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
