@@ -186,9 +186,10 @@ plot(diag, "convergence")                      # StEM chains
 diagnostic](reference/figures/diag-discr-mmd.png)![FlexRL smd
 diagnostic](reference/figures/diag-discr-smd.png)![FlexRL iou
 diagnostic](reference/figures/diag-discr-iou.png)![FlexRL agreementrate
-diagnostic](reference/figures/diag-discr-agreerate.png)![FlexRL gamma
-convergence](reference/figures/diag-gamma.png)![FlexRL
-scores](reference/figures/diag-scores.png)
+diagnostic](reference/figures/diag-discr-agreerate.png)![FlexRL
+scores](reference/figures/diag-scores.png)![FlexRL gamma
+convergence](reference/figures/diag-gamma.png)![FlexRL phi
+convergence](reference/figures/diag-phi.png)
 
 ### Compare record linkage methodologies
 
