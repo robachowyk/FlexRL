@@ -138,8 +138,9 @@ plot(diag, "convergence")                      # StEM chains
 <img src="man/figures/diag-discr-smd.png" align="right" height="139" alt="FlexRL smd diagnostic" />
 <img src="man/figures/diag-discr-iou.png" align="right" height="139" alt="FlexRL iou diagnostic" />
 <img src="man/figures/diag-discr-agreerate.png" align="right" height="139" alt="FlexRL agreementrate diagnostic" />
-<img src="man/figures/diag-gamma.png" align="right" height="139" alt="FlexRL gamma convergence" />
 <img src="man/figures/diag-scores.png" align="right" height="139" alt="FlexRL scores" />
+<img src="man/figures/diag-gamma.png" align="right" height="139" alt="FlexRL gamma convergence" />
+<img src="man/figures/diag-phi.png" align="right" height="139" alt="FlexRL phi convergence" />
 
 ### Compare record linkage methodologies
 
