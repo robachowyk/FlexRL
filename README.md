@@ -143,6 +143,8 @@ plot(diag, "convergence")                      # StEM chains
 <img src="man/figures/diag-phi.png" align="right" height="139" alt="FlexRL phi convergence" />
 </br>
 
+## Test
+
 ### Compare record linkage methodologies
 
 The diagnostics only need the declared linked pairs and, if available, their scores. To assess another package, name it in `RL_method`; the wrapper `link_with_<pkg>()` runs it and returns `idxA`, `idxB` and `LinkScore`.
