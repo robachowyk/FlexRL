@@ -15,6 +15,6 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
-URL: https://github.com/robachowyk/FlexRL
+URL: https://github.com/robachowyk/FlexRL, https://robachowyk.github.io/FlexRL/
 BugReports: https://github.com/robachowyk/FlexRL/issues
 Config/roxygen2/version: 8.1.0
