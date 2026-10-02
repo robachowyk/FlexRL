@@ -133,17 +133,16 @@ plot(diag, "distributions", threshold = 0.75)  # linked versus source data distr
 plot(diag, "convergence")                      # StEM chains
 ```
 
-<img src="man/figures/diag-FDP.png" align="right" height="139" alt="FlexRL FDP diagnostic" />
-<img src="man/figures/diag-discr-mmd.png" align="right" height="139" alt="FlexRL mmd diagnostic" />
-<img src="man/figures/diag-discr-smd.png" align="right" height="139" alt="FlexRL smd diagnostic" />
-<img src="man/figures/diag-discr-iou.png" align="right" height="139" alt="FlexRL iou diagnostic" />
-<img src="man/figures/diag-discr-agreerate.png" align="right" height="139" alt="FlexRL agreementrate diagnostic" />
-<img src="man/figures/diag-scores.png" align="right" height="139" alt="FlexRL scores" />
-<img src="man/figures/diag-gamma.png" align="right" height="139" alt="FlexRL gamma convergence" />
-<img src="man/figures/diag-phi.png" align="right" height="139" alt="FlexRL phi convergence" />
-</br>
-
-## Test
+<div align="center">
+  <img src="man/figures/diag-FDP.png" height="139" alt="FlexRL FDP diagnostic" />
+  <img src="man/figures/diag-discr-mmd.png" height="139" alt="FlexRL mmd diagnostic" />
+  <img src="man/figures/diag-discr-smd.png" height="139" alt="FlexRL smd diagnostic" />
+  <img src="man/figures/diag-discr-iou.png" height="139" alt="FlexRL iou diagnostic" />
+  <img src="man/figures/diag-discr-agreerate.png" height="139" alt="FlexRL agreementrate diagnostic" />
+  <img src="man/figures/diag-scores.png" height="139" alt="FlexRL scores" />
+  <img src="man/figures/diag-gamma.png" height="139" alt="FlexRL gamma convergence" />
+  <img src="man/figures/diag-phi.png" height="139" alt="FlexRL phi convergence" />
+</div>
 
 ### Compare record linkage methodologies
 
