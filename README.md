@@ -12,13 +12,13 @@ FlexRL implements the [Stochastic Expectation Maximisation (StEM) approach to re
 
 Since record linkage is rarely the end of the analysis, FlexRL also provides tools for inference on linked data. They make the quality of linked data transparent:
 - [estimators of the false discovery proportion in record linkage](https://doi.org/10.1002/sim.70292) (Robach et al., Statistics in Medicine, 2025);
-- [diagnostics for assessing the divergence between linked sample and source population](https://kayanerobach.github.io/blog/2025/causal-record-linkage/) (Robach et al., arXiv, 2026).
+- [diagnostics for assessing the divergence between linked sample and source population](https://kayanerobach.github.io/blog/2025/causal-record-linkage/) (Robach et al., soon on arXiv, 2026).
 
 These tools apply to the output of any record linkage method, including other packages, so any study using linked data can report linkage quality alongside its results.
 
 The StEM algorithm may take time to run on large data sets, but it has a low memory footprint and runs on a standard computer.
 
-More details are in the [software article](...) (Robach et al., arXiv, 2026) and on [CRAN](https://CRAN.R-project.org/package=FlexRL).
+More details are in the [software article](...) (Robach et al., soon on arXiv, 2026) and on [CRAN](https://CRAN.R-project.org/package=FlexRL).
 
 Please [open an issue](https://github.com/robachowyk/FlexRL/issues) to report any bug, to make a request, or to ask for help :-)
 
