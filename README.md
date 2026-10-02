@@ -141,6 +141,7 @@ plot(diag, "convergence")                      # StEM chains
 <img src="man/figures/diag-scores.png" align="right" height="139" alt="FlexRL scores" />
 <img src="man/figures/diag-gamma.png" align="right" height="139" alt="FlexRL gamma convergence" />
 <img src="man/figures/diag-phi.png" align="right" height="139" alt="FlexRL phi convergence" />
+<br>
 
 ### Compare record linkage methodologies
 
