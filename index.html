@@ -64,7 +64,7 @@
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
 <p><strong>FlexRL</strong> is an open-source R package for <strong>Flexible Record Linkage and inference on linked data</strong>. It links records that refer to the same entity across two data sources sharing no unique identifier but rather partially identifying variables such as birth year, sex, postal code, or product code, brand and category.</p>
-<p>It applies wherever two sources are expected to overlap: health monitoring studies at two time points, survey waves, census and administrative records, or customer and product files from two retailers.</p>
+<p>The package applies wherever two sources are expected to overlap: health monitoring studies at two time points, survey waves, census and administrative records, or customer and product files from two retailers. It reach real practice by supporting data access, data sharing without unique identifiers, reusing existing data, offering access to broader sets of variables across wider populations and extended time periods.</p>
 <p>Without a unique identifier, probabilistic record linkage makes errors, and these errors propagate into the analysis that follows. FlexRL therefore does two things:</p>
 <ol style="list-style-type: decimal">
 <li>
@@ -172,7 +172,7 @@
 <div class="section level2">
 <h2 id="rocket-quick-start">🚀 Quick start<a class="anchor" aria-label="anchor" href="#rocket-quick-start"></a>
 </h2>
-<p>The example below uses the <a href="https://www.bancaditalia.it/statistiche/tematiche/indagini-famiglie-imprese/bilanci-famiglie/distribuzione-microdati/index.html" class="external-link">Bank of Italy Survey on Household Income and Wealth</a> (SHIW), whose waves can be linked with a known identifier, so that you can check the linkage against the truth. A small extract is shipped with the package vignettes. The number of iterations is kept very small so that it runs in a few seconds; use larger values for real analyses and check the convergence plots.</p>
+<p>The example below uses the <a href="https://www.bancaditalia.it/statistiche/tematiche/indagini-famiglie-imprese/bilanci-famiglie/distribuzione-microdati/index.html" class="external-link">Bank of Italy Survey on Household Income and Wealth</a> (SHIW), whose waves can be linked with a known identifier, so that you can check the linkage against the truth. A small extract is shipped with the package vignettes.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Two sources (here: two survey waves)</span></span>
 <span><span class="co">#   system.file()</span></span>
@@ -204,8 +204,7 @@
 <span>        <span class="va">fp</span> <span class="op">/</span> <span class="op">(</span><span class="va">tp</span> <span class="op">+</span> <span class="va">fp</span><span class="op">)</span>, <span class="va">tp</span> <span class="op">/</span> <span class="op">(</span><span class="va">tp</span> <span class="op">+</span> <span class="va">fn</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Fit the model</span></span>
-<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/stEM.html">StEM</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">prep_data</span>, StEM_iter <span class="op">=</span> <span class="fl">10</span>, StEM_burnin <span class="op">=</span> <span class="fl">5</span>,</span>
-<span>            gibbs_iter <span class="op">=</span> <span class="fl">10</span>, gibbs_burnin <span class="op">=</span> <span class="fl">5</span>, n_post_samp <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/stEM.html">StEM</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">prep_data</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Linked pairs: row of A (i), row of B (j), linkage score (x).</span></span>
 <span><span class="co">#    A score above 0.5 guarantees one-to-one assignment.</span></span>
@@ -216,8 +215,6 @@
 <span>                       <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>ANASCI <span class="op">=</span> <span class="cn">TRUE</span>, SESSO <span class="op">=</span> <span class="cn">FALSE</span>, STACIV <span class="op">=</span> <span class="cn">FALSE</span>, STUDIO <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>,</span>
 <span>                       true_pairs <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">true_pairs</span>, FDP_estimation <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                       RL_method <span class="op">=</span> <span class="st">"FlexRL"</span>, data <span class="op">=</span> <span class="va">prep_data</span>,</span>
-<span>                       StEM_iter <span class="op">=</span> <span class="fl">10</span>, StEM_burnin <span class="op">=</span> <span class="fl">5</span>,</span>
-<span>                       gibbs_iter <span class="op">=</span> <span class="fl">10</span>, gibbs_burnin <span class="op">=</span> <span class="fl">5</span>, n_post_samp <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>                       maxIter4CV <span class="op">=</span> <span class="fl">3</span>, n_repeats <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">diag</span>, threshold <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span>                  <span class="co"># summary at one specific decision rule</span></span>
@@ -226,7 +223,7 @@
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"scores"</span><span class="op">)</span>                           <span class="co"># linkage scores</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"distributions"</span>, threshold <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span>  <span class="co"># linked versus source data distributions</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"convergence"</span><span class="op">)</span>                      <span class="co"># StEM chains</span></span></code></pre></div>
-<p><img src="reference/figures/diag-FDP.png" align="right" height="139" alt="FlexRL FDP diagnostic"><img src="reference/figures/diag-discr.png" align="right" height="139" alt="FlexRL discrepancy diagnostic"><!-- TODO: add files in man/figures/ for display --></p>
+<p><img src="reference/figures/diag-FDP.png" align="right" height="139" alt="FlexRL FDP diagnostic"><img src="reference/figures/diag-discr-mmd.png" align="right" height="139" alt="FlexRL mmd diagnostic"><img src="reference/figures/diag-discr-smd.png" align="right" height="139" alt="FlexRL smd diagnostic"><img src="reference/figures/diag-discr-iou.png" align="right" height="139" alt="FlexRL iou diagnostic"><img src="reference/figures/diag-discr-agreerate.png" align="right" height="139" alt="FlexRL agreementrate diagnostic"><img src="reference/figures/diag-gamma.png" align="right" height="139" alt="FlexRL gamma convergence"><img src="reference/figures/diag-scores.png" align="right" height="139" alt="FlexRL scores"></p>
 <div class="section level3">
 <h3 id="compare-record-linkage-methodologies">Compare record linkage methodologies<a class="anchor" aria-label="anchor" href="#compare-record-linkage-methodologies"></a>
 </h3>

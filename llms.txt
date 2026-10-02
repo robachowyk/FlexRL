@@ -8,10 +8,13 @@ entity across two data sources sharing no unique identifier but rather
 partially identifying variables such as birth year, sex, postal code, or
 product code, brand and category.
 
-It applies wherever two sources are expected to overlap: health
+The package applies wherever two sources are expected to overlap: health
 monitoring studies at two time points, survey waves, census and
 administrative records, or customer and product files from two
-retailers.
+retailers. It reach real practice by supporting data access, data
+sharing without unique identifiers, reusing existing data, offering
+access to broader sets of variables across wider populations and
+extended time periods.
 
 Without a unique identifier, probabilistic record linkage makes errors,
 and these errors propagate into the analysis that follows. FlexRL
@@ -124,9 +127,7 @@ The example below uses the [Bank of Italy Survey on Household Income and
 Wealth](https://www.bancaditalia.it/statistiche/tematiche/indagini-famiglie-imprese/bilanci-famiglie/distribuzione-microdati/index.html)
 (SHIW), whose waves can be linked with a known identifier, so that you
 can check the linkage against the truth. A small extract is shipped with
-the package vignettes. The number of iterations is kept very small so
-that it runs in a few seconds; use larger values for real analyses and
-check the convergence plots.
+the package vignettes.
 
 ``` r
 
@@ -160,8 +161,7 @@ sprintf("Linking records on the exact agreement of their PIVs gives a false disc
         fp / (tp + fp), tp / (tp + fn))
 
 # Fit the model
-fit <- StEM(data = prep_data, StEM_iter = 10, StEM_burnin = 5,
-            gibbs_iter = 10, gibbs_burnin = 5, n_post_samp = 10)
+fit <- StEM(data = prep_data)
 
 # Linked pairs: row of A (i), row of B (j), linkage score (x).
 #    A score above 0.5 guarantees one-to-one assignment.
@@ -172,8 +172,6 @@ diag <- RL_diagnostics(fit, prep_data$encodedA, prep_data$encodedB, PIVs,
                        list(ANASCI = TRUE, SESSO = FALSE, STACIV = FALSE, STUDIO = FALSE),
                        true_pairs = prep_data$true_pairs, FDP_estimation = TRUE,
                        RL_method = "FlexRL", data = prep_data,
-                       StEM_iter = 10, StEM_burnin = 5,
-                       gibbs_iter = 10, gibbs_burnin = 5, n_post_samp = 10,
                        maxIter4CV = 3, n_repeats = 5)
 
 print(diag, threshold = 0.75)                  # summary at one specific decision rule
@@ -184,8 +182,13 @@ plot(diag, "distributions", threshold = 0.75)  # linked versus source data distr
 plot(diag, "convergence")                      # StEM chains
 ```
 
-![FlexRL FDP diagnostic](reference/figures/diag-FDP.png)![FlexRL
-discrepancy diagnostic](reference/figures/diag-discr.png)
+![FlexRL FDP diagnostic](reference/figures/diag-FDP.png)![FlexRL mmd
+diagnostic](reference/figures/diag-discr-mmd.png)![FlexRL smd
+diagnostic](reference/figures/diag-discr-smd.png)![FlexRL iou
+diagnostic](reference/figures/diag-discr-iou.png)![FlexRL agreementrate
+diagnostic](reference/figures/diag-discr-agreerate.png)![FlexRL gamma
+convergence](reference/figures/diag-gamma.png)![FlexRL
+scores](reference/figures/diag-scores.png)
 
 ### Compare record linkage methodologies
 
