@@ -6,7 +6,7 @@
 
 ## Overview
 
-**FlexRL** is an open-source R package for **Flexible Record Linkage and inference on linked data**. It links records that refer to the same entity across two data sources sharing no unique identifier but rather partially identifying variables such as birth year, sex, postal code, or product code, brand and category.
+**FlexRL** is an open-source R package for **Flexible Record Linkage and inference on linked data**. It links records that refer to the same entity across two data sources sharing no unique identifier but rather partially identifying variables (PIVs) such as birth year, sex, postal code, or product code, brand and category.
 
 The package applies wherever two sources are expected to overlap: health monitoring studies at two time points, survey waves, census and administrative records, or customer and product files from two retailers. It reach real practice by supporting data access, data sharing without unique identifiers, reusing existing data, offering access to broader sets of variables across wider populations and extended time periods.
 
@@ -35,14 +35,14 @@ The model is introduced in:
 
 ## 🧩 Flexible by design
 
-FlexRL adapts to the data you have, rather than the other way round.
+FlexRL adapts to your data:
 
 | You want to... | How FlexRL does it |
 | --- | --- |
 | Link variables that never change (birth year, sex) | Declare the PIV as `"stable"`, optionally bounding its probability of a mistake |
 | Link variables that may change but whose registration dates are unknown (marital status, education) | Declare it `"flexible"`: changes are absorbed by the registration error model |
 | Link variables that change over time and model the change | Declare it `"structured"`: changes follow a survival model (exponential, Weibull, Gompertz, piecewise constant, or any user-defined model), optionally with covariates |
-| Control the registration errors | Bound or fix the probability of a mistake per PIV, and choose whether both sources share the same error parameters (`same_mistakes`) |
+| Control the mistakes | Bound or fix the probability of a mistake per PIV, and choose whether both sources share the same error parameters (`same_mistakes`) |
 | Handle missing values | Missing values are modelled explicitly per PIV and per source, not dropped |
 | Get a quick baseline | `naive_linkage()` links records agreeing exactly on all PIVs, to gauge how hard the task is |
 | Try methods on simulated data | `simulate_data()` generates two overlapping sources with chosen overlap, error rates and hazards of change |
@@ -53,10 +53,10 @@ FlexRL adapts to the data you have, rather than the other way round.
 Record linkage is rarely the end of the analysis. A stricter decision rule produces fewer falsely linked pairs, but it also select fewer and more atypical records, and both can bias what you estimate. `RL_diagnostics()` gathers the tools that make this trade-off visible, as a function of the decision rule:
 
 - [**Estimators of the false discovery proportion**](https://doi.org/10.1002/sim.70292) (Robach et al., *Statistics in Medicine*, 2025): one computed from the linkage scores, and one based on synthetic records that does not rely on the linkage model.
-- [**Diagnostics of the divergence between the linked sample and the sources**](https://kayanerobach.github.io/blog/2025/causal-record-linkage/) (Robach et al., soon on arXiv, 2026): standardised mean differences, overlap of supports, maximum mean discrepancy, and agreement rates.
+- [**Diagnostics of the divergence between the linked sample and the sources**](https://kayanerobach.github.io/blog/2025/causal-record-linkage/): standardised mean differences, overlap of supports, maximum mean discrepancy, and agreement rates.
 - **Convergence and score plots** for the StEM chains and the linkage scores.
 
-You can choose the decision rule so that the estimated false discovery proportion stays below a target, and see what that choice costs in sample size and representativeness.
+You can choose the decision rule so that the estimated false discovery proportion stays below a target, and see what that choice costs in sample size available for inference and representativeness.
 
 ## 📦 Installation
 
@@ -64,7 +64,6 @@ The released version of FlexRL can be installed from [CRAN](https://CRAN.R-proje
 
 ```r
 install.packages("FlexRL")
-library(FlexRL)
 ```
 
 The development version is available from [GitHub](https://github.com/robachowyk/FlexRL), with one of:
@@ -75,7 +74,11 @@ remotes::install_github("robachowyk/FlexRL")
 devtools::install_github("robachowyk/FlexRL")
 ```
 
-FlexRL relies on Rcpp. When installed from GitHub, it may require gfortran and gcc.
+```r
+library(FlexRL)
+```
+
+FlexRL relies on Rcpp.
 
 ## 🚀 Quick start
 
@@ -167,7 +170,7 @@ plot(diag_brl, "distributions", threshold = 0.75)
 
 - **Vignettes**: step-by-step examples on simulated and real data.
 - **Documentation in R**: `?simulate_data`, `?prepare_data`, `?naive_linkage`, `?StEM`, `?RL_diagnostics`.
-- **Software article**: <!-- TODO: link when on arXiv --> (Robach et al., 2026).
+- **Software article**: <!-- TODO: link when on arXiv --> (Robach et al., soon on arXiv).
 
 ## 🤝 Contributing
 
@@ -179,7 +182,7 @@ For other requests, contact _robachowyk@gmail.com_.
 
 ## 📝 How to cite
 
-If you use FlexRL, please cite the software article and the methodological papers:
+If you use FlexRL, please cite the software article and the methodological paper:
 
 ```bibtex
 @article{RLrobachetal25,
