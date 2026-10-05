@@ -10,10 +10,10 @@
 
 The package applies wherever two sources are expected to overlap: health monitoring studies at two time points, survey waves, census and administrative records, or customer and product files from two retailers. It reach real practice by supporting data access, data sharing without unique identifiers, reusing existing data, offering access to broader sets of variables across wider populations and extended time periods.
 
-Without a unique identifier, probabilistic record linkage makes errors, and these errors propagate into the analysis that follows. FlexRL therefore does two things:
+Without a unique identifier, probabilistic record linkage makes errors, and these errors propagate into the analysis that follows. FlexRL contributions are therefore twofold:
 
-1. **It links the sources** with a hierarchical model of how the data were generated, and returns the linked records with their posterior linkage scores.
-2. **It makes the quality of the linked data transparent**, with tools that tell you how many of the linked pairs are likely to be false, and how much the linked sample differs from the sources it comes from.
+1. It **links the sources** with a hierarchical model fitting how the data were generated, and returns the linked records with their posterior linkage scores.
+2. It **makes the quality of the linked data transparent**, with tools that tell you how many of the linked pairs are likely to be false, and how much the linked sample differs from the sources it comes from.
 
 Those tools work on the output of **any** record linkage method, so you can report linkage quality alongside your results even if you did not use FlexRL for linkage.
 

@@ -2854,7 +2854,7 @@ compute_augmRL_FDP_synth <- function(synth_method, encodedA, encodedB, PIVs, n_s
 # plot.FDP_curves(), plot.discrepancy_curves().
 # 
 # diag <- RL_diagnostics(fit_flexrl, prep_data$encodedA, prep_data$encodedB,
-#                        PIVs, PIVs_type, prep_data$true_pairs, TRUE, 
+#                        PIVs, PIVs_type, PIVs, prep_data$true_pairs, TRUE, 
 #                        RL_method = "FlexRL", data = prep_data,
 #                        StEM_iter = 10, StEM_burnin = 5, 
 #                        gibbs_iter = 10, gibbs_burnin = 5,
@@ -2978,35 +2978,39 @@ plot_StEM_convergence <- function(fit) {
     linkedB <- encodedB[fit$idxB[linked], , drop = FALSE]
   }
   
-  agreement <- if (n_linked > 0) {
-    RL_agreement(encodedA, encodedB, compare_vars, data.frame(fit$idxA[linked], fit$idxB[linked]))$agreements
+  varsA  <- intersect(compare_vars, names(encodedA))
+  varsB  <- intersect(compare_vars, names(encodedB))
+  varsAB <- intersect(varsA, varsB)
+  
+  agreement <- if (n_linked > 0 && length(varsAB) > 0) {
+    RL_agreement(encodedA, encodedB, varsAB, data.frame(fit$idxA[linked], fit$idxB[linked]))$agreements
   } else {
-    stats::setNames(rep(NA_real_, length(compare_vars)), compare_vars)
+    stats::setNames(rep(NA_real_, length(varsAB)), varsAB)
   }
-
-  smd_by_var <- function(linkedX, encodedX) {
-    stats::setNames(lapply(compare_vars, function(v) {
+  
+  smd_by_var <- function(linkedX, encodedX, vars) {
+    stats::setNames(lapply(vars, function(v) {
       if (n_linked == 0) return(NA_real_)
       res <- smd(linkedX, encodedX, v, continuous = vars_type_cont[[v]])
       if (vars_type_cont[[v]]) res[[1]] else res
-    }), compare_vars)
+    }), vars)
   }
-  iou_by_var <- function(linkedX, encodedX) {
-    stats::setNames(vapply(compare_vars, function(v) {
+  iou_by_var <- function(linkedX, encodedX, vars) {
+    stats::setNames(vapply(vars, function(v) {
       if (n_linked < 2) return(NA_real_)
       support_iou(graphics::hist(as.numeric(linkedX[[v]]), plot = FALSE),
                   graphics::hist(as.numeric(encodedX[[v]]), plot = FALSE))
-    }, numeric(1)), compare_vars)
+    }, numeric(1)), vars)
   }
-  mmd_all <- function(linkedX, encodedX) {
-    if (n_linked < 2) return(NA_real_)
-    mmd(as.matrix(linkedX[, compare_vars, drop = FALSE]), as.matrix(encodedX[, compare_vars, drop = FALSE]))
+  mmd_all <- function(linkedX, encodedX, vars) {
+    if (n_linked < 2 || length(vars) == 0) return(NA_real_)
+    mmd(stats::na.omit(as.matrix(linkedX[, vars, drop = FALSE])), stats::na.omit(as.matrix(encodedX[, vars, drop = FALSE])))
   }
-
+  
   list(n_linked = n_linked, linkedA = linkedA, linkedB = linkedB, agreement = agreement,
-       smdA = smd_by_var(linkedA, encodedA), smdB = smd_by_var(linkedB, encodedB),
-       iouA = iou_by_var(linkedA, encodedA), iouB = iou_by_var(linkedB, encodedB),
-       mmdA = mmd_all(linkedA, encodedA), mmdB = mmd_all(linkedB, encodedB))
+       smdA = smd_by_var(linkedA, encodedA, varsA), smdB = smd_by_var(linkedB, encodedB, varsB),
+       iouA = iou_by_var(linkedA, encodedA, varsA), iouB = iou_by_var(linkedB, encodedB, varsB),
+       mmdA = mmd_all(linkedA, encodedA, varsA), mmdB = mmd_all(linkedB, encodedB, varsB))
 }
 
 #' Plot post-linkage diagnostics over thresholds
@@ -3024,6 +3028,7 @@ plot.discrepancy_curves <- function(x, ...) {
     v
   }
   lines_by_col <- function(vals, ylab, main, ylim = NULL, where = "bottomleft") {
+    if (ncol(vals) == 0 || all(is.na(vals))) return(invisible(NULL))
     if (is.null(ylim)) ylim <- range(vals, na.rm = TRUE)
     if (any(duplicated(as.list(vals)) )){
       perturbation <- duplicated(as.list(vals))*c(stats::runif(length(duplicated(as.list(vals))),0,0.005))
@@ -3037,6 +3042,7 @@ plot.discrepancy_curves <- function(x, ...) {
                      bty = "n", cex = 0.7, ncol = max(1, ncol(vals) %/% 8))
   }
   two_files <- function(a, b, ylab, main, ylim = NULL, where = "topleft") {
+    if (all(is.na(a)) && all(is.na(b))) return(invisible(NULL))
     if (is.null(ylim)) ylim <- range(c(a, b), na.rm = TRUE)
     graphics::plot(xi, a, type = "l", xlab = "decision rule threshold", ylab = ylab, main = main, ylim = ylim)
     graphics::lines(xi, b, lty = 2)
@@ -3046,7 +3052,7 @@ plot.discrepancy_curves <- function(x, ...) {
   on.exit(graphics::par(op))
   two_files(x$mmdA, x$mmdB, "MMD", "Multivariate discrepancy")
   agreements <- cbind(cols("agreementAB"), cols("agreementLinks"))
-  names(agreements) <- c(names(cols("agreementAB")), paste(names(cols("agreementLinks")), "true pairs"))
+  names(agreements) <- c(names(cols("agreementAB")), sprintf("%s true pairs", names(cols("agreementLinks"))))
   lines_by_col(agreements, "agreement rate", "linked A vs. linked B", c(0, 1.03))
   op <- graphics::par(mfrow = c(1, 2))
   on.exit(graphics::par(op))
@@ -3054,7 +3060,8 @@ plot.discrepancy_curves <- function(x, ...) {
   lines_by_col(cols("iouB"), "support IoU", "linked B vs. B", c(0, 1.03))
   op <- graphics::par(mfrow = c(1, 2))
   on.exit(graphics::par(op))
-  ylim <- range(c(as.matrix(cols("smdA")), as.matrix(cols("smdB"))), na.rm = TRUE)
+  allsmd <- c(as.matrix(cols("smdA")), as.matrix(cols("smdB")))
+  ylim <- if (any(is.finite(allsmd))) range(allsmd[is.finite(allsmd)]) else NULL
   lines_by_col(cols("smdA"), "SMD", "linked A vs. A", ylim, "topleft")
   lines_by_col(cols("smdB"), "SMD", "linked B vs. B", ylim, "topleft")
   invisible(x)
@@ -3148,7 +3155,7 @@ plot.discrepancy_curves <- function(x, ...) {
 #' fit_flexrl <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2,
 #'                     gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 10 )
 #' diag_flexrl <- RL_diagnostics(fit_flexrl, prep_data$encodedA, prep_data$encodedB,
-#'                               PIVs, PIVs_type, true_pairs = prep_data$true_pairs,
+#'                               PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs,
 #'                               FDP_estimation = TRUE, RL_method = "FlexRL", 
 #'                               data = prep_data,
 #'                               StEM_iter = 5, StEM_burnin = 2, 
@@ -3167,7 +3174,7 @@ plot.discrepancy_curves <- function(x, ...) {
 #'                           list( flds = PIVs, 
 #'                                 types = rep("bi",length(PIVs)) ) )
 #' diag_brl <- RL_diagnostics(fit_brl, prep_data$encodedA, prep_data$encodedB,
-#'                            PIVs, PIVs_type, true_pairs = prep_data$true_pairs,
+#'                            PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs,
 #'                            FDP_estimation = TRUE, RL_method = "BRL", 
 #'                            flds = PIVs, types = rep("bi",length(PIVs)),
 #'                            maxIter4CV = 1, n_repeats = 1)
@@ -3178,9 +3185,20 @@ plot.discrepancy_curves <- function(x, ...) {
 #' plot(diag_brl, "FDP")
 #' plot(diag_brl, "discrepancy")
 RL_diagnostics <- function(fit, encodedA, encodedB, compare_vars, vars_type_cont,
-                           true_pairs = NULL, FDP_estimation = TRUE, ...) {
+                           PIVs, true_pairs = NULL, FDP_estimation = TRUE, ...) {
 
   arguments <- list(...)
+  
+  varsA  <- intersect(compare_vars, names(encodedA))
+  varsB  <- intersect(compare_vars, names(encodedB))
+  varsAB <- intersect(varsA, varsB)
+  if (length(setdiff(compare_vars, union(varsA, varsB))) > 0) {
+    stop("Some `compare_vars` are in neither `encodedA` nor `encodedB`.", call. = FALSE)
+  }
+  if (!all(compare_vars %in% names(vars_type_cont))) {
+    stop("All `compare_vars` should be specified in `vars_type_cont`.", call. = FALSE)
+  }
+  
   if ("Delta" %in% names(fit) && all(c("i", "j", "x") %in% names(fit$Delta))) {
       fit$idxA <- fit$Delta$i
       fit$idxB <- fit$Delta$j
@@ -3231,8 +3249,8 @@ RL_diagnostics <- function(fit, encodedA, encodedB, compare_vars, vars_type_cont
   }
   
   true_agreement <- NULL
-  if (!is.null(true_pairs)) {
-    true_agreement <- RL_agreement(encodedA, encodedB, compare_vars, true_pairs)$agreements
+  if (!is.null(true_pairs) && length(varsAB) > 0) {
+    true_agreement <- RL_agreement(encodedA, encodedB, varsAB, true_pairs)$agreements
   }
 
   discrepancy_measures <- do.call(rbind, lapply(th, function(t) {
@@ -3265,7 +3283,7 @@ RL_diagnostics <- function(fit, encodedA, encodedB, compare_vars, vars_type_cont
     arguments$synth_method <- if ("synth_method" %in% names(arguments)) arguments$synth_method else "arf"
     arguments$encodedA <- encodedA
     arguments$encodedB <- encodedB
-    arguments$PIVs <- if ("PIVs" %in% names(arguments)) arguments$PIVs else compare_vars
+    arguments$PIVs <- if ("PIVs" %in% names(arguments)) arguments$PIVs else PIVs
 
     FDP_synth_res <- do.call(compute_augmRL_FDP_synth, arguments)
     FDP_score_res <- do.call(compute_RL_FDP_score, arguments)
@@ -3279,8 +3297,8 @@ RL_diagnostics <- function(fit, encodedA, encodedB, compare_vars, vars_type_cont
       idxA = fit$idxA, idxB = fit$idxB, RL_method = arguments$RL_method,
       n_pairs = nrow(encodedA) * nrow(encodedB), true_performance = true_performance,
       true_agreement = true_agreement,
-      A = encodedA[, compare_vars, drop = FALSE],
-      B = encodedB[, compare_vars, drop = FALSE],
+      A = encodedA[, varsA, drop = FALSE],
+      B = encodedB[, varsB, drop = FALSE],
       gamma = fit$gamma, eta = fit$eta, alpha = fit$alpha, phi = fit$phi,
       FDP_measures = FDP_measures,
       discrepancy_measures = structure(discrepancy_measures, class = c("discrepancy_curves", "data.frame"))
@@ -3437,12 +3455,18 @@ plot.RL_diagnostics <- function(x, type, threshold = NULL, ...) {
     }
     linkedA <- x$A[x$idxA[linked], , drop = FALSE]
     linkedB <- x$B[x$idxB[linked], , drop = FALSE]
-    op <- graphics::par(mfrow = grDevices::n2mfrow(length(x$compare_vars)))
-    on.exit(graphics::par(op))
-    plot_distributions(list(A = x$A, linkedA = linkedA), x$compare_vars, threshold, ...)
-    op <- graphics::par(mfrow = grDevices::n2mfrow(length(x$compare_vars)))
-    on.exit(graphics::par(op))
-    plot_distributions(list(B = x$B, linkedB = linkedB), x$compare_vars, threshold, ...)
+    varsA <- colnames(x$A)
+    if (length(varsA) > 0) {
+      op <- graphics::par(mfrow = grDevices::n2mfrow(length(varsA)))
+      on.exit(graphics::par(op))
+      plot_distributions(list(A = x$A, linkedA = linkedA), varsA, threshold, ...)
+    }
+    varsB <- colnames(x$B)
+    if (length(varsB) > 0) {
+      op <- graphics::par(mfrow = grDevices::n2mfrow(length(varsB)))
+      on.exit(graphics::par(op))
+      plot_distributions(list(B = x$B, linkedB = linkedB), varsB, threshold, ...)
+    }
   } else if (type == "convergence") {
     if (is.null(x$gamma)) {
       stop("No StEM chains stored on this object (the `fit` passed to `RL_diagnostics()` had no `gamma`/`eta`/`alpha`/`phi`).", call. = FALSE)
