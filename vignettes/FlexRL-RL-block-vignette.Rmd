@@ -36,17 +36,31 @@ This vignette runs these wrappers on the same pipeline for:
 ```{r}
 wrapper_args <- function(method, prep_data, ...) {
   PIVs <- names(prep_data$PIVs_config)
-  args <- list(...)
-  
+  args <- c(...)
 
   switch(method,
-         FlexRL    = list(data = prep_data, args),
-         BRL       = list(flds = PIVs, types = rep("bi", length(PIVs)), nIter = 1000, args),
-         fastLink  = list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, return.all = TRUE, n.cores = 1, args),
-         multilink = list(types = rep("bi", length(PIVs)), breaks = stats::setNames(as.list(rep(NA, length(PIVs))), PIVs), duplicates = c(0, 0), n_iter = 200, max_cc_size = 50, args),
-         reclin2   = list(on = PIVs, formula = stats::as.formula(paste("~", paste(PIVs, collapse = "+"))), type = "mpost", add = TRUE, variable = "selected", score = "mpost", threshold = 0.5, args),
-         diyar     = list(probabilistic = TRUE, return_weights = TRUE, args),
-         fedmatch  = list(by = PIVs, match_type = "multivar", unique_key_1 = "unique_key_A", unique_key_2 = "unique_key_B", multivar_settings = fedmatch::build_multivar_settings(compare_type = rep("indicator", length(PIVs)), wgts = rep(1 / length(PIVs), length(PIVs))), args)
+         FlexRL    = c(list(data = prep_data), args[intersect(names(args), names(formals(FlexRL::StEM)))]),
+         BRL       = c(list(flds = PIVs, types = rep("bi", length(PIVs)), nIter = 1000), args[intersect(names(args), c(names(formals(BRL::compareRecords)), names(formals(BRL::bipartiteGibbs))))]),
+         fastLink  = c(list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, return.all = TRUE, n.cores = 1), 
+                       args[intersect(names(args), names(formals(fastLink::fastLink)))]),
+         multilink = c(list(types = rep("bi", length(PIVs)), breaks = stats::setNames(as.list(rep(NA, length(PIVs))), PIVs), duplicates = c(0, 0), n_iter = 200, max_cc_size = 50),
+                       args[intersect(names(args), c( names(formals(multilink::create_comparison_data)),
+                                                                names(formals(multilink::reduce_comparison_data)),
+                                                                names(formals(multilink::specify_prior)),
+                                                                names(formals(multilink::gibbs_sampler)),
+                                                                names(formals(multilink::find_bayes_estimate)),
+                                                                names(formals(multilink::relabel_bayes_estimate)) ))]),
+         reclin2   = c(list(on = PIVs, formula = stats::as.formula(paste("~", paste(PIVs, collapse = "+"))), type = "mpost", add = TRUE, variable = "selected", score = "mpost", threshold = 0.5), 
+                       args[intersect(names(args), c( names(formals(reclin2::pair)), 
+                                                                names(formals(reclin2::compare_pairs)),
+                                                                names(formals(reclin2::problink_em)),
+                                                                names(formals(stats::predict)),
+                                                                names(formals(reclin2::select_threshold)) ))]),
+         diyar     = c(list(probabilistic = TRUE, return_weights = TRUE), 
+                       args[intersect(names(args), c( names(formals(diyar::prob_score_range)),
+                                                                names(formals(diyar::links_wf_probabilistic)) ))]),
+         fedmatch  = c(list(by = PIVs, match_type = "multivar", unique_key_1 = "unique_key_A", unique_key_2 = "unique_key_B", multivar_settings = fedmatch::build_multivar_settings(compare_type = rep("indicator", length(PIVs)), wgts = rep(1 / length(PIVs), length(PIVs)))), 
+                       args[intersect(names(args), names(formals(fedmatch::merge_plus)))])
          )
 }
 
@@ -57,6 +71,7 @@ run_wrapper <- function(method, prep_data, arguments) {
     prep_data$encodedA <- prep_data$encodedA[, c(PIVs, "local_id", "source")]
     prep_data$encodedB <- prep_data$encodedB[, c(PIVs, "local_id", "source")]
   }
+
   tryCatch(link_with(prep_data$encodedA, prep_data$encodedB, arguments),
            error = function(e) {
              if (grepl("cannot allocate|memory|bad_alloc|too large|long vectors", conditionMessage(e), ignore.case = TRUE)) {
@@ -94,6 +109,8 @@ results_rows <- c("TP",
 
 run_all_wrappers <- function(prep_data, PIVs_type, methods, FDP_estimation = TRUE,
                              maxIter4CV = 3, n_repeats = 5, ...) {
+  args <- list(...)
+  
   op <- options()
   on.exit(options(op))
   PIVs <- names(prep_data$PIVs_config)
@@ -105,7 +122,7 @@ run_all_wrappers <- function(prep_data, PIVs_type, methods, FDP_estimation = TRU
   df_results[1:5, "Naive"] <- evaluate_linkage(list(idxA = naive_fit[[1]], idxB = naive_fit[[2]]), true_pairs)
 
   for (method in methods) {
-    arguments <- wrapper_args(method, prep_data)
+    arguments <- wrapper_args(method, prep_data, args)
     fit <- run_wrapper(method, prep_data, arguments)
     df_results[1:5, method] <- evaluate_linkage(fit, true_pairs)
     if (is.null(fit) || length(fit$idxA) == 0) next
@@ -116,9 +133,10 @@ run_all_wrappers <- function(prep_data, PIVs_type, methods, FDP_estimation = TRU
       encodedA <- encodedA[, c(PIVs, "local_id", "source")]
       encodedB <- encodedB[, c(PIVs, "local_id", "source")]
     }
+
     diag <- do.call(RL_diagnostics, c(list(fit, encodedA, encodedB, PIVs, PIVs_type, PIVs,
                                            true_pairs = prep_data$true_pairs, FDP_estimation = FDP_estimation,
-                                           RL_method = method, maxIter4CV = maxIter4CV, n_repeats = n_repeats),
+                                           RL_method = method, data = prep_data, maxIter4CV = maxIter4CV, n_repeats = n_repeats),
                                       arguments))
     if (FDP_estimation) {
       df_results[6, method] <- diag$FDP_measures$curve$RL_FDP_score[1]
@@ -229,7 +247,8 @@ df_results_full <- data.frame(matrix(NA, nrow = 6, ncol = 0))
 rownames(df_results_full) <- c("TP", "FP", "FN", "sensitivity", "FDP", "minutes")
 for (method in methods) {
   t0 <- Sys.time()
-  fit <- run_wrapper(method, prep_data_full, wrapper_args(method, prep_data_full, n_post_samp = 10))
+  args <- list(n_post_samp = 100)
+  fit <- run_wrapper(method, prep_data_full, wrapper_args(method, prep_data_full, args))
   df_results_full[1:5, method] <- evaluate_linkage(fit, true_pairs_full)
   df_results_full[6, method] <- if (is.null(fit)) NA else round(as.numeric(Sys.time() - t0, units = "mins"))
 }
