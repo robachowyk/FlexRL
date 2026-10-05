@@ -72,7 +72,7 @@
 #'                        RL_method = "FlexRL", data = prep_data,
 #'                        StEM_iter = 5, StEM_burnin = 2, 
 #'                        gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5,
-#'                        maxIter4CV = 1, n_repeats = 2)
+#'                        maxIter4CV = 1, n_repeats = 1)
 #' diag # print(diag)
 #' print(diag, threshold = 0.75)
 #' plot(diag, "scores")
