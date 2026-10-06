@@ -28,15 +28,13 @@ keywords:
 license: "CC BY"
 funding: "This research received no funding from any agency in the public, commercial, or not-for-profit sectors."
 bibliography: Article-references.bib
-filters:
-  - pseudocode
 format: html
 editor: visual
 ---
 
 ## Introduction {#sec-introduction}
 
-Researchers and statistical agencies increasingly need to combine data sources that do not share a unique identifier [@Cleaton_Splink_2024; @Laidler_NHSE_2025; @Kramer_Destatis_2026]. Record linkage combines records that refer to the same entity across sources, relying on partially identifying variables (PIVs) (e.g. birth year, sex, postal code, phone number, product code). Each PIV has little discriminative power on its own, may be missing or wrongly recorded, and may change over time. Record linkage underpins the production of official statistics, enables the reuse of administrative and registry data for research [@opensafely2020; @perined_linkage_2021; @cooneyhealthcare_2023], and improves data quality through linkage and deduplication. Yet, linkage is rarely the final product: linked records become the study population of a downstream analysis, into which linkage errors may propagate [@reflexRL_2020; @Wang_Slawski_linked_2022; @CoxLinkedData_2024; @CRLrobachetal26].
+Researchers and statistical agencies increasingly need to combine data sources that do not share a unique identifier [@Cleaton_Splink_2024; @Laidler_NHSE_2025; @Kramer_Destatis_2026]. Record linkage connects records that refer to the same entity across sources, relying on Partially Identifying Variables (PIVs) (e.g. birth year, sex, postal code, phone number, product code). Each PIV has little discriminative power on its own, may be missing or wrongly recorded, and may change over time. Record linkage underpins the production of official statistics, enables the reuse of administrative and registry data for research [@opensafely2020; @perined_linkage_2021; @cooneyhealthcare_2023], and improves data quality through linkage and deduplication. Yet, linkage is rarely the final product: linked records become the study population of a downstream analysis, into which linkage errors may propagate [@reflexRL_2020; @Wang_Slawski_linked_2022; @CoxLinkedData_2024; @CRLrobachetal26].
 
 Two main probabilistic record linkage approaches have developed through times. First, the traditional mixture model [@FS_RL_1969; @jaro_RL_matching_1989; @Larsen_mixture_1999; @fortini_bay_RL_2001; @sadinle_bay_bipartite_RL_2017] turns the problem into a classification one, between pairs of records that are similar and pairs that are not. Second, the hierarchical entity resolution framework [@tancredi_bay_RL_2011; @steorts2015; @smered2016; @dblink_2021; @marchantsteorts2023] models the data generation process, considering the observed values as potentially distorted versions of true latent values. The later uses all the information contained in the records and is therefore more flexible but more computationally demanding. In `R`, it has been developed for entity resolution (clustering records from one file into entities) rather than for the linkage between two data sources.
 
@@ -146,7 +144,7 @@ $$ {#eq-survival} where $\boldsymbol{x}_{i,j}$ contains an intercept and, option
 \end{aligned}
 $$ {#eq-changes}
 
-### #Linkage ($\gamma$)
+#### Linkage ($\gamma$)
 
 Since $N_{\mathcal A} \leq N_{\mathcal B}$, we work with the rows of $\boldsymbol{\Delta}$: whether record $i \in \mathcal A$ forms a link with a record of $\mathcal B$ is Bernoulli($\gamma$), independently across $i$. Given the number of links $N_L = \sum_{i,j} \Delta_{i,j}$, all linkage matrices satisfying the one-to-one assignment constraint are equally likely. There are $N_{\mathcal B}! / (N_{\mathcal B} - N_L)!$ ways to assign the $N_L$ linked records of $\mathcal A$ to distinct records of $\mathcal B$, hence $$ 
     \log \mathcal{L}_{\gamma}(\boldsymbol{\Delta}) = N_L \log \gamma + (N_{\mathcal A} - N_L) \log (1 - \gamma) - \log \frac{N_{\mathcal B}!}{(N_{\mathcal B} - N_L)!} .
@@ -163,70 +161,38 @@ The package distinguishes three kinds of PIVs, which determine how the component
 
 ### Estimation {#sec-estimation}
 
-The likelihood of the observed data is given by @eq-flexrl, summed over all values of the latent $\textbf{H}$ and $\boldsymbol{\Delta}$. *FlexRL* maximises it with a stochastic EM algorithm [@celeux_diebolt_SEM]: the E-step draws the latent variables from their distribution given the current parameters with a Gibbs sampler, and the M-step maximises the resulting complete-data likelihood. @algo-stem summarises the procedure.
+The likelihood of the observed data is given by @eq-flexrl, summed over all values of the latent $\textbf{H}$ and $\boldsymbol{\Delta}$. *FlexRL* maximises it with a stochastic EM algorithm [@celeux_diebolt_SEM]: the E-step draws the latent variables from their distribution given the current parameters with a Gibbs sampler, and the M-step maximises the resulting complete-data likelihood. [Algorithm @alg-stem] summarises the procedure.
 
-
-```pseudocode
-#| label: algo-stem
-
-\begin{algorithm}
-\caption{Stochastic EM for record linkage}
-\begin{algorithmic}
-\INPUT encoded sources $\mathbf{G}^{\mathcal A}, \mathbf{G}^{\mathcal B}$; PIV configuration; $N_{\text{StEM}}$ iterations with $N_{0\text{StEM}}$ burn-in; $N_{\text{Gibbs}}$ iterations with $N_{0\text{Gibbs}}$ burn-in
-\STATE Initialise $\boldsymbol{\theta}= (\gamma, \boldsymbol{\eta}, \boldsymbol{\alpha}, \boldsymbol{\phi})$
-\FOR{$\text{StEM iter} = 1, \dots, N_{\text{StEM}}$}
-    \STATE $\boldsymbol{\Delta} \gets \mathbf 0$
-    \FOR{$\text{Gibbs iter} = 1, \dots, N_{\text{Gibbs}}$} \COMMENT{stochastic E-step}
-        \STATE Draw $\mathbf{H}^{\mathcal A}, \mathbf{H}^{\mathcal B} \mid \mathbf{G}, \boldsymbol{\Delta}, \boldsymbol{\theta}$
-        \STATE Form candidate pairs $\{(i,j): H^{\mathcal A}_{i,k} = H^{\mathcal B}_{j,k} \ \forall k \text{ stable or flexible}\}$
-        \STATE For each non-linked candidate pair, propose to link it; for each linked pair, propose to break the link; accept with the likelihood of the model
-        \IF{$\text{Gibbs iter} > N_{0\text{Gibbs}}$}
-            \STATE Store summary statistics: $N_L$, counts of true values, agreements $G = H$, and $\boldsymbol{x}_{i,j}, t_{i,j}, \mathbb 1 \{H^{\mathcal A}_{i,k} = H^{\mathcal B}_{j,k}\}$ for linked pairs $(i,j)$
-        \ENDIF
-    \ENDFOR
-    \STATE M-step:
-    \STATE $\gamma \gets \text{mean}(N_L) / N_{\mathcal A}$
-    \STATE $\eta_{k,\ell} \gets$ relative frequency of $\ell$ among sampled true values (linked pairs and non-linked records)
-    \STATE $1 - \phi_{k,\text{mistake}} \gets$ agreement rate $G = H$ among non-missing entries
-    \STATE $\boldsymbol{\alpha}_k \gets \arg\max$ of the survival likelihood
-    \STATE Store $\boldsymbol{\theta}$
-\ENDFOR
-\STATE $\widehat{\boldsymbol{\theta}} \gets$ average of $\boldsymbol{\theta}$ over $\text{StEM iter} > N_{0\text{StEM}}$
-\STATE Run further Gibbs iterations at $\widehat{\boldsymbol{\theta}}$
-\STATE $\widehat{\Delta}_{i,j} \gets$ proportion of iterations in which $(i,j)$ is linked
-\end{algorithmic}
-\end{algorithm}
+::: {#alg-stem}
+```{.text}
+Input: encoded sources G_A, G_B; PIV configuration;
+       N_StEM iterations (burn-in N0_StEM); N_Gibbs iterations (burn-in N0_Gibbs)
+Initialise θ = (γ, η, α, φ)
+for StEM iter = 1, ..., N_StEM do
+    Δ ← 0
+    for Gibbs iter = 1, ..., N_Gibbs do          # stochastic E-step
+        draw H_A, H_B | G, Δ, θ
+        form candidate pairs (i,j): H_A[i,k] = H_B[j,k] for all stable or flexible k
+        for each non-linked candidate pair: propose to link
+        for each linked pair: propose to break the link
+        accept each proposal with the likelihood of the model
+        if Gibbs iter > N0_Gibbs then
+            store N_L, counts of true values, agreements G = H, x_ij, t_ij
+        end if
+    end for
+    # M-step
+    γ ← mean(N_L) / N_A
+    η[k,l] ← relative frequency of l among sampled true values
+    1 − φ_mistake[k] ← agreement rate G = H among non-missing entries
+    α[k] ← argmax of the survival likelihood
+    store θ
+end for
+θ_hat ← average of θ over StEM iter > N0_StEM
+run further Gibbs iterations at θ_hat
+Δ_hat[i,j] ← proportion of iterations in which (i,j) is linked
 ```
-
-<!-- ```pseudocode -->
-<!-- #| label: algo-stem -->
-
-<!-- \begin{algorithm} -->
-<!-- \caption{Stochastic EM for record linkage} -->
-<!-- \begin{algorithmic} -->
-<!-- \Input encoded sources $\textbf{G}^{\mathcal A}, \textbf{G}^{\mathcal B}$; PIV configuration; $N_{\text{StEM}}$ iterations with $N_{0\text{StEM}}$ burn-in; $N_{\text{Gibbs}}$ iterations with $N_{0\text{Gibbs}}$ burn-in. -->
-<!-- \State Initialise $\boldsymbol{\theta}= (\gamma, \boldsymbol{\eta}, \boldsymbol{\alpha}, \boldsymbol{\phi})$. -->
-<!-- \For{$\text{StEM iter} = 1, \dots, N_{\text{StEM}}$} -->
-<!--     \State $\boldsymbol{\Delta} \gets \mathbf 0$. -->
-<!--     \For{$\text{Gibbs iter} = 1, \dots, N_{\text{Gibbs}}$} \Comment{stochastic E-step: Gibbs sampler} -->
-<!--         \State Draw $\textbf{H}^{\mathcal A}, \textbf{H}^{\mathcal B} \mid \textbf{G}, \boldsymbol{\Delta}, \boldsymbol{\theta}$ \Comment{@eq-loglikHA, @eq-registration, @eq-changes, @eq-linkage-prior} -->
-<!--         \State Form candidate pairs $\{(i,j): H^{\mathcal A}_{i,k} = H^{\mathcal B}_{j,k} \ \forall k \text{ stable or flexible}\}$. -->
-<!--         \State For each non-linked candidate pair propose to link it, for each linked pair propose to break the link; accept with the likelihood of @eq-flexrl. -->
-<!--         \If{$\text{Gibbs iter} > N_{0\text{Gibbs}}$} store summary statistics: $N_L$, counts of true values, agreements $G = H$, and $ \boldsymbol{x}_{i,j}, t_{i,j}, \mathbb 1 \{H^{\mathcal A}_{i,k} = H^{\mathcal B}_{j,k}\}$ for linked pairs $(i,j)$. \EndIf -->
-<!--     \EndFor -->
-<!--     \State M-step:  -->
-<!--     \State $\gamma \gets \text{mean}(N_L) / N_{\mathcal A}$, -->
-<!--     \State $\eta_{k,\ell} \gets$ relative frequency of $\ell$ among sampled true values (of linked pairs and non-linked records), -->
-<!--     \State $1 - \phi_{k,\text{mistake}} \gets$ agreement rate $G = H$ among non-missing entries, -->
-<!--     \State $\boldsymbol{\alpha}_k \gets \arg\max$ of the survival likelihood. -->
-<!--     \State Store $\boldsymbol{\theta}$. -->
-<!-- \EndFor -->
-<!-- \State $\widehat{\boldsymbol{\theta}} \gets$ average of $\boldsymbol{\theta}$ over $\text{StEM iter} > N_{0\text{StEM}}$. -->
-<!-- \State Run further Gibbs iterations at $\widehat{\boldsymbol{\theta}}$: -->
-<!-- \State $\widehat{\Delta}_{i,j} \gets$ proportion of iterations in which $(i,j)$ is linked. -->
-<!-- \end{algorithmic} -->
-<!-- \end{algorithm} -->
-<!-- ``` -->
+Stochastic EM for record linkage
+:::
 
 #### Initialisation
 
@@ -314,13 +280,12 @@ These quantities are computed over a grid of values of $\xi$. Together with the 
   raw(raw sources `data1`, `data2`) --> prep(`prepare_data` checks, encodes, raises warnings)
   sim(`simulate\_data`) --> prep
   prep --> naive(`naive\_linkage`)
-  prep --> fit(`StEM` @algo-stem)
+  prep --> fit(`StEM` [Algorithm @alg-stem])
   fit --> delta(linkage output $\widehat\boldsymbol\Delta$ chains $\gamma$, $\boldsymbol\eta$, $\boldsymbol\alpha$, $\boldsymbol\phi$)
   delta --> diag(`RL_diagnostics` `print`, `plot`)
   wrap(`link_with_<pkg>`) --> diag
   diag --> alles(FDP estimation, convergence plots, score plots, data comparison, discrepancy measures, agreement rates)
 ```
-
 Workflow of *FlexRL*
 :::
 
@@ -334,7 +299,7 @@ Besides, `naive_linkage()` links records that agree exactly on all PIVs (a missi
 
 ### Record linkage with `StEM()` {#sec-stem}
 
-`StEM()` runs @algo-stem. Its main arguments are listed below.
+`StEM()` runs [Algorithm @alg-stem]. Its main arguments are listed below.
 
 - `data`: a list, typically the output of `prepare_data()`, with the encoded sources `encodedA` and `encodedB`, `n_values`, the number of distinct values of each PIV (excluding missing values), `same_mistakes`, a logical indicating whether both sources share the registration error parameters, and `PIVs_config`, the configuration of each PIV.
 - `StEM_iter`, `StEM_burnin`, `gibbs_iter`, `gibbs_burnin`: the numbers of iterations of the outer StEM algorithm and of the inner Gibbs sampler, and their burn-in periods. `gibbs_burnin = 0` sets the burn-in automatically: the sampler runs until the number of links changes by fewer than 10 for 10 consecutive iterations, with a maximum of 500 iterations.

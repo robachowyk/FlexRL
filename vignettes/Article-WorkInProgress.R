@@ -57,12 +57,31 @@ PIVs_type <- c(PIVs_type, MOVE = FALSE)
 prep_data <- prepare_data(prep_data$encodedA, prep_data$encodedB, "2020", "2016", PIVs_config, same_mistakes = TRUE, uniq_id = "ID")
 true_pairs <- do.call(paste, c(prep_data$true_pairs, list(sep = "_")))
 
+fit <- StEM(data = prep_data, StEM_iter = 10, StEM_burnin = 5, gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10)
+
+run_wrapper <- function(method, prep_data, arguments) {
+  PIVs <- names(prep_data$PIVs_config)
+  link_with <- get(paste0("link_with_", method), envir = asNamespace("FlexRL"))
+  if (method == "diyar") {
+    prep_data$encodedA <- prep_data$encodedA[, c(PIVs, "local_id", "source")]
+    prep_data$encodedB <- prep_data$encodedB[, c(PIVs, "local_id", "source")]
+  }
+  tryCatch(link_with(prep_data$encodedA, prep_data$encodedB, arguments),
+           error = function(e) {
+             if (grepl("cannot allocate|memory|bad_alloc|too large|long vectors", conditionMessage(e), ignore.case = TRUE)) {
+               message(method, ": memory error (", conditionMessage(e), "), results reported as NA")
+               return(NULL)
+             }
+             stop(e)
+           })
+}
+
 df_results_full <- data.frame(matrix(NA, nrow = 6, ncol = 0))
 rownames(df_results_full) <- c("TP", "FP", "FN", "sensitivity", "FDP", "minutes")
 for (method in methods) {
   t0 <- Sys.time()
-  args <- list(StEM_iter = 10, StEM_burnin = 5, gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10)
-  fit <- run_wrapper(method, prep_data_full, wrapper_args(method, prep_data_full, args))
+  
+  
   df_results_full[1:5, method] <- evaluate_linkage(fit, true_pairs_full)
   df_results_full[6, method] <- if (is.null(fit)) NA else round(as.numeric(Sys.time() - t0, units = "mins"))
 }

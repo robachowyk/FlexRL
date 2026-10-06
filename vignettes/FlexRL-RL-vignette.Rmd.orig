@@ -11,6 +11,7 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
+  cli.progress_show_after = Inf,
   options(digits = 2, scipen = 999)
 )
 ```
