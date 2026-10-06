@@ -806,7 +806,7 @@ survival_model <- function(type = c("exponential", "weibull", "gompertz", "piece
 #' @param gamma0 Optional starting values for `gamma`; at random if `NULL`.
 #' @param phiA0 Optional starting values for `phi`; at random if `NULL`.
 #' @param phiB0 Optional starting values for `phi`; at random if `NULL`.
-#' @param n_post_samp Integer, number of posterior draws used to estimate the
+#' @param n_post_sample Integer, number of posterior draws used to estimate the
 #'   final linkage probabilities `Delta`. Default is set to 1000, we recommend
 #'   not lowering it.
 #' @param model_dynamics Object from [survival_model()]: the survival model
@@ -846,7 +846,7 @@ survival_model <- function(type = c("exponential", "weibull", "gompertz", "piece
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
 #' fit1 <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
-#'               gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5,
+#'               gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5,
 #'               model_dynamics = survival_model("exponential") )
 #' apply(fit1$alpha$V4[2:5,], 2, mean)
 #' cond_hazard_params1$V4
@@ -860,7 +860,7 @@ survival_model <- function(type = c("exponential", "weibull", "gompertz", "piece
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
 #' fit2 <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
-#'               gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5,
+#'               gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5,
 #'               model_dynamics = survival_model("weibull"))
 #' apply(fit2$alpha$V4[2:5,], 2, mean)
 #' cond_hazard_params2$V4
@@ -874,7 +874,7 @@ survival_model <- function(type = c("exponential", "weibull", "gompertz", "piece
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
 #' fit3 <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
-#'               gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5,
+#'               gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5,
 #'               model_dynamics = survival_model("gompertz"))
 #' apply(fit3$alpha$V4[2:5,], 2, mean)
 #' cond_hazard_params3$V4
@@ -888,14 +888,14 @@ survival_model <- function(type = c("exponential", "weibull", "gompertz", "piece
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
 #' fit4 <- StEM( data = prep_data, StEM_iter = 2, StEM_burnin = 1, 
-#'               gibbs_iter = 2, gibbs_burnin = 1, n_post_samp = 2,
+#'               gibbs_iter = 2, gibbs_burnin = 1, n_post_sample = 2,
 #'               model_dynamics = survival_model("piecewise", cuts = c(1,2,3)))
 #' apply(fit4$alpha$V4, 2, mean)
 #' cond_hazard_params4$V4
 #' head(fit4$Delta[fit4$Delta$x > 0.5, ])
 StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_burnin = 10,
                  music_on = FALSE, new_directory = NULL, save_info_iter = FALSE,
-                 gamma0 = NULL, phiA0 = NULL, phiB0 = NULL, n_post_samp = 1000,
+                 gamma0 = NULL, phiA0 = NULL, phiB0 = NULL, n_post_sample = 1000,
                  model_dynamics = survival_model("exponential")) {
 
   message("FlexRL")
@@ -1226,9 +1226,9 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
   Delta <- Matrix::Matrix(0, nrow = nrow(encodedA), ncol = nrow(encodedB), sparse = TRUE)
   pbfinal_id <- cli::cli_progress_bar(
     format = "Drawing Delta          {cli::pb_bar} {cli::pb_percent} [{cli::pb_elapsed}]",
-    total = n_post_samp, clear = FALSE
+    total = n_post_sample, clear = FALSE
   )
-  for (m in seq_len(n_post_samp)) {
+  for (m in seq_len(n_post_sample)) {
     step <- gibbs_step(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma_avg, eta_avg, alpha_avg, phi_avg)
     # Note: eta/alpha/phi are frozen at their posterior mean for these draws
     linksCpp <- step$linksCpp
@@ -1242,7 +1242,7 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
     }
     cli::cli_progress_update(id = pbfinal_id)
   }
-  Delta <- Delta / n_post_samp
+  Delta <- Delta / n_post_sample
   cli::cli_progress_done(id = pbfinal_id)
 
   if (music_on) utils::browseURL("https://www.youtube.com/watch?v=NTa6Xbzfq1U")
@@ -1739,7 +1739,7 @@ link_with_diyar <- function(dataA, dataB, arguments, ...) {
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
 #' fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 5, 
-#'              gibbs_iter = 10, gibbs_burnin = 5, n_post_samp = 10 )                         
+#'              gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10 )                         
 #' linked_pairs <- fit$Delta[fit$Delta$x > 0.5, ]
 #' RL_agreement( prep_data$encodedA, prep_data$encodedB,
 #'               names(PIVs_config), linked_pairs )
@@ -2116,7 +2116,7 @@ prepare_data <- function(data1, data2, label1, label2, PIVs_config,
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
 #' fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 5,
-#'              gibbs_iter = 10, gibbs_burnin = 5, n_post_samp = 10 )
+#'              gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10 )
 #' threshold_strict <- stats::quantile(fit$Delta$x, 0.75)
 #' data_list = list(data_baseline = prep_data$encodedA, 
 #' data_select = prep_data$encodedA[fit$Delta[fit$Delta$x > threshold_strict, "i"],])
@@ -2414,7 +2414,7 @@ plot_linkage_scores <- function(n_pairs, LinkScore) {
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
 #' fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 5,
-#'              gibbs_iter = 10, gibbs_burnin = 5, n_post_samp = 10 )
+#'              gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10 )
 #' FDP_score(fit$Delta$x, 0.5)
 #' FDP_score(fit$Delta$x, 0.75)
 FDP_score <- function(LinkScore, threshold) {
@@ -2485,7 +2485,7 @@ FDP_score <- function(LinkScore, threshold) {
 #' new_data$dataA$date[is.na(new_data$dataA$date)] <- 0
 #' new_data$dataB$date[is.na(new_data$dataB$date)] <- 0
 #' arguments <- list(data = prep_data, StEM_iter = 5, StEM_burnin = 1, 
-#'                   gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5)
+#'                   gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5)
 #' fit_flexrl <- link_with_FlexRL(new_data$dataA, new_data$dataB, arguments)  
 #' FDP_synth(fit_flexrl$idxA, fit_flexrl$idxB, fit_flexrl$LinkScore, 0.5,
 #'           nrow(prep_data$encodedA), nrow(prep_data$encodedB), 
@@ -2560,7 +2560,7 @@ FDP_synth <- function(idxA, idxB, LinkScore, threshold,
 #' compute_RL_FDP_score( prep_data$encodedA, prep_data$encodedB, PIVs, 1, 2,
 #'                       "FlexRL", data = prep_data, StEM_iter = 5, 
 #'                       StEM_burnin = 2, gibbs_iter = 5, gibbs_burnin = 2,
-#'                       n_post_samp = 5 )
+#'                       n_post_sample = 5 )
 compute_RL_FDP_score <- function(encodedA, encodedB, PIVs, maxIter4CV = 10, n_repeats = 10,
                                  RL_method, ...) {
   n_records_A <- nrow(encodedA)
@@ -2707,7 +2707,7 @@ compute_RL_FDP_score <- function(encodedA, encodedB, PIVs, maxIter4CV = 10, n_re
 #' compute_augmRL_FDP_synth( "arf", prep_data$encodedA, prep_data$encodedB, PIVs, 
 #'                           NULL, TRUE, 1, 2, "FlexRL", data = prep_data, 
 #'                           StEM_iter = 5, StEM_burnin = 2, 
-#'                           gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5 )
+#'                           gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5 )
 compute_augmRL_FDP_synth <- function(synth_method, encodedA, encodedB, PIVs, n_synth = NULL,
                                     restrict_support_intersection = TRUE, maxIter4CV = 10, n_repeats = 10,
                                     RL_method, ...) {
@@ -2909,7 +2909,7 @@ compute_augmRL_FDP_synth <- function(synth_method, encodedA, encodedB, PIVs, n_s
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
 #' fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 3,
-#'              gibbs_iter = 10, gibbs_burnin = 3, n_post_samp = 10 )
+#'              gibbs_iter = 10, gibbs_burnin = 3, n_post_sample = 10 )
 #' plot_StEM_convergence(fit)
 plot_StEM_convergence <- function(fit) {
   required <- c("gamma", "eta", "alpha", "phi")
@@ -3153,14 +3153,14 @@ plot.discrepancy_curves <- function(x, ...) {
 #' PIVs_type <- list(V1=FALSE, V2=FALSE, V3=FALSE, V4=TRUE)
 #' 
 #' fit_flexrl <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2,
-#'                     gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 10 )
+#'                     gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 10 )
 #' diag_flexrl <- RL_diagnostics(fit_flexrl, prep_data$encodedA, prep_data$encodedB,
 #'                               PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs,
 #'                               FDP_estimation = TRUE, RL_method = "FlexRL", 
 #'                               data = prep_data,
 #'                               StEM_iter = 5, StEM_burnin = 2, 
 #'                               gibbs_iter = 5, gibbs_burnin = 2,
-#'                               n_post_samp = 10,
+#'                               n_post_sample = 10,
 #'                               maxIter4CV = 1, n_repeats = 1)
 #' diag_flexrl # print(diag_flexrl)
 #' print(diag_flexrl, threshold = 0.75)

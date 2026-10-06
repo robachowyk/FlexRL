@@ -1,8 +1,8 @@
 ---
-title: "FlexRL-RL-vignette"
+title: "FlexRL-RL-block-vignette"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{FlexRL-RL-vignette}
+  %\VignetteIndexEntry{FlexRL-RL-block-vignette}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -10,12 +10,14 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  options(digits = 2, scipen = 999)
 )
 ```
 
 ```{r, include = FALSE}
 pak::pak("robachowyk/FlexRL")
+options(digits = 2, scipen = 999)
 ```
 
 ```{r setup}
@@ -30,12 +32,12 @@ Several other algorithms for record linkage are available in R. The `link_with_*
 
 This vignette runs these wrappers on the same pipeline for:
 - a regional subset of the [NLTCS](https://www.icpsr.umich.edu/web/NACDA/studies/9681/versions/V5) data (1982 and 1994 waves)
-- a regional subset of the [SHIW](https://github.com/robachowyk/FlexRL-experiments/tree/main/SHIWApplication/SHIWData) data (2016 and 2020 waves)
+- a regional subset of the [SHIW](https://www.bancaditalia.it/statistiche/tematiche/indagini-famiglie-imprese/bilanci-famiglie/distribuzione-microdati/index.html) data (2016 and 2020 waves)
 - the full SHIW data with and without regional blocking
 
 ## One pipeline for all the wrappers
 
-```{r}
+```{r functionalities}
 wrapper_args <- function(method, prep_data, ...) {
   PIVs <- names(prep_data$PIVs_config)
   args <- c(...)
@@ -160,9 +162,9 @@ run_all_wrappers <- function(prep_data, PIVs_type, methods, FDP_estimation = TRU
 }
 
 show_results <- function(df_results) {
-  cat("Record Linkage\n");      print(round(df_results[1:5, ], 3))
-  cat("\nFDP estimation\n");    print(round(df_results[6:8, ], 3))
-  cat("\nLinked divergence\n"); print(round(df_results[9:11, ], 3))
+  cat("Record Linkage\n");      print(df_results[1:5, ], 3)
+  cat("\nFDP estimation\n");    print(df_results[6:8, ], 3)
+  cat("\nLinked divergence\n"); print(df_results[9:11, ], 3)
 }
 
 methods <- c("FlexRL", "BRL", "multilink", "fastLink", "reclin2", "diyar", "fedmatch")
@@ -174,7 +176,7 @@ We will fill a table of results throughout the vignette, gathering for each reco
 
 We use 4 **P**artially **I**dentifying **V**ariable**s** to link the records: sex, birth month and birth year are `stable`, the state code may change over time but we cannot model these changes so we set this variable as `flexible`.
 
-```{r}
+```{r nltcs-block}
 df1982 <- read.csv("ex-reg-NLTCS-82.csv", row.names = 1)
 df1994 <- read.csv("ex-reg-NLTCS-94.csv", row.names = 1)
 
@@ -189,14 +191,14 @@ PIVs_type <- list(SEX = FALSE, DOB_MONTH = TRUE, DOB_YEAR = TRUE, STATE = FALSE)
 
 `prepare_data()` removes the records for which the linking variables are outside of the common support, checks that PIVs are not strongly associated with each other (which may degrade record linkage performance), maps PIV values to natural numbers and encodes missing values as 0. The StEM algorithm denotes the smallest source as `A` and the largest as `B`. The true pairs are known from the identifier ID (they are indexed on the rows of `encodedA` and `encodedB`, after the support restriction).
 
-```{r, warning=FALSE}
+```{r nltcs-block-prepare-data, warning=FALSE}
 prep_data <- prepare_data(df1982, df1994, "1982", "1994", PIVs_config, same_mistakes = TRUE, uniq_id = "ID")
 
 c(n_A = nrow(prep_data$encodedA), n_B = nrow(prep_data$encodedB), n_links = nrow(prep_data$true_pairs))
 
 prep_data$n_values
 ```
-```{r, message = FALSE, warning=FALSE}
+```{r nltcs-block-results, message=FALSE, warning=FALSE}
 df_results_NLTCS <- run_all_wrappers(prep_data, PIVs_type, methods)
 ```
 
@@ -208,7 +210,7 @@ show_results(df_results_NLTCS)
 
 We use 4 **P**artially **I**dentifying **V**ariable**s** to link the records: sex and birth year are `stable`, education level and marital status are `flexible`.
 
-```{r, warning=FALSE}
+```{r shiw-block, warning=FALSE}
 df2016 <- read.csv("ex-reg-SHIW-16.csv", row.names = 1)
 df2020 <- read.csv("ex-reg-SHIW-20.csv", row.names = 1)
 
@@ -227,7 +229,7 @@ c(n_A = nrow(prep_data$encodedA), n_B = nrow(prep_data$encodedB), n_links = nrow
 prep_data$n_values
 ```
 
-```{r, message = FALSE, warning=FALSE}
+```{r shiw-block-results, message=FALSE, warning=FALSE}
 df_results_SHIW <- run_all_wrappers(prep_data, PIVs_type, methods)
 ```
 
@@ -237,7 +239,7 @@ show_results(df_results_SHIW)
 
 ## Full SHIW data
 
-```{r, message=FALSE, warning=FALSE}
+```{r shiw, message=FALSE, warning=FALSE}
 df2016 <- read.csv("SHIW2016.csv", row.names = 1)
 df2020 <- read.csv("SHIW2020.csv", row.names = 1)
 df2016 <- df2016[!df2016$ID %in% df2016$ID[duplicated(df2016$ID)], ]
@@ -255,7 +257,7 @@ df_results_full <- data.frame(matrix(NA, nrow = 6, ncol = 0))
 rownames(df_results_full) <- c("TP", "FP", "FN", "sensitivity", "FDP", "minutes")
 for (method in methods) {
   t0 <- Sys.time()
-  args <- list(StEM_iter = 10, StEM_burnin = 5, gibbs_iter = 10, gibbs_burnin = 5, n_post_samp = 10)
+  args <- list(StEM_iter = 10, StEM_burnin = 5, gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10)
   fit <- run_wrapper(method, prep_data_full, wrapper_args(method, prep_data_full, args))
   df_results_full[1:5, method] <- evaluate_linkage(fit, true_pairs_full)
   df_results_full[6, method] <- if (is.null(fit)) NA else round(as.numeric(Sys.time() - t0, units = "mins"))
@@ -266,8 +268,6 @@ for (method in methods) {
 ```
 
 ```{r}
-options(digits = 2, scipen = 999)
-
 cat("Record Linkage on large files")
 df_results_full
 ```
@@ -278,7 +278,7 @@ Note that when methods do not ensure the one-to-one assignment constraint the nu
 
 Blocking on the region code `IREG` splits the task into 20 smaller ones. Within a region, `IREG` is constant and the linkage uses the 4 other PIVs. Region 2 is the regional subset used above.
 
-```{r, message=FALSE, warning=FALSE}
+```{r shiw-regional-blocking, message=FALSE, warning=FALSE}
 regions <- sort(unique(c(df2016$IREG, df2020$IREG)))
 results_IREG <- list()
 for (r in regions) {
@@ -299,8 +299,6 @@ results_IREG <- do.call(rbind, results_IREG)
 ```
 
 ```{r}
-options(digits = 2)
-
 cat("Record Linkage on regional subsets")
 results_IREG
 ```
@@ -317,9 +315,9 @@ table_by <- function(measure) {
   tab
 }
 
-round(table_by("FDP"), 2)
+table_by("FDP")
 
-round(table_by("sensitivity"), 2)
+table_by("sensitivity")
 ```
 
 Averaged over the regions and total computing time:
@@ -337,7 +335,7 @@ rownames(summary_IREG) <- NULL
 summary_IREG
 ```
 
-```{r, fig.width=7, fig.height=5}
+```{r shiw-regional-blocking-plot, fig.width=7, fig.height=5}
 colours <- grDevices::hcl.colors(length(methods), "Dark 3")
 names(colours) <- methods
 plot(NA, xlim = c(0, 1), ylim = c(0, 1), xlab = "sensitivity", ylab = "FDP",
@@ -351,6 +349,6 @@ legend("bottomright", legend = methods, col = colours, pch = 19, bty = "n")
 
 The 4 PIVs have little discriminating power on these data (birth years, sex, 6 education levels, 4 marital statuses) and the two waves overlap on about 40% of their records (6.430 true links, 14.917 records in A, 16.445 record sin B), so the task is hard for every package. `fastLink`, `multilink`, `BRL` and `diyar` are not scalable (out of memory errors). 
 
-We compare methods with blocking over the 20 regions: `reclin2` (EM on the comparison patterns, thresholded at 0.5 on the posterior) links a lot of records reaching a high sensitivity at the price of a high FDP; `fastLink`, `fedmatch` and `multilink` link about half of the true pairs with a FDP around 0.7; `BRL` and `diyar` are the most conservative, with a FDP around 0.3 and a sensitivity around 0.2; `FlexRL` performance is between these conservative and permissive methods. 
+We compare methods with blocking over the 20 regions: `reclin2` (EM on the comparison patterns, threshold at 0.5 on the posterior) links a lot of records reaching a high sensitivity at the price of a high FDP; `fastLink`, `fedmatch` and `multilink` link about half of the true pairs with a FDP around 0.7; `BRL` and `diyar` are the most conservative, with a FDP around 0.3 and a sensitivity around 0.2; `FlexRL` performance is between these conservative and permissive methods. 
 
 In terms of computational time however, `FlexRL` and `multilink` are more than 10 times slower than the other methods. The results were computed with the code above, on a machine with Apple M1 Max ARM chip, 8-core CPU, 32 GB of memory.

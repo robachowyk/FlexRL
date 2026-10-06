@@ -16,7 +16,7 @@ StEM(
   gamma0 = NULL,
   phiA0 = NULL,
   phiB0 = NULL,
-  n_post_samp = 1000,
+  n_post_sample = 1000,
   model_dynamics = survival_model("exponential")
 )
 }
@@ -59,7 +59,7 @@ iteration (only used if \code{new_directory} is not \code{NULL}).}
 
 \item{phiB0}{Optional starting values for \code{phi}; at random if \code{NULL}.}
 
-\item{n_post_samp}{Integer, number of posterior draws used to estimate the
+\item{n_post_sample}{Integer, number of posterior draws used to estimate the
 final linkage probabilities \code{Delta}. Default is set to 1000, we recommend
 not lowering it.}
 
@@ -107,7 +107,7 @@ gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200,
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
 fit1 <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
-              gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5,
+              gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5,
               model_dynamics = survival_model("exponential") )
 apply(fit1$alpha$V4[2:5,], 2, mean)
 cond_hazard_params1$V4
@@ -121,7 +121,7 @@ gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200,
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
 fit2 <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
-              gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5,
+              gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5,
               model_dynamics = survival_model("weibull"))
 apply(fit2$alpha$V4[2:5,], 2, mean)
 cond_hazard_params2$V4
@@ -135,7 +135,7 @@ gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200,
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
 fit3 <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
-              gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5,
+              gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5,
               model_dynamics = survival_model("gompertz"))
 apply(fit3$alpha$V4[2:5,], 2, mean)
 cond_hazard_params3$V4
@@ -149,7 +149,7 @@ gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200,
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
 fit4 <- StEM( data = prep_data, StEM_iter = 2, StEM_burnin = 1, 
-              gibbs_iter = 2, gibbs_burnin = 1, n_post_samp = 2,
+              gibbs_iter = 2, gibbs_burnin = 1, n_post_sample = 2,
               model_dynamics = survival_model("piecewise", cuts = c(1,2,3)))
 apply(fit4$alpha$V4, 2, mean)
 cond_hazard_params4$V4

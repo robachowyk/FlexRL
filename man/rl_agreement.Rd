@@ -58,7 +58,7 @@ gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200,
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
 fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 5, 
-             gibbs_iter = 10, gibbs_burnin = 5, n_post_samp = 10 )                         
+             gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10 )                         
 linked_pairs <- fit$Delta[fit$Delta$x > 0.5, ]
 RL_agreement( prep_data$encodedA, prep_data$encodedB,
               names(PIVs_config), linked_pairs )

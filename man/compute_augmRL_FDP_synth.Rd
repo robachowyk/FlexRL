@@ -88,5 +88,5 @@ compute_augmRL_FDP_synth( "arf", prep_data$encodedA, prep_data$encodedB, PIVs,
 compute_augmRL_FDP_synth( "arf", prep_data$encodedA, prep_data$encodedB, PIVs, 
                           NULL, TRUE, 1, 2, "FlexRL", data = prep_data, 
                           StEM_iter = 5, StEM_burnin = 2, 
-                          gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5 )
+                          gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5 )
 }

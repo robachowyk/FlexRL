@@ -51,7 +51,7 @@ gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200,
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
 fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 5,
-             gibbs_iter = 10, gibbs_burnin = 5, n_post_samp = 10 )
+             gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10 )
 threshold_strict <- stats::quantile(fit$Delta$x, 0.75)
 data_list = list(data_baseline = prep_data$encodedA, 
 data_select = prep_data$encodedA[fit$Delta[fit$Delta$x > threshold_strict, "i"],])
