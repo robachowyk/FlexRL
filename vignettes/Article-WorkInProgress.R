@@ -127,5 +127,7 @@ diag <- RL_diagnostics(fit = fit, encodedA = prep_data$encodedA, encodedB = prep
                        true_pairs = prep_data$true_pairs, FDP_estimation = TRUE, 
                        RL_method = "FlexRL", data = prep_data, StEM_iter = 10, StEM_burnin = 5, 
                        gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10,
-                       maxIter4CV = 1, n_repeats = 2)
+                       maxIter4CV = 5, n_repeats = 2)
+
+# more?
 
