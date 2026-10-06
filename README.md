@@ -20,7 +20,6 @@ Those tools work on the output of **any** record linkage method, so you can repo
 ### 📣 News
 
 - Version 1.0.0 of **FlexRL** is ready for use on [CRAN](https://cran.r-project.org/package=FlexRL)!
-
 - **FlexRL** will be soon available on [JASP](https://jasp-stats.org/)
 
 ## 🔬 FlexRL contributions: hierarchical modelling & diagnostics
