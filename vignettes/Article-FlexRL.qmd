@@ -38,21 +38,21 @@ Researchers and statistical agencies increasingly need to combine data sources t
 
 Two main probabilistic record linkage approaches have developed through times. First, the traditional mixture model [@FS_RL_1969; @jaro_RL_matching_1989; @Larsen_mixture_1999; @fortini_bay_RL_2001; @sadinle_bay_bipartite_RL_2017] turns the problem into a classification one, between pairs of records that are similar and pairs that are not. Second, the hierarchical entity resolution framework [@tancredi_bay_RL_2011; @steorts2015; @smered2016; @dblink_2021; @marchantsteorts2023] models the data generation process, considering the observed values as potentially distorted versions of true latent values. The later uses all the information contained in the records and is therefore more flexible but more computationally demanding. In `R`, it has been developed for entity resolution (clustering records from one file into entities) rather than for the linkage between two data sources.
 
-Record linkage may miss links, entities represented in both sources, or falsely link records from distinct entities. Both may bias the conclusions drawn from linked data, and they cannot be reduced simultaneously. A stricter decision rule produces fewer falsely linked pairs but more missed links. Practitioners therefore need not only record linkage methods, but also tools to quantify linkage errors and their consequences for statistical analysis.
+Record linkage may miss links, entities represented in both sources, or falsely link records from distinct entities. Both may bias the conclusions drawn from linked data, and they cannot be reduced simultaneously [@Wang_Slawski_linked_2022; @reflexRL_2020; @CRLrobachetal26]. A stricter decision rule produces fewer falsely linked pairs but more missed links. Practitioners therefore need not only record linkage methods, but also tools to quantify linkage errors and appraise their consequences for statistical analysis.
 
 This article presents the *FlexRL* `R` package, which links the records of two overlapping sources with a hierarchical model and provides tools to assess the linked data quality. The package implements a stochastic expectation maximisation (StEM) algorithm to estimate the distribution from which the observed data arise [@RLrobachetal25]. The model accounts for registration errors and for changes of the PIVs over time. Two estimators of the false discovery proportion (FDP) are implemented: one computed from the linkage scores of the model [@belin_rubin_1995; @measurementError_2019; @fastLink_paper_2019], and one based on an auxiliary task linking synthetic records to the data [@FDProbachetal25]. Multiple measures of the divergence of the linked sample from the original data sources are implemented: standardised mean differences, overlap of supports, maximum mean discrepancy, agreement rates.
 
 The diagnostic tools for linked data quality only need the linked pairs and, if any, their linkage scores. They therefore apply to the output of any linkage method, and the package provides wrappers for several existing `R` packages. These tools are motivated by recent research on the biases that linkage errors cause in inference [@Lahiri_Larsen_linked_2005; @Tancredi_Liseo_linked_2015; @reflexRL_2020; @Wang_Slawski_linked_2022; @CRLrobachetal26] and on the need for linked data quality control in practice [@eval_linkage_17; @datalinkagequal2020; @linkage_bias_datasynthesis24; @Laidler_NHSE_2025]. The package is aimed at practitioners, statistical agencies and researchers who need to link data sources without a unique identifier, or who want to measure the error and the sample selection induced by record linkage.
 
-The remainder of the article is organised as follows. @sec-setup introduces the notation, the two modelling paradigms and the existing software. @sec-model presents the model implemented in *FlexRL* and its estimation. @sec-inference explains how linkage errors affect inference and describes the tools that quantify them. @sec-package further describes the package and its main functions, and @sec-practice illustrates its use on simulated and real data. @sec-discussion discusses the scope of the package and concludes.
+The remainder of the article is organised as follows. @sec-setup introduces the notation, the two main modelling paradigms and the existing software. @sec-model presents the model implemented in *FlexRL* and its estimation. @sec-inference explains how linkage errors affect inference and describes the tools that quantify them. @sec-package further describes the package and its main functions, and @sec-practice illustrates its use on simulated and real data. @sec-discussion discusses the scope of the package and concludes.
 
-## Record linkage of two data sources {#sec-setup}
+## The record linkage problem {#sec-setup}
 
 ### Setup and notation {#sec-notation}
 
-We consider two overlapping samples $\mathcal A$ and $\mathcal B$ from the same population, with $N_{\mathcal A}$ and $N_{\mathcal B} \geq N_{\mathcal A}$ records. Both sources record the same $K$ PIVs, indexed by $k = 1, \dots, K$, each categorical with $N_k$ possible values. For record $i \in \mathcal A$ and PIV $k$, $G^{\mathcal A}_{i,k}$ is the registered (observed) value and $H^{\mathcal A}_{i,k}$ the true (latent) value; $G^{\mathcal B}_{j,k}$ and $H^{\mathcal B}_{j,k}$ are defined analogously for record $j \in \mathcal B$. The registered value differs from the true value when there is a registration error: a missing value or a mistake. Overall, we use $N$ indexed by a set to denote its size and, to lighten notation, we identify the index $i \in \{1, \dots, N_{\mathcal A}\}$ with the entity $i$ in $\mathcal A$ (and similarly for index $j \in \{1, \dots, N_{\mathcal B}\}$ and entity $j$ in $\mathcal B$); this creates no ambiguity.
+We consider two overlapping samples $\mathcal A$ and $\mathcal B$ from the same population, with $N_{\mathcal A}$ and $N_{\mathcal B} \geq N_{\mathcal A}$ records. Both sources record the same $K$ PIVs, indexed by $k = 1, \dots, K$, each categorical with $N_k$ possible values. Throughout, index $i \in \{1, \dots, N_{\mathcal A}\}$ identifies with entity $i$ in $\mathcal A$, and likewise for index $j \in \{1, \dots, N_{\mathcal B}\}$ and entity $j$ in $\mathcal B$; $N$ indexed by a set denotes its size. For record $i \in \mathcal A$ and PIV $k$, $G^{\mathcal A}_{i,k}$ is the registered (observed) value and $H^{\mathcal A}_{i,k}$ the true (latent) value; $G^{\mathcal B}_{j,k}$ and $H^{\mathcal B}_{j,k}$ are defined analogously for record $j \in \mathcal B$. 
 
-For an entity $\ell$ recorded in both sources, the true values $H^{\mathcal A}_{\ell,k}, H^{\mathcal B}_{\ell,k}$ may also differ between $\mathcal A$ and $\mathcal B$. We call a PIV *dynamic* if its true value may change between the two data collections, for instance a postal code after a move or a marital status. Otherwise, the PIV values cannot change, like the year of birth. For an entity recorded in both sources, the true values of a non-dynamic PIV are therefore identical in $\mathcal A$ and $\mathcal B$, and any disagreement between the registered values is due to a registration error. @sec-pivs describes how *FlexRL* handles dynamic PIVs.
+The registered values differ from the true values when there are registration errors: missing values or mistakes. In addition, the true values may differ between the two data collections $\mathcal A$ and $\mathcal B$. It is the case for *dynamic* PIVs like postal code or marital status. Otherwise PIVs are *stable* and their true values cannot change, like for the year of birth. For an entity recorded in both sources, the true values of stable PIVs are therefore identical in $\mathcal A$ and $\mathcal B$, and any disagreement between the registered values is due to a registration error. @sec-pivs describes how *FlexRL* handles dynamic PIVs.
 
 The object of interest is the linkage matrix $\boldsymbol{\Delta} \in \{0,1\}^{N_{\mathcal A} \times N_{\mathcal B}}$, with $\Delta_{i,j} = 1$ if records $i \in \mathcal A$ and $j \in \mathcal B$ refer to the same entity. We assume that there is no duplicate within a source, so that each record forms a link with at most one record of the other source: $\sum_j \Delta_{i,j} \leq 1$ for all $i$ and $\sum_i \Delta_{i,j} \leq 1$ for all $j$. This is the one-to-one assignment constraint, also referred to as bipartite matching [@sadinle_bay_bipartite_RL_2017]. We denote by $\gamma \in (0,1)$ the probability that a record of $\mathcal A$ forms a link with a record of $\mathcal B$, that is, the overlap between the sources as a fraction of the smaller data set.
 
@@ -94,7 +94,16 @@ In `Python`, *recordlinkage* [@PYRL_de_bruin_j_2019], *Splink* [@splink_2022] an
 
 No `R` package implements Paradigm 2 for the linkage of two sources under the one-to-one assignment constraint, and none models the dynamics of PIVs over time. Moreover, none of the package provides tools to assess the quality of the linked data and its suitability for inference.
 
-## The FlexRL model {#sec-model}
+## The hierarchical model {#sec-model}
+
+### Configuration of the PIVs {#sec-pivs}
+
+The package distinguishes three kinds of PIVs, which determine how the components of @eq-flexrl are used.
+
+- *Stable*: the true value does not change (e.g. birth year). The PIV is used to form candidate pairs (see @sec-estimation), and its probability of mistake can be bounded, for example by $0.10$.
+- *Dynamic*: the true value may change (e.g. postal code, marital status or education level between two survey waves)
+  - *Flexible*: the change cannot be modelled, typically because registration dates are not available. The PIV is still used to form candidate pairs, but its probability of mistake should not be bounded, so that the registration model of @eq-registration absorbs both mistakes and changes.
+  - *Structured*: changes are modelled by @eq-survival. The PIV is not used to form candidate pairs. Registration dates are needed in both sources, and covariates for the hazard may be supplied. Mistakes and changes both result in $G^{\mathcal A}_{i,k} \neq G^{\mathcal B}_{j,k}$ and are hard to tell apart; the probability of mistake should therefore be fixed (for example at $0.02$), unless enough linked pairs have time gaps near zero, for which changes are not plausible and mistakes can be estimated without confusion. Estimating $\boldsymbol{\alpha}_k$ also requires variation in the time gaps $t_{i,j}$ among linked pairs.
 
 ### Likelihood {#sec-likelihood}
 
@@ -149,15 +158,6 @@ $$ {#eq-changes}
 Since $N_{\mathcal A} \leq N_{\mathcal B}$, we work with the rows of $\boldsymbol{\Delta}$: whether record $i \in \mathcal A$ forms a link with a record of $\mathcal B$ is Bernoulli($\gamma$), independently across $i$. Given the number of links $N_L = \sum_{i,j} \Delta_{i,j}$, all linkage matrices satisfying the one-to-one assignment constraint are equally likely. There are $N_{\mathcal B}! / (N_{\mathcal B} - N_L)!$ ways to assign the $N_L$ linked records of $\mathcal A$ to distinct records of $\mathcal B$, hence $$ 
     \log \mathcal{L}_{\gamma}(\boldsymbol{\Delta}) = N_L \log \gamma + (N_{\mathcal A} - N_L) \log (1 - \gamma) - \log \frac{N_{\mathcal B}!}{(N_{\mathcal B} - N_L)!} .
 $$ {#eq-linkage-prior}
-
-## Configuration of the PIVs {#sec-pivs}
-
-The package distinguishes three kinds of PIVs, which determine how the components of @eq-flexrl are used.
-
-- *Stable*: the true value does not change (e.g. birth year). The PIV is used to form candidate pairs (see @sec-estimation), and its probability of mistake can be bounded, for example by $0.10$.
-- *Dynamic*: the true value may change (e.g. postal code, marital status or education level between two survey waves)
-  - *Flexible*: the change cannot be modelled, typically because registration dates are not available. The PIV is still used to form candidate pairs, but its probability of mistake should not be bounded, so that the registration model of @eq-registration absorbs both mistakes and changes.
-  - *Structured*: changes are modelled by @eq-survival. The PIV is not used to form candidate pairs. Registration dates are needed in both sources, and covariates for the hazard may be supplied. Mistakes and changes both result in $G^{\mathcal A}_{i,k} \neq G^{\mathcal B}_{j,k}$ and are hard to tell apart; the probability of mistake should therefore be fixed (for example at $0.02$), unless enough linked pairs have time gaps near zero, for which changes are not plausible and mistakes can be estimated without confusion. Estimating $\boldsymbol{\alpha}_k$ also requires variation in the time gaps $t_{i,j}$ among linked pairs.
 
 ### Estimation {#sec-estimation}
 
@@ -324,13 +324,11 @@ All the tools of @sec-fdp and @sec-representativeness are gathered in a single f
 
 : Diagnostics performed by `RL_diagnostics()` {#tbl-diagnostics}
 
+Throughout the diagnostics, the record linkage is run by wrappers with a common form, `link_with_<pkg>(dataA, dataB, ...)`, returning `idxA`, `idxB` and `LinkScore`. Wrappers exist for *FlexRL*, *fastLink*, *BRL*, *reclin2*, *multilink*, *diyar* and *fedmatch*. That way, the diagnostic tools apply on any of these methods in a similar fashion.
+
 #### FDP estimation
 
 With `FDP_estimation = TRUE`, the function runs the two estimators of @sec-fdp; this is optional since it can take time. The linkage method is named in `RL_method` and its arguments are passed through `...`, as are the number of repetitions `n_repeats`, the generator `synth_method` (`"arf"` by default) and the number of synthetic records `n_synth` (10% of $N_{\mathcal B}$ by default). `compute_RL_FDP_score()` computes the score-based estimate on the original task. `compute_augmRL_FDP_synth()` adds synthetic records to $\mathcal B$ with `synthesise()`, links the augmented sources as an auxiliary task, and computes both the score-based and the synthetic-data estimates on it. The three resulting curves are averaged over the repetitions. Similar score-based estimates on the original and augmented tasks support the use of the synthetic-data estimator, which requires the augmented task to be comparable to the original one.
-
-#### Using other linkage methods
-
-The linkage is run through wrappers with a common form, `link_with_<pkg>(dataA, dataB, ...)`, returning `idxA`, `idxB` and `LinkScore`. Wrappers exist for *FlexRL*, *fastLink*, *BRL*, *reclin2*, *multilink*, *diyar* and *fedmatch*, so that the FDP of any of these methods can be estimated in the same way.
 
 #### Discrepancy measures
 

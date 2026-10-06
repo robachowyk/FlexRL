@@ -1,4 +1,8 @@
 
+
+pak::pak("robachowyk/FlexRL")
+library(FlexRL)
+
 # load data
 
 df2016 <- read.csv("SHIW2016.csv", row.names = 1)
@@ -22,6 +26,7 @@ RL_agreement(prep_data$encodedA, prep_data$encodedB, PIVs, prep_data$true_pairs)
 truelinksdata <- merge(prep_data$encodedA, prep_data$encodedB, by = "ID")
 
 # add a new dynamic piv "move"
+
 prep_data$encodedA[,"date"] <- prep_data$encodedA[,"ETA"]
 prep_data$encodedB[,"date"] <- rep(0, nrow(prep_data$encodedB))
 prep_data$encodedA[,"change"] <- FALSE
@@ -48,7 +53,8 @@ for (i in seq_len(nrow(prep_data$true_pairs))) {
     prep_data$encodedB[prep_data$true_pairs[i,2], "change"] <- TRUE
   }
 }
-###
+
+# data pre-processing
 
 PIVs_config <- c(PIVs_config, list(MOVE = list(dynamics = "structured", bound_mistakes = c(NA, NA), fix_mistakes = c(0, 0), cond_hazard_cov = list(cov1 = c(), cov2 = c()))))
 PIVs <- names(PIVs_config)
@@ -57,99 +63,69 @@ PIVs_type <- c(PIVs_type, MOVE = FALSE)
 prep_data <- prepare_data(prep_data$encodedA, prep_data$encodedB, "2020", "2016", PIVs_config, same_mistakes = TRUE, uniq_id = "ID")
 true_pairs <- do.call(paste, c(prep_data$true_pairs, list(sep = "_")))
 
+# run StEM
+
 fit <- StEM(data = prep_data, StEM_iter = 10, StEM_burnin = 5, gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10)
 
-run_wrapper <- function(method, prep_data, arguments) {
-  PIVs <- names(prep_data$PIVs_config)
-  link_with <- get(paste0("link_with_", method), envir = asNamespace("FlexRL"))
-  if (method == "diyar") {
-    prep_data$encodedA <- prep_data$encodedA[, c(PIVs, "local_id", "source")]
-    prep_data$encodedB <- prep_data$encodedB[, c(PIVs, "local_id", "source")]
-  }
-  tryCatch(link_with(prep_data$encodedA, prep_data$encodedB, arguments),
-           error = function(e) {
-             if (grepl("cannot allocate|memory|bad_alloc|too large|long vectors", conditionMessage(e), ignore.case = TRUE)) {
-               message(method, ": memory error (", conditionMessage(e), "), results reported as NA")
-               return(NULL)
-             }
-             stop(e)
-           })
-}
+# default results
 
-df_results_full <- data.frame(matrix(NA, nrow = 6, ncol = 0))
-rownames(df_results_full) <- c("TP", "FP", "FN", "sensitivity", "FDP", "minutes")
-for (method in methods) {
-  t0 <- Sys.time()
-  
-  
-  df_results_full[1:5, method] <- evaluate_linkage(fit, true_pairs_full)
-  df_results_full[6, method] <- if (is.null(fit)) NA else round(as.numeric(Sys.time() - t0, units = "mins"))
-}
+delta_result = fit$Delta
+delta_result = delta_result[delta_result$x>0.5, ]
 
+linked_pairs    = do.call(paste, c(delta_result[,c("i","j")], list(sep = "_")))
+true_positive   = length( intersect(linked_pairs, true_pairs) ) 
+false_positive  = length( setdiff(linked_pairs, true_pairs) ) 
+false_negative  = length( setdiff(true_pairs, linked_pairs) )
+sensitivity     = true_positive / (true_positive + false_negative) 
+fdp             = false_positive / (true_positive + false_positive)  
 
+c(true_positive,false_positive,false_negative,sensitivity,fdp)
 
+# convergence of the alpha!
 
+apply(fit$alpha$MOVE, 2, mean)
+log(0.03)
 
+# linked data for inference
 
+# 2020 data
+prep_data$encodedA[delta_result$i, ]
 
+# 2016 data
+prep_data$encodedB[delta_result$j, ]
 
-time_difference <- truelinksdata$ETA.x
-intercept <- rep(1, nrow(truelinksdata))
-proba_same_H <- matrix(1, nrow(truelinksdata), length(PIVs)+1)
-cov <- cbind(intercept)
-model_dynamics <- survival_model("exponential")
-proba_same_H[, length(PIVs)+1] <- model_dynamics$S(as.matrix(cov), log(0.03), time_difference)
-
-plot(truelinksdata$ETA.x, proba_same_H[,6])
-
-xp <- exp(0.23 * (0:(30 - 1)))
-truelinksdata$move.x <- sample(seq_len(30), nrow(truelinksdata), replace = TRUE, prob = xp / sum(xp))
-truelinksdata$move.y <- truelinksdata$move.x
-truelinksdata$change <- FALSE
-
-k = 6
-for (i in seq_len(nrow(truelinksdata))) {
-  is_not_changing <- stats::rbinom(1, 1, proba_same_H[i, k])
-  if (!is_not_changing && !is.na(truelinksdata[i, "move.x"])) {
-    truelinksdata[i, "move.y"] <- sample((1:30)[-c(truelinksdata[i, "move.x"])], 1)
-    truelinksdata[i, "change"] <- TRUE
-  }
-}
-
-plot(truelinksdata$ETA.x, truelinksdata$move.x == truelinksdata$move.y)
-###
-
-X <- cbind(intercept = rep(1, nrow(truelinksdata)))
-times <- truelinksdata$ETA.y
-Hequal <- truelinksdata$STUDIO.x == truelinksdata$STUDIO.y
-test = survival_model("exponential")
-# test$S(X, alpha, times)
-# expo$S(X, alpha = log(0.3), times)
-alphastar = stats::nlminb(test$init(ncol(X)), test$negloglik, X = X, times = times, Hequal = Hequal)$par
-plot(times, test$S(X,alphastar, times))
-plot(times, Hequal)
-
-plot(truelinksdata[truelinksdata$STUDIO.x == truelinksdata$STUDIO.y,"ETA.x"])
-plot(truelinksdata[truelinksdata$STUDIO.x != truelinksdata$STUDIO.y,"ETA.x"])
-
-sort(truelinksdata$STUDIO.x == truelinksdata$STUDIO.y)
-
-
-(truelinksdata, )
-
-apply(df2016, 2, function(x) length(unique(x)))
-apply(df2020, 2, function(x) length(unique(x)))
-
-# ETA: age (realted to birth year)
-# nonoc unemployment type
-# sttp7 emplyment branch of activity
+# combined 
+combined <- data.frame( cbind( data.frame(prep_data$encodedA[delta_result$i, ]),
+                                 data.frame(prep_data$encodedB[delta_result$j, ]) ) )
 
 # in 2016
 # ETA: age (realted to birth year) (cont)
 # STUDIO: Educational qualification (cat)
 # SETTP11: sector of activity
 # QUALP10: Main employment, work status
-
+# .y and .1
 # in 2020
-# Y etapen expected age of retirement (cont)
+# outome etapen expected age of retirement (cont)
+# .x and _
+
+model <- lm(etapen.x ~ ETA.y + as.factor(STUDIO.y) + as.factor(SETTP11.y) + as.factor(QUALP10.y), data = truelinksdata)
+model <- lm(etapen.x ~ ETA.y + as.factor(STUDIO.y) + as.factor(SETTP3.y) + as.factor(QUALP3.y), data = truelinksdata)
+summary(model)$coef
+summary(model)$coef[summary(model)$coef[,"Pr(>|t|)"] < 0.1,]
+summary(model)$adj.r.squared
+
+modelRL <- lm(etapen ~ ETA.1 + as.factor(STUDIO.1) + as.factor(SETTP11.1) + as.factor(QUALP10.1), data = combined)
+modelRL <- lm(etapen ~ ETA.1 + as.factor(STUDIO.1) + as.factor(SETTP3.1) + as.factor(QUALP3.1), data = combined)
+summary(modelRL)$coef
+summary(modelRL)$coef[summary(modelRL)$coef[,"Pr(>|t|)"] < 0.1,]
+summary(modelRL)$adj.r.squared
+
+# run diagnostics
+
+diag <- RL_diagnostics(fit = fit, encodedA = prep_data$encodedA, encodedB = prep_data$encodedB,
+                       compare_vars = PIVs, vars_type_cont = PIVs_type, PIVs = PIVs, 
+                       true_pairs = prep_data$true_pairs, FDP_estimation = TRUE, 
+                       RL_method = "FlexRL", data = prep_data, StEM_iter = 10, StEM_burnin = 5, 
+                       gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10,
+                       maxIter4CV = 1, n_repeats = 2)
 

@@ -17,7 +17,6 @@ knitr::opts_chunk$set(
 
 ```{r, include = FALSE}
 pak::pak("robachowyk/FlexRL")
-options(digits = 2, scipen = 999)
 ```
 
 ```{r setup}
@@ -198,7 +197,8 @@ c(n_A = nrow(prep_data$encodedA), n_B = nrow(prep_data$encodedB), n_links = nrow
 
 prep_data$n_values
 ```
-```{r nltcs-block-results, message=FALSE, warning=FALSE}
+
+```{r nltcs-block-results, warning=FALSE, message=FALSE}
 df_results_NLTCS <- run_all_wrappers(prep_data, PIVs_type, methods)
 ```
 
@@ -229,7 +229,7 @@ c(n_A = nrow(prep_data$encodedA), n_B = nrow(prep_data$encodedB), n_links = nrow
 prep_data$n_values
 ```
 
-```{r shiw-block-results, message=FALSE, warning=FALSE}
+```{r shiw-block-results, warning=FALSE, message=FALSE}
 df_results_SHIW <- run_all_wrappers(prep_data, PIVs_type, methods)
 ```
 
@@ -239,7 +239,7 @@ show_results(df_results_SHIW)
 
 ## Full SHIW data
 
-```{r shiw, message=FALSE, warning=FALSE}
+```{r shiw, warning=FALSE, message=FALSE}
 df2016 <- read.csv("SHIW2016.csv", row.names = 1)
 df2020 <- read.csv("SHIW2020.csv", row.names = 1)
 df2016 <- df2016[!df2016$ID %in% df2016$ID[duplicated(df2016$ID)], ]
@@ -278,7 +278,7 @@ Note that when methods do not ensure the one-to-one assignment constraint the nu
 
 Blocking on the region code `IREG` splits the task into 20 smaller ones. Within a region, `IREG` is constant and the linkage uses the 4 other PIVs. Region 2 is the regional subset used above.
 
-```{r shiw-regional-blocking, message=FALSE, warning=FALSE}
+```{r shiw-regional-blocking, warning=FALSE, message=FALSE}
 regions <- sort(unique(c(df2016$IREG, df2020$IREG)))
 results_IREG <- list()
 for (r in regions) {
@@ -288,9 +288,11 @@ for (r in regions) {
   true_pairs_r <- do.call(paste, c(prep_data_r$true_pairs, list(sep = "_")))
   for (method in methods) {
     t0 <- Sys.time()
-    fit <- run_wrapper(method, prep_data_r, wrapper_args(method, prep_data_r))
+    fit <- run_wrapper(method, prep_data_r, wrapper_args(method, prep_data_r, list(StEM_iter = 10, StEM_burnin = 5, 
+                gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10, n_iter = 500, max_cc_size = 50, n.cores = 1)))
     results_IREG[[length(results_IREG) + 1]] <- data.frame(
-      IREG = r, n_A = nrow(prep_data_r$encodedA), n_B = nrow(prep_data_r$encodedB), n_links = length(true_pairs_r),
+      IREG = r, n_A = nrow(prep_data_r$encodedA), 
+      n_B = nrow(prep_data_r$encodedB), n_links = length(true_pairs_r),
       method = method, t(evaluate_linkage(fit, true_pairs_r)),
       seconds = round(as.numeric(Sys.time() - t0, units = "secs")))
   }
