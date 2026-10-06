@@ -1,0 +1,385 @@
+---
+title: "FlexRL: an R package for Flexible Record Linkage and Inference on Linked Data"
+author:
+  - name: Kayané Robach
+    orcid: 0000-0002-5725-623X
+    email: k.c.robach@amsterdamumc.nl
+    affiliation: 
+      - name: Amsterdam UMC
+        department: Department of Epidemiology and Data Science
+        address: location Vrije Universiteit Amsterdam, De Boelelaan 1117, 1081 HV Amsterdam
+        city: Amsterdam
+        country: The Netherlands
+      - name: Amsterdam Public Health
+        department: Methodology
+        city: Amsterdam
+        country: The Netherlands
+    roles: [methodology, formal analysis, investigation, software]
+  - name: Mark A van de Wiel
+    affiliation: 
+      - name: Amsterdam UMC
+        department: Department of Epidemiology and Data Science
+        address: location Vrije Universiteit Amsterdam, De Boelelaan 1117, 1081 HV Amsterdam
+        city: Amsterdam
+        country: The Netherlands
+      - name: Amsterdam Public Health
+        department: Methodology
+        city: Amsterdam
+        country: The Netherlands
+    roles: [methodology, supervision]
+  - name: Michel H Hof
+    affiliation: 
+      - name: Amsterdam UMC
+        department: Department of Epidemiology and Data Science
+        address: location Vrije Universiteit Amsterdam, De Boelelaan 1117, 1081 HV Amsterdam
+        city: Amsterdam
+        country: The Netherlands
+      - name: Amsterdam Public Health
+        department: Methodology
+        city: Amsterdam
+        country: The Netherlands
+    roles: [conceptualization, methodology, supervision]
+abstract: |
+  FlexRL is an R package for record linkage, complemented with tools for inference on linked data. It links the records of two overlapping data sources that share a set of partially identifying variables but no unique identifier. Rather than classifying pairs of records from the comparison of their values, the package fits a hierarchical latent variable model of the data generation process, which accommodates registration errors and variables changing over time. Since the linkage may affect any subsequent analysis, the package provide tools to assess the linked data quality as functions of the linkage decision rule. Two false discovery proportion estimators are implemented: a straightforward probabilistic approach contingent on the record linkage model, and an augmented approach relying on an auxiliary estimation component using synthetic data. Several measures of the divergence of the linked sample from the source population are developed. These tools are agnostic to the underlying record linkage model and can be applied to alternative methods. Together, they connect the output of the linkage to the validity of the analysis that follows. The implementation combines standard \proglang{R} functions and S3 methods with \proglang{Rcpp} computations, resulting in reasonable execution times and a low memory footprint.
+keywords:
+  - Record Linkage
+  - Inference
+  - Stochastic EM
+  - False Discovery Proportion
+  - Sampling Selection
+  - Linked Data
+license: "CC BY"
+funding: "This research received no funding from any agency in the public, commercial, or not-for-profit sectors."
+bibliography: references.bib
+format: html
+editor: visual
+---
+
+## Introduction {#sec-introduction}
+
+Researchers and statistical agencies increasingly need to combine data sources that do not share a unique identifier [@Cleaton_Splink_2024; @Laidler_NHSE_2025, @Kramer_Destatis_2026]. Record linkage combines records that refer to the same entity across sources, relying on partially identifying variables (PIVs) (e.g. birth year, sex, postal code, phone number, product code). Each PIV has little discriminative power on its own, may be missing or wrongly recorded, and may change over time. Record linkage underpins the production of official statistics, enables the reuse of administrative and registry data for research [@opensafely2020; @perined_linkage_2021; @cooneyhealthcare_2023], and improves data quality through linkage and deduplication. Yet, linkage is rarely the final product: linked records become the study population of a downstream analysis, into which linkage errors may propagate [@reflexRL_2020; @Wang_Slawski_linked_2022; @CoxLinkedData_2024; @CRLrobachetal26].
+
+Two main probabilistic record linkage approaches have developed through times. First, the traditional mixture model [@FS_RL_1969; @jaro_RL_matching_1989; @Larsen_mixture_1999; @fortini_bay_RL_2001; @sadinle_bay_bipartite_RL_2017] turns the problem into a classification one, between pairs of records that are similar and pairs that are not. Second, the hierarchical entity resolution framework [@tancredi_bay_RL_2011; @steorts2015; @smered2016; @dblink_2021; @marchantsteorts2023] models the data generation process, considering the observed values as potentially distorted versions of true latent values. The later uses all the information contained in the records and is therefore more flexible but more computationally demanding. In \proglang{R}, it has been developed for entity resolution (clustering records from one file into entities) rather than for the linkage between two data sources.
+
+Record linkage may miss links, entities represented in both sources, or falsely link records from distinct entities. Both may bias the conclusions drawn from linked data, and they cannot be reduced simultaneously. A stricter decision rule produces fewer falsely linked pairs but more missed links. Practitioners therefore need not only record linkage methods, but also tools to quantify linkage errors and their consequences for statistical analysis.
+
+This article presents the \pkg{FlexRL} \proglang{R} package, which links the records of two overlapping sources with a hierarchical model and provides tools to assess the linked data quality. The package implements a stochastic expectation maximisation (StEM) algorithm to estimate the distribution from which the observed data arise [@RLrobachetal25]. The model accounts for registration errors and for changes of the PIVs over time. Two estimators of the false discovery proportion (FDP) are implemented: one computed from the linkage scores of the model [@belin_rubin_1995; @measurementError_2019; @fastLink_paper_2019], and one based on an auxiliary task linking synthetic records to the data [@FDProbachetal25]. Multiple measures of the divergence of the linked sample from the original data sources are implemented: standardised mean differences, overlap of supports, maximum mean discrepancy, agreement rates.
+
+The diagnostic tools for linked data quality only need the linked pairs and, if any, their linkage scores. They therefore apply to the output of any linkage method, and the package provides wrappers for several existing \proglang{R} packages. These tools are motivated by recent research on the biases that linkage errors cause in inference [@Lahiri_Larsen_linked_2005; @Tancredi_Liseo_linked_2015; @reflexRL_2020; @Wang_Slawski_linked_2022; @CRLrobachetal26] and on the need for linked data quality control in practice [@eval_linkage_17; @datalinkagequal2020; @linkage_bias_datasynthesis24; @Laidler_NHSE_2025]. The package is aimed at practitioners, statistical agencies and researchers who need to link data sources without a unique identifier, or who want to measure the error and the sample selection induced by record linkage.
+
+The remainder of the article is organised as follows. @sec-setup introduces the notation, the two modelling paradigms and the existing software. @sec-model presents the model implemented in \pkg{FlexRL} and its estimation. @sec-inference explains how linkage errors affect inference and describes the tools that quantify them. @sec-package further describes the package and its main functions, and @sec:practice illustrates its use on simulated and real data. @sec-discussion discusses the scope of the package and concludes.
+
+## Record linkage of two data sources {#sec-setup}
+
+### Setup and notation {#sec-notation}
+
+We consider two overlapping samples $\mathcal A$ and $\mathcal B$ from the same population, with $N_{\mathcal A}$ and $N_{\mathcal B} \geq N_{\mathcal A}$ records. Both sources record the same $K$ PIVs, indexed by $k = 1, \dots, K$, each categorical with $N_k$ possible values. For record $i \in \mathcal A$ and PIV $k$, $G^{\mathcal A}_{i,k}$ is the registered (observed) value and $H^{\mathcal A}_{i,k}$ the true (latent) value; $G^{\mathcal B}_{j,k}$ and $H^{\mathcal B}_{j,k}$ are defined analogously for record $j \in \mathcal B$. The registered value differs from the true value when there is a registration error: a missing value or a mistake. Overall, we use $N$ indexed by a set to denote its size and, to lighten notation, we identify the index $i \in \{1, \dots, N_{\mathcal A}\}$ with the entity $i$ in $\mathcal A$ (and similarly for index $j \in \{1, \dots, N_{\mathcal B}\}$ and entity $j$ in $\mathcal B$); this creates no ambiguity.
+
+For an entity $\ell$ recorded in both sources, the true values $H^{\mathcal A}_{\ell,k}, H^{\mathcal B}_{\ell,k}$ may also differ between $\mathcal A$ and $\mathcal B$. We call a PIV *dynamic* if its true value may change between the two data collections, for instance a postal code after a move or a marital status. Otherwise, the PIV values cannot change, like the year of birth. For an entity recorded in both sources, the true values of a non-dynamic PIV are therefore identical in $\mathcal A$ and $\mathcal B$, and any disagreement between the registered values is due to a registration error. @sec-pivs describes how \pkg{FlexRL} handles dynamic PIVs.
+
+The object of interest is the linkage matrix $\boldsymbol{\Delta} \in \{0,1\}^{N_{\mathcal A} \times N_{\mathcal B}}$, with $\Delta_{i,j} = 1$ if records $i \in \mathcal A$ and $j \in \mathcal B$ refer to the same entity. We assume that there is no duplicate within a source, so that each record forms a link with at most one record of the other source: $\sum_j \Delta_{i,j} \leq 1$ for all $i$ and $\sum_i \Delta_{i,j} \leq 1$ for all $j$. This is the one-to-one assignment constraint, also referred to as bipartite matching [@sadinle_bay_bipartite_RL_2017]. We denote by $\gamma \in (0,1)$ the probability that a record of $\mathcal A$ forms a link with a record of $\mathcal B$, that is, the overlap between the sources as a fraction of the smaller data set.
+
+Record linkage makes two kinds of errors: false positives (pairs declared linked while referring to distinct entities) and false negatives (true links that are missed). The non-links of the Cartesian product $\mathcal A \times \mathcal B$ are far more numerous than the links and are rarely of interest. The useful summaries are therefore the false discovery proportion (FDP) among the linked data (complement of precision or positive predictive value), and the sensitivity (also called recall, complement of miss rate). The two errors affect inference differently: falsely linked pairs cause contamination bias, and missed links cause sampling bias [@reflexRL_2020; @CRLrobachetal26].
+
+### Modelling paradigms {#sec-paradigms}
+
+Linkage methods can be grouped into four families [@Binette_Steorts_2022]. Deterministic (rule-based) linkage declares a link when records agree on a set of variables, exactly or up to a tolerance. Supervised methods train a classifier on pairs whose linkage status is known [@DeepMatcher_method_2018]; such labelled pairs are seldom available. The two remaining families are unsupervised and probabilistic, and differ in what they model [@review_methods_2014; @Binette_Steorts_2022].
+
+#### Paradigm 1: classification of comparison vectors
+
+The traditional approach [@FS_RL_1969; @bookoflife; @newcombe1959; @Tepping1968], reduces the data to comparison vectors. For each pair $(i,j) \in \mathcal A \times \mathcal B$, a vector $\boldsymbol{c}_{i,j} = (c_{i,j,1}, \dots, c_{i,j,K})$ records whether $G^{\mathcal A}_{i,k}$ and $G^{\mathcal B}_{j,k}$ agree, or how similar they are. The pairs are split into the set matched $M$ and the set of unmatched $U$, and the comparison vectors follow a two-components mixture; $$
+P(\boldsymbol{c}_{i,j}) = \gamma \; m(\boldsymbol{c}_{i,j}) + (1-\gamma) \; u(\boldsymbol{c}_{i,j}),
+    \qquad \qquad
+    m(\boldsymbol{c}) = P(\boldsymbol{c} \mid M), \quad u(\boldsymbol{c}) = P(\boldsymbol{c} \mid U),
+$$ {#eq-FS} where $\gamma$ in this paradigm is the proportion of links among all pairs. Assuming that the $K$ comparisons are independent given the linkage status, $m$ and $u$ factorise over $k$, and the parameters are estimated with an EM algorithm [@jaro_RL_matching_1989; @Larsen_mixture_1999]. Pairs are then classified by thresholding the ratio $m(\boldsymbol{c}_{i,j}) / u(\boldsymbol{c}_{i,j})$ or the posterior linkage probability. Bayesian versions place a prior on $\boldsymbol{\Delta}$ to enforce the one-to-one assignment constraint [@fortini_bay_RL_2001; @sadinle_bay_bipartite_RL_2017], or a prior on a partition of the records when there are more than two sources or duplicates [@multifilepartitioningrecordlinkage]. This paradigm is simple, fast, but memory intensive as it works on $N_{\mathcal A} \times N_{\mathcal B}$ comparison vectors, thus it may require blocking (only comparing pairs that agree on some variables) to scale [@blocking_methods_2014]. It treats pairs as independent although they share records, and the reduction to comparison vectors discards part of the information contained in the records.
+
+#### Paradigm 2: hierarchical modelling
+
+The second family models how the data were generated [@tancredi_bay_RL_2011; @steorts2015; @smered2016; @dblink_2021; @marchantsteorts2023; @RLrobachetal25]. Registered values $\textbf{G}$ are seen as distorted versions of latent true values $\textbf{H}$, which define the linkage structure $\boldsymbol{\Delta}$, the joint model reads $$
+    P(\textbf{G}, \textbf{H}, \boldsymbol{\Delta}) = P(\textbf{G} \mid \textbf{H}) P(\textbf{H} \mid \boldsymbol{\Delta}) P(\boldsymbol{\Delta}),
+$$ {#eq-hier} with a model for registration errors $P(\textbf{G} \mid \textbf{H})$, a model for the true values $P(\textbf{H} \mid \boldsymbol{\Delta})$, which may incorporate dynamics of the PIVs, and a model for the linkage structure $P(\boldsymbol{\Delta})$. Since records are never reduced to pairwise comparisons, the model can separate missing values, mistakes and changes over time, and it does not need blocking to fit in memory. It is, however, more demanding in computation time.
+
+### Existing software {#sec-software}
+
+In \proglang{Python}, \pkg{recordlinkage} [@PYRL_de_bruin_j_2019], \pkg{Splink} [@splink_2022] and \pkg{NameMatch} [@PYRL_namematch] implement Paradigm 1 at scale. In \proglang{R}, @tbl-packages lists the main packages for the task considered here. \pkg{fedmatch} [@fedmatchmanual; @fedmatch_article] uses a push relabel maximum flow algorithm, \pkg{diyar} [@diyarmanual] weights comparisons with fixed scores, \pkg{reclin2} [@reclin2manual] and \pkg{fastLink} [@fastLinkmanual; fastLink_paper_2019] fit the mixture @eq-FS with an EM algorithm. \pkg{BRL} [@brlmanual; @sadinle_bay_bipartite_RL_2017] and \pkg{multilink} [@multilinkmanual; @multifilepartitioningrecordlinkage] are Bayesian models on comparison vectors, with a bipartite and a partition prior respectively. Paradigm 2 is available in \proglang{R} through methods that target entity resolution, that is, clustering records into entities, possibly with duplicates, rather than one-to-one linkage of two sources [@dblink_2021; @marchantsteorts2023].
+
+| Package | Paradigm | Estimation | Linkage structure | PIVs dynamics |
+|---------------|---------------|---------------|---------------|---------------|
+| *fedmatch* [@fedmatchmanual] | comparison vectors | push relabel maximum flow | many-to-many | no |
+| *diyar* [@diyarmanual] | comparison vectors | multistage, fixed parameters | clusters | no |
+| *reclin2* [@reclin2manual] | comparison vectors, supervised | EM, machine learning | one-to-one post hoc | no |
+| *fastLink* [@fastLink_paper_2019] | comparison vectors | EM | one-to-one post hoc | no |
+| BRL [@sadinle_bay_bipartite_RL_2017] | comparison vectors | Bayesian, Gibbs sampler | one-to-one in model | no |
+| multilink [@multifilepartitioningrecordlinkage] | comparison vectors | Bayesian, Gibbs sampler | clusters, one-to-one in model | no |
+| FlexRL [@RLrobachetal25] | hierarchical | stochastic EM | one-to-one in model | yes |
+
+: Record linkage packages on \proglang{CRAN} compared with \pkg{FlexRL}. Diagnostic tools, including FDP estimation and measures of divergence between the linked sample and the source population, are available for all these packages through \pkg{FlexRL}.
+
+No \proglang{R} package implements Paradigm 2 for the linkage of two sources under the one-to-one assignment constraint, and none models the dynamics of PIVs over time. Moreover, none of the package provides tools to assess the quality of the linked data and its suitability for inference.
+
+## The FlexRL model {#sec-model}
+
+### Likelihood {#sec-likelihood}
+
+\pkg{FlexRL} adapts @eq-hier to two sources under the one-to-one assignment constraint [@RLrobachetal25]. For non-linked records, the true values $H^{\mathcal A}_{i,\cdot}$ and $H^{\mathcal B}_{j,\cdot}$ are independent draws from the population distribution. For a linked pair $(i,j)$, $H^{\mathcal B}_{j,\cdot}$ is a copy of $H^{\mathcal A}_{i,\cdot}$ whose dynamic PIVs may have changed between the two registrations. The registered values $G^{\mathcal A}_{i,\cdot}$ and $G^{\mathcal B}_{j,\cdot}$ are versions of $H^{\mathcal A}_{i,\cdot}$ and $H^{\mathcal B}_{j,\cdot}$ distorted by registration errors.
+
+With parameters $\boldsymbol{\theta} = (\gamma, \boldsymbol{\eta}, \boldsymbol{\alpha}, \boldsymbol{\phi})$, the complete-data likelihood factorises as $$
+    \mathcal{L}_{\boldsymbol{\theta}} \big( \textbf{G}^{\mathcal{A}}, \textbf{G}^{\mathcal{B}}, \textbf{H}^{\mathcal{A}}, \textbf{H}^{\mathcal{B}}, \boldsymbol{\Delta} \big)
+    = \underbrace{\mathcal{L}_{\boldsymbol{\phi}^{\mathcal A}} \big( \textbf{G}^{\mathcal{A}} \mid \textbf{H}^{\mathcal{A}} \big)
+    \mathcal{L}_{\boldsymbol{\phi}^{\mathcal B}} \big( \textbf{G}^{\mathcal{B}} \mid \textbf{H}^{\mathcal{B}} \big)}_{\text{registration errors}} \underbrace{\mathcal{L}_{\boldsymbol{\alpha}, \boldsymbol{\eta}} \big( \textbf{H}^{\mathcal{B}} \mid \textbf{H}^{\mathcal{A}}, \boldsymbol{\Delta} \big)}_{\text{changes over time}} \underbrace{\mathcal{L}_{\boldsymbol{\eta}} \big( \textbf{H}^{\mathcal{A}} \big)}_{\text{true values}}\underbrace{\mathcal{L}_{\gamma} \big( \boldsymbol{\Delta} \big)}_{\text{linkage}} .
+$$ {#eq-flexrl} Compared with @eq-hier, the term $P(\textbf{H} \mid \boldsymbol{\Delta})$ is split in two: a model for the true values in $\mathcal A$, and a model for the true values in $\mathcal B$ given those in $\mathcal A$ and the linkage. The term $P(\textbf{G} \mid \textbf{H})$ is modelled on $\mathcal A$ and on $\mathcal B$ but may be modelled on both simultaneously assuming they are governed by the same parameters. We now describe each component.
+
+#### True values ($\boldsymbol{\eta}$)
+
+True values are assumed independent across PIVs and identically distributed in both sources, since both are samples from the same population. For PIV $k$ with support $\{1, \dots, N_k\}$, $\eta_{k,\ell} = P(H_{\cdot,k} = \ell)$ is the population frequency of value $\ell$, and $$
+    \log \mathcal{L}_{\boldsymbol{\eta}} ( \textbf{H}^{\mathcal{A}} ) = \sum_{i \in \mathcal A} \sum_{k=1}^{K} \log \eta_{k, H^{\mathcal A}_{i,k}} .
+$$ {#eq-loglikHA} Strong associations between PIVs violate the independence assumption and may degrade the linkage [@RLrobachetal25]; the package warns the user when it detects them (@sec-prepare).
+
+#### Registration errors ($\boldsymbol{\phi}$)
+
+Registered values are distorted copies of the true values, through two mechanisms. A value is missing, coded $G = 0$, at random with probability $\phi^{\mathcal A}_{k,\text{missing}}$ in source $\mathcal A$ (and $\phi^{\mathcal B}_{k,\text{missing}}$ in $\mathcal B$). A value that is not missing is a mistake, $G \neq H$, with probability $\phi^{\mathcal A}_{k,\text{mistake}}$, and the correct value is uniform over the other $N_k - 1$ categories. For record $i$ of source $\mathcal A$ and PIV $k$, $$
+    P\big(G^{\mathcal A}_{i,k} = g \mid H^{\mathcal A}_{i,k} = h\big) =
+    \begin{cases}
+        \phi^{\mathcal A}_{k,\text{missing}} & g = 0, \\
+        (1 - \phi^{\mathcal A}_{k,\text{missing}}) (1 - \phi^{\mathcal A}_{k,\text{mistake}}) & g = h, \\
+        (1 - \phi^{\mathcal A}_{k,\text{missing}}) \phi^{\mathcal A}_{k,\text{mistake}} / (N_k - 1) & g \notin \{0, h\},
+    \end{cases}
+$$ and in the same way for $\mathcal B$. The corresponding log-likelihood is $$
+\begin{aligned}
+\log \mathcal L_{\boldsymbol{\phi}^{\mathcal A}}\big(\textbf{G}^{\mathcal A} \mid \textbf{H}^{\mathcal A}\big)
+    = \sum_{i \in \mathcal A} \sum_{k=1}^{K} \Big[ & \mathbb 1 \{G^{\mathcal A}_{i,k} = 0\} \log \phi^{\mathcal A}_{k,\text{missing}} \\
+    & + \mathbb 1 \{G^{\mathcal A}_{i,k} = H^{\mathcal A}_{i,k}\} \log\big\{(1 - \phi^{\mathcal A}_{k,\text{missing}})(1 - \phi^{\mathcal A}_{k,\text{mistake}})\big\} \\
+    & + \mathbb 1 \{G^{\mathcal A}_{i,k} \notin \{0, H^{\mathcal A}_{i,k}\}\} \log \frac{(1 - \phi^{\mathcal A}_{k,\text{missing}}) \phi^{\mathcal A}_{k,\text{mistake}}}{N_k - 1} \Big],
+\end{aligned}
+$$ {#eq-registration} and similarly for $\mathcal B$, or for $\mathcal A$ and $\mathcal B$ jointly when the parameters are shared (especially $\phi^{\mathcal A}_{k,\text{mistake}}=\phi^{\mathcal B}_{k,\text{mistake}}$). The probabilities of missing values are estimated by the observed proportions of missing entries, per source and PIV. The probabilities of mistakes are estimated with the StEM algorithm but the user can also bound or fix these probabilities; @sec-pivs explains when each option is appropriate.
+
+#### Changes over time ($\boldsymbol{\alpha}$)
+
+For a dynamic PIV $k$ whose changes are modelled (a \emph{structured} PIV, see @sec-pivs), consider a linked pair $(i,j)$ with time gap $t_{i,j} = |t^{\mathcal B}_j - t^{\mathcal A}_i|$, with $\textbf{t}^{\mathcal A}$ and $\textbf{t}^{\mathcal B}$ the registration dates of the records. The probability that the true value has not changed is given by a survival function. By default, the package uses an exponential model with proportional hazards, $$
+    P\big(H^{\mathcal B}_{j,k} = H^{\mathcal A}_{i,k} \mid t_{i,j}, \boldsymbol{x}_{i,j}, \Delta_{i,j} = 1\big) = S_{\boldsymbol{\alpha}_k}(\boldsymbol{x}_{i,j}, t_{i,j}) = \exp\big\{ - \exp(\boldsymbol{x}_{i,j}^{T} \boldsymbol{\alpha}_k) t_{i,j} \big\},
+$$ {#eq-survival} where $\boldsymbol{x}_{i,j}$ contains an intercept and, optionally, covariates from either data source that explain the hazard of change (for example age or income for a move), and $\boldsymbol{\alpha}_k$ contains the log-hazard coefficients. The user can replace @eq-survival with another survival model, such as a Weibull, a Gompertz, a piecewise constant hazard, or any user-defined model. When the value has changed, the new value is uniform over the other $N_k - 1$ categories. For the other PIVs, the true values of a linked pair are identical, $H^{\mathcal B}_{j,k} = H^{\mathcal A}_{i,k}$. $$ 
+\begin{aligned}
+\log \mathcal L_{\boldsymbol{\alpha}, \boldsymbol{\eta}}\big(\textbf{H}^{\mathcal B} \mid \textbf{H}^{\mathcal A}, \boldsymbol{\Delta}\big)
+    = {} & \sum_{j, \Delta_{\cdot,j}=0} \sum_{k=1}^{K} \log \eta_{k, H^{\mathcal B}_{j,k}} \\
+    & + \sum_{(i,j) : \Delta_{i,j}=1} \sum_{k \text{ structured}} \Big[
+    \mathbb 1 \{H^{\mathcal A}_{i,k} = H^{\mathcal B}_{j,k}\} \log S_{\boldsymbol{\alpha}_k}(\boldsymbol{x}_{i,j}, t_{i,j})
+    + \mathbb 1 \{H^{\mathcal A}_{i,k} \neq H^{\mathcal B}_{j,k}\} \log \frac{1 - S_{\boldsymbol{\alpha}_k}(\boldsymbol{x}_{i,j}, t_{i,j})}{N_k - 1} \Big].
+\end{aligned}
+$$ {eq-changes}
+
+####Linkage ($\gamma$)
+
+Since $N_{\mathcal A} \leq N_{\mathcal B}$, we work with the rows of $\boldsymbol{\Delta}$: whether record $i \in \mathcal A$ forms a link with a record of $\mathcal B$ is Bernoulli($\gamma$), independently across $i$. Given the number of links $N_L = \sum_{i,j} \Delta_{i,j}$, all linkage matrices satisfying the one-to-one assignment constraint are equally likely. There are $N_{\mathcal B}! / (N_{\mathcal B} - N_L)!$ ways to assign the $N_L$ linked records of $\mathcal A$ to distinct records of $\mathcal B$, hence $$ 
+    \log \mathcal{L}_{\gamma}(\boldsymbol{\Delta}) = N_L \log \gamma + (N_{\mathcal A} - N_L) \log (1 - \gamma) - \log \frac{N_{\mathcal B}!}{(N_{\mathcal B} - N_L)!} .
+$$ {#eq-linkage-prior}
+
+## Configuration of the PIVs {#sec-pivs}
+
+The package distinguishes three kinds of PIVs, which determine how the components of @eq-flexrl are used.
+
+- *Stable*: the true value does not change (e.g. birth year). The PIV is used to form candidate pairs (@sec-estimation), and its probability of mistake can be bounded, for example by $0.10$.
+- *Dynamic*: the true value may change (e.g. postal code, marital status or education level between two survey waves)
+  - *Flexible*: the change cannot be modelled, typically because registration dates are not available. The PIV is still used to form candidate pairs, but its probability of mistake should not be bounded, so that the registration model @eq-registration absorbs both mistakes and changes.
+  - *Structured*: changes are modelled by @eq-survival. The PIV is not used to form candidate pairs. Registration dates are needed in both sources, and covariates for the hazard may be supplied. Mistakes and changes both result in $G^{\mathcal A}_{i,k} \neq G^{\mathcal B}_{j,k}$ and are hard to tell apart; the probability of mistake should therefore be fixed (for example at $0.02$), unless enough linked pairs have time gaps near zero, for which changes are not plausible and mistakes can be estimated without confusion. Estimating $\boldsymbol{\alpha}_k$ also requires variation in the time gaps $t_{i,j}$ among linked pairs.
+
+### Estimation {#sec-estimation}
+
+The likelihood of the observed data is @eq-flexrl summed over all values of the latent $\textbf{H}$ and $\boldsymbol{\Delta}$. \pkg{FlexRL} maximises it with a stochastic EM algorithm [@celeux_diebolt_SEM]: the E-step draws the latent variables from their distribution given the current parameters with a Gibbs sampler, and the M-step maximises the resulting complete-data likelihood. @alg-stem summarises the procedure.
+
+\begin{algorithm}
+\Input encoded sources $\textbf{G}^{\mathcal A}, \textbf{G}^{\mathcal B}$; PIV configuration; $N_{\text{StEM}}$ iterations with $N_{0\text{StEM}}$ burn-in; $N_{\text{Gibbs}}$ iterations with $N_{0\text{Gibbs}}$ burn-in.
+\State Initialise $\boldsymbol{\theta}= (\gamma, \boldsymbol{\eta}, \boldsymbol{\alpha}, \boldsymbol{\phi})$.
+\For{$\text{StEM iter} = 1, \dots, N_{\text{StEM}}$}
+    \State $\boldsymbol{\Delta} \gets \mathbf 0$.
+    \For{$\text{Gibbs iter} = 1, \dots, N_{\text{Gibbs}}$} \Comment{stochastic E-step: Gibbs sampler}
+        \State Draw $\textbf{H}^{\mathcal A}, \textbf{H}^{\mathcal B} \mid \textbf{G}, \boldsymbol{\Delta}, \boldsymbol{\theta}$ \Comment{@eq-loglikHA, @eq-registration, @eq-changes, @eq-linkage-prior}
+        \State Form candidate pairs $\{(i,j): H^{\mathcal A}_{i,k} = H^{\mathcal B}_{j,k} \ \forall k \text{ stable or flexible}\}$.
+        \State For each non-linked candidate pair propose to link it, for each linked pair propose to break the link; accept with the likelihood @eq-flexrl.
+        \If{$\text{Gibbs iter} > N_{0\text{Gibbs}}$} store summary statistics: $N_L$, counts of true values, agreements $G = H$, and $ \boldsymbol{x}_{i,j}, t_{i,j}, \mathbb 1 \{H^{\mathcal A}_{i,k} = H^{\mathcal B}_{j,k}\}$ for linked pairs $(i,j)$. \EndIf
+    \EndFor
+    \State M-step: 
+    \State $\gamma \gets \text{mean}(N_L) / N_{\mathcal A}$,
+    \State $\eta_{k,\ell} \gets$ relative frequency of $\ell$ among sampled true values (of linked pairs and non-linked records),
+    \State $1 - \phi_{k,\text{mistake}} \gets$ agreement rate $G = H$ among non-missing entries,
+    \State $\boldsymbol{\alpha}_k \gets \arg\max$ of the survival likelihood.
+    \State Store $\boldsymbol{\theta}$.
+\EndFor
+\State $\widehat{\boldsymbol{\theta}} \gets$ average of $\boldsymbol{\theta}$ over $\text{StEM iter} > N_{0\text{StEM}}$.
+\State Run further Gibbs iterations at $\widehat{\boldsymbol{\theta}}$:
+\State $\widehat{\Delta}_{i,j} \gets$ proportion of iterations in which $(i,j)$ is linked.
+\end{algorithm}
+
+: Stochastic EM for record linkage {#alg-stem}
+
+#### Initialisation
+
+The probability $\gamma$ is drawn uniformly in $(0.2, 0.8)$, the distributions $\boldsymbol\eta_k$ are uniform, the probabilities of a mistake are drawn in $(0.03, 0.20)$ and the probabilities of a missing value are set to the observed proportions. For structured PIVs, the log baseline hazard is drawn between $0.01$ and $1$ per time unit and the covariate coefficients near $0$. The user can supply other starting values.
+
+#### Stochastic E-step
+
+Given $\boldsymbol{\theta}$, the Gibbs sampler alternates two blocks. First, the true values are drawn. For a non-linked record, $H_{i,k}$ (or $H_{j,k}$) is drawn from $\boldsymbol\eta_k$ weighted by the registration model @eq-registration. For a linked pair, $(H^{\mathcal A}_{i,k}, H^{\mathcal B}_{j,k})$ is drawn jointly among the $N_k \times N_k$ possible values, from $\boldsymbol\eta_k$ weighted by the registration model and the survival model. Second, the linkage is updated. Candidate pairs are the pairs whose sampled true values agree on all PIVs that are not structured. For these pairs, we compute the log-likelihood contribution of the pair when linked, $\ell^{L}_{i,j}$, and of the two records when not linked, $\ell^{\mathcal A}_i + \ell^{\mathcal B}_j$. A sequential sweep over the candidate pairs then proposes to create or break links. A proposal is accepted with probability $\mathcal L_{\text{new}} / (\mathcal L_{\text{old}} + \mathcal L_{\text{new}})$, where the two likelihoods differ by $\ell^{L}_{i,j} - \ell^{\mathcal A}_i - \ell^{\mathcal B}_j$ and by the change in @eq-linkage-prior. Restricting the sweep to candidate pairs keeps the algorithm light in memory: likelihood contributions are only computed for these pairs and for the remaining non-linked records of each data source.
+
+#### M-step
+
+The summary statistics averaged over the Gibbs draws after burn-in give the parameter updates. Thanks to the factorisation of @eq-flexrl, $\gamma$, $\boldsymbol{\eta}$ and $\boldsymbol{\phi}$ have separate closed-form updates, and each $\boldsymbol{\alpha}_k$ is obtained by numerical optimisation. Optional bounds on the probabilities of a mistake are applied at this stage. A warning is displayed when a bound is reached in many iterations, suggesting that the bound is too tight or that the PIV is dynamic.
+
+### Linkage scores and decision rule {#sec-scores}
+
+Based on the StEM chains of estimates, we build an estimate the set of parameters, $\widehat{\boldsymbol{\theta}}$, by averaging the post burn-in elements in the sequence. These are used to sample further linkage matrices that are averaged to return a probabilistic estimate of $\boldsymbol{\Delta}$ as a final output, $\widehat{\Delta}$, whose entries are the posterior probabilities for the pair $(i,j)$ to be linked, which we call the linkage score. A decision rule on each entry $\widehat{\Delta}_{i,j} > \xi$ with $\xi \in [0.5,1)$ then defines the final set of linked data. Since the scores of a record sum to at most one, a threshold of at least $0.5$ ensures the one-to-one assignment [@tancredi_bay_RL_2011; @sadinle_bay_bipartite_RL_2017]. The choice of $\xi$ is the subject of the next section.
+
+## Inference on linked data {#sec-inference}
+
+### Impact of linkage errors {#sec-linkage-error}
+
+The linkage is rarely the end of the analysis. Suppose the analysis relates a variable $X$ recorded in $\mathcal A$ to a variable $Y$ recorded in $\mathcal B$, for instance through the slope $\beta$ of the linear regression $Y = X\beta + \varepsilon$, with $\mathbb E[\varepsilon]=0$ and $\mathbb E[X \varepsilon]=0$, so that $\beta = \operatorname{Cov}(X,Y)/\operatorname{Var}(X)$. The target is $\beta$ in the population of entities present in both sources. The analyst only observes the linked data $\{(i,j): \widehat{\Delta}_{i,j} > \xi\}$ with, $X_i$ from $\mathcal A$ and $Y_j$ from $\mathcal B$. $Y_j$ equals $Y_i$ for truly linked pairs but belongs to another entity for falsely linked records. Among the linked data, a proportion $1-\text{FDP}$ (that may in reality depend on $X$) carries the correct $Y$, and a proportion FDP carries a spurious one. Below we denote by $\widehat \Delta = 1$ the population of linked data, pairs $(i,j)$ with $i \in \mathcal{A}$ and $j \in \mathcal{B}$ such that $\widehat \Delta_{i,j} > \xi$. Truly linked pairs of records (true positives, TP) are thus denoted $\{ \widehat \Delta = 1, \Delta = 1 \}$ and falsely linked pairs of records (false positives, FP) $\{ \widehat \Delta = 1, \Delta = 0 \}$. $$ \begin{aligned}
+    \mathbb E[ Y \mid X, \widehat \Delta = 1 ] & = (1-\text{FDP}) \cdot \mathbb E[ Y \mid X, \widehat \Delta = 1, \Delta = 1 ] + \text{FDP} \cdot \mathbb E[ Y \mid X, \widehat \Delta = 1, \Delta = 0] \\
+    & = (1-\text{FDP}) \cdot \mathbb E_{TP}[ Y \mid X ] + \text{FDP} \cdot \mathbb E_{FP}[ Y \mid X ],
+\end{aligned} $$ where $\mathbb E_{TP}$ and $\mathbb E_{FP}$ denote expectations among truly and falsely linked pairs. Linkage errors are often assumed to occur at random, in which case $\mathbb E_{FP}[ Y \mid X ] = \mathbb E_{FP}[ Y ]$ and $\widehat\beta_{FP} = 0$. However, the PIVs, often demographic, are likely to be associated with variables of interest in the analysis, so it is more realistic to consider an association between $X$ and $Y$ among falsely linked pairs.
+
+Let $\widehat\beta$ be the slope estimated on the linked data, if $X$ has the same mean and variance among all data in $\mathcal{A}$, it a mixture of $\widehat\beta_{FP}$ and $\widehat\beta_{TP}$, $$
+    \widehat\beta = (1-\text{FDP}) \cdot \widehat\beta_{TP} + \text{FDP} \cdot \widehat\beta_{FP}.
+$$ {#eq-beta-hat} The error of the analysis splits into two parts: $$
+    \widehat\beta - \beta = \underbrace{(\widehat\beta_{TP} - \beta)}_{\text{sampling bias}} + \underbrace{(\widehat\beta - \widehat\beta_{TP})}_{\text{contamination bias}}.
+$$ {#eq-decomposition} Missed links may cause sample selection, and false linked data may cause measurement error in the linked variables [@Wang_Slawski_linked_2022; @reflexRL_2020; @CRLrobachetal26].
+
+#### Contamination bias
+
+Falsely linked data dilute the true signal and add a spurious one, from @eq-beta-hat we have: $$
+    \underbrace{\widehat\beta - \widehat\beta_{TP}}_{\text{contamination bias}} = \text{FDP} (\widehat\beta_{FP} - \widehat\beta_{TP}).
+$$ {#eq-beta-contamination}
+
+#### Sampling bias
+
+The linkage acts as a selection mechanism. Records with rare PIV values are linked with more confidence than records with common values [@reflexRL_2020; @CRLrobachetal26]. As a consequence, $$
+    \underbrace{\widehat\beta_{TP} - \beta}_{\text{sampling bias}} = \frac{\operatorname{Cov}_{TP}(X,\varepsilon)}{\operatorname{Var}_{TP}(X)} = \frac{E_{TP}[X \varepsilon]}{\operatorname{Var}_{TP}(X)}.
+$$ {#eq-beta-sampling} Although $E[X \varepsilon]=0$ in the population, it may be different for $E_{TP}[X \varepsilon]$ due to the conditioning on $\widehat \Delta=1$. In that case, the chance of being linked is related to $X$ hence $\widehat\beta_{TP}$ differs from $\beta$.
+
+#### Linkage decision rule trade-off
+
+Raising the threshold $\xi$ on the linkage scores reduces the number of falsely linked pairs, which lowers the FDP and hence the contamination bias @eq-beta-contamination. It also selects fewer and more atypical records, which may increase the sampling bias @eq-beta-sampling. These aspects motivate the complementary tools we develop in \pkg{FlexRL} to quantify these two biases—estimation of the FDP (@sec-fdp) and evaluation of the divergence of the linked sample from the data sources (@sec-representativeness) over a range of values of $\xi$—to make users aware of this trade-off.
+
+### False discovery proportion {#sec-fdp}
+
+For the decision rule $\xi \in [0.5, 1)$, the false discovery proportion is $\text{FDP}(\xi) = \text{FP}(\xi) / \{\text{TP}(\xi) + \text{FP}(\xi)\}$, where $\text{TP}(\xi)$ and $\text{FP}(\xi)$ are the numbers of truly and falsely linked pairs. In real data applications this quantity is unknown. Linkage errors can be estimated from the scores of the linkage model [@belin_rubin_1995; @measurementError_2019; @fastLink_paper_2019], from synthetic data [@linkage_bias_datasynthesis24; @FDProbachetal25], or from a separate model under conditions on the distribution of the number of records per entity [@sensitivity_2002; @sensitivity_2020; @DG_esterror22]. \pkg{FlexRL} implements the first two. We focus on the FDP because it drives the contamination bias @eq-beta-contamination; the sampling bias is addressed by the diagnostics of @sec-representativeness. The estimators are provided as functions of $\xi$, together with the linked sample size available for inference, so the user can choose a threshold controlling the estimated FDP (and hopefully the true underlying FDP).
+
+#### Score-based estimator
+
+If the linkage model is well calibrated, $\widehat{\Delta}_{i,j}$ should represent the probability that the pair $(i,j)$ is a true link and the expected number of truly linked pairs among linked data is $\sum_{(i,j)} \widehat{\Delta}_{i,j} \mathbb 1 \{\widehat{\Delta}_{i,j} > \xi\}$, therefore $$
+    \widehat{\text{FDP}}(\xi) = 1 - \frac{\sum_{(i,j)} \widehat{\Delta}_{i,j} \mathbb 1 \{\widehat{\Delta}_{i,j} > \xi\}}{\sum_{(i,j)} \mathbb 1 \{\widehat{\Delta}_{i,j} > \xi\}} .
+$$ {#eq-fdp-model} This estimator comes at no cost for any method that returns linkage scores, but it is only as good as the linkage model. The calibration of the scores is affected by missing values and mistakes, the size of the overlap between the sources, the number of entities in the population, the discriminative power of the PIVs, their changes over time, and their marginal and joint distributions.
+
+#### Synthetic-data estimator
+
+An estimator that does not rely on linkage scores can be computed with synthetic data [@FDProbachetal25]. Source $\mathcal B$ is augmented with $N_{\text{synth}}$ synthetic records, drawn from a generative model fitted on the PIVs of $\mathcal B$ (for example \pkg{arf} [@arf_2023], \pkg{synthpop} [@synthpop_2016] or \pkg{mice} [@mice_2011]). Synthetic records by definition do not form a link in $\mathcal A$, so synthetic links can represent false positives when links and non-links have similar distributions [@FDProbachetal25]. Then $\text{FP}(\xi)$ is estimated by scaling the number of synthetic links by $N_{\mathcal B} / N_{\text{synth}}$ and $\text{TP}(\xi) + \text{FP}(\xi)$ is estimated by the number of (real) linked pairs $N_{\text{real}}(\xi) = \sum_{(i,j)} \mathbb 1 \{\widehat{\Delta}_{i,j} > \xi\}$ as for the score-based estimator: $$ 
+    \widehat{\text{FDP}}_{\text{synth}}(\xi) = \frac{\text{FP}_{\text{synth}}(\xi) \cdot N_{\mathcal B} / N_{\text{synth}}}{N_{\text{real}}(\xi)}.
+$$ {#eq-fdp-synth} The procedure is repeated over several synthetic draws and averaged. The estimator does not depend on the linkage model, but it depends on the quality of the data synthesis.
+
+### Representativeness of the linked sample {#sec-representativeness}
+
+As explained in @sec-linkage-error, the linked sample may differ from the sources in ways the analyst cannot see [@reflexRL_2020; @Wang_Slawski_linked_2022; @CRLrobachetal26]. Given a decision rule $\xi$, \pkg{FlexRL} compares each source with its linked subset using the following measures, computed on the sets of variables $\mathcal V_{\mathcal A}$ and $\mathcal V_{\mathcal B}$ available in sources $\mathcal A$ and $\mathcal B$ respectively:
+
+- *Agreement rate*: the proportion of linked pairs whose records agree on $v$, for each variable $v \in \mathcal V_{\mathcal A} \cap \mathcal V_{\mathcal B}$ (such as the PIVs).
+- *Standardised mean difference*: $(\text{mean}(v_{\text{linked}}) - \text{mean}(v_{\text{source}})) / \text{sd}(v_{\text{source}})$, for a continuous variable $v$ in a given set; the same quantity is computed for the indicator of each level when $v$ is categorical.
+- *Overlap of supports*: the intersection over union of the set of values taken in the linked sample and in the source, for a variable $v$ in a given set.
+- *Maximum mean discrepancy*: a multivariate measure of the difference between the linked sample and the source, computed jointly over a gien set of variables, with a Gaussian kernel and the median heuristic for the bandwidth [@gretton2012].
+
+These quantities are computed over a grid of values of $\xi$. Together with the estimated FDP and linked sample size plotted against $\xi$, they make the trade-off of @sec-linkage-error visible: raising $\xi$ lowers the estimated FDP but may increase the divergence of the linked sample from the source. All quantities only need the declared pairs and (if provided) their linkage scores, and therefore apply to any linkage method.
+
+## The FlexRL package {#sec-package}
+
+### Overview {#sec-overview}
+
+\pkg{FlexRL} is available on \proglang{CRAN} and on GitHub. It depends on \pkg{Rcpp} for the samplers and on \pkg{Matrix} for the sparse likelihood and linkage matrice. Progress bars are provided by \pkg{cli}, plots by \pkg{graphics} and \pkg{grDevices}, and standard statistical routines by \pkg{stats}; \pkg{utils} is used to play a sound notifying the user when a long StEM run completes. The synthetic-data FDP estimator relies on \pkg{arf}, \pkg{synthpop} and \pkg{mice}. The diagnostic tools apply to any record linkage output in the required format, with built-in wrappers for \pkg{BRL}, \pkg{diyar}, \pkg{fastLink}, \pkg{fedmatch}, \pkg{multilink} and \pkg{reclin2}. @fig-workflow shows the workflow, which follows the structure of @sec-model, @sec-inference: the data are prepared, linked with `stEM()`, and the linked data quality it assessed with `RL\_diagnostics()`.
+
+```{mermaid}
+flowchart LR
+  A[Hard edge] --> B(Round edge)
+  B --> C{Decision}
+  C --> D[Result one]
+  C --> E[Result two]
+```
+
+::: {#fig-workflow}
+```{mermaid}
+  flowchart LR
+  raw(raw sources \\ `data1`, `data2`) --> prep(`prepare\_data()`\\ checks, encodes, \\ raises warnings)
+  sim(`simulate\_data()`) --> prep
+  prep --> naive(`naive\_linkage()`)
+  prep --> fit(`stEM()`\\ @alg-stem)
+  fit --> delta(linkage output\\ $\widehat{\boldsymbol{\Delta}}$\\ chains $\gamma, \boldsymbol\eta, \boldsymbol\alpha, \boldsymbol\phi$)
+  delta --> diag(`RL\_diagnostics()`\\ `print()`, `plot()`)
+  wrap(`link\_with\_$^\star$()`) --> diag
+  diag --> alles(FDP estimation, convergence plots, score plots,\\ data comparison, discrepancy measures, agreement rates)
+```
+
+Workflow of \pkg{FlexRL}
+:::
+
+HERE START MINIMAL EXAMPLE?!
+
+### Data preparation {#sec-prepare}
+
+The model requires categorical PIVs encoded as integers $1, \dots, N_k$, with missing values coded as $0$, a common support in both sources, and the smaller source labelled $\mathcal A$. The function `prepare\_data()` checks the configuration of the PIVs (@sec-pivs), labels the sources and encodes the PIVs. It warns the user about inconsistent configurations, strongly associated PIVs and values outside the common support. If a unique identifier is available, as in a simulation study, it also returns the set of true links.
+
+Besides, `naive\_linkage()` links records that agree exactly on all PIVs (a missing value matching any value when `na\_match = TRUE`), without enforcing the one-to-one constraint. It gives a quick idea of the discriminative power of the PIVs and of the ambiguity of the task. `simulate\_data()` simulates two files with a given overlap, given rates of mistakes and missing values per PIV and file, and given hazard coefficients for structured PIVs, useful to explore and compare record linkage methods.
+
+### Record linkage with `stEM()` {#sec-stem}
+
+`stEM()` runs @alg-stem. Its main arguments are listed below.
+
+- `data`: a list, typically the output of `prepare\_data()`, with the encoded sources `encodedA` and `encodedB`, `n\_values`, the number of distinct values of each PIV (excluding missing values), `same\_mistakes`, a logical indicating whether both sources share the registration error parameters, and `PIVs\_config`, the configuration of each PIV.
+- `StEM\_iter`, `StEM\_burnin`, `gibbs\_iter`, `gibbs\_burnin`: the numbers of iterations of the outer StEM algorithm and of the inner Gibbs sampler, and their burn-in periods. `gibbs\_burnin = 0` sets the burn-in automatically: the sampler runs until the number of links changes by fewer than 10 for 10 consecutive iterations, with a maximum of 500 iterations.
+- `model\_dynamics`: the survival model for structured PIVs, by default the exponential model @eq-survival. It is only used if a PIV is declared structured in `PIVs\_config`.
+- `n\_post\_samp`: the number of posterior draws used to compute the linkage scores.
+- Starting values for $\gamma$ and for the agreement probabilities $1-\phi$ can be supplied.
+- For long runs, `new\_directory` and `save\_info\_iter = TRUE` save the environment after each StEM iteration, and `music\_on = TRUE` plays a short tune when the algorithm finishes.
+
+The function returns `Delta`, a data frame with columns `i` (row in $\mathcal A$), `j` (row in $\mathcal B$) and `x` ($\widehat{\Delta}_{i,j}$) for every pair with a positive score, and the four chains: `gamma` (a vector of length `StEM\_iter`), `eta` (one `StEM\_iter` $\times N_k$ matrix per PIV), `alpha` (one matrix per structured PIV, with `StEM\_iter` rows and one column per parameter of the survival model) and `phi` (one `StEM\_iter` $\times 4$ matrix per PIV: agreement in $\mathcal A$, in $\mathcal B$, missing in $\mathcal A$, in $\mathcal B$).
+
+### Diagnostics with `RL\_diagnostics()` {#sec-diagnostics}
+
+All the tools of @sec-fdp, @sec-representativeness are gathered in a single function, `RL\_diagnostics()`, summarised in @tbl-diagnostics. All measures are computed for every threshold $\xi \in \{0.50, 0.51, \dots, 0.99\}$, or once for all returned pairs when the linkage method gives no score. Each diagnostic can also be computed on its own.
+
+| Diagnostic | Computation | Display |
+|-------------------------|---------------------------|--------------------|
+| FDP estimation | `compute\_RL\_FDP\_score()`, which calls `FDP\_score()` (@eq-fdp-model); `compute\_augmRL\_FDP\_synth()`, which calls `synthesise()`, a `link\_with\_*()` wrapper, `FDP\_score()` and `FDP\_synth()` (@eq-fdp-synth) | `x <- RL\_diagnostics(fit, A, B, PIVs, ...)`; `print(x, 0.75)`; `plot(x, "FDP")` |
+| Convergence | the StEM chains of $\gamma$, $\boldsymbol\eta$, $\boldsymbol\alpha$, $\boldsymbol\phi$ returned by `stEM()`, plotted with `plot\_StEM\_convergence()` | `plot(x, "convergence")` |
+| Linkage scores | the linkage scores, plotted with `plot\_linkage\_scores()` | `plot(x, "scores")` |
+| Data comparison | the linked subset of each source and the source, plotted with `plot\_distributions()` | `plot(x, "distributions")` |
+| Discrepancy measures | `smd()`, `support\_iou()`, `mmd()`, `RL\_agreement()` | `plot(x, "discrepancy")` |
+
+: Diagnostics performed by `RL\_diagnostics()`
+
+#### FDP estimation
+
+With `FDP\_estimation = TRUE`, the function runs the two estimators of @sec-fdp; this is optional since it can take time. The linkage method is named in `RL\_method` and its arguments are passed through `...`, as are the number of repetitions `n\_repeats`, the generator `synth\_method` (`"arf"` by default) and the number of synthetic records `n\_synth` (10% of $N_{\mathcal B}$ by default). `compute\_RL\_FDP\_score()` computes the score-based estimate on the original task. `compute\_augmRL\_FDP\_synth()` adds synthetic records to $\mathcal B$ with `synthesise()`, links the augmented sources as an auxiliary task, and computes both the score-based and the synthetic-data estimates on it. The three resulting curves are averaged over the repetitions. Similar score-based estimates on the original and augmented tasks support the use of the synthetic-data estimator, which requires the augmented task to be comparable to the original one.
+
+#### Using other linkage methods
+
+The linkage is run through wrappers with a common form, `link\_with\_<pkg>(dataA, dataB, ...)`, returning `idxA`, `idxB` and `LinkScore`. Wrappers exist for \pkg{FlexRL}, \pkg{fastLink}, \pkg{BRL}, \pkg{reclin2}, \pkg{multilink}, \pkg{diyar} and \pkg{fedmatch}, so that the FDP of any of these methods can be estimated in the same way.
+
+#### Discrepancy measures
+
+At each threshold, the linked subset of $\mathcal A$ is compared with $\mathcal A$, and the linked subset of $\mathcal B$ with $\mathcal B$, with the measures of @sec-representativeness. If `true\_pairs` is supplied, the true FDP and sensitivity at each threshold, and the agreement rate among the true links, are added for validation.
+
+#### Output
+
+`print(x)` reports (at threshold = 0.5 if non specified), the linked sample size, the FDP estimates, the true FDP and sensitivity if available, and the discrepancy measures. `plot(x, type)`, with `type` being one of `"scores"`, `"distributions"`, `"convergence"`, `"FDP"` and `"discrepancy"`, draws the plots listed in @tbl-diagnostics. The last two show the measures against the threshold, to make the trade-off of @sec-linkage-error visible.
+
+### Computational aspects {#sec-computation}
+
+The two latent variable samplers are implemented with \pkg{Rcpp}. `sampleH()` draws the true values; for linked pairs it goes through the $N_k^2$ joint values once per PIV. `sampleD()` performs the sequential sweep over candidate pairs and stores the linkage as a hash map, so that the cost of a sweep is nearly linear in the number of candidate pairs and the memory is linear in the number of links rather than in $N_{\mathcal A} \times N_{\mathcal B}$.
+
+Candidate pairs are found by hashing the pattern of sampled true values on the PIVs that are not structured, an operation linear in $N_{\mathcal A} + N_{\mathcal B}$, and their likelihood contributions are stored in a sparse matrix. Memory therefore grows with the number of records and of candidate pairs, not with $N_{\mathcal A} \times N_{\mathcal B}$. Running time grows with the number of records; the number of candidate pairs, larger when PIVs have few levels; the number of PIVs and their numbers of levels, since sampling the true values of a linked pair costs $N_k^2$ operations per PIV $k$; the number of structured PIVs, whose survival model is estimated at each iteration; and the number of iterations. All random draws use the random number generator of \proglang{R}, so that `set.seed()` makes a run reproducible.
+
+## Examples {#sec-practice}
+
+Start earlier a red line example with synthetic data or SHIW modified with a structured PIV, find a small exampl e(linear regression) of inference.
+
+## Discussion {#sec-discussion}
+
+This article presented \pkg{FlexRL}, an \proglang{R} package that links two overlapping sources with a hierarchical model and assesses the quality of the linked data. The model accounts for registration errors and for changes of the PIVs over time, which no other \proglang{R} package for record linkage does. The diagnostics tools developed only require the linked pairs and, when available, their linkage scores, so they also apply to the output of other linkage methods.
+
+The package reports two complementary tools of importance for downstream inference, the estimated FDP and the divergence between the linked sample and the data sources as functions of the threshold. This makes the trade-off between contamination bias and sampling bias visible and lets users choose a linkage decision rule with its consequences for the analysis in mind.
+
+Although the record linkage method implemented and the diagnostic tools for linked data quality have their limitations (modelling assumptions, computational time, validity of the estimators) it enables record linkage in real practice / makes record linkage more useful in practice / these tools allow linked data quality to be reported, so that users / scientists can judge how far the conclusions of an analysis based on linked data may be trusted.

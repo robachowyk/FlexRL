@@ -14,9 +14,11 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-# library(FlexRL)
+```{r, include = FALSE}
 pak::pak("robachowyk/FlexRL")
+```
+
+```{r setup}
 library(FlexRL)
 ```
 
@@ -44,14 +46,14 @@ PIVs_config <- list( V1 = list(dynamics = "stable",
                               cond_hazard_cov = list(cov1 = c("Xe", "Xf"),
                                                      cov2 = c()))
 )
-PIVs = names(PIVs_config)
-PIVs_stable = sapply(PIVs_config, function(x) x$dynamics != "structured")
-PIVs_type = list( V1 = FALSE, V2 = FALSE, V3 = FALSE, V4 = TRUE )
+PIVs <- names(PIVs_config)
+PIVs_stable <- sapply(PIVs_config, function(x) x$dynamics != "structured")
+PIVs_type <- list( V1 = FALSE, V2 = FALSE, V3 = FALSE, V4 = TRUE )
 ```
 
 With PIVs that evolve over time, when modelling is possible, it is natural to parametrise the probability that underlying true values of the registered data for a pair of linked records coincide using a survival function. It is possible to use an exponential model, whose baseline hazard is constant in time; a Weibull model, whose baseline hazard is monotone in time; a Gompertz model, whose baseline hazard grows or decays exponentially in time; a piecewise-constant model, whose baseline hazard takes one value on each interval defined by given cut points; a custom model, supplied as a survival function S(X, alpha, times) together with a number of parameters and their starting values. These models may assume proportional hazards, accelerated failure time, proportional odds, additive hazards, ... If the covariates are categorical, make sure to encode them into dummies and drop one category (an intercept is included automatically). Since only the agreement of the true values at the observed time gap is used, the likelihood is the same for every model, -sum(Hequal \* log(S) + (1 - Hequal) \* log(1 - S)), and the parameters are estimated with stats::nlminb() at each M-step.
 
-```{r}
+```{r, warning=FALSE}
 n_values  <- c(8, 9, 10, 15)
 p_mistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
                   V3 = c(0.02, 0.02), V4 = c(0.02, 0.02))
@@ -69,7 +71,7 @@ gen_data <- simulate_data(
 
 We pre-process the data for the record linkage task: remove the records for which the linking variables are outside of the common support, check that PIVs are not strongly associated with each other (which may degrade record linkage performance), map PIV values to natural numbers and encode missing values as 0. The StEM algorithm denotes the smallest source as `A` and the largest as `B`.
 
-```{r}
+```{r, warning=FALSE}
 prep_data <- prepare_data(
   data1 = gen_data$data1, data2 = gen_data$data2, label1 = "1", label2 = "2", 
   PIVs_config = PIVs_config, same_mistakes = TRUE, uniq_id = "entity_id",
@@ -78,17 +80,17 @@ prep_data <- prepare_data(
 ```
 
 ```{r}
-head(prep_data$encodedA)
+head(round(prep_data$encodedA,2))
 ```
 
 ```{r}
-head(prep_data$encodedB)
+head(round(prep_data$encodedB,2))
 ```
 
 For this example we know the true linkage structure.
 
 ```{r}
-prep_data$true_pairs
+head(prep_data$true_pairs)
 true_pairs <- do.call(paste, c(prep_data$true_pairs, list(sep="_")))
 ```
 
@@ -100,7 +102,7 @@ prep_data$n_values
 
 We gauge how hard the record linkage task is using a naive linkage approach: matching records on exact agreement of identifying information.
 
-```{r}
+```{r, warning=FALSE}
 naive_fit <- naive_linkage(PIVs = PIVs, 
                            encodedA = prep_data$encodedA, 
                            encodedB = prep_data$encodedB)
@@ -131,9 +133,8 @@ round(df_results, 2)
 
 We run record linkage with `FlexRL`. The `data` should contain encodedA, encodedB, n_values, PIVs_config, same_mistakes. `StEM_iter`, `StEM_burnin` and `gibbs_iter`, `gibbs_burnin` are total number of iterations (including burn-in) and iterations to be discarded as burn-in. If `music_on` the algorithm opens a short tune in the browser when it finishes. You can `save_info_iter` (save environment information at each iteration) to `new_directory`. You can set starting values of the algorithm for parameters gamma and phi with `gamma0`, `phiA0`, `phiB0`, and change the number of samples drawn a posteriori to provide a linkage estimate with `n_post_samp` (set to 1000 as default).
 
-```{r}
-fit <- StEM(data = prep_data, StEM_iter = 30, StEM_burnin = 15,
-           gibbs_iter = 20, gibbs_burnin = 10, music_on = FALSE)
+```{r, warning=FALSE}
+fit <- StEM(data = prep_data)
 ```
 
 The missing values and potential mistakes in the registration, the size of the overlapping set of records between the files, the total number of entities in the population, the low discriminative power of PIVs, PIVs potential dynamics across time, PIVs distribution, dependencies among PIVs, are obstacles to the linkage.
@@ -158,7 +159,7 @@ round(df_results, 2)
 
 Let us run record linkage diagnostics:
 
-```{r}
+```{r, warning=FALSE}
 diag <- RL_diagnostics(fit = fit, encodedA = prep_data$encodedA, encodedB = prep_data$encodedB,
                       compare_vars = PIVs, vars_type_cont = PIVs_type, PIVs = PIVs, 
                       true_pairs = prep_data$true_pairs, FDP_estimation = TRUE, 
@@ -179,22 +180,17 @@ df_results[11,"FlexRL    "] = max(diag$discrepancy_measures[1,mmd_idx])
 ```
 
 ```{r}
-diag # print(diag)
-
+diag # default, equivalent to print(diag)
 print(diag, threshold = 0.75)
 ```
 
 These summaries provide information on the linked data. We can also look at: the convergence of the StEM algorithm parameters, the linkage scores distribution, the data distributions between linked subset and original data sources, the divergence metrics of the linked data from the data sources, the FDP estimation.
 
-```{r, fig.width=10, fig.height=7}
+```{r, fig.width=7, fig.height=5}
 plot(diag, "convergence")
-
 plot(diag, "scores")
- 
 plot(diag, "distributions", threshold = 0.75)
-
 plot(diag, "discrepancy")
-
 plot(diag, "FDP")
 ```
 
@@ -202,7 +198,7 @@ Several other algorithms for **R**ecord **L**inkage have been developed so far i
 
 With [link_with\_\*()] wrappers we can link records with "multilink", "fastLink", "BRL", "reclin2", "diyar", "fedmatch".
 
-```{r}
+```{r, warning=FALSE}
 brl_args <- list(flds = PIVs, types = rep("bi",length(PIVs)))
 fit_brl <- link_with_BRL(prep_data$encodedA, prep_data$encodedB, brl_args)
 
@@ -235,7 +231,7 @@ df_results[10,"BRL       "] = min(diag_brl$discrepancy_measures[1,iou_idx])
 df_results[11,"BRL       "] = max(diag_brl$discrepancy_measures[1,mmd_idx])
 ```
 
-```{r}
+```{r, warning=FALSE}
 multilink_args <- list(types = rep("bi",length(PIVs)), breaks = list(V1 = NA, V2 = NA, V3 = NA, V4 = NA),
                        duplicates = c(0,0), n_iter = 500, max_cc_size = 50)
 fit_multilink <- link_with_multilink( prep_data$encodedA, prep_data$encodedB, multilink_args)
@@ -268,7 +264,7 @@ df_results[10,"multilink "] = min(diag_multilink$discrepancy_measures[1,iou_idx]
 df_results[11,"multilink "] = max(diag_multilink$discrepancy_measures[1,mmd_idx])
 ```
 
-```{r}
+```{r, warning=FALSE}
 fastLink_args <- list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, return.all = TRUE, n.cores = 1 )
 fit_fastLink <- link_with_fastLink( prep_data$encodedA, prep_data$encodedB, fastLink_args )
 
@@ -301,7 +297,7 @@ df_results[10,"fastLink  "] = min(diag_fastLink$discrepancy_measures[1,iou_idx])
 df_results[11,"fastLink  "] = max(diag_fastLink$discrepancy_measures[1,mmd_idx])
 ```
 
-```{r}
+```{r, warning=FALSE}
 reclin2_args <- list(on = PIVs, formula = stats::as.formula(paste("~", paste(PIVs, collapse = "+"))),
                      type = "mpost", add = TRUE, variable = "selected", score = "mpost", threshold = 0.5)
 fit_reclin2 <- link_with_reclin2( prep_data$encodedA, prep_data$encodedB, reclin2_args )
@@ -335,7 +331,7 @@ df_results[10,"reclin2   "] = min(diag_reclin2$discrepancy_measures[1,iou_idx])
 df_results[11,"reclin2   "] = max(diag_reclin2$discrepancy_measures[1,mmd_idx])
 ```
 
-```{r}
+```{r, warning=FALSE}
 diyar_args <- list(probabilistic = TRUE, return_weights = TRUE)
 fit_diyar <- link_with_diyar(prep_data$encodedA[, PIVs], prep_data$encodedB[, PIVs], diyar_args)
 
@@ -369,7 +365,7 @@ df_results[10,"diyar     "] = min(diag_diyar$discrepancy_measures[1,iou_idx])
 df_results[11,"diyar     "] = max(diag_diyar$discrepancy_measures[1,mmd_idx])
 ```
 
-```{r}
+```{r, warning=FALSE}
 fedmatch_args <- list(by = PIVs, match_type = "multivar", 
                       unique_key_1 = "unique_key_A", unique_key_2 = "unique_key_B",
                       multivar_settings = fedmatch::build_multivar_settings(

@@ -14,9 +14,11 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-# library(FlexRL)
+```{r, include = FALSE}
 pak::pak("robachowyk/FlexRL")
+```
+
+```{r setup}
 library(FlexRL)
 ```
 
@@ -39,27 +41,34 @@ wrapper_args <- function(method, prep_data, ...) {
   args <- c(...)
 
   switch(method,
-         FlexRL    = c(list(data = prep_data), args[intersect(names(args), names(formals(FlexRL::StEM)))]),
-         BRL       = c(list(flds = PIVs, types = rep("bi", length(PIVs)), nIter = 1000), args[intersect(names(args), c(names(formals(BRL::compareRecords)), names(formals(BRL::bipartiteGibbs))))]),
+         FlexRL    = c(list(data = prep_data), 
+                       args[intersect(names(args), names(formals(FlexRL::StEM)))]),
+         BRL       = c(list(flds = PIVs, types = rep("bi", length(PIVs)), nIter = 1000), 
+                       args[intersect(names(args), c(names(formals(BRL::compareRecords)), names(formals(BRL::bipartiteGibbs))))]),
          fastLink  = c(list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, return.all = TRUE, n.cores = 1), 
                        args[intersect(names(args), names(formals(fastLink::fastLink)))]),
-         multilink = c(list(types = rep("bi", length(PIVs)), breaks = stats::setNames(as.list(rep(NA, length(PIVs))), PIVs), duplicates = c(0, 0), n_iter = 200, max_cc_size = 50),
-                       args[intersect(names(args), c( names(formals(multilink::create_comparison_data)),
-                                                                names(formals(multilink::reduce_comparison_data)),
-                                                                names(formals(multilink::specify_prior)),
-                                                                names(formals(multilink::gibbs_sampler)),
-                                                                names(formals(multilink::find_bayes_estimate)),
-                                                                names(formals(multilink::relabel_bayes_estimate)) ))]),
-         reclin2   = c(list(on = PIVs, formula = stats::as.formula(paste("~", paste(PIVs, collapse = "+"))), type = "mpost", add = TRUE, variable = "selected", score = "mpost", threshold = 0.5), 
-                       args[intersect(names(args), c( names(formals(reclin2::pair)), 
-                                                                names(formals(reclin2::compare_pairs)),
-                                                                names(formals(reclin2::problink_em)),
-                                                                names(formals(stats::predict)),
-                                                                names(formals(reclin2::select_threshold)) ))]),
+         multilink = c(list(types = rep("bi", length(PIVs)), breaks = stats::setNames(as.list(rep(NA, length(PIVs))), PIVs), 
+                            duplicates = c(0, 0), n_iter = 200, max_cc_size = 50),
+                       args[intersect(names(args), c(names(formals(multilink::create_comparison_data)),
+                                                     names(formals(multilink::reduce_comparison_data)),
+                                                     names(formals(multilink::specify_prior)),
+                                                     names(formals(multilink::gibbs_sampler)),
+                                                     names(formals(multilink::find_bayes_estimate)),
+                                                     names(formals(multilink::relabel_bayes_estimate))))]),
+         reclin2   = c(list(on = PIVs, formula = stats::as.formula(paste("~", paste(PIVs, collapse = "+"))), 
+                            type = "mpost", add = TRUE, variable = "selected", score = "mpost", threshold = 0.5), 
+                       args[intersect(names(args), c(names(formals(reclin2::pair)), 
+                                                     names(formals(reclin2::compare_pairs)),
+                                                     names(formals(reclin2::problink_em)),
+                                                     names(formals(stats::predict)),
+                                                     names(formals(reclin2::select_threshold))))]),
          diyar     = c(list(probabilistic = TRUE, return_weights = TRUE), 
-                       args[intersect(names(args), c( names(formals(diyar::prob_score_range)),
-                                                                names(formals(diyar::links_wf_probabilistic)) ))]),
-         fedmatch  = c(list(by = PIVs, match_type = "multivar", unique_key_1 = "unique_key_A", unique_key_2 = "unique_key_B", multivar_settings = fedmatch::build_multivar_settings(compare_type = rep("indicator", length(PIVs)), wgts = rep(1 / length(PIVs), length(PIVs)))), 
+                       args[intersect(names(args), c(names(formals(diyar::prob_score_range)),
+                                                     names(formals(diyar::links_wf_probabilistic))))]),
+         fedmatch  = c(list(by = PIVs, match_type = "multivar", unique_key_1 = "unique_key_A", 
+                            unique_key_2 = "unique_key_B", multivar_settings = fedmatch::build_multivar_settings(
+                              compare_type = rep("indicator", length(PIVs)), 
+                              wgts = rep(1 / length(PIVs), length(PIVs)))), 
                        args[intersect(names(args), names(formals(fedmatch::merge_plus)))])
          )
 }
@@ -180,15 +189,14 @@ PIVs_type <- list(SEX = FALSE, DOB_MONTH = TRUE, DOB_YEAR = TRUE, STATE = FALSE)
 
 `prepare_data()` removes the records for which the linking variables are outside of the common support, checks that PIVs are not strongly associated with each other (which may degrade record linkage performance), maps PIV values to natural numbers and encodes missing values as 0. The StEM algorithm denotes the smallest source as `A` and the largest as `B`. The true pairs are known from the identifier ID (they are indexed on the rows of `encodedA` and `encodedB`, after the support restriction).
 
-```{r}
+```{r, warning=FALSE}
 prep_data <- prepare_data(df1982, df1994, "1982", "1994", PIVs_config, same_mistakes = TRUE, uniq_id = "ID")
 
 c(n_A = nrow(prep_data$encodedA), n_B = nrow(prep_data$encodedB), n_links = nrow(prep_data$true_pairs))
 
 prep_data$n_values
 ```
-
-```{R}
+```{r, message = FALSE, warning=FALSE}
 df_results_NLTCS <- run_all_wrappers(prep_data, PIVs_type, methods)
 ```
 
@@ -200,7 +208,7 @@ show_results(df_results_NLTCS)
 
 We use 4 **P**artially **I**dentifying **V**ariable**s** to link the records: sex and birth year are `stable`, education level and marital status are `flexible`.
 
-```{r}
+```{r, warning=FALSE}
 df2016 <- read.csv("ex-reg-SHIW-16.csv", row.names = 1)
 df2020 <- read.csv("ex-reg-SHIW-20.csv", row.names = 1)
 
@@ -219,7 +227,7 @@ c(n_A = nrow(prep_data$encodedA), n_B = nrow(prep_data$encodedB), n_links = nrow
 prep_data$n_values
 ```
 
-```{r}
+```{r, message = FALSE, warning=FALSE}
 df_results_SHIW <- run_all_wrappers(prep_data, PIVs_type, methods)
 ```
 
@@ -229,7 +237,7 @@ show_results(df_results_SHIW)
 
 ## Full SHIW data
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 df2016 <- read.csv("SHIW2016.csv", row.names = 1)
 df2020 <- read.csv("SHIW2020.csv", row.names = 1)
 df2016 <- df2016[!df2016$ID %in% df2016$ID[duplicated(df2016$ID)], ]
@@ -247,11 +255,12 @@ df_results_full <- data.frame(matrix(NA, nrow = 6, ncol = 0))
 rownames(df_results_full) <- c("TP", "FP", "FN", "sensitivity", "FDP", "minutes")
 for (method in methods) {
   t0 <- Sys.time()
-  args <- list(n_post_samp = 100)
+  args <- list(StEM_iter = 10, StEM_burnin = 5, gibbs_iter = 10, gibbs_burnin = 5, n_post_samp = 10)
   fit <- run_wrapper(method, prep_data_full, wrapper_args(method, prep_data_full, args))
   df_results_full[1:5, method] <- evaluate_linkage(fit, true_pairs_full)
   df_results_full[6, method] <- if (is.null(fit)) NA else round(as.numeric(Sys.time() - t0, units = "mins"))
 }
+
 # on Apple M1 Max ARM chip, 8-core CPU, 32 GB of memory
 # fastLink: memory error / multilink: memory error / BRL: memory error / diyar: memory error
 ```
@@ -269,7 +278,7 @@ Note that when methods do not ensure the one-to-one assignment constraint the nu
 
 Blocking on the region code `IREG` splits the task into 20 smaller ones. Within a region, `IREG` is constant and the linkage uses the 4 other PIVs. Region 2 is the regional subset used above.
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 regions <- sort(unique(c(df2016$IREG, df2020$IREG)))
 results_IREG <- list()
 for (r in regions) {
@@ -309,6 +318,7 @@ table_by <- function(measure) {
 }
 
 round(table_by("FDP"), 2)
+
 round(table_by("sensitivity"), 2)
 ```
 
@@ -323,10 +333,11 @@ summary_IREG <- do.call(rbind, lapply(split(results_IREG, results_IREG$method), 
              minutes = sum(d$seconds) / 60)
 }))
 rownames(summary_IREG) <- NULL
+
 summary_IREG
 ```
 
-```{r}
+```{r, fig.width=7, fig.height=5}
 colours <- grDevices::hcl.colors(length(methods), "Dark 3")
 names(colours) <- methods
 plot(NA, xlim = c(0, 1), ylim = c(0, 1), xlab = "sensitivity", ylab = "FDP",

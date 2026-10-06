@@ -2635,8 +2635,8 @@ compute_RL_FDP_score <- function(encodedA, encodedB, PIVs, maxIter4CV = 10, n_re
     `Linked pairs (RL)`        = round(colMeans(n_linked_score_res, na.rm = TRUE)),
     check.names = FALSE
   )
-  message(sprintf("%s results (average over %s iterations):", RL_method, n_repeats))
-  print(t(to_show))
+  message(sprintf("%s results (average over %s iterations) (original RL task) `compute_RL_FDP_score`", RL_method, n_repeats))
+  print(round(t(to_show[c(1,6,11,16,21,26,31,36,41,46),]),2))
   
   list(
     FDP_score_estimator = FDP_score_res,
@@ -2836,8 +2836,8 @@ compute_augmRL_FDP_synth <- function(synth_method, encodedA, encodedB, PIVs, n_s
     `Linked pairs (RL)`        = round(colMeans(n_linked_score_res, na.rm = TRUE)),
     check.names = FALSE
   )
-  message(sprintf("%s results (average over %s iterations):", RL_method, n_repeats))
-  print(t(to_show))
+  message(sprintf("%s results (average over %s iterations) (augmented RL task) `compute_augmRL_FDP_synth`", RL_method, n_repeats))
+  print(round(t(to_show[c(1,6,11,16,21,26,31,36,41,46),]),2))
 
   list(
     FDP_score_estimator = FDP_score_res,

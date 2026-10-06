@@ -10,6 +10,7 @@ RL_diagnostics(
   encodedB,
   compare_vars,
   vars_type_cont,
+  PIVs,
   true_pairs = NULL,
   FDP_estimation = TRUE,
   ...
@@ -111,7 +112,7 @@ PIVs_type <- list(V1=FALSE, V2=FALSE, V3=FALSE, V4=TRUE)
 fit_flexrl <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2,
                     gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 10 )
 diag_flexrl <- RL_diagnostics(fit_flexrl, prep_data$encodedA, prep_data$encodedB,
-                              PIVs, PIVs_type, true_pairs = prep_data$true_pairs,
+                              PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs,
                               FDP_estimation = TRUE, RL_method = "FlexRL", 
                               data = prep_data,
                               StEM_iter = 5, StEM_burnin = 2, 
@@ -130,7 +131,7 @@ fit_brl <- link_with_BRL( prep_data$encodedA, prep_data$encodedB,
                           list( flds = PIVs, 
                                 types = rep("bi",length(PIVs)) ) )
 diag_brl <- RL_diagnostics(fit_brl, prep_data$encodedA, prep_data$encodedB,
-                           PIVs, PIVs_type, true_pairs = prep_data$true_pairs,
+                           PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs,
                            FDP_estimation = TRUE, RL_method = "BRL", 
                            flds = PIVs, types = rep("bi",length(PIVs)),
                            maxIter4CV = 1, n_repeats = 1)
