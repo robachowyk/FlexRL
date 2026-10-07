@@ -133,6 +133,7 @@ variable in <code>common_vars</code>) and, if available, <code>true_agreements</
 <span class="r-in"><span>                           <span class="va">p_mistake</span>, <span class="va">p_missing</span>, <span class="va">cond_hazard_params</span>, <span class="cn">TRUE</span> <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">prep_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="prepare_data.html">prepare_data</a></span><span class="op">(</span> <span class="va">gen_data</span><span class="op">$</span><span class="va">data1</span>, <span class="va">gen_data</span><span class="op">$</span><span class="va">data2</span>, <span class="st">"1"</span>, <span class="st">"2"</span>,</span></span>
 <span class="r-in"><span>                           <span class="va">PIVs_config</span>, <span class="cn">TRUE</span>, <span class="st">"entity_id"</span>, <span class="cn">TRUE</span> <span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIVs 'V4' and 'V1' are associated (Cramer's V = 0.32 in data1, 0.23 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> '2' is the larger source, saved as B; '1' saved as A.</span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="stEM.html">StEM</a></span><span class="op">(</span> data <span class="op">=</span> <span class="va">prep_data</span>, StEM_iter <span class="op">=</span> <span class="fl">10</span>, StEM_burnin <span class="op">=</span> <span class="fl">5</span>, </span></span>
 <span class="r-in"><span>             gibbs_iter <span class="op">=</span> <span class="fl">10</span>, gibbs_burnin <span class="op">=</span> <span class="fl">5</span>, n_post_sample <span class="op">=</span> <span class="fl">10</span> <span class="op">)</span>                         </span></span>
@@ -142,13 +143,13 @@ variable in <code>common_vars</code>) and, if available, <code>true_agreements</
 <span class="r-in"><span>              <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">PIVs_config</span><span class="op">)</span>, <span class="va">linked_pairs</span> <span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $agreements</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        V1        V2        V3        V4 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 0.9900990 0.9405941 0.9405941 0.6732673 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 0.9883721 0.9534884 0.9767442 0.8372093 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="fu">RL_agreement</span><span class="op">(</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedA</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span>,</span></span>
 <span class="r-in"><span>              <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">PIVs_config</span><span class="op">)</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">true_pairs</span> <span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $agreements</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   V1   V2   V3   V4 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 0.98 0.96 0.91 0.79 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 0.95 0.98 0.89 0.78 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>
