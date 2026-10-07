@@ -2640,7 +2640,7 @@ compute_RL_FDP_score <- function(encodedA, encodedB, PIVs, maxIter4CV = 10, n_re
   colnames(out) <- rep("", ncol(out))
   
   message(sprintf("%s results (average over %s iterations) (original RL task) `compute_RL_FDP_score`", RL_method, n_repeats))
-  write.table(round(out,2), quote = FALSE, col.names = FALSE, sep = "\t")
+  utils::write.table(round(out,2), quote = FALSE, col.names = FALSE, sep = "\t")
   
   list(
     FDP_score_estimator = FDP_score_res,
@@ -2845,7 +2845,7 @@ compute_augmRL_FDP_synth <- function(synth_method, encodedA, encodedB, PIVs, n_s
   colnames(out) <- rep("", ncol(out))
 
   message(sprintf("%s results (average over %s iterations) (augmented RL task) `compute_augmRL_FDP_synth`", RL_method, n_repeats))
-  write.table(round(out,2), quote = FALSE, col.names = FALSE, sep = "\t")
+  utils::write.table(round(out,2), quote = FALSE, col.names = FALSE, sep = "\t")
 
   list(
     FDP_score_estimator = FDP_score_res,
