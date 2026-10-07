@@ -54,7 +54,7 @@ gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100,
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
 fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 5,
-             gibbs_iter = 10, gibbs_burnin = 5, n_post_samp = 10 )
+             gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10 )
 
 # linked pairs and performance against the true pairs
 linked <- fit$Delta[fit$Delta$x > 0.5, ]
@@ -73,7 +73,7 @@ diag <- RL_diagnostics(fit, prep_data$encodedA, prep_data$encodedB,
                        true_pairs = prep_data$true_pairs, FDP_estimation = TRUE, 
                        RL_method = "FlexRL", data = prep_data,
                        StEM_iter = 5, StEM_burnin = 2, 
-                       gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5,
+                       gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5,
                        maxIter4CV = 1, n_repeats = 1)
 diag # print(diag)
 print(diag, threshold = 0.75)

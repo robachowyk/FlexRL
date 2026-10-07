@@ -60,7 +60,7 @@ p_mistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
                   V3 = c(0.02, 0.02), V4 = c(0.02, 0.02))
 p_missing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
-cond_hazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = log(c(0.7, 0.6, 0.5)))
+cond_hazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(-0.35, -0.50, -0.70))
 
 gen_data <- simulate_data(
   PIVs_config = PIVs_config, n_values = n_values, n_records = c(450, 500), 
@@ -200,7 +200,7 @@ plot(diag, "FDP")
 
 Several other algorithms for **R**ecord **L**inkage have been developed so far in the literature. Each has its own qualities and flaws. `StEM()` usually outperforms in scenarios where the **PIVs** have low discriminative power with few expected registration errors; it is particularly efficient when there is enough information to model the dynamics of some **PIV** changing across time (such as postal code). In 2026, it is the only package taking account of dynamic PIVs. More can be found on this topic in the simulation setting of the [methodology paper](https://doi.org/10.1093/jrsssc/qlaf016), code is provided in [`FlexRL-experiments`](https://github.com/robachowyk/FlexRL-experiments). More can be found on the FDP estimation methods in [this paper](https://doi.org/10.1002/sim.70292).
 
-With `link_with\_\*()` wrappers we can link records with "multilink", "fastLink", "BRL", "reclin2", "diyar", "fedmatch".
+With `link_with_<pkg>()` wrappers we can link records with "multilink", "fastLink", "BRL", "reclin2", "diyar", "fedmatch".
 
 ```{r brl-linkage, warning=FALSE, message=FALSE, results="hide"}
 brl_args <- list(flds = PIVs, types = rep("bi",length(PIVs)))
@@ -406,17 +406,29 @@ df_results[10,"fedmatch  "] <- min(diag_fedmatch$discrepancy_measures[1,iou_idx]
 df_results[11,"fedmatch  "] <- max(diag_fedmatch$discrepancy_measures[1,mmd_idx])
 ```
 
+```{r, include = FALSE}
+options(digits = 2)
+```
+
 ```{r}
 cat("Record Linkage ")
 round(df_results[1:5,],2)
 ```
 
-```{r}
-cat("\nFDP estimation ")
-round(df_results[6:8,],2)
+```{r, include = FALSE}
+options(digits = 2)
 ```
 
 ```{r}
-cat("\nLinked divergence ")
+cat("FDP estimation ")
+round(df_results[6:8,],2)
+```
+
+```{r, include = FALSE}
+options(digits = 2)
+```
+
+```{r}
+cat("Linked divergence ")
 round(df_results[9:11,],2)
 ```

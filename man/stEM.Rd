@@ -102,7 +102,7 @@ p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
                    
 cond_hazard_params1 <- list( V1 = c(), V2 = c(), 
                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
                            p_mistake, p_missing, cond_hazard_params1, TRUE )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
@@ -115,7 +115,7 @@ head(fit1$Delta[fit1$Delta$x > 0.5, ])
 
 cond_hazard_params2 <- list( V1 = c(), V2 = c(), 
                              V3 = c(), V4 = log(c(0.3, 0.7, 0.6, 0.5)) )
-gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
                            p_mistake, p_missing, cond_hazard_params2, TRUE,
                            model_dynamics = survival_model("weibull") )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
@@ -129,7 +129,7 @@ head(fit2$Delta[fit2$Delta$x > 0.5, ])
 
 cond_hazard_params3 <- list( V1 = c(), V2 = c(), 
                              V3 = c(), V4 = log(c(0.3, 0.7, 0.6, 0.5)) )
-gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
                            p_mistake, p_missing, cond_hazard_params3, TRUE,
                            model_dynamics = survival_model("gompertz") )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
@@ -143,7 +143,7 @@ head(fit3$Delta[fit3$Delta$x > 0.5, ])
 
 cond_hazard_params4 <- list( V1 = c(), V2 = c(), 
                              V3 = c(), V4 = log(c(0.6, 0.5, 0.4, 0.3, 0.2, 0.1)) )
-gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
                            p_mistake, p_missing, cond_hazard_params4, TRUE,
                            model_dynamics = survival_model("piecewise", cuts = c(1,2,3)) )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",

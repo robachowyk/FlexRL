@@ -44,7 +44,7 @@ p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 cond_hazard_params <- list( V1 = c(), V2 = c(), 
                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
                            p_mistake, p_missing, cond_hazard_params, TRUE )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
