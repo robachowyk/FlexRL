@@ -34,6 +34,9 @@ compare between the linked subset and each source file.}
 \code{compare_vars}: \code{TRUE} if the variable is treated as continuous,
 \code{FALSE} if categorical (one SMD per level).}
 
+\item{PIVs}{Character vector, partially identifying variables to
+compare between the linked records from A and from B.}
+
 \item{true_pairs}{Optional data frame with 2 columns of true (A, B)
 indices, when known, to report the realised FDP and sensitivity.}
 

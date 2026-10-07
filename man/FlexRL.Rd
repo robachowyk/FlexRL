@@ -69,6 +69,7 @@ c(LinkageDecisionRule = 0.5, FDP = fp / (tp + fp), Sensitivity = tp / (tp + fn))
 diag <- RL_diagnostics(fit, prep_data$encodedA, prep_data$encodedB,
                        names(PIVs_config),
                        list(V1 = FALSE, V2 = FALSE, V3 = FALSE, V4 = TRUE),
+                       names(PIVs_config),
                        true_pairs = prep_data$true_pairs, FDP_estimation = TRUE, 
                        RL_method = "FlexRL", data = prep_data,
                        StEM_iter = 5, StEM_burnin = 2, 
