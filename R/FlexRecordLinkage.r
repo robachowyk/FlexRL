@@ -3087,6 +3087,8 @@ plot.discrepancy_curves <- function(x, ...) {
 #' @param vars_type_cont Named list or logical vector, one entry per
 #'   `compare_vars`: `TRUE` if the variable is treated as continuous,
 #'   `FALSE` if categorical (one SMD per level).
+#' @param PIVs Character vector, partially identifying variables to
+#'   compare between the linked records from A and from B.
 #' @param true_pairs Optional data frame with 2 columns of true (A, B)
 #'   indices, when known, to report the realised FDP and sensitivity.
 #' @param FDP_estimation Logical; if `TRUE`, run [compute_RL_FDP_score()] and

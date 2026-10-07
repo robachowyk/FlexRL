@@ -10,13 +10,13 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>",
-  options(digits = 2, scipen = 999)
+  comment = "#>"
 )
 ```
 
 ```{r, include = FALSE}
 pak::pak("robachowyk/FlexRL")
+options(digits = 2, scipen = 999)
 ```
 
 ```{r setup}
