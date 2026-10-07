@@ -1,5 +1,5 @@
 Package: FlexRL
-Title: A Flexible Model for Record Linkage
+Title: Flexible Record Linkage and Linked Data Quality Assessment
 Version: 1.0.0
 Authors@R: c(
     person("Kayané", "ROBACH", email = "k.c.robach@amsterdamumc.nl", role = c("aut", "cre", "cph"), comment = c(ORCID = "0000-0002-5725-623X")),

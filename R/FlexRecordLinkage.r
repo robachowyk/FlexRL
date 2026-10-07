@@ -1,7 +1,7 @@
 
 # ============================================================================
-# FlexRL — flexible probabilistic record linkage with diagnostics for
-# downstream inference on linked data.
+# FlexRL — flexible probabilistic record linkage with data quality diagnostics 
+# for downstream inference on linked data.
 # ============================================================================
 
 
@@ -3161,16 +3161,15 @@ plot.discrepancy_curves <- function(x, ...) {
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
 #' PIVs <- names(PIVs_config)  
 #' PIVs_type <- list(V1=FALSE, V2=FALSE, V3=FALSE, V4=TRUE)
-#' 
 #' fit_flexrl <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2,
-#'                     gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 10 )
+#'                     gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5 )
 #' diag_flexrl <- RL_diagnostics(fit_flexrl, prep_data$encodedA, prep_data$encodedB,
 #'                               PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs,
 #'                               FDP_estimation = TRUE, RL_method = "FlexRL", 
 #'                               data = prep_data,
 #'                               StEM_iter = 5, StEM_burnin = 2, 
 #'                               gibbs_iter = 5, gibbs_burnin = 2,
-#'                               n_post_sample = 10,
+#'                               n_post_sample = 5,
 #'                               maxIter4CV = 1, n_repeats = 1)
 #' diag_flexrl # print(diag_flexrl)
 #' print(diag_flexrl, threshold = 0.75)
