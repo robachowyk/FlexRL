@@ -152,103 +152,203 @@ Experiments repository: <a href="https://github.com/robachowyk/FlexRL-experiment
 <span class="r-in"><span><span class="va">fn</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="va">true_pairs</span>, <span class="va">linked_pairs</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>LinkageDecisionRule <span class="op">=</span> <span class="fl">0.5</span>, FDP <span class="op">=</span> <span class="va">fp</span> <span class="op">/</span> <span class="op">(</span><span class="va">tp</span> <span class="op">+</span> <span class="va">fp</span><span class="op">)</span>, Sensitivity <span class="op">=</span> <span class="va">tp</span> <span class="op">/</span> <span class="op">(</span><span class="va">tp</span> <span class="op">+</span> <span class="va">fn</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> LinkageDecisionRule                 FDP         Sensitivity </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           0.5000000           0.2631579           0.5600000 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           0.5000000           0.3703704           0.5100000 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># diagnostics for inference on the linked data</span></span></span>
 <span class="r-in"><span><span class="va">diag</span> <span class="op">&lt;-</span> <span class="fu"><a href="rl_diagnostics.html">RL_diagnostics</a></span><span class="op">(</span><span class="va">fit</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedA</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span>,</span></span>
 <span class="r-in"><span>                       <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">PIVs_config</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                       <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>V1 <span class="op">=</span> <span class="cn">FALSE</span>, V2 <span class="op">=</span> <span class="cn">FALSE</span>, V3 <span class="op">=</span> <span class="cn">FALSE</span>, V4 <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                       <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">PIVs_config</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                       true_pairs <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">true_pairs</span>, FDP_estimation <span class="op">=</span> <span class="cn">TRUE</span>, </span></span>
 <span class="r-in"><span>                       RL_method <span class="op">=</span> <span class="st">"FlexRL"</span>, data <span class="op">=</span> <span class="va">prep_data</span>,</span></span>
 <span class="r-in"><span>                       StEM_iter <span class="op">=</span> <span class="fl">5</span>, StEM_burnin <span class="op">=</span> <span class="fl">2</span>, </span></span>
 <span class="r-in"><span>                       gibbs_iter <span class="op">=</span> <span class="fl">5</span>, gibbs_burnin <span class="op">=</span> <span class="fl">2</span>, n_post_samp <span class="op">=</span> <span class="fl">5</span>,</span></span>
 <span class="r-in"><span>                       maxIter4CV <span class="op">=</span> <span class="fl">1</span>, n_repeats <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in RL_diagnostics(fit, prep_data$encodedA, prep_data$encodedB, names(PIVs_config),     list(V1 = FALSE, V2 = FALSE, V3 = FALSE, V4 = TRUE), true_pairs = prep_data$true_pairs,     FDP_estimation = TRUE, RL_method = "FlexRL", data = prep_data,     StEM_iter = 5, StEM_burnin = 2, gibbs_iter = 5, gibbs_burnin = 2,     n_post_samp = 5, maxIter4CV = 1, n_repeats = 1):</span> argument "PIVs" is missing, with no default</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration: 0, Accuracy: 52.64%</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration: 1, Accuracy: 42.13%</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIV 'V1': synthetic records out of the common support were removed.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIV 'V3': synthetic records out of the common support were removed.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> FlexRL</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■                              </span>   2% [1s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■                             </span>   6% [3s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■                           </span>  13% [6s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■                         </span>  19% [9s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■                       </span>  25% [12s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■                      </span>  31% [15s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■                    </span>  38% [18s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■                  </span>  44% [21s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■■■                </span>  50% [24s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■              </span>  56% [27s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■            </span>  62% [30s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■          </span>  69% [33s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■        </span>  75% [36s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■       </span>  81% [39s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■     </span>  88% [42s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   </span>  94% [45s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% [47.8s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> FlexRL results (average over 1 iterations) (augmented RL task) `compute_augmRL_FDP_synth`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                            0.50  0.55  0.60  0.65  0.70  0.75  0.80  0.85  0.90</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> FDP model score estimator  0.19  0.18  0.17  0.16  0.14  0.12  0.11  0.09  0.06</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> FDP synth data estimator   0.00  0.00  0.00  0.00  0.00  0.00  0.00  0.00  0.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Linked pairs (augm. RL)   55.00 53.00 51.00 48.00 44.00 37.00 33.00 25.00 16.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Linked pairs (RL)         55.00 53.00 51.00 48.00 44.00 37.00 33.00 25.00 16.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                           0.95</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> FDP model score estimator 0.03</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> FDP synth data estimator  0.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Linked pairs (augm. RL)   4.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Linked pairs (RL)         4.00</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> FlexRL</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■                              </span>   2% [1s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■                             </span>   6% [2.9s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■                           </span>  13% [5.9s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■                         </span>  19% [8.9s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■                       </span>  26% [11.9s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■                     </span>  33% [14.9s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■                   </span>  39% [17.8s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■■                 </span>  46% [20.9s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■               </span>  53% [23.9s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■             </span>  59% [26.9s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■           </span>  66% [29.9s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■         </span>  72% [32.8s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■       </span>  79% [35.9s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■     </span>  86% [38.9s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   </span>  92% [41.8s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span>  99% [44.9s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Drawing Delta          <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% [45.4s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> FlexRL results (average over 1 iterations) (original RL task) `compute_RL_FDP_score`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                           0.50  0.55  0.60  0.65  0.70 0.75  0.80  0.85  0.90</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> FDP model score estimator  0.2  0.19  0.17  0.15  0.13  0.1  0.09  0.07  0.06</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Linked pairs (RL)         56.0 54.00 50.00 45.00 40.00 35.0 32.00 26.00 20.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                           0.95</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> FDP model score estimator 0.03</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Linked pairs (RL)         5.00</span>
 <span class="r-in"><span><span class="va">diag</span> <span class="co"># print(diag)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> function (x = 1, nrow, ncol, names = TRUE) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     if (is.matrix(x)) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         if (nargs() &gt; 1L &amp;&amp; (nargs() &gt; 2L || any(names(match.call()) %in% </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             c("nrow", "ncol")))) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             stop("'nrow' or 'ncol' cannot be specified when 'x' is a matrix")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         if ((m &lt;- min(dim(x))) == 0L) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             return(vector(typeof(x), 0L))</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         y &lt;- x[1 + 0L:(m - 1L) * (dim(x)[1L] + 1)]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         if (names) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             nms &lt;- dimnames(x)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             if (is.list(nms) &amp;&amp; !any(vapply(nms, is.null, NA)) &amp;&amp; </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 identical((nm &lt;- nms[[1L]][seq_len(m)]), nms[[2L]][seq_len(m)])) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 names(y) &lt;- nm</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         return(y)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     if (is.array(x) &amp;&amp; length(dim(x)) != 1L) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         stop("'x' is an array, but not one-dimensional.")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     if (missing(x)) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         n &lt;- nrow</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     else if (length(x) == 1L &amp;&amp; nargs() == 1L) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         n &lt;- as.integer(x)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         x &lt;- 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     else n &lt;- length(x)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     if (!missing(nrow)) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         n &lt;- nrow</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     if (missing(ncol)) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         ncol &lt;- n</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     .Internal(diag(x, n, ncol))</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x56364f37cf40&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: namespace:base&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;RL_diagnostics&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Linked pairs  (score &gt; 0.50):  81</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP           (true pairs):    0.370</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Sensitivity   (true pairs):    0.510</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.199</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                threshold 0.50: FDP ~ 0.199</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                            max threshold 0.98: FDP ~ 0.012</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.194</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                threshold 0.50: FDP ~ 0.194</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                            max threshold 0.98: FDP ~ 0.013</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                threshold 0.50: FDP ~ 0.000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                            max threshold 0.98: FDP ~ 0.000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   The score-based estimator is valid when the linkage model is well calibrated to the data.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   The synthetic-data estimator is valid when the augmented task is equivalent to the</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   original one, which requires links and non-links to have similar distributions; similar</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   score-based FDP estimates on the original and augmented tasks support this prerequisite.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Multivariate MMD  (linked A vs. A):  0.0098</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Multivariate MMD  (linked B vs. B):  0.0079</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V1  (linked A vs. A):  1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V2  (linked A vs. A):  1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V3  (linked A vs. A):  1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V4  (linked A vs. A):  1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V1  (linked B vs. B):  1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V2  (linked B vs. B):  1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V3  (linked B vs. B):  0.8571</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V4  (linked B vs. B):  0.9167</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V1  (linked A vs. linked B):  0.9506</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V2  (linked A vs. linked B):  0.9506</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V3  (linked A vs. linked B):  0.9753</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V4  (linked A vs. linked B):  0.7778</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V1  (true pairs):  0.9700</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V2  (true pairs):  0.9500</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V3  (true pairs):  0.8900</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V4  (true pairs):  0.7400</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V1 values: {1, 3, 5, ...}  (linked A vs. A):  -0.0506, 0.0775, -0.0430, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V2 values: {0, 4, 6, ...}  (linked A vs. A):  0.0696, 0.1223, -0.1283, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V3 values: {2, 3, 5, ...}  (linked A vs. A):  0.1468, -0.1206, 0.1287, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V4                         (linked A vs. A):  -0.1029</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V1 values: {0, 1, 5, ...}  (linked B vs. B):  0.1039, 0.0589, -0.1219, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V2 values: {3, 5, 6, ...}  (linked B vs. B):  -0.1031, 0.1075, -0.1179, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V3 values: {1, 2, 7, ...}  (linked B vs. B):  -0.0977, 0.1110, -0.0795, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V4                         (linked B vs. B):  0.0484</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">diag</span>, threshold <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> function (x = 1, nrow, ncol, names = TRUE) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     if (is.matrix(x)) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         if (nargs() &gt; 1L &amp;&amp; (nargs() &gt; 2L || any(names(match.call()) %in% </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             c("nrow", "ncol")))) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             stop("'nrow' or 'ncol' cannot be specified when 'x' is a matrix")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         if ((m &lt;- min(dim(x))) == 0L) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             return(vector(typeof(x), 0L))</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         y &lt;- x[1 + 0L:(m - 1L) * (dim(x)[1L] + 1)]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         if (names) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             nms &lt;- dimnames(x)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             if (is.list(nms) &amp;&amp; !any(vapply(nms, is.null, NA)) &amp;&amp; </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 identical((nm &lt;- nms[[1L]][seq_len(m)]), nms[[2L]][seq_len(m)])) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 names(y) &lt;- nm</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         return(y)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     if (is.array(x) &amp;&amp; length(dim(x)) != 1L) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         stop("'x' is an array, but not one-dimensional.")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     if (missing(x)) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         n &lt;- nrow</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     else if (length(x) == 1L &amp;&amp; nargs() == 1L) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         n &lt;- as.integer(x)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         x &lt;- 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     else n &lt;- length(x)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     if (!missing(nrow)) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         n &lt;- nrow</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     if (missing(ncol)) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         ncol &lt;- n</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     .Internal(diag(x, n, ncol))</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x56364f37cf40&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: namespace:base&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;RL_diagnostics&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Linked pairs  (score &gt; 0.75):  61</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP           (true pairs):    0.328</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Sensitivity   (true pairs):    0.410</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.199</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                threshold 0.75: FDP ~ 0.104</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                            max threshold 0.98: FDP ~ 0.012</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.194</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                threshold 0.75: FDP ~ 0.120</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                            max threshold 0.98: FDP ~ 0.013</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                threshold 0.75: FDP ~ 0.000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                            max threshold 0.98: FDP ~ 0.000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   The score-based estimator is valid when the linkage model is well calibrated to the data.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   The synthetic-data estimator is valid when the augmented task is equivalent to the</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   original one, which requires links and non-links to have similar distributions; similar</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   score-based FDP estimates on the original and augmented tasks support this prerequisite.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Multivariate MMD  (linked A vs. A):  0.0196</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Multivariate MMD  (linked B vs. B):  0.0115</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V1  (linked A vs. A):  1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V2  (linked A vs. A):  1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V3  (linked A vs. A):  1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V4  (linked A vs. A):  1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V1  (linked B vs. B):  0.8000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V2  (linked B vs. B):  0.8333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V3  (linked B vs. B):  0.8571</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V4  (linked B vs. B):  1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V1  (linked A vs. linked B):  0.9672</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V2  (linked A vs. linked B):  0.9508</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V3  (linked A vs. linked B):  0.9672</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V4  (linked A vs. linked B):  0.8361</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V1  (true pairs):  0.9700</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V2  (true pairs):  0.9500</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V3  (true pairs):  0.8900</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V4  (true pairs):  0.7400</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V1 values: {1, 3, 5, ...}  (linked A vs. A):  -0.1693, 0.2135, -0.1297, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V2 values: {1, 4, 6, ...}  (linked A vs. A):  0.1579, 0.2107, -0.2212, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V3 values: {2, 3, 5, ...}  (linked A vs. A):  0.1270, -0.1339, 0.1047, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V4                         (linked A vs. A):  -0.1770</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V1 values: {3, 4, 5, ...}  (linked B vs. B):  0.1413, 0.1145, -0.1690, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V2 values: {1, 4, 6, ...}  (linked B vs. B):  0.2006, 0.1734, -0.1749, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V3 values: {0, 2, 7, ...}  (linked B vs. B):  -0.0707, 0.0923, -0.0610, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V4                         (linked B vs. B):  0.0007</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"scores"</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>NAs introduced by coercion</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in seq.int(from, to, length.out = n):</span> 'from' must be a finite number</span>
+<span class="r-plt img"><img src="FlexRL-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"distributions"</span>, threshold <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>NAs introduced by coercion</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in seq.int(from, to, length.out = n):</span> 'from' must be a finite number</span>
+<span class="r-plt img"><img src="FlexRL-2.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="FlexRL-3.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"convergence"</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>NAs introduced by coercion</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in seq.int(from, to, length.out = n):</span> 'from' must be a finite number</span>
+<span class="r-plt img"><img src="FlexRL-4.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="FlexRL-5.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="FlexRL-6.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="FlexRL-7.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="FlexRL-8.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="FlexRL-9.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="FlexRL-10.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="FlexRL-11.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="FlexRL-12.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="FlexRL-13.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"FDP"</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>NAs introduced by coercion</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in seq.int(from, to, length.out = n):</span> 'from' must be a finite number</span>
+<span class="r-plt img"><img src="FlexRL-14.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"discrepancy"</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>NAs introduced by coercion</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in seq.int(from, to, length.out = n):</span> 'from' must be a finite number</span>
+<span class="r-plt img"><img src="FlexRL-15.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="FlexRL-16.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="FlexRL-17.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="FlexRL-18.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </div>

@@ -154,45 +154,45 @@ data frames (<code>n_repeats</code> rows x 50 thresholds, 0.50 to 0.99).</p>
 <span class="r-in"><span><span class="fu">compute_RL_FDP_score</span><span class="op">(</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedA</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span>, <span class="va">PIVs</span>, <span class="fl">1</span>, <span class="fl">2</span>,</span></span>
 <span class="r-in"><span>                      <span class="st">"BRL"</span>, flds <span class="op">=</span> <span class="va">PIVs</span>, types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"bi"</span>,<span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">PIVs</span><span class="op">)</span><span class="op">)</span> <span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> BRL results (average over 2 iterations) (original RL task) `compute_RL_FDP_score`</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                             0.50  0.55  0.60  0.65  0.70  0.75  0.80  0.85 0.90</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> FDP model score estimator   0.18  0.17  0.16  0.16  0.16  0.16  0.15  0.12 0.09</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Linked pairs (RL)         103.00 99.00 97.00 97.00 97.00 96.00 83.00 42.00 5.00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                            0.50  0.55  0.60  0.65  0.70  0.75  0.80  0.85 0.90</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> FDP model score estimator  0.15  0.15  0.15  0.15  0.15  0.15  0.14  0.13  0.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Linked pairs (RL)         97.00 97.00 96.00 96.00 96.00 96.00 88.00 54.00  2.0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                           0.95</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> FDP model score estimator    0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Linked pairs (RL)            0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $FDP_score_estimator</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        0.50      0.51      0.52      0.53      0.54      0.55      0.56</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.1779612 0.1779612 0.1719252 0.1658137 0.1658137 0.1658137 0.1658137</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.1779612 0.1779612 0.1719252 0.1658137 0.1658137 0.1658137 0.1658137</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.1509507 0.1509507 0.1509507 0.1509507 0.1509507 0.1509507 0.1509507</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.1509507 0.1509507 0.1509507 0.1509507 0.1509507 0.1509507 0.1509507</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        0.57      0.58      0.59      0.60      0.61      0.62      0.63</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.1602176 0.1602176 0.1602176 0.1602176 0.1602176 0.1602176 0.1602176</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.1602176 0.1602176 0.1602176 0.1602176 0.1602176 0.1602176 0.1602176</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.1480208 0.1480208 0.1480208 0.1480208 0.1480208 0.1480208 0.1480208</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.1480208 0.1480208 0.1480208 0.1480208 0.1480208 0.1480208 0.1480208</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        0.64      0.65      0.66      0.67      0.68      0.69      0.70</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.1602176 0.1602176 0.1602176 0.1602176 0.1602176 0.1602176 0.1602176</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.1602176 0.1602176 0.1602176 0.1602176 0.1602176 0.1602176 0.1602176</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        0.71      0.72      0.73      0.74      0.75      0.76      0.77</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.1602176 0.1602176 0.1602176 0.1591667 0.1591667 0.1574113 0.1549939</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.1602176 0.1602176 0.1602176 0.1591667 0.1591667 0.1574113 0.1549939</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        0.78      0.79     0.80      0.81      0.82      0.83      0.84</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.1525758 0.1495899 0.148929 0.1465963 0.1423318 0.1328283 0.1286168</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.1525758 0.1495899 0.148929 0.1465963 0.1423318 0.1328283 0.1286168</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        0.85      0.86      0.87      0.88       0.89       0.90       0.91</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.1242328 0.1200952 0.1093889 0.1010256 0.09755556 0.09111111 0.07666667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.1242328 0.1200952 0.1093889 0.1010256 0.09755556 0.09111111 0.07666667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.07666667    0    0    0    0    0    0    0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.07666667    0    0    0    0    0    0    0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.1480208 0.1480208 0.1480208 0.1480208 0.1480208 0.1480208 0.1480208</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.1480208 0.1480208 0.1480208 0.1480208 0.1480208 0.1480208 0.1480208</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        0.71      0.72      0.73      0.74      0.75      0.76     0.77     0.78</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.1480208 0.1480208 0.1480208 0.1480208 0.1480208 0.1470292 0.146052 0.143431</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.1480208 0.1480208 0.1480208 0.1480208 0.1480208 0.1470292 0.146052 0.143431</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       0.79      0.80      0.81      0.82      0.83      0.84      0.85</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.142642 0.1412374 0.1406386 0.1380352 0.1346519 0.1294965 0.1250823</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.142642 0.1412374 0.1406386 0.1380352 0.1346519 0.1294965 0.1250823</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        0.86      0.87      0.88      0.89       0.90 0.91 0.92 0.93 0.94 0.95</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.1224586 0.1153704 0.1098148 0.1044444 0.09555556    0    0    0    0    0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.1224586 0.1153704 0.1098148 0.1044444 0.09555556    0    0    0    0    0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   0.96 0.97 0.98 0.99</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1    0    0    0    0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2    0    0    0    0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $Linked_pairs</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   0.50 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.60 0.61 0.62 0.63 0.64</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  103  103  101   99   99   99   99   97   97   97   97   97   97   97   97</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2  103  103  101   99   99   99   99   97   97   97   97   97   97   97   97</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   97   97   97   97   97   97   97   96   96   96   96   96   96   96   96</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   97   97   97   97   97   97   97   96   96   96   96   96   96   96   96</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   0.65 0.66 0.67 0.68 0.69 0.70 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   97   97   97   97   97   97   97   97   97   96   96   94   91   88   84</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   97   97   97   97   97   97   97   97   97   96   96   94   91   88   84</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   96   96   96   96   96   96   96   96   96   96   96   95   94   91   90</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   96   96   96   96   96   96   96   96   96   96   96   95   94   91   90</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   0.80 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.90 0.91 0.92 0.93 0.94</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   83   79   71   55   49   42   35   20   13   10    5    1    1    0    0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   83   79   71   55   49   42   35   20   13   10    5    1    1    0    0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   88   87   82   75   64   54   47   30   18   10    2    0    0    0    0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   88   87   82   75   64   54   47   30   18   10    2    0    0    0    0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   0.95 0.96 0.97 0.98 0.99</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1    0    0    0    0    0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2    0    0    0    0    0</span>
@@ -205,44 +205,44 @@ data frames (<code>n_repeats</code> rows x 50 thresholds, 0.50 to 0.99).</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> FlexRL</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> FlexRL results (average over 2 iterations) (original RL task) `compute_RL_FDP_score`</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                             0.50   0.55   0.60   0.65   0.70   0.75 0.80 0.85</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> FDP model score estimator   0.13   0.13   0.06   0.06   0.06   0.06    0    0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Linked pairs (RL)         156.00 156.00 122.00 122.00 122.00 122.00   88   88</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> FDP model score estimator   0.12   0.12   0.05   0.05   0.05   0.05    0    0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Linked pairs (RL)         158.00 158.00 128.00 128.00 128.00 128.00   98   98</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                           0.90 0.95</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> FDP model score estimator    0    0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Linked pairs (RL)           88   88</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Linked pairs (RL)           98   98</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $FDP_score_estimator</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        0.50      0.51      0.52      0.53      0.54      0.55      0.56</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.1306122 0.1306122 0.1306122 0.1306122 0.1306122 0.1306122 0.1306122</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.1317073 0.1317073 0.1317073 0.1317073 0.1317073 0.1317073 0.1317073</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.1271605 0.1271605 0.1271605 0.1271605 0.1271605 0.1271605 0.1271605</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.1045161 0.1045161 0.1045161 0.1045161 0.1045161 0.1045161 0.1045161</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        0.57      0.58      0.59       0.60       0.61       0.62       0.63</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.1306122 0.1306122 0.1306122 0.07000000 0.07000000 0.07000000 0.07000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.1317073 0.1317073 0.1317073 0.04227642 0.04227642 0.04227642 0.04227642</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.1271605 0.1271605 0.1271605 0.04920635 0.04920635 0.04920635 0.04920635</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.1045161 0.1045161 0.1045161 0.04496124 0.04496124 0.04496124 0.04496124</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         0.64       0.65       0.66       0.67       0.68       0.69       0.70</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.07000000 0.07000000 0.07000000 0.07000000 0.07000000 0.07000000 0.07000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.04227642 0.04227642 0.04227642 0.04227642 0.04227642 0.04227642 0.04227642</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.04920635 0.04920635 0.04920635 0.04920635 0.04920635 0.04920635 0.04920635</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.04496124 0.04496124 0.04496124 0.04496124 0.04496124 0.04496124 0.04496124</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         0.71       0.72       0.73       0.74       0.75       0.76       0.77</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.07000000 0.07000000 0.07000000 0.07000000 0.07000000 0.07000000 0.07000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.04227642 0.04227642 0.04227642 0.04227642 0.04227642 0.04227642 0.04227642</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.04920635 0.04920635 0.04920635 0.04920635 0.04920635 0.04920635 0.04920635</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.04496124 0.04496124 0.04496124 0.04496124 0.04496124 0.04496124 0.04496124</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         0.78       0.79 0.80 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.90</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.07000000 0.07000000    0    0    0    0    0    0    0    0    0    0    0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.04227642 0.04227642    0    0    0    0    0    0    0    0    0    0    0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.04920635 0.04920635    0    0    0    0    0    0    0    0    0    0    0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.04496124 0.04496124    0    0    0    0    0    0    0    0    0    0    0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1    0    0    0    0    0    0    0    0    0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2    0    0    0    0    0    0    0    0    0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $Linked_pairs</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   0.50 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.60 0.61 0.62 0.63 0.64</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  147  147  147  147  147  147  147  147  147  147  120  120  120  120  120</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2  164  164  164  164  164  164  164  164  164  164  123  123  123  123  123</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  162  162  162  162  162  162  162  162  162  162  126  126  126  126  126</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  155  155  155  155  155  155  155  155  155  155  129  129  129  129  129</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   0.65 0.66 0.67 0.68 0.69 0.70 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  120  120  120  120  120  120  120  120  120  120  120  120  120  120  120</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2  123  123  123  123  123  123  123  123  123  123  123  123  123  123  123</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  126  126  126  126  126  126  126  126  126  126  126  126  126  126  126</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  129  129  129  129  129  129  129  129  129  129  129  129  129  129  129</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   0.80 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.90 0.91 0.92 0.93 0.94</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   78   78   78   78   78   78   78   78   78   78   78   78   78   78   78</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   97   97   97   97   97   97   97   97   97   97   97   97   97   97   97</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   95   95   95   95   95   95   95   95   95   95   95   95   95   95   95</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  100  100  100  100  100  100  100  100  100  100  100  100  100  100  100</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   0.95 0.96 0.97 0.98 0.99</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   78   78   78   78   78</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   97   97   97   97   97</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   95   95   95   95   95</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  100  100  100  100  100</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>
