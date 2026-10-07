@@ -88,6 +88,6 @@ NULL
 
 .onAttach <- function(libname, pkgname) {
   packageStartupMessage(
-    "If you are happy with FlexRL, please cite us!  Also, if you are unhappy, please cite us anyway."
+    "If you are happy with FlexRL, please cite us! If you are unhappy, please cite us anyway (and feel free to complain as well)."
   )
 }
