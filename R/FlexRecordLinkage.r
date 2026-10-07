@@ -72,7 +72,7 @@
 #'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' cond_hazard_params <- list( V1 = c(), V2 = c(), 
 #'                             V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-#' gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+#' gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
 #'                            p_mistake, p_missing, cond_hazard_params, TRUE )
 #' str(gen_data, max.level = 1)
 simulate_data <- function(PIVs_config, n_values, n_records, n_links, p_mistake, p_missing,
@@ -384,7 +384,7 @@ log_lik <- function(LLL, LLA, LLB, links, sumRowD, sumColD, gamma) {
 #'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' cond_hazard_params <- list( V1 = c(), V2 = c(), 
 #'                             V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-#' gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+#' gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
 #'                            p_mistake, p_missing, cond_hazard_params, TRUE )
 #' data_StEM <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
@@ -481,7 +481,7 @@ simulateH <- function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi) {
 #'                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' cond_hazard_params <- list( V1 = c(), V2 = c(), 
 #'                             V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-#' gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+#' gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
 #'                            p_mistake, p_missing, cond_hazard_params, TRUE )
 #' data_StEM <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
@@ -841,7 +841,7 @@ survival_model <- function(type = c("exponential", "weibull", "gompertz", "piece
 #'                    
 #' cond_hazard_params1 <- list( V1 = c(), V2 = c(), 
 #'                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-#' gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+#' gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
 #'                            p_mistake, p_missing, cond_hazard_params1, TRUE )
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
@@ -854,7 +854,7 @@ survival_model <- function(type = c("exponential", "weibull", "gompertz", "piece
 #' 
 #' cond_hazard_params2 <- list( V1 = c(), V2 = c(), 
 #'                              V3 = c(), V4 = log(c(0.3, 0.7, 0.6, 0.5)) )
-#' gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+#' gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
 #'                            p_mistake, p_missing, cond_hazard_params2, TRUE,
 #'                            model_dynamics = survival_model("weibull") )
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
@@ -868,7 +868,7 @@ survival_model <- function(type = c("exponential", "weibull", "gompertz", "piece
 #' 
 #' cond_hazard_params3 <- list( V1 = c(), V2 = c(), 
 #'                              V3 = c(), V4 = log(c(0.3, 0.7, 0.6, 0.5)) )
-#' gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+#' gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
 #'                            p_mistake, p_missing, cond_hazard_params3, TRUE,
 #'                            model_dynamics = survival_model("gompertz") )
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
@@ -882,7 +882,7 @@ survival_model <- function(type = c("exponential", "weibull", "gompertz", "piece
 #' 
 #' cond_hazard_params4 <- list( V1 = c(), V2 = c(), 
 #'                              V3 = c(), V4 = log(c(0.6, 0.5, 0.4, 0.3, 0.2, 0.1)) )
-#' gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+#' gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
 #'                            p_mistake, p_missing, cond_hazard_params4, TRUE,
 #'                            model_dynamics = survival_model("piecewise", cuts = c(1,2,3)) )
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
@@ -1297,7 +1297,7 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
 #'                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' cond_hazard_params <- list( V1 = c(), V2 = c(), 
 #'                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-#' gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+#' gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
 #'                            p_mistake, p_missing, cond_hazard_params, TRUE )
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
@@ -1734,7 +1734,7 @@ link_with_diyar <- function(dataA, dataB, arguments, ...) {
 #'                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' cond_hazard_params <- list( V1 = c(), V2 = c(), 
 #'                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-#' gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+#' gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
 #'                            p_mistake, p_missing, cond_hazard_params, TRUE )
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
@@ -1837,7 +1837,7 @@ RL_agreement <- function(data1, data2, common_vars, pairs,
 #'                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' cond_hazard_params <- list( V1 = c(), V2 = c(), 
 #'                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-#' gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+#' gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
 #'                            p_mistake, p_missing, cond_hazard_params, TRUE )
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
@@ -2111,7 +2111,7 @@ prepare_data <- function(data1, data2, label1, label2, PIVs_config,
 #'                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' cond_hazard_params <- list( V1 = c(), V2 = c(), 
 #'                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-#' gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+#' gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
 #'                            p_mistake, p_missing, cond_hazard_params, TRUE )
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
@@ -2409,7 +2409,7 @@ plot_linkage_scores <- function(n_pairs, LinkScore) {
 #'                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' cond_hazard_params <- list( V1 = c(), V2 = c(), 
 #'                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-#' gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+#' gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
 #'                            p_mistake, p_missing, cond_hazard_params, TRUE )
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
@@ -2468,7 +2468,7 @@ FDP_score <- function(LinkScore, threshold) {
 #'                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' cond_hazard_params <- list( V1 = c(), V2 = c(), 
 #'                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-#' gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+#' gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
 #'                            p_mistake, p_missing, cond_hazard_params, TRUE )
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
@@ -2550,7 +2550,7 @@ FDP_synth <- function(idxA, idxB, LinkScore, threshold,
 #'                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' cond_hazard_params <- list( V1 = c(), V2 = c(), 
 #'                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-#' gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+#' gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
 #'                            p_mistake, p_missing, cond_hazard_params, TRUE )
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
@@ -2631,12 +2631,16 @@ compute_RL_FDP_score <- function(encodedA, encodedB, PIVs, maxIter4CV = 10, n_re
   }
   
   to_show <- data.frame(
-    `FDP model score estimator`     = round(colMeans(FDP_score_res, na.rm = TRUE), 2),
-    `Linked pairs (RL)`        = round(colMeans(n_linked_score_res, na.rm = TRUE)),
+    `FDP model score estimator `     = round(colMeans(FDP_score_res, na.rm = TRUE), 2),
+    `Linked pairs (RL)         `     = round(colMeans(n_linked_score_res, na.rm = TRUE)),
     check.names = FALSE
   )
+  out <- t(to_show[c(1,6,11,16,21,26,31,36,41,46),])
+  out <- rbind("Decision rule threshold   " = as.numeric(colnames(out)), out)
+  colnames(out) <- rep("", ncol(out))
+  
   message(sprintf("%s results (average over %s iterations) (original RL task) `compute_RL_FDP_score`", RL_method, n_repeats))
-  print(round(t(to_show[c(1,6,11,16,21,26,31,36,41,46),]),2))
+  write.table(round(out,2), quote = FALSE, col.names = FALSE, sep = "\t")
   
   list(
     FDP_score_estimator = FDP_score_res,
@@ -2696,7 +2700,7 @@ compute_RL_FDP_score <- function(encodedA, encodedB, PIVs, maxIter4CV = 10, n_re
 #'                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' cond_hazard_params <- list( V1 = c(), V2 = c(), 
 #'                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-#' gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+#' gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
 #'                            p_mistake, p_missing, cond_hazard_params, TRUE )
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
@@ -2830,14 +2834,18 @@ compute_augmRL_FDP_synth <- function(synth_method, encodedA, encodedB, PIVs, n_s
   }
 
   to_show <- data.frame(
-    `FDP model score estimator`     = round(colMeans(FDP_score_res, na.rm = TRUE), 2),
-    `FDP synth data estimator`      = round(colMeans(FDP_synth_res, na.rm = TRUE), 2),
-    `Linked pairs (augm. RL)`  = round(colMeans(n_linked_synth_res, na.rm = TRUE)),
-    `Linked pairs (RL)`        = round(colMeans(n_linked_score_res, na.rm = TRUE)),
+    `FDP model score estimator `     = round(colMeans(FDP_score_res, na.rm = TRUE), 2),
+    `FDP synth data estimator  `     = round(colMeans(FDP_synth_res, na.rm = TRUE), 2),
+    `Linked pairs (augm. RL)   `     = round(colMeans(n_linked_synth_res, na.rm = TRUE)),
+    `Linked pairs (RL)         `     = round(colMeans(n_linked_score_res, na.rm = TRUE)),
     check.names = FALSE
   )
+  out <- t(to_show[c(1,6,11,16,21,26,31,36,41,46),])
+  out <- rbind("Decision rule threshold   " = as.numeric(colnames(out)), out)
+  colnames(out) <- rep("", ncol(out))
+
   message(sprintf("%s results (average over %s iterations) (augmented RL task) `compute_augmRL_FDP_synth`", RL_method, n_repeats))
-  print(round(t(to_show[c(1,6,11,16,21,26,31,36,41,46),]),2))
+  write.table(round(out,2), quote = FALSE, col.names = FALSE, sep = "\t")
 
   list(
     FDP_score_estimator = FDP_score_res,
@@ -2904,7 +2912,7 @@ compute_augmRL_FDP_synth <- function(synth_method, encodedA, encodedB, PIVs, n_s
 #'                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 #' cond_hazard_params <- list( V1 = c(), V2 = c(), 
 #'                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-#' gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+#' gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
 #'                            p_mistake, p_missing, cond_hazard_params, TRUE )
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
@@ -3287,7 +3295,9 @@ RL_diagnostics <- function(fit, encodedA, encodedB, compare_vars, vars_type_cont
     arguments$encodedB <- encodedB
     arguments$PIVs <- if ("PIVs" %in% names(arguments)) arguments$PIVs else PIVs
 
+    cat("\nFDP estimation on augmented RL task")
     FDP_synth_res <- do.call(compute_augmRL_FDP_synth, arguments)
+    cat("\nFDP estimation on original RL task")
     FDP_score_res <- do.call(compute_RL_FDP_score, arguments)
 
     FDP_measures <- .FDP_measures(FDP_score_res, FDP_synth_res, true_performance)
@@ -3323,7 +3333,7 @@ print.RL_diagnostics <- function(x, threshold = 0.5, ...) {
   
   if (is.null(x$LinkScore)){
     if (is.null(x$RL_method)){
-      cat(sprintf("  The linkage returned no LinkScore.\n"))
+      cat("  The linkage returned no LinkScore.\n")
     } else {
       cat(sprintf("  %s linkage returned no LinkScore.\n", x$RL_method))
     }

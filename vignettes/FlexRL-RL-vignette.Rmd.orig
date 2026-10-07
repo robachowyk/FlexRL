@@ -92,7 +92,6 @@ For this example we know the true linkage structure.
 
 ```{r}
 head(prep_data$true_pairs)
-true_pairs <- do.call(paste, c(prep_data$true_pairs, list(sep="_")))
 ```
 
 The number of unique values per **PIV** gives information on their discriminating power:
@@ -121,6 +120,7 @@ rownames(df_results) <- c("TP              ",
                           "min support IoU ",
                           "max MMD         ")
 
+true_pairs      <- do.call(paste, c(prep_data$true_pairs, list(sep="_")))
 linked_pairs    <- do.call(paste, c(naive_fit, list(sep = "_")))
 true_positive   <- length( intersect(linked_pairs, true_pairs) ) 
 false_positive  <- length( setdiff(linked_pairs, true_pairs) ) 
@@ -134,7 +134,7 @@ df_results
 
 We run record linkage with `FlexRL`. The `data` should contain encodedA, encodedB, n_values, PIVs_config, same_mistakes. `StEM_iter`, `StEM_burnin` and `gibbs_iter`, `gibbs_burnin` are total number of iterations (including burn-in) and iterations to be discarded as burn-in. If `music_on` the algorithm opens a short tune in the browser when it finishes. You can `save_info_iter` (save environment information at each iteration) to `new_directory`. You can set starting values of the algorithm for parameters gamma and phi with `gamma0`, `phiA0`, `phiB0`, and change the number of samples drawn a posteriori to provide a linkage estimate with `n_post_sample` (set to 1000 as default).
 
-```{r stem-linkage, warning=FALSE, message=FALSE}
+```{r stem-linkage, warning=FALSE, message=FALSE, results="hide"}
 fit <- StEM(data = prep_data)
 ```
 
@@ -160,7 +160,7 @@ df_results
 
 Let us run record linkage diagnostics:
 
-```{r diagnostics-linkage, warning=FALSE, message=FALSE}
+```{r diagnostics-linkage, warning=FALSE, message=FALSE, results="hide"}
 diag <- RL_diagnostics(fit = fit, encodedA = prep_data$encodedA, encodedB = prep_data$encodedB,
                       compare_vars = PIVs, vars_type_cont = PIVs_type, PIVs = PIVs, 
                       true_pairs = prep_data$true_pairs, FDP_estimation = TRUE, 
@@ -182,6 +182,9 @@ df_results[11,"FlexRL    "] <- max(diag$discrepancy_measures[1,mmd_idx])
 
 ```{r}
 diag # default, equivalent to print(diag)
+```
+
+```{r}
 print(diag, threshold = 0.75)
 ```
 
@@ -199,7 +202,7 @@ Several other algorithms for **R**ecord **L**inkage have been developed so far i
 
 With `link_with\_\*()` wrappers we can link records with "multilink", "fastLink", "BRL", "reclin2", "diyar", "fedmatch".
 
-```{r brl-linkage, warning=FALSE, message=FALSE}
+```{r brl-linkage, warning=FALSE, message=FALSE, results="hide"}
 brl_args <- list(flds = PIVs, types = rep("bi",length(PIVs)))
 fit_brl <- link_with_BRL(prep_data$encodedA, prep_data$encodedB, brl_args)
 
@@ -232,7 +235,7 @@ df_results[10,"BRL       "] <- min(diag_brl$discrepancy_measures[1,iou_idx])
 df_results[11,"BRL       "] <- max(diag_brl$discrepancy_measures[1,mmd_idx])
 ```
 
-```{r multilink-linkage, warning=FALSE, message=FALSE}
+```{r multilink-linkage, warning=FALSE, message=FALSE, results="hide"}
 multilink_args <- list(types = rep("bi",length(PIVs)), breaks = list(V1 = NA, V2 = NA, V3 = NA, V4 = NA),
                        duplicates = c(0,0), n_iter = 500, max_cc_size = 50)
 fit_multilink <- link_with_multilink( prep_data$encodedA, prep_data$encodedB, multilink_args)
@@ -265,7 +268,7 @@ df_results[10,"multilink "] <- min(diag_multilink$discrepancy_measures[1,iou_idx
 df_results[11,"multilink "] <- max(diag_multilink$discrepancy_measures[1,mmd_idx])
 ```
 
-```{r fastlink-linkage, warning=FALSE, message=FALSE}
+```{r fastlink-linkage, warning=FALSE, message=FALSE, results="hide"}
 fastLink_args <- list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, return.all = TRUE, n.cores = 1 )
 fit_fastLink <- link_with_fastLink( prep_data$encodedA, prep_data$encodedB, fastLink_args )
 
@@ -298,7 +301,7 @@ df_results[10,"fastLink  "] <- min(diag_fastLink$discrepancy_measures[1,iou_idx]
 df_results[11,"fastLink  "] <- max(diag_fastLink$discrepancy_measures[1,mmd_idx])
 ```
 
-```{r reclin2-linkage, warning=FALSE, message=FALSE}
+```{r reclin2-linkage, warning=FALSE, message=FALSE, results="hide"}
 reclin2_args <- list(on = PIVs, formula = stats::as.formula(paste("~", paste(PIVs, collapse = "+"))),
                      type = "mpost", add = TRUE, variable = "selected", score = "mpost", threshold = 0.5)
 fit_reclin2 <- link_with_reclin2( prep_data$encodedA, prep_data$encodedB, reclin2_args )
@@ -332,7 +335,7 @@ df_results[10,"reclin2   "] <- min(diag_reclin2$discrepancy_measures[1,iou_idx])
 df_results[11,"reclin2   "] <- max(diag_reclin2$discrepancy_measures[1,mmd_idx])
 ```
 
-```{r diyar-linkage, warning=FALSE, message=FALSE}
+```{r diyar-linkage, warning=FALSE, message=FALSE, results="hide"}
 diyar_args <- list(probabilistic = TRUE, return_weights = TRUE)
 fit_diyar <- link_with_diyar(prep_data$encodedA[, PIVs], prep_data$encodedB[, PIVs], diyar_args)
 
@@ -366,7 +369,7 @@ df_results[10,"diyar     "] <- min(diag_diyar$discrepancy_measures[1,iou_idx])
 df_results[11,"diyar     "] <- max(diag_diyar$discrepancy_measures[1,mmd_idx])
 ```
 
-```{r fedmatch-linkage, warning=FALSE, message=FALSE}
+```{r fedmatch-linkage, warning=FALSE, message=FALSE, results="hide"}
 fedmatch_args <- list(by = PIVs, match_type = "multivar", 
                       unique_key_1 = "unique_key_A", unique_key_2 = "unique_key_B",
                       multivar_settings = fedmatch::build_multivar_settings(
@@ -405,15 +408,15 @@ df_results[11,"fedmatch  "] <- max(diag_fedmatch$discrepancy_measures[1,mmd_idx]
 
 ```{r}
 cat("Record Linkage ")
-df_results[1:5,]
+round(df_results[1:5,],2)
 ```
 
 ```{r}
 cat("\nFDP estimation ")
-df_results[6:8,]
+round(df_results[6:8,],2)
 ```
 
 ```{r}
 cat("\nLinked divergence ")
-df_results[9:11,]
+round(df_results[9:11,],2)
 ```

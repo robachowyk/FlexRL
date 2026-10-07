@@ -161,9 +161,9 @@ run_all_wrappers <- function(prep_data, PIVs_type, methods, FDP_estimation = TRU
 }
 
 show_results <- function(df_results) {
-  cat("Record Linkage\n");      print(df_results[1:5, ], 3)
-  cat("\nFDP estimation\n");    print(df_results[6:8, ], 3)
-  cat("\nLinked divergence\n"); print(df_results[9:11, ], 3)
+  cat("Record Linkage\n");      print(df_results[1:5, ],  2)
+  cat("\nFDP estimation\n");    print(df_results[6:8, ],  2)
+  cat("\nLinked divergence\n"); print(df_results[9:11, ], 2)
 }
 
 methods <- c("FlexRL", "BRL", "multilink", "fastLink", "reclin2", "diyar", "fedmatch")
@@ -198,7 +198,7 @@ c(n_A = nrow(prep_data$encodedA), n_B = nrow(prep_data$encodedB), n_links = nrow
 prep_data$n_values
 ```
 
-```{r nltcs-block-results, warning=FALSE, message=FALSE}
+```{r nltcs-block-results, warning=FALSE, message=FALSE, results="hide"}
 df_results_NLTCS <- run_all_wrappers(prep_data, PIVs_type, methods)
 ```
 
@@ -229,7 +229,7 @@ c(n_A = nrow(prep_data$encodedA), n_B = nrow(prep_data$encodedB), n_links = nrow
 prep_data$n_values
 ```
 
-```{r shiw-block-results, warning=FALSE, message=FALSE}
+```{r shiw-block-results, warning=FALSE, message=FALSE, results="hide"}
 df_results_SHIW <- run_all_wrappers(prep_data, PIVs_type, methods)
 ```
 
@@ -239,7 +239,7 @@ show_results(df_results_SHIW)
 
 ## Full SHIW data
 
-```{r shiw, warning=FALSE, message=FALSE}
+```{r shiw, warning=FALSE, message=FALSE, results="hide"}
 df2016 <- read.csv("SHIW2016.csv", row.names = 1)
 df2020 <- read.csv("SHIW2020.csv", row.names = 1)
 df2016 <- df2016[!df2016$ID %in% df2016$ID[duplicated(df2016$ID)], ]
@@ -256,8 +256,9 @@ true_pairs_full <- do.call(paste, c(prep_data_full$true_pairs, list(sep = "_")))
 df_results_full <- data.frame(matrix(NA, nrow = 6, ncol = 0))
 rownames(df_results_full) <- c("TP", "FP", "FN", "sensitivity", "FDP", "minutes")
 for (method in methods) {
-  t0 <- Sys.time()
-  args <- list(StEM_iter = 10, StEM_burnin = 5, gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10)
+  t0 <- Sys.time()           
+  args <- list(StEM_iter = 10, StEM_burnin = 5, gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10, 
+               n_iter = 500, max_cc_size = 50, n.cores = 4)
   fit <- run_wrapper(method, prep_data_full, wrapper_args(method, prep_data_full, args))
   df_results_full[1:5, method] <- evaluate_linkage(fit, true_pairs_full)
   df_results_full[6, method] <- if (is.null(fit)) NA else round(as.numeric(Sys.time() - t0, units = "mins"))
@@ -269,7 +270,7 @@ for (method in methods) {
 
 ```{r}
 cat("Record Linkage on large files")
-df_results_full
+round(df_results_full,2)
 ```
 
 Note that when methods do not ensure the one-to-one assignment constraint the number of False Positives may be high due to many-to-many falsely linked pairs of records.
@@ -278,7 +279,7 @@ Note that when methods do not ensure the one-to-one assignment constraint the nu
 
 Blocking on the region code `IREG` splits the task into 20 smaller ones. Within a region, `IREG` is constant and the linkage uses the 4 other PIVs. Region 2 is the regional subset used above.
 
-```{r shiw-regional-blocking, warning=FALSE, message=FALSE}
+```{r shiw-regional-blocking, warning=FALSE, message=FALSE, results="hide"}
 regions <- sort(unique(c(df2016$IREG, df2020$IREG)))
 results_IREG <- list()
 for (r in regions) {
@@ -288,8 +289,7 @@ for (r in regions) {
   true_pairs_r <- do.call(paste, c(prep_data_r$true_pairs, list(sep = "_")))
   for (method in methods) {
     t0 <- Sys.time()
-    fit <- run_wrapper(method, prep_data_r, wrapper_args(method, prep_data_r, list(StEM_iter = 10, StEM_burnin = 5, 
-                gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10, n_iter = 500, max_cc_size = 50, n.cores = 1)))
+    fit <- run_wrapper(method, prep_data_r, wrapper_args(method, prep_data_r))
     results_IREG[[length(results_IREG) + 1]] <- data.frame(
       IREG = r, n_A = nrow(prep_data_r$encodedA), 
       n_B = nrow(prep_data_r$encodedB), n_links = length(true_pairs_r),
@@ -302,7 +302,7 @@ results_IREG <- do.call(rbind, results_IREG)
 
 ```{r}
 cat("Record Linkage on regional subsets")
-results_IREG
+round(results_IREG,2)
 ```
 
 FDP and sensitivity per region (rows) and per package (columns):
@@ -314,7 +314,7 @@ table_by <- function(measure) {
   sizes <- unique(results_IREG[, c("IREG", "n_A", "n_B", "n_links")])
   tab <- merge(sizes, tab, by = "IREG")
   rownames(tab) <- NULL
-  tab
+  round(tab,2)
 }
 
 table_by("FDP")
@@ -334,7 +334,7 @@ summary_IREG <- do.call(rbind, lapply(split(results_IREG, results_IREG$method), 
 }))
 rownames(summary_IREG) <- NULL
 
-summary_IREG
+round(summary_IREG,2)
 ```
 
 ```{r shiw-regional-blocking-plot, fig.width=7, fig.height=5}

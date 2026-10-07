@@ -14,6 +14,7 @@ vignette: >
 
 ``` r
 library(FlexRL)
+#> If you are happy with FlexRL, please cite us!  Also, if you are unhappy, please cite us anyway.
 ```
 
 `FlexRL` is a package proposing flexible probabilistic **R**ecord **L**inkage with diagnostic tools for downstream inference on linked data. The record linkage algorithm `StEM()` uses a **St**ochastic **E**xpectation **M**aximisation approach to combine 2 data sources and outputs the set of records referring to the same entities.
@@ -80,25 +81,25 @@ prep_data <- prepare_data(
 
 ``` r
 head(prep_data$encodedA)
-#>   V1 V2 V3 V4 change   date     Xe   Xf local_id entity_id source
-#> 1  8  4  2 13  FALSE 0.0084 -0.037 0.76        1         1      1
-#> 2  8  7  8 10  FALSE 0.0047  1.902 1.60        2         2      1
-#> 3  7  7 10  9  FALSE 0.0075  0.169 2.46        3         3      1
-#> 4  7  6  2 13  FALSE 0.0088  0.160 2.41        4         4      1
-#> 5  8  2  3 11  FALSE 0.0032  2.252 0.89        5         5      1
-#> 6  1  1  3  1  FALSE 0.0093 -0.169 0.43        6         6      1
+#>   V1 V2 V3 V4 change   date    Xe   Xf local_id entity_id source
+#> 1  4  1  6 13  FALSE 0.0070  0.93 2.08        1         1      1
+#> 2  7  9  8 12  FALSE 0.0043  2.96 1.95        2         2      1
+#> 3  0  8  5 10  FALSE 0.0067 -0.36 2.92        3         3      1
+#> 4  5  9  8  6  FALSE 0.0094  2.12 0.54        4         4      1
+#> 5  5  8 10 13  FALSE 0.0058  1.47 0.90        5         5      1
+#> 6  6  6 10 13  FALSE 0.0072  2.70 0.79        6         6      1
 ```
 
 
 ``` r
 head(prep_data$encodedB)
 #>   V1 V2 V3 V4 change   date local_id entity_id source
-#> 1  8  4  2 13  FALSE 0.0037        1         1      2
-#> 2  8  7  8 10  FALSE 0.0076        2         2      2
-#> 3  7  3 10  9  FALSE 0.0070        3         3      2
-#> 4  7  6  2 13  FALSE 0.0025        4         4      2
-#> 5  8  8  3 11  FALSE 0.0043        5         5      2
-#> 6  1  1  3  1  FALSE 0.0063        6         6      2
+#> 1  4  1  6 13  FALSE 0.0035        1         1      2
+#> 2  7  9  9 12  FALSE 0.0026        2         2      2
+#> 3  6  8  5 10  FALSE 0.0015        3         3      2
+#> 4  5  9  8  6  FALSE 0.0032        4         4      2
+#> 5  5  8 10 13  FALSE 0.0080        5         5      2
+#> 6  6  6 10 13  FALSE 0.0061        6         6      2
 ```
 
 For this example we know the true linkage structure.
@@ -113,7 +114,6 @@ head(prep_data$true_pairs)
 #> 4 4 4
 #> 5 5 5
 #> 6 6 6
-true_pairs <- do.call(paste, c(prep_data$true_pairs, list(sep="_")))
 ```
 
 The number of unique values per **PIV** gives information on their discriminating power:
@@ -146,6 +146,7 @@ rownames(df_results) <- c("TP              ",
                           "min support IoU ",
                           "max MMD         ")
 
+true_pairs      <- do.call(paste, c(prep_data$true_pairs, list(sep="_")))
 linked_pairs    <- do.call(paste, c(naive_fit, list(sep = "_")))
 true_positive   <- length( intersect(linked_pairs, true_pairs) ) 
 false_positive  <- length( setdiff(linked_pairs, true_pairs) ) 
@@ -156,11 +157,11 @@ df_results[1:5,"Naive     "] <- c(true_positive,false_positive,false_negative,se
 
 df_results
 #>                  Naive     
-#> TP                   279.00
-#> FP                   116.00
-#> FN                   121.00
-#> sensitivity            0.70
-#> FDP                    0.29
+#> TP                   252.00
+#> FP                    80.00
+#> FN                   148.00
+#> sensitivity            0.63
+#> FDP                    0.24
 #> hat FDP score            NA
 #> hat FDP score*           NA
 #> hat FDP synth*           NA
@@ -196,11 +197,11 @@ df_results[1:5,"FlexRL    "] <- c(true_positive,false_positive,false_negative,se
 
 df_results
 #>                  Naive      FlexRL    
-#> TP                   279.00     292.00
-#> FP                   116.00      42.00
-#> FN                   121.00     108.00
-#> sensitivity            0.70       0.73
-#> FDP                    0.29       0.13
+#> TP                   252.00     289.00
+#> FP                    80.00      41.00
+#> FN                   148.00     111.00
+#> sensitivity            0.63       0.72
+#> FDP                    0.24       0.12
 #> hat FDP score            NA         NA
 #> hat FDP score*           NA         NA
 #> hat FDP synth*           NA         NA
@@ -218,24 +219,6 @@ diag <- RL_diagnostics(fit = fit, encodedA = prep_data$encodedA, encodedB = prep
                       true_pairs = prep_data$true_pairs, FDP_estimation = TRUE, 
                       RL_method = "FlexRL", data = prep_data,
                       maxIter4CV = 1, n_repeats = 2)
-#> Iteration: 0, Accuracy: 49.75%
-#> Iteration: 0, Accuracy: 48.53%
-#>                             0.50   0.55   0.60   0.65   0.70   0.75   0.80
-#> FDP model score estimator   0.12   0.11   0.09   0.07   0.06   0.05   0.04
-#> FDP synth data estimator    0.20   0.19   0.15   0.12   0.11   0.07   0.04
-#> Linked pairs (augm. RL)   330.00 320.00 306.00 290.00 278.00 269.00 254.00
-#> Linked pairs (RL)         336.00 326.00 311.00 294.00 280.00 271.00 254.00
-#>                             0.85   0.90   0.95
-#> FDP model score estimator   0.03   0.03   0.01
-#> FDP synth data estimator    0.04   0.05   0.00
-#> Linked pairs (augm. RL)   232.00 217.00 175.00
-#> Linked pairs (RL)         234.00 218.00 175.00
-#>                            0.50   0.55   0.60   0.65   0.70   0.75   0.80
-#> FDP model score estimator   0.1   0.09   0.07   0.06   0.05   0.05   0.04
-#> Linked pairs (RL)         340.0 327.00 312.00 300.00 290.00 282.00 272.00
-#>                             0.85   0.90   0.95
-#> FDP model score estimator   0.03   0.02   0.01
-#> Linked pairs (RL)         256.00 235.00 199.00
 
 df_results[6,"FlexRL    "] <- diag$FDP_measures$curve$RL_FDP_score[1]
 df_results[7,"FlexRL    "] <- diag$FDP_measures$curve$augmRL_FDP_score[1]
@@ -255,105 +238,109 @@ df_results[11,"FlexRL    "] <- max(diag$discrepancy_measures[1,mmd_idx])
 diag # default, equivalent to print(diag)
 #> <RL_diagnostics>
 #> 
-#>   Linked pairs  (score > 0.50):  334
+#>   Linked pairs  (score > 0.50):  330
 #> 
-#>   FDP           (true pairs):    0.126
-#>   Sensitivity   (true pairs):    0.730
+#>   FDP           (true pairs):    0.124
+#>   Sensitivity   (true pairs):    0.723
 #> 
-#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.104
-#>                                                threshold 0.50: FDP ~ 0.104
+#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.108
+#>                                                threshold 0.50: FDP ~ 0.108
 #>                                            max threshold 0.99: FDP ~ 0.004
-#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.118
-#>                                                threshold 0.50: FDP ~ 0.118
+#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.127
+#>                                                threshold 0.50: FDP ~ 0.127
 #>                                            max threshold 0.99: FDP ~ 0.004
-#>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.197
-#>                                                threshold 0.50: FDP ~ 0.197
+#>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.243
+#>                                                threshold 0.50: FDP ~ 0.243
 #>                                            max threshold 0.99: FDP ~ 0.000
 #>   The score-based estimator is valid when the linkage model is well calibrated to the data.
 #>   The synthetic-data estimator is valid when the augmented task is equivalent to the
 #>   original one, which requires links and non-links to have similar distributions; similar
 #>   score-based FDP estimates on the original and augmented tasks support this prerequisite.
 #> 
-#>   Multivariate MMD  (linked A vs. A):  0.0019
-#>   Multivariate MMD  (linked B vs. B):  0.0017
+#>   Multivariate MMD  (linked A vs. A):  0.0023
+#>   Multivariate MMD  (linked B vs. B):  0.0028
 #> 
 #>   IoU support V1  (linked A vs. A):  1.0000
 #>   IoU support V2  (linked A vs. A):  1.0000
 #>   IoU support V3  (linked A vs. A):  1.0000
 #>   IoU support V4  (linked A vs. A):  1.0000
-#>   IoU support V1  (linked B vs. B):  1.0000
-#>   IoU support V2  (linked B vs. B):  1.0000
+#>   IoU support V1  (linked B vs. B):  0.8750
+#>   IoU support V2  (linked B vs. B):  0.8889
 #>   IoU support V3  (linked B vs. B):  1.0000
-#>   IoU support V4  (linked B vs. B):  0.8750
+#>   IoU support V4  (linked B vs. B):  1.0000
 #> 
-#>   Agreement V1  (linked A vs. linked B):  0.9910
-#>   Agreement V2  (linked A vs. linked B):  0.9880
-#>   Agreement V3  (linked A vs. linked B):  0.9910
-#>   Agreement V4  (linked A vs. linked B):  0.8024
-#>   Agreement V1  (true pairs):  0.9650
-#>   Agreement V2  (true pairs):  0.9450
-#>   Agreement V3  (true pairs):  0.9500
-#>   Agreement V4  (true pairs):  0.7575
+#>   Agreement V1  (linked A vs. linked B):  0.9970
+#>   Agreement V2  (linked A vs. linked B):  0.9939
+#>   Agreement V3  (linked A vs. linked B):  0.9909
+#>   Agreement V4  (linked A vs. linked B):  0.7485
+#>   Agreement V1  (true pairs):  0.9600
+#>   Agreement V2  (true pairs):  0.9350
+#>   Agreement V3  (true pairs):  0.9650
+#>   Agreement V4  (true pairs):  0.7075
 #> 
-#>   SMD V1 values: {3, 4, 8, ...}  (linked A vs. A):  -0.0592, 0.0516, -0.0524, ...
-#>   SMD V2 values: {1, 5, 9, ...}  (linked A vs. A):  0.0250, 0.0353, -0.0477, ...
-#>   SMD V3 values: {0, 3, 6, ...}  (linked A vs. A):  -0.0451, -0.0454, 0.0711, ...
-#>   SMD V4                         (linked A vs. A):  -0.0547
-#>   SMD V1 values: {2, 3, 5, ...}   (linked B vs. B):  0.0657, -0.1121, 0.0748, ...
-#>   SMD V2 values: {5, 7, 9, ...}   (linked B vs. B):  0.0477, 0.0269, -0.0403, ...
-#>   SMD V3 values: {3, 9, 10, ...}  (linked B vs. B):  -0.0520, 0.0623, -0.1097, ...
-#>   SMD V4                          (linked B vs. B):  -0.0031
+#>   SMD V1 values: {1, 6, 7, ...}   (linked A vs. A):  0.0309, 0.0285, -0.0686, ...
+#>   SMD V2 values: {3, 6, 9, ...}   (linked A vs. A):  0.0510, 0.0225, -0.0724, ...
+#>   SMD V3 values: {7, 8, 10, ...}  (linked A vs. A):  0.0416, -0.0644, 0.0377, ...
+#>   SMD V4                          (linked A vs. A):  0.0326
+#>   SMD V1 values: {1, 2, 7, ...}  (linked B vs. B):  0.0500, 0.0570, -0.0789, ...
+#>   SMD V2 values: {0, 2, 9, ...}  (linked B vs. B):  -0.0447, 0.0486, -0.0838, ...
+#>   SMD V3 values: {3, 5, 7, ...}  (linked B vs. B):  -0.0427, 0.0486, 0.0548, ...
+#>   SMD V4                         (linked B vs. B):  -0.0345
+```
+
+
+``` r
 print(diag, threshold = 0.75)
 #> <RL_diagnostics>
 #> 
-#>   Linked pairs  (score > 0.75):  278
+#>   Linked pairs  (score > 0.75):  260
 #> 
-#>   FDP           (true pairs):    0.068
-#>   Sensitivity   (true pairs):    0.647
+#>   FDP           (true pairs):    0.038
+#>   Sensitivity   (true pairs):    0.625
 #> 
-#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.104
-#>                                                threshold 0.75: FDP ~ 0.045
+#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.108
+#>                                                threshold 0.75: FDP ~ 0.054
 #>                                            max threshold 0.99: FDP ~ 0.004
-#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.118
-#>                                                threshold 0.75: FDP ~ 0.055
+#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.127
+#>                                                threshold 0.75: FDP ~ 0.061
 #>                                            max threshold 0.99: FDP ~ 0.004
-#>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.197
-#>                                                threshold 0.75: FDP ~ 0.074
+#>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.243
+#>                                                threshold 0.75: FDP ~ 0.120
 #>                                            max threshold 0.99: FDP ~ 0.000
 #>   The score-based estimator is valid when the linkage model is well calibrated to the data.
 #>   The synthetic-data estimator is valid when the augmented task is equivalent to the
 #>   original one, which requires links and non-links to have similar distributions; similar
 #>   score-based FDP estimates on the original and augmented tasks support this prerequisite.
 #> 
-#>   Multivariate MMD  (linked A vs. A):  0.0042
-#>   Multivariate MMD  (linked B vs. B):  0.0030
+#>   Multivariate MMD  (linked A vs. A):  0.0072
+#>   Multivariate MMD  (linked B vs. B):  0.0079
 #> 
-#>   IoU support V1  (linked A vs. A):  0.8750
+#>   IoU support V1  (linked A vs. A):  1.0000
 #>   IoU support V2  (linked A vs. A):  1.0000
-#>   IoU support V3  (linked A vs. A):  0.9000
+#>   IoU support V3  (linked A vs. A):  1.0000
 #>   IoU support V4  (linked A vs. A):  1.0000
-#>   IoU support V1  (linked B vs. B):  1.0000
-#>   IoU support V2  (linked B vs. B):  1.0000
-#>   IoU support V3  (linked B vs. B):  1.0000
-#>   IoU support V4  (linked B vs. B):  0.8750
+#>   IoU support V1  (linked B vs. B):  0.8750
+#>   IoU support V2  (linked B vs. B):  0.8889
+#>   IoU support V3  (linked B vs. B):  0.9000
+#>   IoU support V4  (linked B vs. B):  1.0000
 #> 
-#>   Agreement V1  (linked A vs. linked B):  0.9928
-#>   Agreement V2  (linked A vs. linked B):  0.9892
-#>   Agreement V3  (linked A vs. linked B):  0.9928
-#>   Agreement V4  (linked A vs. linked B):  0.8633
-#>   Agreement V1  (true pairs):  0.9650
-#>   Agreement V2  (true pairs):  0.9450
-#>   Agreement V3  (true pairs):  0.9500
-#>   Agreement V4  (true pairs):  0.7575
+#>   Agreement V1  (linked A vs. linked B):  0.9962
+#>   Agreement V2  (linked A vs. linked B):  0.9962
+#>   Agreement V3  (linked A vs. linked B):  0.9962
+#>   Agreement V4  (linked A vs. linked B):  0.8231
+#>   Agreement V1  (true pairs):  0.9600
+#>   Agreement V2  (true pairs):  0.9350
+#>   Agreement V3  (true pairs):  0.9650
+#>   Agreement V4  (true pairs):  0.7075
 #> 
-#>   SMD V1 values: {2, 4, 8, ...}  (linked A vs. A):  0.0502, 0.0843, -0.0779, ...
-#>   SMD V2 values: {3, 8, 9, ...}  (linked A vs. A):  0.0551, -0.0876, -0.0589, ...
-#>   SMD V3 values: {0, 5, 6, ...}  (linked A vs. A):  -0.0818, 0.0914, 0.1028, ...
-#>   SMD V4                         (linked A vs. A):  -0.0561
-#>   SMD V1 values: {2, 3, 5, ...}   (linked B vs. B):  0.0793, -0.0896, 0.0754, ...
-#>   SMD V2 values: {4, 7, 8, ...}   (linked B vs. B):  0.0529, 0.0675, -0.1139, ...
-#>   SMD V3 values: {5, 6, 10, ...}  (linked B vs. B):  0.1005, 0.0710, -0.1177, ...
-#>   SMD V4                          (linked B vs. B):  -0.0329
+#>   SMD V1 values: {1, 2, 7, ...}   (linked A vs. A):  0.0767, 0.0620, -0.1027, ...
+#>   SMD V2 values: {2, 3, 9, ...}   (linked A vs. A):  0.0932, 0.1314, -0.1733, ...
+#>   SMD V3 values: {3, 7, 10, ...}  (linked A vs. A):  -0.0850, 0.0674, 0.0646, ...
+#>   SMD V4                          (linked A vs. A):  0.0207
+#>   SMD V1 values: {1, 2, 7, ...}  (linked B vs. B):  0.0973, 0.0937, -0.1127, ...
+#>   SMD V2 values: {2, 3, 9, ...}  (linked B vs. B):  0.1234, 0.0998, -0.1815, ...
+#>   SMD V3 values: {0, 3, 7, ...}  (linked B vs. B):  -0.0633, -0.1221, 0.0812, ...
+#>   SMD V4                         (linked B vs. B):  0.0289
 ```
 
 These summaries provide information on the linked data. We can also look at: the convergence of the StEM algorithm parameters, the linkage scores distribution, the data distributions between linked subset and original data sources, the divergence metrics of the linked data from the data sources, the FDP estimation.
@@ -413,24 +400,6 @@ diag_brl <- do.call(RL_diagnostics, c(list(fit_brl, prep_data$encodedA, prep_dat
                            PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs,
                            FDP_estimation = TRUE, RL_method = "BRL", maxIter4CV = 1, n_repeats = 2),
                            brl_args))
-#> Iteration: 0, Accuracy: 49.65%
-#> Iteration: 0, Accuracy: 46.57%
-#>                            0.50   0.55   0.60   0.65   0.70   0.75   0.80
-#> FDP model score estimator   0.1   0.07   0.06   0.06   0.06   0.05   0.05
-#> FDP synth data estimator    0.2   0.15   0.16   0.16   0.16   0.16   0.16
-#> Linked pairs (augm. RL)   246.0 229.00 224.00 222.00 222.00 222.00 222.00
-#> Linked pairs (RL)         252.0 232.00 227.00 226.00 226.00 226.00 226.00
-#>                             0.85   0.90   0.95
-#> FDP model score estimator   0.05   0.05   0.03
-#> FDP synth data estimator    0.16   0.10   0.00
-#> Linked pairs (augm. RL)   220.00 202.00 124.00
-#> Linked pairs (RL)         224.00 204.00 124.00
-#>                             0.50   0.55   0.60   0.65   0.70   0.75   0.80
-#> FDP model score estimator   0.13   0.09   0.06   0.05   0.05   0.05   0.05
-#> Linked pairs (RL)         294.00 262.00 237.00 230.00 228.00 228.00 228.00
-#>                             0.85   0.90   0.95
-#> FDP model score estimator   0.04   0.04   0.03
-#> Linked pairs (RL)         226.00 212.00 146.00
 
 df_results[6,"BRL       "] <- diag_brl$FDP_measures$curve$RL_FDP_score[1]
 df_results[7,"BRL       "] <- diag_brl$FDP_measures$curve$augmRL_FDP_score[1]
@@ -450,21 +419,6 @@ df_results[11,"BRL       "] <- max(diag_brl$discrepancy_measures[1,mmd_idx])
 multilink_args <- list(types = rep("bi",length(PIVs)), breaks = list(V1 = NA, V2 = NA, V3 = NA, V4 = NA),
                        duplicates = c(0,0), n_iter = 500, max_cc_size = 50)
 fit_multilink <- link_with_multilink( prep_data$encodedA, prep_data$encodedB, multilink_args)
-#> [1] "Creating comparison data for field V1"
-#> [1] "Creating comparison data for field V2"
-#> [1] "Creating comparison data for field V3"
-#> [1] "Creating comparison data for field V4"
-#> [1] "Running Gibbs sampler with Gibbs updates to partition."
-#> [1] "Processing inputs"
-#> [1] "Beginning sampling"
-#> Beginning iteration 1/500
-#> Beginning iteration 100/500
-#> Beginning iteration 200/500
-#> Beginning iteration 300/500
-#> Beginning iteration 400/500
-#> Beginning iteration 500/500
-#> [1] "Finished sampling in 20.9501218795776 seconds"
-#> [1] "Finding Bayes estimate with a threshold of 0.035 and a maximum connected component of size 47"
 
 delta_result    <- as.data.frame(fit_multilink[c("idxA", "idxB")])
 linked_pairs    <- do.call(paste, c(delta_result[,c("idxA","idxB")], list(sep = "_")))
@@ -480,62 +434,6 @@ diag_multilink <- do.call(RL_diagnostics, c(list(fit_multilink, prep_data$encode
                                 PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs,
                                 FDP_estimation = TRUE, RL_method = "multilink", maxIter4CV = 1, n_repeats = 2),
                                 multilink_args))
-#> Iteration: 0, Accuracy: 48.54%
-#> [1] "Creating comparison data for field V1"
-#> [1] "Creating comparison data for field V2"
-#> [1] "Creating comparison data for field V3"
-#> [1] "Creating comparison data for field V4"
-#> [1] "Running Gibbs sampler with Gibbs updates to partition."
-#> [1] "Processing inputs"
-#> [1] "Beginning sampling"
-#> Beginning iteration 1/500
-#> Beginning iteration 100/500
-#> Beginning iteration 200/500
-#> Beginning iteration 300/500
-#> Beginning iteration 400/500
-#> Beginning iteration 500/500
-#> [1] "Finished sampling in 25.871365070343 seconds"
-#> [1] "Finding Bayes estimate with a threshold of 0.0325 and a maximum connected component of size 38"
-#> Iteration: 0, Accuracy: 50.4%
-#> Iteration: 1, Accuracy: 41.19%
-#> [1] "Creating comparison data for field V1"
-#> [1] "Creating comparison data for field V2"
-#> [1] "Creating comparison data for field V3"
-#> [1] "Creating comparison data for field V4"
-#> [1] "Running Gibbs sampler with Gibbs updates to partition."
-#> [1] "Processing inputs"
-#> [1] "Beginning sampling"
-#> Beginning iteration 1/500
-#> Beginning iteration 100/500
-#> Beginning iteration 200/500
-#> Beginning iteration 300/500
-#> Beginning iteration 400/500
-#> Beginning iteration 500/500
-#> [1] "Finished sampling in 24.1498630046844 seconds"
-#> [1] "Finding Bayes estimate with a threshold of 0.0375 and a maximum connected component of size 33"
-#>                             0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95
-#> FDP model score estimator    NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN
-#> FDP synth data estimator    0.21  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN
-#> Linked pairs (augm. RL)   268.00  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN
-#> Linked pairs (RL)            NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN
-#> [1] "Creating comparison data for field V1"
-#> [1] "Creating comparison data for field V2"
-#> [1] "Creating comparison data for field V3"
-#> [1] "Creating comparison data for field V4"
-#> [1] "Running Gibbs sampler with Gibbs updates to partition."
-#> [1] "Processing inputs"
-#> [1] "Beginning sampling"
-#> Beginning iteration 1/500
-#> Beginning iteration 100/500
-#> Beginning iteration 200/500
-#> Beginning iteration 300/500
-#> Beginning iteration 400/500
-#> Beginning iteration 500/500
-#> [1] "Finished sampling in 20.7687139511108 seconds"
-#> [1] "Finding Bayes estimate with a threshold of 0.035 and a maximum connected component of size 47"
-#>                           0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95
-#> FDP model score estimator  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN
-#> Linked pairs (RL)          NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN
 
 df_results[6,"multilink "] <- diag_multilink$FDP_measures$curve$RL_FDP_score[1]
 df_results[7,"multilink "] <- diag_multilink$FDP_measures$curve$augmRL_FDP_score[1]
@@ -554,29 +452,6 @@ df_results[11,"multilink "] <- max(diag_multilink$discrepancy_measures[1,mmd_idx
 ``` r
 fastLink_args <- list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, return.all = TRUE, n.cores = 1 )
 fit_fastLink <- link_with_fastLink( prep_data$encodedA, prep_data$encodedB, fastLink_args )
-#> 
-#> ==================== 
-#> fastLink(): Fast Probabilistic Record Linkage
-#> ==================== 
-#> 
-#> Calculating matches for each variable.
-#> Getting counts for parameter estimation.
-#> Running the EM algorithm.
-#> Iteration number 100 
-#> Maximum difference in log-likelihood = 0.0017 
-#> Iteration number 200 
-#> Maximum difference in log-likelihood = 0.0003 
-#> Iteration number 300 
-#> Maximum difference in log-likelihood = 0.0001 
-#> Iteration number 400 
-#> Maximum difference in log-likelihood = 0 
-#> Iteration number 500 
-#> Maximum difference in log-likelihood = 0 
-#> Iteration number 600 
-#> Maximum difference in log-likelihood = 0 
-#> Getting the indices of estimated matches.
-#> Deduping the estimated matches.
-#> Getting the match patterns for each estimated match.
 
 delta_result    <- as.data.frame(fit_fastLink)
 delta_result    <- delta_result[delta_result$LinkScore>0.5, ]
@@ -593,115 +468,6 @@ diag_fastLink <- do.call(RL_diagnostics, c(list(fit_fastLink, prep_data$encodedA
                                 PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs,
                                 FDP_estimation = TRUE, RL_method = "fastLink", maxIter4CV = 1, n_repeats = 2),
                                 fastLink_args))
-#> Iteration: 0, Accuracy: 50.86%
-#> Iteration: 1, Accuracy: 40.28%
-#> 
-#> ==================== 
-#> fastLink(): Fast Probabilistic Record Linkage
-#> ==================== 
-#> 
-#> Calculating matches for each variable.
-#> Getting counts for parameter estimation.
-#> Running the EM algorithm.
-#> Iteration number 100 
-#> Maximum difference in log-likelihood = 0.0013 
-#> Iteration number 200 
-#> Maximum difference in log-likelihood = 0.0002 
-#> Iteration number 300 
-#> Maximum difference in log-likelihood = 0 
-#> Iteration number 400 
-#> Maximum difference in log-likelihood = 0 
-#> Iteration number 500 
-#> Maximum difference in log-likelihood = 0 
-#> Getting the indices of estimated matches.
-#> Deduping the estimated matches.
-#> Getting the match patterns for each estimated match.
-#> Iteration: 0, Accuracy: 44.6%
-#> 
-#> ==================== 
-#> fastLink(): Fast Probabilistic Record Linkage
-#> ==================== 
-#> 
-#> Calculating matches for each variable.
-#> Getting counts for parameter estimation.
-#> Running the EM algorithm.
-#> Iteration number 100 
-#> Maximum difference in log-likelihood = 0.0015 
-#> Iteration number 200 
-#> Maximum difference in log-likelihood = 0.0003 
-#> Iteration number 300 
-#> Maximum difference in log-likelihood = 0.0001 
-#> Iteration number 400 
-#> Maximum difference in log-likelihood = 0 
-#> Iteration number 500 
-#> Maximum difference in log-likelihood = 0 
-#> Iteration number 600 
-#> Maximum difference in log-likelihood = 0 
-#> Getting the indices of estimated matches.
-#> Deduping the estimated matches.
-#> Getting the match patterns for each estimated match.
-#>                             0.50   0.55   0.60   0.65   0.70   0.75 0.80 0.85
-#> FDP model score estimator   0.21   0.21   0.21   0.21   0.21   0.21    0    0
-#> FDP synth data estimator    0.16   0.16   0.16   0.16   0.16   0.16    0    0
-#> Linked pairs (augm. RL)   286.00 286.00 286.00 286.00 286.00 286.00    0    0
-#> Linked pairs (RL)         291.00 291.00 291.00 291.00 291.00 291.00    0    0
-#>                           0.90 0.95
-#> FDP model score estimator    0    0
-#> FDP synth data estimator     0    0
-#> Linked pairs (augm. RL)      0    0
-#> Linked pairs (RL)            0    0
-#> 
-#> ==================== 
-#> fastLink(): Fast Probabilistic Record Linkage
-#> ==================== 
-#> 
-#> Calculating matches for each variable.
-#> Getting counts for parameter estimation.
-#> Running the EM algorithm.
-#> Iteration number 100 
-#> Maximum difference in log-likelihood = 0.0019 
-#> Iteration number 200 
-#> Maximum difference in log-likelihood = 0.0003 
-#> Iteration number 300 
-#> Maximum difference in log-likelihood = 0.0001 
-#> Iteration number 400 
-#> Maximum difference in log-likelihood = 0 
-#> Iteration number 500 
-#> Maximum difference in log-likelihood = 0 
-#> Iteration number 600 
-#> Maximum difference in log-likelihood = 0 
-#> Getting the indices of estimated matches.
-#> Deduping the estimated matches.
-#> Getting the match patterns for each estimated match.
-#> 
-#> ==================== 
-#> fastLink(): Fast Probabilistic Record Linkage
-#> ==================== 
-#> 
-#> Calculating matches for each variable.
-#> Getting counts for parameter estimation.
-#> Running the EM algorithm.
-#> Iteration number 100 
-#> Maximum difference in log-likelihood = 0.0011 
-#> Iteration number 200 
-#> Maximum difference in log-likelihood = 0.0002 
-#> Iteration number 300 
-#> Maximum difference in log-likelihood = 0 
-#> Iteration number 400 
-#> Maximum difference in log-likelihood = 0 
-#> Iteration number 500 
-#> Maximum difference in log-likelihood = 0 
-#> Iteration number 600 
-#> Maximum difference in log-likelihood = 0 
-#> Getting the indices of estimated matches.
-#> Deduping the estimated matches.
-#> Getting the match patterns for each estimated match.
-#>                             0.50   0.55   0.60   0.65   0.70   0.75 0.80 0.85
-#> FDP model score estimator   0.21   0.21   0.21   0.21   0.21   0.21    0    0
-#> Linked pairs (RL)         290.00 290.00 290.00 290.00 290.00 290.00    0    0
-#>                           0.90 0.95
-#> FDP model score estimator    0    0
-#> Linked pairs (RL)            0    0
 
 df_results[6,"fastLink  "] <- diag_fastLink$FDP_measures$curve$RL_FDP_score[1]
 df_results[7,"fastLink  "] <- diag_fastLink$FDP_measures$curve$augmRL_FDP_score[1]
@@ -737,26 +503,6 @@ diag_reclin2 <- do.call(RL_diagnostics, c(list(fit_reclin2, prep_data$encodedA, 
                                PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs, 
                                FDP_estimation = TRUE, RL_method = "reclin2", maxIter4CV = 1, n_repeats = 2),
                                reclin2_args))
-#> Iteration: 0, Accuracy: 50.75%
-#> Iteration: 1, Accuracy: 41.44%
-#> Iteration: 0, Accuracy: 54.23%
-#> Iteration: 1, Accuracy: 44.64%
-#>                             0.50   0.55   0.60   0.65   0.70 0.75 0.80 0.85
-#> FDP model score estimator   0.28   0.28   0.28   0.28   0.28    0    0    0
-#> FDP synth data estimator    0.28   0.28   0.28   0.28   0.28    0    0    0
-#> Linked pairs (augm. RL)   338.00 338.00 338.00 338.00 338.00    0    0    0
-#> Linked pairs (RL)         348.00 348.00 348.00 348.00 348.00    0    0    0
-#>                           0.90 0.95
-#> FDP model score estimator    0    0
-#> FDP synth data estimator     0    0
-#> Linked pairs (augm. RL)      0    0
-#> Linked pairs (RL)            0    0
-#>                             0.50   0.55   0.60   0.65   0.70 0.75 0.80 0.85
-#> FDP model score estimator   0.27   0.27   0.27   0.27   0.27    0    0    0
-#> Linked pairs (RL)         338.00 338.00 338.00 338.00 338.00    0    0    0
-#>                           0.90 0.95
-#> FDP model score estimator    0    0
-#> Linked pairs (RL)            0    0
 
 df_results[6,"reclin2   "] <- diag_reclin2$FDP_measures$curve$RL_FDP_score[1]
 df_results[7,"reclin2   "] <- diag_reclin2$FDP_measures$curve$augmRL_FDP_score[1]
@@ -792,17 +538,6 @@ diag_diyar <- do.call(RL_diagnostics, c(list(fit_diyar,
                              PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs, 
                              FDP_estimation = TRUE, RL_method = "diyar", maxIter4CV = 1, n_repeats = 2),
                              diyar_args))
-#> Iteration: 0, Accuracy: 49.4%
-#> Iteration: 0, Accuracy: 50.2%
-#> Iteration: 1, Accuracy: 43.02%
-#>                            0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95
-#> FDP model score estimator   NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN
-#> FDP synth data estimator   0.08  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN
-#> Linked pairs (augm. RL)   54.00  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN
-#> Linked pairs (RL)           NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN
-#>                           0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95
-#> FDP model score estimator  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN
-#> Linked pairs (RL)          NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN  NaN
 
 df_results[6,"diyar     "] <- diag_diyar$FDP_measures$curve$RL_FDP_score[1]
 df_results[7,"diyar     "] <- diag_diyar$FDP_measures$curve$augmRL_FDP_score[1]
@@ -841,23 +576,6 @@ diag_fedmatch <- do.call(RL_diagnostics, c(list(fit_fedmatch, prep_data$encodedA
                                PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs, 
                                FDP_estimation = TRUE, RL_method = "fedmatch", maxIter4CV = 1, n_repeats = 2),
                                fedmatch_args))
-#> Iteration: 0, Accuracy: 49.19%
-#>                             0.50   0.55   0.60   0.65   0.70 0.75 0.80 0.85
-#> FDP model score estimator   0.08   0.08   0.08   0.08   0.08    0    0    0
-#> FDP synth data estimator     NaN    NaN    NaN    NaN    NaN  NaN  NaN  NaN
-#> Linked pairs (augm. RL)   356.00 356.00 356.00 356.00 356.00  237  237  237
-#> Linked pairs (RL)         446.00 446.00 446.00 446.00 446.00  295  295  295
-#>                           0.90 0.95
-#> FDP model score estimator    0    0
-#> FDP synth data estimator   NaN  NaN
-#> Linked pairs (augm. RL)    237  237
-#> Linked pairs (RL)          295  295
-#>                             0.50   0.55   0.60   0.65   0.70 0.75 0.80 0.85
-#> FDP model score estimator   0.09   0.09   0.09   0.09   0.09    0    0    0
-#> Linked pairs (RL)         446.00 446.00 446.00 446.00 446.00  290  290  290
-#>                           0.90 0.95
-#> FDP model score estimator    0    0
-#> Linked pairs (RL)          290  290
 
 df_results[6,"fedmatch  "] <- diag_fedmatch$FDP_measures$curve$RL_FDP_score[1]
 df_results[7,"fedmatch  "] <- diag_fedmatch$FDP_measures$curve$augmRL_FDP_score[1]
@@ -877,24 +595,24 @@ df_results[11,"fedmatch  "] <- max(diag_fedmatch$discrepancy_measures[1,mmd_idx]
 cat("Record Linkage ")
 #> Record Linkage
 df_results[1:5,]
-#>                            Naive               FlexRL                BRL       
-#> TP               279.0000000000000000 292.000000000000000 262.00000000000000000
-#> FP               116.0000000000000000  42.000000000000000  27.00000000000000000
-#> FN               121.0000000000000000 108.000000000000000 138.00000000000000000
-#> sensitivity        0.6975000000000000   0.730000000000000   0.65500000000000003
-#> FDP                0.2936708860759494   0.125748502994012   0.09342560553633218
-#>                            multilink            fastLink             reclin2   
-#> TP               268.0000000000000000 243.0000000000000000 264.0000000000000000
-#> FP                41.0000000000000000  47.0000000000000000  74.0000000000000000
-#> FN               132.0000000000000000 157.0000000000000000 136.0000000000000000
-#> sensitivity        0.6700000000000000   0.6075000000000000   0.6600000000000000
-#> FDP                0.1326860841423948   0.1620689655172414   0.2189349112426036
-#>                  diyar                fedmatch  
-#> TP                  51.0000 278.0000000000000000
-#> FP                   0.0000 168.0000000000000000
-#> FN                 349.0000 122.0000000000000000
-#> sensitivity          0.1275   0.6950000000000000
-#> FDP                  0.0000   0.3766816143497758
+#>                            Naive                FlexRL               BRL       
+#> TP               252.0000000000000000 289.0000000000000000 251.0000000000000000
+#> FP                80.0000000000000000  41.0000000000000000  29.0000000000000000
+#> FN               148.0000000000000000 111.0000000000000000 149.0000000000000000
+#> sensitivity        0.6300000000000000   0.7225000000000000   0.6274999999999999
+#> FDP                0.2409638554216867   0.1242424242424242   0.1035714285714286
+#>                            multilink            fastLink            reclin2   
+#> TP               256.0000000000000000 224.0000000000000000 247.000000000000000
+#> FP                35.0000000000000000  44.0000000000000000  72.000000000000000
+#> FN               144.0000000000000000 176.0000000000000000 153.000000000000000
+#> sensitivity        0.6400000000000000   0.5600000000000001   0.617500000000000
+#> FDP                0.1202749140893471   0.1641791044776119   0.225705329153605
+#>                             diyar               fedmatch  
+#> TP                56.00000000000000000 269.000000000000000
+#> FP                 1.00000000000000000 170.000000000000000
+#> FN               344.00000000000000000 131.000000000000000
+#> sensitivity        0.14000000000000001   0.672500000000000
+#> FDP                0.01754385964912281   0.387243735763098
 ```
 
 
@@ -903,18 +621,18 @@ cat("\nFDP estimation ")
 #> 
 #> FDP estimation
 df_results[6:8,]
-#>                  Naive              FlexRL              BRL       
-#> hat FDP score            NA 0.1039679526988561 0.13382636478181453
-#> hat FDP score*           NA 0.1175135244960331 0.09647751314383723
-#> hat FDP synth*           NA 0.1973104056437390 0.20230452674897120
+#>                  Naive              FlexRL             BRL       
+#> hat FDP score            NA 0.1082505528527204 0.1536551479566186
+#> hat FDP score*           NA 0.1266631815044860 0.1313086863244028
+#> hat FDP synth*           NA 0.2427987795418110 0.1859948394495413
 #>                          multilink          fastLink           reclin2   
-#> hat FDP score                   NaN 0.2059029495437591 0.2669932882055828
-#> hat FDP score*                  NaN 0.2126086244668433 0.2788150249048157
-#> hat FDP synth*   0.2050898622019733 0.1573464912280702 0.2810650887573964
-#>                           diyar               fedmatch  
-#> hat FDP score                    NaN 0.08744394618834084
-#> hat FDP score*                   NaN 0.08464125560538116
-#> hat FDP synth*   0.08196721311475409                 NaN
+#> hat FDP score                   NaN 0.2310273975188470 0.3027410458975639
+#> hat FDP score*                  NaN 0.2381850917934526 0.3154496848261316
+#> hat FDP synth*   0.1207365659313964 0.1889667350193666 0.2037617554858934
+#>                  diyar               fedmatch  
+#> hat FDP score           NaN 0.09738041002277908
+#> hat FDP score*          NaN 0.09681093394077445
+#> hat FDP synth*            0                 NaN
 ```
 
 
@@ -923,16 +641,16 @@ cat("\nLinked divergence ")
 #> 
 #> Linked divergence
 df_results[9:11,]
-#>                  Naive                FlexRL               BRL       
-#> max SMD                  NA 0.074830259407501862 0.104786328342814664
-#> min support IoU          NA 0.875000000000000000 0.875000000000000000
-#> max MMD                  NA 0.001928345864155911 0.002772440525236231
-#>                            multilink            fastLink             reclin2   
-#> max SMD          0.082323395043694805 0.138019252845657553 0.186901341628616713
-#> min support IoU  0.875000000000000000 0.875000000000000000 0.875000000000000000
-#> max MMD          0.002386030021872376 0.004798803644765814 0.008991409388652449
-#>                          diyar                fedmatch  
-#> max SMD          0.5691777671114943 0.151784294792007196
-#> min support IoU  0.8750000000000000 0.875000000000000000
-#> max MMD          0.1193414773123548 0.005554733581180415
+#>                  Naive                FlexRL              BRL       
+#> max SMD                  NA 0.056991477960729245 0.09823767031745587
+#> min support IoU          NA 0.875000000000000000 0.87500000000000000
+#> max MMD                  NA 0.002784106132446951 0.00518460771715884
+#>                            multilink            fastLink            reclin2   
+#> max SMD          0.084815556623603988 0.169534917512512956 0.23885588276112665
+#> min support IoU  0.875000000000000000 0.875000000000000000 0.87500000000000000
+#> max MMD          0.003494132327310939 0.005899727021323686 0.00925920144947695
+#>                           diyar                fedmatch  
+#> max SMD          0.80049449237882664 0.128257933686506342
+#> min support IoU  0.86666666666666670 0.875000000000000000
+#> max MMD          0.07174554916792503 0.004613783032311081
 ```
