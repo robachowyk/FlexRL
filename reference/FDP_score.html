@@ -33,9 +33,6 @@ a given threshold"><meta property="og:image" content="/logo.png"><!-- mathjax --
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/FlexRL-RL-block-vignette.html">FlexRL-RL-block-vignette</a>
-    </li>
-    <li>
       <a href="../articles/FlexRL-RL-vignette.html">FlexRL-RL-vignette</a>
     </li>
   </ul></li>
@@ -114,30 +111,32 @@ records.</p>
 <span class="r-in"><span>                   V3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.005</span>, <span class="fl">0.005</span><span class="op">)</span>, V4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.005</span>, <span class="fl">0.005</span><span class="op">)</span> <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">cond_hazard_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span> V1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>, V2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>, </span></span>
 <span class="r-in"><span>                             V3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>, V4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.7</span>, <span class="fl">0.6</span>, <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span> <span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">gen_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="simulate_data.html">simulate_data</a></span><span class="op">(</span> <span class="va">PIVs_config</span>, <span class="va">n_values</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">250</span>, <span class="fl">300</span><span class="op">)</span>, <span class="fl">200</span>, </span></span>
+<span class="r-in"><span><span class="va">gen_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="simulate_data.html">simulate_data</a></span><span class="op">(</span> <span class="va">PIVs_config</span>, <span class="va">n_values</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">200</span><span class="op">)</span>, <span class="fl">100</span>, </span></span>
 <span class="r-in"><span>                           <span class="va">p_mistake</span>, <span class="va">p_missing</span>, <span class="va">cond_hazard_params</span>, <span class="cn">TRUE</span> <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">prep_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="prepare_data.html">prepare_data</a></span><span class="op">(</span> <span class="va">gen_data</span><span class="op">$</span><span class="va">data1</span>, <span class="va">gen_data</span><span class="op">$</span><span class="va">data2</span>, <span class="st">"1"</span>, <span class="st">"2"</span>,</span></span>
 <span class="r-in"><span>                           <span class="va">PIVs_config</span>, <span class="cn">TRUE</span>, <span class="st">"entity_id"</span>, <span class="cn">TRUE</span> <span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIVs 'V4' and 'V1' are associated (Cramer's V = 0.29 in data1, 0.31 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIVs 'V4' and 'V3' are associated (Cramer's V = 0.32 in data1, 0.21 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> '2' is the larger source, saved as B; '1' saved as A.</span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="stEM.html">StEM</a></span><span class="op">(</span> data <span class="op">=</span> <span class="va">prep_data</span>, StEM_iter <span class="op">=</span> <span class="fl">10</span>, StEM_burnin <span class="op">=</span> <span class="fl">5</span>,</span></span>
 <span class="r-in"><span>             gibbs_iter <span class="op">=</span> <span class="fl">10</span>, gibbs_burnin <span class="op">=</span> <span class="fl">5</span>, n_post_sample <span class="op">=</span> <span class="fl">10</span> <span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> FlexRL</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Running StEM algorithm <span style="color: #00BB00;">■■■■■■■■■■■■■                   </span>  40% | iter 4/10 [1.1s]</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Running StEM algorithm <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | iter 10/10 [1.9s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Running StEM algorithm <span style="color: #00BB00;">■■■■■■■■■■■■■■■■                </span>  50% | iter 5/10 [1.1s]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Running StEM algorithm <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | iter 10/10 [1.6s]</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="fu">FDP_score</span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">Delta</span><span class="op">$</span><span class="va">x</span>, <span class="fl">0.5</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $FDP_score</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.09032258</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.1238636</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $n_linked</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 186</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 88</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="fu">FDP_score</span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">Delta</span><span class="op">$</span><span class="va">x</span>, <span class="fl">0.75</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $FDP_score</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.04556962</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.0530303</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $n_linked</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 158</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 66</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>

@@ -40,9 +40,6 @@ separate "mistake" from "change over time" when fitting the model.'><meta proper
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/FlexRL-RL-block-vignette.html">FlexRL-RL-block-vignette</a>
-    </li>
-    <li>
       <a href="../articles/FlexRL-RL-vignette.html">FlexRL-RL-vignette</a>
     </li>
   </ul></li>
@@ -183,16 +180,16 @@ of the linked records</p>
 <span class="r-in"><span>                  V3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.005</span>, <span class="fl">0.005</span><span class="op">)</span>, V4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.005</span>, <span class="fl">0.005</span><span class="op">)</span> <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">cond_hazard_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span> V1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>, V2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>, </span></span>
 <span class="r-in"><span>                            V3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>, V4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.7</span>, <span class="fl">0.6</span>, <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span> <span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">gen_data</span> <span class="op">&lt;-</span> <span class="fu">simulate_data</span><span class="op">(</span> <span class="va">PIVs_config</span>, <span class="va">n_values</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">250</span>, <span class="fl">300</span><span class="op">)</span>, <span class="fl">200</span>, </span></span>
+<span class="r-in"><span><span class="va">gen_data</span> <span class="op">&lt;-</span> <span class="fu">simulate_data</span><span class="op">(</span> <span class="va">PIVs_config</span>, <span class="va">n_values</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">200</span><span class="op">)</span>, <span class="fl">100</span>, </span></span>
 <span class="r-in"><span>                           <span class="va">p_mistake</span>, <span class="va">p_missing</span>, <span class="va">cond_hazard_params</span>, <span class="cn">TRUE</span> <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">gen_data</span>, max.level <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> List of 6</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ data1          :'data.frame':	250 obs. of  11 variables:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ data2          :'data.frame':	300 obs. of  9 variables:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ data1          :'data.frame':	150 obs. of  11 variables:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ data2          :'data.frame':	200 obs. of  9 variables:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  $ n_values       : int [1:4] 5 6 7 12</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ time_difference: num [1:200] 0.00673 0.00642 0.00671 0.00503 0.00642 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ proba_same_H   : num [1:200, 1:4] 1 1 1 1 1 1 1 1 1 1 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ true_pairs     :'data.frame':	200 obs. of  2 variables:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ time_difference: num [1:100] 0.00638 0.004 0.00126 0.00804 0.00933 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ proba_same_H   : num [1:100, 1:4] 1 1 1 1 1 1 1 1 1 1 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ true_pairs     :'data.frame':	100 obs. of  2 variables:</span>
 </code></pre></div>
     </div>
   </div>
