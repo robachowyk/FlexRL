@@ -1,16 +1,16 @@
 #' FlexRL: A Flexible Model for Record Linkage
 #'
 #' Links records that refer to the same entities across two data sources
-#' without a unique identifier, using partially identifying variables. 
-#' These  are stable (not changing over time, probability of mistakes 
-#' could be bounded), flexible (dynamic but no information to model 
-#' changes over time) or structured (dynamic and information to model 
+#' without a unique identifier, using partially identifying variables.
+#' These  are stable (not changing over time, probability of mistakes
+#' could be bounded), flexible (dynamic but no information to model
+#' changes over time) or structured (dynamic and information to model
 #' changes over time, probability of mistakes could be fixed).
-#' The main function [StEM()] fits a latent-variable model by stochastic 
-#' expectation-maximisation; it models registration errors (missing values 
-#' and mistakes) and changes over time. [prepare_data()] prepares the data 
+#' The main function [StEM()] fits a latent-variable model by stochastic
+#' expectation-maximisation; it models registration errors (missing values
+#' and mistakes) and changes over time. [prepare_data()] prepares the data
 #' sources for record linkage, [RL_diagnostics()] gathers diagnostics
-#' (FDP estimation and discrepancy metrics for  inference on the linked 
+#' (FDP estimation and discrepancy metrics for  inference on the linked
 #' data.
 #'
 #' Methodological paper: \doi{10.1093/jrsssc/qlaf016}.
@@ -24,7 +24,7 @@
 #' @name FlexRL
 #'
 #' @examples
-#' # Link two simulated sources with 4 PIVs: two stable, one flexible, one 
+#' # Link two simulated sources with 4 PIVs: two stable, one flexible, one
 #' # structured. The true links are known, so performance can be computed.
 #' PIVs_config <- list( V1 = list(dynamics = "stable",
 #'                                bound_mistakes = c(0.10,0.10),
@@ -45,15 +45,15 @@
 #'                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
 #' p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
 #'                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
-#' cond_hazard_params <- list(V1 = c(), V2 = c(), 
+#' cond_hazard_params <- list(V1 = c(), V2 = c(),
 #'                            V3 = c(), V4 = log(c(0.7, 0.6, 0.5)))
-#' gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
-#'                            p_mistake, p_missing, cond_hazard_params, 
+#' gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100,
+#'                            p_mistake, p_missing, cond_hazard_params,
 #'                            TRUE, survival_model("exponential") )
 #' prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
-#' fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 5,
-#'              gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10 )
+#' fit <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2,
+#'              gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5 )
 #'
 #' # linked pairs and performance against the true pairs
 #' linked <- fit$Delta[fit$Delta$x > 0.5, ]
@@ -69,9 +69,9 @@
 #'                        names(PIVs_config),
 #'                        list(V1 = FALSE, V2 = FALSE, V3 = FALSE, V4 = TRUE),
 #'                        names(PIVs_config),
-#'                        true_pairs = prep_data$true_pairs, FDP_estimation = TRUE, 
+#'                        true_pairs = prep_data$true_pairs, FDP_estimation = TRUE,
 #'                        RL_method = "FlexRL", data = prep_data,
-#'                        StEM_iter = 5, StEM_burnin = 2, 
+#'                        StEM_iter = 5, StEM_burnin = 2,
 #'                        gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5,
 #'                        maxIter4CV = 1, n_repeats = 1)
 #' diag # print(diag)

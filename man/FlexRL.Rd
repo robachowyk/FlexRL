@@ -25,7 +25,7 @@ False discovery proportion estimation: \doi{10.1002/sim.70292}.
 Experiments repository: \url{https://github.com/robachowyk/FlexRL-experiments}.
 }
 \examples{
-# Link two simulated sources with 4 PIVs: two stable, one flexible, one 
+# Link two simulated sources with 4 PIVs: two stable, one flexible, one
 # structured. The true links are known, so performance can be computed.
 PIVs_config <- list( V1 = list(dynamics = "stable",
                                bound_mistakes = c(0.10,0.10),
@@ -46,15 +46,15 @@ p_mistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
 p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
-cond_hazard_params <- list(V1 = c(), V2 = c(), 
+cond_hazard_params <- list(V1 = c(), V2 = c(),
                            V3 = c(), V4 = log(c(0.7, 0.6, 0.5)))
-gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
-                           p_mistake, p_missing, cond_hazard_params, 
+gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100,
+                           p_mistake, p_missing, cond_hazard_params,
                            TRUE, survival_model("exponential") )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
-fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 5,
-             gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10 )
+fit <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2,
+             gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5 )
 
 # linked pairs and performance against the true pairs
 linked <- fit$Delta[fit$Delta$x > 0.5, ]
@@ -70,9 +70,9 @@ diag <- RL_diagnostics(fit, prep_data$encodedA, prep_data$encodedB,
                        names(PIVs_config),
                        list(V1 = FALSE, V2 = FALSE, V3 = FALSE, V4 = TRUE),
                        names(PIVs_config),
-                       true_pairs = prep_data$true_pairs, FDP_estimation = TRUE, 
+                       true_pairs = prep_data$true_pairs, FDP_estimation = TRUE,
                        RL_method = "FlexRL", data = prep_data,
-                       StEM_iter = 5, StEM_burnin = 2, 
+                       StEM_iter = 5, StEM_burnin = 2,
                        gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5,
                        maxIter4CV = 1, n_repeats = 1)
 diag # print(diag)
