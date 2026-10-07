@@ -1,3 +1,7 @@
+# FlexRL 1.0.1 (release candidate)
+
+- Bugs fixed.
+
 # FlexRL 1.0.0 (release candidate)
 
 - Functions and arguments renamed, data configuration functions added.
