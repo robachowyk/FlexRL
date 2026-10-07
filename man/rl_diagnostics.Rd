@@ -111,31 +111,14 @@ prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
 PIVs <- names(PIVs_config)  
 PIVs_type <- list(V1=FALSE, V2=FALSE, V3=FALSE, V4=TRUE)
-fit_flexrl <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2,
-                    gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5 )
-diag_flexrl <- RL_diagnostics(fit_flexrl, prep_data$encodedA, prep_data$encodedB,
-                              PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs,
-                              FDP_estimation = TRUE, RL_method = "FlexRL", 
-                              data = prep_data,
-                              StEM_iter = 5, StEM_burnin = 2, 
-                              gibbs_iter = 5, gibbs_burnin = 2,
-                              n_post_sample = 5,
-                              maxIter4CV = 1, n_repeats = 1)
-diag_flexrl # print(diag_flexrl)
-print(diag_flexrl, threshold = 0.75)
-plot(diag_flexrl, "scores")
-plot(diag_flexrl, "distributions", threshold = 0.75)
-plot(diag_flexrl, "convergence")
-plot(diag_flexrl, "FDP")
-plot(diag_flexrl, "discrepancy")
-
 fit_brl <- link_with_BRL( prep_data$encodedA, prep_data$encodedB, 
                           list( flds = PIVs, 
-                                types = rep("bi",length(PIVs)) ) )
+                                types = rep("bi",length(PIVs)),
+                                nIter = 500 ) )
 diag_brl <- RL_diagnostics(fit_brl, prep_data$encodedA, prep_data$encodedB,
                            PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs,
                            FDP_estimation = TRUE, RL_method = "BRL", 
-                           flds = PIVs, types = rep("bi",length(PIVs)),
+                           flds = PIVs, types = rep("bi",length(PIVs)), nIter = 500,
                            maxIter4CV = 1, n_repeats = 1)
 diag_brl # print(diag_brl)
 print(diag_brl, threshold = 0.75)
