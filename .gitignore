@@ -7,9 +7,3 @@
 inst/doc
 *.o
 docs
-figure/
-Article-FlexRL_files/
-*.html
-*.qmd
-Article-WorkInProgress.R
-*.bib
