@@ -1,0 +1,17 @@
+url: https://robachowyk.github.io/FlexRL/
+
+template:
+  bootstrap: 5
+
+navbar:
+  structure:
+    left:  [reference, articles, news]
+    right: [search, github, lightswitch]
+  components:
+    articles:
+      text: Vignettes
+      menu:
+        - text: Record linkage with FlexRL
+          href: articles/FlexRL-RL-vignette.html
+        - text: Record linkage with blocking
+          href: articles/FlexRL-RL-block-vignette.html

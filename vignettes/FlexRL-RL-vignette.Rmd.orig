@@ -20,6 +20,7 @@ options(digits = 2, scipen = 999)
 ```
 
 ```{r setup}
+set.seed(0)
 library(FlexRL)
 ```
 
@@ -100,14 +101,66 @@ The number of unique values per **PIV** gives information on their discriminatin
 prep_data$n_values
 ```
 
+```{r, include = FALSE}
+peakRAMNew <- function(...){
+  # Capture R expressions or function calls
+  args <- c(as.list(match.call(expand.dots = FALSE)$`...`), NULL)
+  Function <- sapply(args, function(e) paste0(deparse(e), collapse = ""))
+  Function <- sapply(Function, function(e) gsub(" ", "", e))
+  # Initialize containers for output
+  numfunc <- length(args)
+  totaltime <- vector("numeric", numfunc)
+  RAMused <- vector("numeric", numfunc)
+  RAMpeak <- vector("numeric", numfunc)
+  i <- 1
+  for(arg in args){
+    # Reset garbage collector and save baseline
+    start <- gc(verbose = FALSE, reset = TRUE)
+    # Evaluate regular and anonymous functions
+    evalTime <- system.time(result <- eval.parent(arg))
+    if(inherits(result, "function")){
+      evalTime <- system.time(output <- result())
+      rm(result)
+    }else{
+      output <- result
+      rm(result)
+    }
+    # Call garbage collector and save post-eval
+    end <- gc(verbose = FALSE, reset = FALSE)
+    rm(output)
+    # Calculate total and peak RAM used
+    totaltime[i] <- as.numeric(evalTime["elapsed"])
+    get_column_mb = function(object, before_column) {
+      ind = which(colnames(object) == before_column)
+      stopifnot(colnames(object)[ind+1] == "(Mb)")
+      if (length(ind) == 0) {
+        stop("No value found for that column")
+      }
+      # need to ref index and not colname because duplicated colnames for (Mb)
+      object[2, ind + 1]
+    }
+    RAMused[i] <- get_column_mb(end, "used")- get_column_mb(start, "used")
+    RAMpeak[i] <- get_column_mb(end, "max used") - get_column_mb(start, "max used")
+    i <- i + 1
+  }
+  data.frame("Function_Call" = Function,
+             "Elapsed_Time_sec" = totaltime,
+             "Total_RAM_Used_MiB" = RAMused,
+             "Peak_RAM_Used_MiB" = RAMpeak,
+             row.names = 1:numfunc)
+}
+```
+
 We gauge how hard the record linkage task is using a naive linkage approach: matching records on exact agreement of identifying information.
 
 ```{r naive-linkage, warning=FALSE}
-naive_fit <- naive_linkage(PIVs = PIVs, 
+t0 <- Sys.time()
+MeM <- peakRAMNew(naive_fit <- naive_linkage(PIVs = PIVs, 
                            encodedA = prep_data$encodedA, 
-                           encodedB = prep_data$encodedB)
+                           encodedB = prep_data$encodedB))
+elapsed <- as.numeric(Sys.time() - t0, units = "secs")
 
-df_results <- data.frame( matrix(NA, nrow = 11, ncol = 0) )
+df_results <- data.frame( matrix(NA, nrow = 13, ncol = 0) )
 rownames(df_results) <- c("TP              ",
                           "FP              ",
                           "FN              ",
@@ -118,7 +171,9 @@ rownames(df_results) <- c("TP              ",
                           "hat FDP synth*  ",
                           "max SMD         ",
                           "min support IoU ",
-                          "max MMD         ")
+                          "max MMD         ",
+                          "time (secs)     ",
+                          "memory (Mb)     ")
 
 true_pairs      <- do.call(paste, c(prep_data$true_pairs, list(sep="_")))
 linked_pairs    <- do.call(paste, c(naive_fit, list(sep = "_")))
@@ -127,7 +182,8 @@ false_positive  <- length( setdiff(linked_pairs, true_pairs) )
 false_negative  <- length( setdiff(true_pairs, linked_pairs) )
 sensitivity     <- true_positive / (true_positive + false_negative) 
 fdp             <- false_positive / (true_positive + false_positive) 
-df_results[1:5,"Naive     "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[1:5,  "Naive     "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[12:13,"Naive     "] <- c(round(elapsed),round(MeM$Peak_RAM_Used_MiB))
 
 df_results
 ```
@@ -135,7 +191,9 @@ df_results
 We run record linkage with `FlexRL`. The `data` should contain encodedA, encodedB, n_values, PIVs_config, same_mistakes. `StEM_iter`, `StEM_burnin` and `gibbs_iter`, `gibbs_burnin` are total number of iterations (including burn-in) and iterations to be discarded as burn-in. If `music_on` the algorithm opens a short tune in the browser when it finishes. You can `save_info_iter` (save environment information at each iteration) to `new_directory`. You can set starting values of the algorithm for parameters gamma and phi with `gamma0`, `phiA0`, `phiB0`, and change the number of samples drawn a posteriori to provide a linkage estimate with `n_post_sample` (set to 1000 as default).
 
 ```{r stem-linkage, warning=FALSE, message=FALSE, results="hide"}
-fit <- StEM(data = prep_data)
+t0 <- Sys.time()
+MeM <- peakRAMNew(fit <- StEM(data = prep_data))
+elapsed <- as.numeric(Sys.time() - t0, units = "secs")
 ```
 
 The missing values and potential mistakes in the registration, the size of the overlapping set of records between the files, the total number of entities in the population, the low discriminative power of PIVs, PIVs potential dynamics across time, PIVs distribution, dependencies among PIVs, are obstacles to the linkage.
@@ -153,7 +211,8 @@ false_negative  <- length( setdiff(true_pairs, linked_pairs) )
 sensitivity     <- true_positive / (true_positive + false_negative) 
 fdp             <- false_positive / (true_positive + false_positive)  
 
-df_results[1:5,"FlexRL    "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[1:5,  "FlexRL    "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[12:13,"FlexRL    "] <- c(round(elapsed),round(MeM$Peak_RAM_Used_MiB))
 
 df_results
 ```
@@ -204,7 +263,9 @@ With `link_with_<pkg>()` wrappers we can link records with "multilink", "fastLin
 
 ```{r brl-linkage, warning=FALSE, message=FALSE, results="hide"}
 brl_args <- list(flds = PIVs, types = rep("bi",length(PIVs)))
-fit_brl <- link_with_BRL(prep_data$encodedA, prep_data$encodedB, brl_args)
+t0 <- Sys.time()
+MeM <- peakRAMNew(fit_brl <- link_with_BRL(prep_data$encodedA, prep_data$encodedB, brl_args))
+elapsed <- as.numeric(Sys.time() - t0, units = "secs")
 
 delta_result    <- as.data.frame(fit_brl)
 delta_result    <- delta_result[delta_result$LinkScore>0.5, ]
@@ -215,7 +276,8 @@ false_negative  <- length( setdiff(true_pairs, linked_pairs) )
 sensitivity     <- true_positive / (true_positive + false_negative) 
 fdp             <- false_positive / (true_positive + false_positive) 
 
-df_results[1:5,"BRL       "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[1:5,  "BRL       "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[12:13,"BRL       "] <- c(round(elapsed),round(MeM$Peak_RAM_Used_MiB))
 
 diag_brl <- do.call(RL_diagnostics, c(list(fit_brl, prep_data$encodedA, prep_data$encodedB,
                            PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs,
@@ -238,7 +300,9 @@ df_results[11,"BRL       "] <- max(diag_brl$discrepancy_measures[1,mmd_idx])
 ```{r multilink-linkage, warning=FALSE, message=FALSE, results="hide"}
 multilink_args <- list(types = rep("bi",length(PIVs)), breaks = list(V1 = NA, V2 = NA, V3 = NA, V4 = NA),
                        duplicates = c(0,0), n_iter = 500, max_cc_size = 50)
-fit_multilink <- link_with_multilink( prep_data$encodedA, prep_data$encodedB, multilink_args)
+t0 <- Sys.time()
+MeM <- peakRAMNew(fit_multilink <- link_with_multilink(prep_data$encodedA, prep_data$encodedB, multilink_args))
+elapsed <- as.numeric(Sys.time() - t0, units = "secs")
 
 delta_result    <- as.data.frame(fit_multilink[c("idxA", "idxB")])
 linked_pairs    <- do.call(paste, c(delta_result[,c("idxA","idxB")], list(sep = "_")))
@@ -248,7 +312,8 @@ false_negative  <- length( setdiff(true_pairs, linked_pairs) )
 sensitivity     <- true_positive / (true_positive + false_negative) 
 fdp             <- false_positive / (true_positive + false_positive) 
 
-df_results[1:5,"multilink "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[1:5,  "multilink "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[12:13,"multilink "] <- c(round(elapsed),round(MeM$Peak_RAM_Used_MiB))
 
 diag_multilink <- do.call(RL_diagnostics, c(list(fit_multilink, prep_data$encodedA, prep_data$encodedB,
                                 PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs,
@@ -270,7 +335,9 @@ df_results[11,"multilink "] <- max(diag_multilink$discrepancy_measures[1,mmd_idx
 
 ```{r fastlink-linkage, warning=FALSE, message=FALSE, results="hide"}
 fastLink_args <- list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, return.all = TRUE, n.cores = 1 )
-fit_fastLink <- link_with_fastLink( prep_data$encodedA, prep_data$encodedB, fastLink_args )
+t0 <- Sys.time()
+MeM <- peakRAMNew(fit_fastLink <- link_with_fastLink(prep_data$encodedA, prep_data$encodedB, fastLink_args))
+elapsed <- as.numeric(Sys.time() - t0, units = "secs")
 
 delta_result    <- as.data.frame(fit_fastLink)
 delta_result    <- delta_result[delta_result$LinkScore>0.5, ]
@@ -281,7 +348,8 @@ false_negative  <- length( setdiff(true_pairs, linked_pairs) )
 sensitivity     <- true_positive / (true_positive + false_negative) 
 fdp             <- false_positive / (true_positive + false_positive) 
 
-df_results[1:5,"fastLink  "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[1:5,  "fastLink  "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[12:13,"fastLink  "] <- c(round(elapsed),round(MeM$Peak_RAM_Used_MiB))
 
 diag_fastLink <- do.call(RL_diagnostics, c(list(fit_fastLink, prep_data$encodedA, prep_data$encodedB,
                                 PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs,
@@ -304,7 +372,9 @@ df_results[11,"fastLink  "] <- max(diag_fastLink$discrepancy_measures[1,mmd_idx]
 ```{r reclin2-linkage, warning=FALSE, message=FALSE, results="hide"}
 reclin2_args <- list(on = PIVs, formula = stats::as.formula(paste("~", paste(PIVs, collapse = "+"))),
                      type = "mpost", add = TRUE, variable = "selected", score = "mpost", threshold = 0.5)
-fit_reclin2 <- link_with_reclin2( prep_data$encodedA, prep_data$encodedB, reclin2_args )
+t0 <- Sys.time()
+MeM <- peakRAMNew(fit_reclin2 <- link_with_reclin2(prep_data$encodedA, prep_data$encodedB, reclin2_args))
+elapsed <- as.numeric(Sys.time() - t0, units = "secs")
 
 delta_result    <- as.data.frame(fit_reclin2)
 delta_result    <- delta_result[delta_result$LinkScore>0.5, ]
@@ -315,7 +385,8 @@ false_negative  <- length( setdiff(true_pairs, linked_pairs) )
 sensitivity     <- true_positive / (true_positive + false_negative) 
 fdp             <- false_positive / (true_positive + false_positive) 
 
-df_results[1:5,"reclin2   "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[1:5,  "reclin2   "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[12:13,"reclin2   "] <- c(round(elapsed),round(MeM$Peak_RAM_Used_MiB))
 
 diag_reclin2 <- do.call(RL_diagnostics, c(list(fit_reclin2, prep_data$encodedA, prep_data$encodedB, 
                                PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs, 
@@ -337,7 +408,9 @@ df_results[11,"reclin2   "] <- max(diag_reclin2$discrepancy_measures[1,mmd_idx])
 
 ```{r diyar-linkage, warning=FALSE, message=FALSE, results="hide"}
 diyar_args <- list(probabilistic = TRUE, return_weights = TRUE)
-fit_diyar <- link_with_diyar(prep_data$encodedA[, PIVs], prep_data$encodedB[, PIVs], diyar_args)
+t0 <- Sys.time()
+MeM <- peakRAMNew(fit_diyar <- link_with_diyar(prep_data$encodedA[, PIVs], prep_data$encodedB[, PIVs], diyar_args))
+elapsed <- as.numeric(Sys.time() - t0, units = "secs")
 
 delta_result    <- as.data.frame(fit_diyar[c("idxA", "idxB")])
 linked_pairs    <- do.call(paste, c(delta_result[,c("idxA","idxB")], list(sep = "_")))
@@ -347,7 +420,8 @@ false_negative  <- length( setdiff(true_pairs, linked_pairs) )
 sensitivity     <- true_positive / (true_positive + false_negative) 
 fdp             <- false_positive / (true_positive + false_positive) 
 
-df_results[1:5,"diyar     "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[1:5,  "diyar     "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[12:13,"diyar     "] <- c(round(elapsed),round(MeM$Peak_RAM_Used_MiB))
 
 names4diag <- c(PIVs, "local_id", "source")
 diag_diyar <- do.call(RL_diagnostics, c(list(fit_diyar, 
@@ -375,7 +449,9 @@ fedmatch_args <- list(by = PIVs, match_type = "multivar",
                       multivar_settings = fedmatch::build_multivar_settings(
                         compare_type = rep("indicator", length(PIVs)),
                         wgts = rep(1/length(PIVs), length(PIVs))))
-fit_fedmatch <- link_with_fedmatch( prep_data$encodedA, prep_data$encodedB, fedmatch_args )
+t0 <- Sys.time()
+MeM <- peakRAMNew(fit_fedmatch <- link_with_fedmatch(prep_data$encodedA, prep_data$encodedB, fedmatch_args))
+elapsed <- as.numeric(Sys.time() - t0, units = "secs")
 
 delta_result    <- as.data.frame(fit_fedmatch)
 delta_result    <- delta_result[delta_result$LinkScore>0.5, ]
@@ -386,7 +462,8 @@ false_negative  <- length( setdiff(true_pairs, linked_pairs) )
 sensitivity     <- true_positive / (true_positive + false_negative) 
 fdp             <- false_positive / (true_positive + false_positive) 
 
-df_results[1:5,"fedmatch  "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[1:5,  "fedmatch  "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[12:13,"fedmatch  "] <- c(round(elapsed),round(MeM$Peak_RAM_Used_MiB))
 
 diag_fedmatch <- do.call(RL_diagnostics, c(list(fit_fedmatch, prep_data$encodedA, prep_data$encodedB, 
                                PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs, 
@@ -431,4 +508,13 @@ options(digits = 2)
 ```{r}
 cat("Linked divergence ")
 round(df_results[9:11,],2)
+```
+
+```{r, include = FALSE}
+options(digits = 2)
+```
+
+```{r}
+cat("Computational time and memory required ")
+round(df_results[12:13,],2)
 ```

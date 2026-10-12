@@ -20,6 +20,7 @@ options(digits = 2, scipen = 999)
 ```
 
 ```{r setup}
+set.seed(0)
 library(FlexRL)
 ```
 
@@ -41,15 +42,15 @@ wrapper_args <- function(method, prep_data, ...) {
   PIVs <- names(prep_data$PIVs_config)
   args <- c(...)
 
-  switch(method,
-         FlexRL    = c(list(data = prep_data),
+    switch(method,
+         FlexRL    = c(list(data = prep_data, StEM_iter = 10, StEM_burnin = 5, gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10),
                        args[intersect(names(args), names(formals(FlexRL::StEM)))]),
          BRL       = c(list(flds = PIVs, types = rep("bi", length(PIVs)), nIter = 1000),
                        args[intersect(names(args), c(names(formals(BRL::compareRecords)), names(formals(BRL::bipartiteGibbs))))]),
          fastLink  = c(list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, return.all = TRUE, n.cores = 1),
                        args[intersect(names(args), names(formals(fastLink::fastLink)))]),
          multilink = c(list(types = rep("bi", length(PIVs)), breaks = stats::setNames(as.list(rep(NA, length(PIVs))), PIVs),
-                            duplicates = c(0, 0), n_iter = 200, max_cc_size = 50),
+                            duplicates = c(0, 0), n_iter = 300, max_cc_size = 50),
                        args[intersect(names(args), c(names(formals(multilink::create_comparison_data)),
                                                      names(formals(multilink::reduce_comparison_data)),
                                                      names(formals(multilink::specify_prior)),
@@ -71,7 +72,7 @@ wrapper_args <- function(method, prep_data, ...) {
                               compare_type = rep("indicator", length(PIVs)),
                               wgts = rep(1 / length(PIVs), length(PIVs)))),
                        args[intersect(names(args), names(formals(fedmatch::merge_plus)))])
-         )
+  )
 }
 
 run_wrapper <- function(method, prep_data, arguments) {
@@ -259,8 +260,8 @@ df_results_full <- data.frame(matrix(NA, nrow = 6, ncol = 0))
 rownames(df_results_full) <- c("TP", "FP", "FN", "sensitivity", "FDP", "minutes")
 for (method in methods) {
   t0 <- Sys.time()           
-  args <- list(StEM_iter = 20, StEM_burnin = 10, gibbs_iter = 20, gibbs_burnin = 10, 
-               n_post_sample = 100, n_iter = 500, max_cc_size = 50, n.cores = 4)
+  args <- list(StEM_iter = 2, StEM_burnin = 1, gibbs_iter = 2, gibbs_burnin = 1, 
+               n_post_sample = 2, n_iter = 100, max_cc_size = 50, n.cores = 4)
   fit <- run_wrapper(method, prep_data_full, wrapper_args(method, prep_data_full, args))
   df_results_full[1:5, method] <- evaluate_linkage(fit, true_pairs_full)
   df_results_full[6, method] <- if (is.null(fit)) NA else round(as.numeric(Sys.time() - t0, units = "mins"))
@@ -297,10 +298,11 @@ for (r in regions) {
     results_IREG[[length(results_IREG) + 1]] <- data.frame(
       IREG = r, n_A = nrow(prep_data_r$encodedA),
       n_B = nrow(prep_data_r$encodedB), n_links = length(true_pairs_r),
-      method = method, round(t(evaluate_linkage(fit, true_pairs_r)),2),
+      method = method, sprintf("%.2f",t(evaluate_linkage(fit, true_pairs_r))),
       seconds = round(as.numeric(Sys.time() - t0, units = "secs")))
   }
 }
+
 results_IREG <- do.call(rbind, results_IREG)
 ```
 
@@ -314,8 +316,8 @@ Averaged over the regions and total computing time:
 ```{r}
 summary_IREG <- do.call(rbind, lapply(split(results_IREG, results_IREG$method), function(d) {
   data.frame(method = d$method[1],
-             FDP = mean(d$FDP, na.rm=TRUE),
-             sensitivity = mean(d$sensitivity, na.rm=TRUE),
+             FDP = sprintf("%.2f",mean(d$FDP, na.rm=TRUE)),
+             sensitivity = sprintf("%.2f",mean(d$sensitivity, na.rm=TRUE)),
              TP = mean(d$TP, na.rm=TRUE), FP = mean(d$FP, na.rm=TRUE), FN = mean(d$FN, na.rm=TRUE),
              minutes = sum(d$seconds) / 60)
 }))

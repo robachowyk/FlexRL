@@ -1,0 +1,15 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^LICENSE\.md$
+^cran-comments\.md$
+^CRAN-SUBMISSION$
+^\.git$
+^\.gitignore$
+^\.DS_Store$
+^.*/\.DS_Store$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.github$
+^vignettes/.*\.orig$
+^vignettes/.*\.html$
