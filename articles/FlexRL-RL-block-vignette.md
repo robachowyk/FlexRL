@@ -1,0 +1,755 @@
+# FlexRL-RL-block-vignette
+
+``` r
+
+set.seed(0)
+library(FlexRL)
+#> If you are happy with FlexRL, please cite us! If you are unhappy, please cite us anyway (and feel free to complain as well).
+```
+
+`FlexRL` is a package proposing flexible probabilistic **R**ecord
+**L**inkage with diagnostic tools for downstream inference on linked
+data. The record linkage algorithm
+[`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md) uses a
+**St**ochastic **E**xpectation **M**aximisation approach to combine 2
+data sources and outputs the set of records referring to the same
+entities.
+
+More details on the [record linkage
+methodology](https://doi.org/10.1093/jrsssc/qlaf016); on the [false
+discovery proportion estimation](https://doi.org/10.1002/sim.70292); and
+on the potential risks of downstream inference on linked data (Robach et
+al., in preparation).
+
+Several other algorithms for record linkage are available in R. The
+`link_with_*()` wrappers of FlexRL run them through one common
+interface, so that the same diagnostics and false discovery proportion
+(FDP) estimators apply to all of them:
+[`link_with_FlexRL()`](https://robachowyk.github.io/FlexRL/reference/link_with_FlexRL.md),
+[`link_with_BRL()`](https://robachowyk.github.io/FlexRL/reference/link_with_BRL.md),
+[`link_with_fastLink()`](https://robachowyk.github.io/FlexRL/reference/link_with_fastLink.md),
+[`link_with_multilink()`](https://robachowyk.github.io/FlexRL/reference/link_with_multilink.md),
+[`link_with_reclin2()`](https://robachowyk.github.io/FlexRL/reference/link_with_reclin2.md),
+[`link_with_diyar()`](https://robachowyk.github.io/FlexRL/reference/link_with_diyar.md),
+[`link_with_fedmatch()`](https://robachowyk.github.io/FlexRL/reference/link_with_fedmatch.md).
+Each wrapper takes the two encoded sources and a named list of arguments
+forwarded to the underlying package, and returns a list with `idxA`,
+`idxB` (row indices of the linked records in dataA and dataB) and
+`LinkScore` (the linkage scores, `NULL` when the package does not return
+any).
+
+This vignette runs these wrappers on the same pipeline for: - a regional
+subset of the
+[NLTCS](https://www.icpsr.umich.edu/web/NACDA/studies/9681/versions/V5)
+data (1982 and 1994 waves) - a regional subset of the
+[SHIW](https://www.bancaditalia.it/statistiche/tematiche/indagini-famiglie-imprese/bilanci-famiglie/distribuzione-microdati/index.html)
+data (2016 and 2020 waves) - the full SHIW data with and without
+regional blocking
+
+## One pipeline for all the wrappers
+
+``` r
+
+wrapper_args <- function(method, prep_data, ...) {
+  PIVs <- names(prep_data$PIVs_config)
+  args <- c(...)
+
+  switch(method,
+         FlexRL    = c(list(data = prep_data),
+                       args[intersect(names(args), names(formals(FlexRL::StEM)))]),
+         BRL       = c(list(flds = PIVs, types = rep("bi", length(PIVs)), nIter = 1000),
+                       args[intersect(names(args), c(names(formals(BRL::compareRecords)), names(formals(BRL::bipartiteGibbs))))]),
+         fastLink  = c(list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, return.all = TRUE, n.cores = 1),
+                       args[intersect(names(args), names(formals(fastLink::fastLink)))]),
+         multilink = c(list(types = rep("bi", length(PIVs)), breaks = stats::setNames(as.list(rep(NA, length(PIVs))), PIVs),
+                            duplicates = c(0, 0), n_iter = 500, max_cc_size = 50),
+                       args[intersect(names(args), c(names(formals(multilink::create_comparison_data)),
+                                                     names(formals(multilink::reduce_comparison_data)),
+                                                     names(formals(multilink::specify_prior)),
+                                                     names(formals(multilink::gibbs_sampler)),
+                                                     names(formals(multilink::find_bayes_estimate)),
+                                                     names(formals(multilink::relabel_bayes_estimate))))]),
+         reclin2   = c(list(on = PIVs, formula = stats::as.formula(paste("~", paste(PIVs, collapse = "+"))),
+                            type = "mpost", add = TRUE, variable = "selected", score = "mpost", threshold = 0.5),
+                       args[intersect(names(args), c(names(formals(reclin2::pair)),
+                                                     names(formals(reclin2::compare_pairs)),
+                                                     names(formals(reclin2::problink_em)),
+                                                     names(formals(stats::predict)),
+                                                     names(formals(reclin2::select_threshold))))]),
+         diyar     = c(list(probabilistic = TRUE, return_weights = TRUE),
+                       args[intersect(names(args), c(names(formals(diyar::prob_score_range)),
+                                                     names(formals(diyar::links_wf_probabilistic))))]),
+         fedmatch  = c(list(by = PIVs, match_type = "multivar", unique_key_1 = "unique_key_A",
+                            unique_key_2 = "unique_key_B", multivar_settings = fedmatch::build_multivar_settings(
+                              compare_type = rep("indicator", length(PIVs)),
+                              wgts = rep(1 / length(PIVs), length(PIVs)))),
+                       args[intersect(names(args), names(formals(fedmatch::merge_plus)))])
+         )
+}
+
+run_wrapper <- function(method, prep_data, arguments) {
+  PIVs <- names(prep_data$PIVs_config)
+  link_with <- get(paste0("link_with_", method), envir = asNamespace("FlexRL"))
+  if (method == "diyar") {
+    prep_data$encodedA <- prep_data$encodedA[, c(PIVs, "local_id", "source")]
+    prep_data$encodedB <- prep_data$encodedB[, c(PIVs, "local_id", "source")]
+  }
+
+  tryCatch(link_with(prep_data$encodedA, prep_data$encodedB, arguments),
+           error = function(e) {
+             if (grepl("cannot allocate|memory|bad_alloc|too large|long vectors", conditionMessage(e), ignore.case = TRUE)) {
+               message(method, ": memory error (", conditionMessage(e), "), results reported as NA")
+               return(NULL)
+             }
+             stop(e)
+           })
+}
+
+evaluate_linkage <- function(fit, true_pairs, threshold = 0.5) {
+  if (is.null(fit)) return(rep(NA_real_, 5))
+  delta_result <- data.frame(idxA = fit$idxA, idxB = fit$idxB)
+  if (!is.null(fit$LinkScore)) delta_result <- delta_result[fit$LinkScore > threshold, , drop = FALSE]
+  linked_pairs   <- do.call(paste, c(delta_result, list(sep = "_")))
+  true_positive  <- length(intersect(linked_pairs, true_pairs))
+  false_positive <- length(setdiff(linked_pairs, true_pairs))
+  false_negative <- length(setdiff(true_pairs, linked_pairs))
+  c(TP = true_positive, FP = false_positive, FN = false_negative,
+    sensitivity = true_positive / (true_positive + false_negative),
+    FDP = false_positive / (true_positive + false_positive))
+}
+
+results_rows <- c("TP",
+                  "FP",
+                  "FN",
+                  "sensitivity",
+                  "FDP",
+                  "hat FDP score",
+                  "hat FDP score*",
+                  "hat FDP synth*",
+                  "max SMD",
+                  "min support IoU",
+                  "max MMD")
+
+run_all_wrappers <- function(prep_data, PIVs_type, methods, FDP_estimation = TRUE,
+                             maxIter4CV = 3, n_repeats = 5, ...) {
+  args <- list(...)
+
+  op <- options()
+  on.exit(options(op))
+  PIVs <- names(prep_data$PIVs_config)
+  true_pairs <- do.call(paste, c(prep_data$true_pairs, list(sep = "_")))
+  df_results <- data.frame(matrix(NA, nrow = length(results_rows), ncol = 0))
+  rownames(df_results) <- results_rows
+
+  naive_fit <- naive_linkage(PIVs = PIVs, encodedA = prep_data$encodedA, encodedB = prep_data$encodedB)
+  df_results[1:5, "Naive"] <- evaluate_linkage(list(idxA = naive_fit[[1]], idxB = naive_fit[[2]]), true_pairs)
+
+  for (method in methods) {
+    arguments <- wrapper_args(method, prep_data, args)
+    fit <- run_wrapper(method, prep_data, arguments)
+    df_results[1:5, method] <- evaluate_linkage(fit, true_pairs)
+    if (is.null(fit) || length(fit$idxA) == 0) next
+
+    encodedA <- prep_data$encodedA
+    encodedB <- prep_data$encodedB
+    if (method == "diyar") {
+      encodedA <- encodedA[, c(PIVs, "local_id", "source")]
+      encodedB <- encodedB[, c(PIVs, "local_id", "source")]
+    }
+
+    diag <- do.call(RL_diagnostics, c(list(fit, encodedA, encodedB, PIVs, PIVs_type, PIVs,
+                                           true_pairs = prep_data$true_pairs, FDP_estimation = FDP_estimation,
+                                           RL_method = method, data = prep_data, maxIter4CV = maxIter4CV, n_repeats = n_repeats),
+                                      arguments))
+    if (FDP_estimation) {
+      df_results[6, method] <- diag$FDP_measures$curve$RL_FDP_score[1]
+      df_results[7, method] <- diag$FDP_measures$curve$augmRL_FDP_score[1]
+      df_results[8, method] <- diag$FDP_measures$curve$augmRL_FDP_synth[1]
+    }
+    df_results[9,  method] <- max(diag$discrepancy_measures[1, grep("smd", names(diag$discrepancy_measures))])
+    df_results[10, method] <- min(diag$discrepancy_measures[1, grep("iou", names(diag$discrepancy_measures))])
+    df_results[11, method] <- max(diag$discrepancy_measures[1, grep("mmd", names(diag$discrepancy_measures))])
+  }
+  df_results
+}
+
+show_results <- function(df_results) {
+  cat("Record Linkage\n");      print(df_results[1:5, ],  2)
+  cat("\nFDP estimation\n");    print(df_results[6:8, ],  2)
+  cat("\nLinked divergence\n"); print(df_results[9:11, ], 2)
+}
+
+methods <- c("FlexRL", "BRL", "multilink", "fastLink", "reclin2", "diyar", "fedmatch")
+```
+
+We will fill a table of results throughout the vignette, gathering for
+each record linkage method: linkage performance, data quality
+diagnostics: FDP estimation, measures of divergence of linked data from
+sources.
+
+## Regional subset of the NLTCS data
+
+We use 4 **P**artially **I**dentifying **V**ariable**s** to link the
+records: sex, birth month and birth year are `stable`, the state code
+may change over time but we cannot model these changes so we set this
+variable as `flexible`.
+
+``` r
+
+df1982 <- read.csv("ex-reg-NLTCS-82.csv", row.names = 1)
+df1994 <- read.csv("ex-reg-NLTCS-94.csv", row.names = 1)
+
+PIVs_config <- list(
+  SEX       = list(dynamics = "stable",   bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
+  DOB_MONTH = list(dynamics = "stable",   bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
+  DOB_YEAR  = list(dynamics = "stable",   bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
+  STATE     = list(dynamics = "flexible", bound_mistakes = c(NA, NA),     fix_mistakes = c(NA, NA)))
+PIVs <- names(PIVs_config)
+PIVs_type <- list(SEX = FALSE, DOB_MONTH = TRUE, DOB_YEAR = TRUE, STATE = FALSE)
+```
+
+[`prepare_data()`](https://robachowyk.github.io/FlexRL/reference/prepare_data.md)
+removes the records for which the linking variables are outside of the
+common support, checks that PIVs are not strongly associated with each
+other (which may degrade record linkage performance), maps PIV values to
+natural numbers and encodes missing values as 0. The StEM algorithm
+denotes the smallest source as `A` and the largest as `B`. The true
+pairs are known from the identifier ID (they are indexed on the rows of
+`encodedA` and `encodedB`, after the support restriction).
+
+``` r
+
+prep_data <- prepare_data(df1982, df1994, "1982", "1994", PIVs_config, same_mistakes = TRUE, uniq_id = "ID")
+#> '1982' is the larger source, saved as B; '1994' saved as A.
+
+c(n_A = nrow(prep_data$encodedA), n_B = nrow(prep_data$encodedB), n_links = nrow(prep_data$true_pairs))
+#>     n_A     n_B n_links 
+#>     491     901     332
+
+prep_data$n_values
+#>       SEX DOB_MONTH  DOB_YEAR     STATE 
+#>         2        12        28         9
+```
+
+``` r
+
+df_results_NLTCS <- run_all_wrappers(prep_data, PIVs_type, methods)
+```
+
+``` r
+
+show_results(df_results_NLTCS)
+#> Record Linkage
+#>              Naive FlexRL     BRL multilink fastLink reclin2   diyar fedmatch
+#> TP          320.00 218.00 211.000    228.00   259.00  320.00 126.000   266.00
+#> FP          163.00  34.00  13.000     34.00    84.00  163.00   5.000   223.00
+#> FN           12.00 114.00 121.000    104.00    73.00   12.00 206.000    66.00
+#> sensitivity   0.96   0.66   0.636      0.69     0.78    0.96   0.380     0.80
+#> FDP           0.34   0.13   0.058      0.13     0.24    0.34   0.038     0.46
+#> 
+#> FDP estimation
+#>                Naive FlexRL   BRL multilink fastLink reclin2 diyar fedmatch
+#> hat FDP score     NA   0.16 0.152       NaN     0.30    0.49   NaN    0.075
+#> hat FDP score*    NA   0.17 0.165       NaN     0.31    0.25   NaN    0.075
+#> hat FDP synth*    NA   0.11 0.093      0.15     0.36    0.32 0.086      NaN
+#> 
+#> Linked divergence
+#>                 Naive FlexRL   BRL multilink fastLink reclin2 diyar fedmatch
+#> max SMD            NA  0.183 0.155     0.146    0.141   0.177  0.43   0.1125
+#> min support IoU    NA  0.875 0.875     0.875    0.875   0.875  0.88   0.8750
+#> max MMD            NA  0.016 0.014     0.013    0.016   0.025  0.03   0.0093
+```
+
+## Regional subset of the SHIW data
+
+We use 4 **P**artially **I**dentifying **V**ariable**s** to link the
+records: sex and birth year are `stable`, education level and marital
+status are `flexible`.
+
+``` r
+
+df2016 <- read.csv("ex-reg-SHIW-16.csv", row.names = 1)
+df2020 <- read.csv("ex-reg-SHIW-20.csv", row.names = 1)
+
+PIVs_config <- list(
+  ANASCI = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
+  SESSO  = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
+  STUDIO = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
+  STACIV = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)))
+PIVs <- names(PIVs_config)
+PIVs_type <- list(ANASCI = TRUE, SESSO = FALSE, STUDIO = FALSE, STACIV = FALSE)
+
+prep_data <- prepare_data(df2016, df2020, "2016", "2020", PIVs_config, same_mistakes = TRUE, uniq_id = "ID")
+#> '2016' is the larger source, saved as B; '2020' saved as A.
+
+c(n_A = nrow(prep_data$encodedA), n_B = nrow(prep_data$encodedB), n_links = nrow(prep_data$true_pairs))
+#>     n_A     n_B n_links 
+#>      42      49      27
+
+prep_data$n_values
+#> ANASCI  SESSO STUDIO STACIV 
+#>     28      2      5      4
+```
+
+``` r
+
+df_results_SHIW <- run_all_wrappers(prep_data, PIVs_type, methods)
+```
+
+``` r
+
+show_results(df_results_SHIW)
+#> Record Linkage
+#>             Naive FlexRL   BRL multilink fastLink reclin2  diyar fedmatch
+#> TP          20.00  16.00 20.00     22.00    19.00   27.00 13.000    19.00
+#> FP           8.00   8.00 15.00     15.00    11.00   52.00  1.000    20.00
+#> FN           7.00  11.00  7.00      5.00     8.00    0.00 14.000     8.00
+#> sensitivity  0.74   0.59  0.74      0.81     0.70    1.00  0.481     0.70
+#> FDP          0.29   0.33  0.43      0.41     0.37    0.66  0.071     0.51
+#> 
+#> FDP estimation
+#>                Naive FlexRL  BRL multilink fastLink reclin2 diyar fedmatch
+#> hat FDP score     NA  0.159 0.20       NaN     0.10    0.14   NaN     0.09
+#> hat FDP score*    NA  0.134 0.22       NaN     0.12    0.13   NaN     0.09
+#> hat FDP synth*    NA  0.094 0.00      0.13     0.26    0.47     0      NaN
+#> 
+#> Linked divergence
+#>                 Naive FlexRL   BRL multilink fastLink reclin2 diyar fedmatch
+#> max SMD            NA  0.273 0.148     0.120    0.190   0.123  0.64    0.168
+#> min support IoU    NA  0.333 1.000     1.000    1.000   1.000  0.83    1.000
+#> max MMD            NA  0.037 0.023     0.018    0.028   0.018  0.14    0.027
+```
+
+## Full SHIW data
+
+``` r
+
+df2016 <- read.csv("SHIW2016.csv", row.names = 1)
+df2020 <- read.csv("SHIW2020.csv", row.names = 1)
+df2016 <- df2016[!df2016$ID %in% df2016$ID[duplicated(df2016$ID)], ]
+df2020 <- df2020[!df2020$ID %in% df2020$ID[duplicated(df2020$ID)], ]
+
+PIVs_config_full <- c(PIVs_config,
+  list(IREG = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA))))
+PIVs_full <- names(PIVs_config_full)
+PIVs_type_full <- c(PIVs_type, IREG = FALSE)
+
+prep_data_full <- prepare_data(df2016, df2020, "2016", "2020", PIVs_config_full, same_mistakes = TRUE, uniq_id = "ID")
+#> '2016' is the larger source, saved as B; '2020' saved as A.
+true_pairs_full <- do.call(paste, c(prep_data_full$true_pairs, list(sep = "_")))
+```
+
+``` r
+
+df_results_full <- data.frame(matrix(NA, nrow = 6, ncol = 0))
+rownames(df_results_full) <- c("TP", "FP", "FN", "sensitivity", "FDP", "minutes")
+for (method in methods) {
+  t0 <- Sys.time()           
+  args <- list(StEM_iter = 20, StEM_burnin = 10, gibbs_iter = 20, gibbs_burnin = 10, 
+               n_post_sample = 100, n_iter = 500, max_cc_size = 50, n.cores = 4)
+  fit <- run_wrapper(method, prep_data_full, wrapper_args(method, prep_data_full, args))
+  df_results_full[1:5, method] <- evaluate_linkage(fit, true_pairs_full)
+  df_results_full[6, method] <- if (is.null(fit)) NA else round(as.numeric(Sys.time() - t0, units = "mins"))
+}
+
+# on Apple M1 Max ARM chip, 8-core CPU, 32 GB of memory
+# fastLink: memory error / multilink: memory error / BRL: memory error / diyar: memory error
+
+# we reduce the number of iterations of FlexRL to gain in computational time
+```
+
+``` r
+
+cat("Record Linkage performance on large files")
+#> Record Linkage performance on large files
+round(df_results_full,2)
+#>              FlexRL BRL multilink fastLink    reclin2 diyar fedmatch
+#> TP          1062.00  NA        NA       NA    5936.00    NA  2756.00
+#> FP          1521.00  NA        NA       NA 1917562.00    NA 12161.00
+#> FN          5368.00  NA        NA       NA     494.00    NA  3674.00
+#> sensitivity    0.17  NA        NA       NA       0.92    NA     0.43
+#> FDP            0.59  NA        NA       NA       1.00    NA     0.82
+#> minutes      106.00  NA        NA       NA       2.00    NA     7.00
+```
+
+Note that when methods do not ensure the one-to-one assignment
+constraint the number of False Positives may be high due to many-to-many
+falsely linked pairs of records.
+
+## Loop over the regions of the SHIW data with blocking
+
+Blocking on the region code `IREG` splits the task into 20 smaller ones.
+Within a region, `IREG` is constant and the linkage uses the 4 other
+PIVs. Region 2 is the regional subset used above.
+
+``` r
+
+regions <- sort(unique(c(df2016$IREG, df2020$IREG)))
+results_IREG <- list()
+for (r in regions) {
+  block2016 <- df2016[df2016$IREG == r, ]
+  block2020 <- df2020[df2020$IREG == r, ]
+  prep_data_r <- prepare_data(block2016, block2020, "2016", "2020", PIVs_config, same_mistakes = TRUE, uniq_id = "ID")
+  true_pairs_r <- do.call(paste, c(prep_data_r$true_pairs, list(sep = "_")))
+  for (method in methods) {
+    t0 <- Sys.time()
+    fit <- run_wrapper(method, prep_data_r, wrapper_args(method, prep_data_r))
+    results_IREG[[length(results_IREG) + 1]] <- data.frame(
+      IREG = r, n_A = nrow(prep_data_r$encodedA),
+      n_B = nrow(prep_data_r$encodedB), n_links = length(true_pairs_r),
+      method = method, round(t(evaluate_linkage(fit, true_pairs_r)),2),
+      seconds = round(as.numeric(Sys.time() - t0, units = "secs")))
+  }
+}
+results_IREG <- do.call(rbind, results_IREG)
+```
+
+``` r
+
+cat("Record Linkage on regional subsets")
+#> Record Linkage on regional subsets
+results_IREG
+#>     IREG  n_A  n_B n_links    method  TP    FP  FN         sensitivity
+#> 1      1  965 1272     388    FlexRL  36    39 352 0.09000000000000000
+#> 2      1  965 1272     388       BRL  20    13 368 0.05000000000000000
+#> 3      1  965 1272     388 multilink  58   207 330 0.14999999999999999
+#> 4      1  965 1272     388  fastLink 140   647 248 0.35999999999999999
+#> 5      1  965 1272     388   reclin2 350  9033  38 0.90000000000000002
+#> 6      1  965 1272     388     diyar  36    38 352 0.09000000000000000
+#> 7      1  965 1272     388  fedmatch 135   830 253 0.34999999999999998
+#> 8      2   42   49      27    FlexRL  18     6   9 0.67000000000000004
+#> 9      2   42   49      27       BRL  22    13   5 0.81000000000000005
+#> 10     2   42   49      27 multilink  22    15   5 0.81000000000000005
+#> 11     2   42   49      27  fastLink  19    11   8 0.69999999999999996
+#> 12     2   42   49      27   reclin2  27    52   0 1.00000000000000000
+#> 13     2   42   49      27     diyar  13     1  14 0.47999999999999998
+#> 14     2   42   49      27  fedmatch  19    20   8 0.69999999999999996
+#> 15     3 1722 1791     636    FlexRL  41    28 595 0.06000000000000000
+#> 16     3 1722 1791     636       BRL  15     1 621 0.02000000000000000
+#> 17     3 1722 1791     636 multilink  33   232 603 0.05000000000000000
+#> 18     3 1722 1791     636  fastLink 210  1106 426 0.33000000000000002
+#> 19     3 1722 1791     636   reclin2 616 26566  20 0.96999999999999997
+#> 20     3 1722 1791     636     diyar  40    26 596 0.06000000000000000
+#> 21     3 1722 1791     636  fedmatch 300  1422 336 0.46999999999999997
+#> 22     4  445  693     254    FlexRL  61    38 193 0.23999999999999999
+#> 23     4  445  693     254       BRL  52    26 202 0.20000000000000001
+#> 24     4  445  693     254 multilink  68    88 186 0.27000000000000002
+#> 25     4  445  693     254  fastLink 108   259 146 0.42999999999999999
+#> 26     4  445  693     254   reclin2 247  2784   7 0.96999999999999997
+#> 27     4  445  693     254     diyar  13     7 241 0.05000000000000000
+#> 28     4  445  693     254  fedmatch 151   294 103 0.58999999999999997
+#> 29     5 1042 1122     446    FlexRL  51    44 395 0.11000000000000000
+#> 30     5 1042 1122     446       BRL  37     9 409 0.08000000000000000
+#> 31     5 1042 1122     446 multilink  68   294 378 0.14999999999999999
+#> 32     5 1042 1122     446  fastLink 179   716 267 0.40000000000000002
+#> 33     5 1042 1122     446   reclin2 435 11856  11 0.97999999999999998
+#> 34     5 1042 1122     446     diyar  29    11 417 0.07000000000000001
+#> 35     5 1042 1122     446  fedmatch 234   807 212 0.52000000000000002
+#> 36     6  326  359     165    FlexRL  52    27 113 0.32000000000000001
+#> 37     6  326  359     165       BRL  54    28 111 0.33000000000000002
+#> 38     6  326  359     165 multilink  67    64  98 0.40999999999999998
+#> 39     6  326  359     165  fastLink 103   152  62 0.62000000000000000
+#> 40     6  326  359     165   reclin2 164  1152   1 0.98999999999999999
+#> 41     6  326  359     165     diyar  22     6 143 0.13000000000000000
+#> 42     6  326  359     165  fedmatch  86   240  79 0.52000000000000002
+#> 43     7  400  494     163    FlexRL  51    38 112 0.31000000000000000
+#> 44     7  400  494     163       BRL  42    29 121 0.26000000000000001
+#> 45     7  400  494     163 multilink  54    64 109 0.33000000000000002
+#> 46     7  400  494     163  fastLink  93   209  70 0.56999999999999995
+#> 47     7  400  494     163   reclin2 159  1625   4 0.97999999999999998
+#> 48     7  400  494     163     diyar  45    27 118 0.28000000000000003
+#> 49     7  400  494     163  fedmatch  91   304  72 0.56000000000000005
+#> 50     8 1120 1217     418    FlexRL  48    36 370 0.11000000000000000
+#> 51     8 1120 1217     418       BRL  29    20 389 0.07000000000000001
+#> 52     8 1120 1217     418 multilink  58   223 360 0.14000000000000001
+#> 53     8 1120 1217     418  fastLink 168   612 250 0.40000000000000002
+#> 54     8 1120 1217     418   reclin2 414 12047   4 0.98999999999999999
+#> 55     8 1120 1217     418     diyar  26    18 392 0.06000000000000000
+#> 56     8 1120 1217     418  fedmatch 165   955 253 0.39000000000000001
+#> 57     9  900 1126     412    FlexRL  75    72 337 0.17999999999999999
+#> 58     9  900 1126     412       BRL  68    40 344 0.17000000000000001
+#> 59     9  900 1126     412 multilink 111   236 301 0.27000000000000002
+#> 60     9  900 1126     412  fastLink 168   587 244 0.40999999999999998
+#> 61     9  900 1126     412   reclin2 400  8718  12 0.96999999999999997
+#> 62     9  900 1126     412     diyar  52    35 360 0.13000000000000000
+#> 63     9  900 1126     412  fedmatch 187   710 225 0.45000000000000001
+#> 64    10  592  614     316    FlexRL  90    52 226 0.28000000000000003
+#> 65    10  592  614     316       BRL  85    32 231 0.27000000000000002
+#> 66    10  592  614     316 multilink 103   126 213 0.33000000000000002
+#> 67    10  592  614     316  fastLink 177   288 139 0.56000000000000005
+#> 68    10  592  614     316   reclin2 313  3620   3 0.98999999999999999
+#> 69    10  592  614     316     diyar  60    20 256 0.19000000000000000
+#> 70    10  592  614     316  fedmatch 161   426 155 0.51000000000000001
+#> 71    11  439  686     278    FlexRL  86    52 192 0.31000000000000000
+#> 72    11  439  686     278       BRL  76    29 202 0.27000000000000002
+#> 73    11  439  686     278 multilink 110   103 168 0.40000000000000002
+#> 74    11  439  686     278  fastLink 146   234 132 0.53000000000000003
+#> 75    11  439  686     278   reclin2 277  2851   1 1.00000000000000000
+#> 76    11  439  686     278     diyar  33    15 245 0.12000000000000000
+#> 77    11  439  686     278  fedmatch 142   297 136 0.51000000000000001
+#> 78    12  959 1115     379    FlexRL  47    32 332 0.12000000000000000
+#> 79    12  959 1115     379       BRL  37    14 342 0.10000000000000001
+#> 80    12  959 1115     379 multilink  63   196 316 0.17000000000000001
+#> 81    12  959 1115     379  fastLink 167   455 212 0.44000000000000000
+#> 82    12  959 1115     379   reclin2 369  8630  10 0.96999999999999997
+#> 83    12  959 1115     379     diyar  46    25 333 0.12000000000000000
+#> 84    12  959 1115     379  fedmatch 215   744 164 0.56999999999999995
+#> 85    13  315  420     141    FlexRL  39    35 102 0.28000000000000003
+#> 86    13  315  420     141       BRL  36    30 105 0.26000000000000001
+#> 87    13  315  420     141 multilink  42    57  99 0.29999999999999999
+#> 88    13  315  420     141  fastLink  88   151  53 0.62000000000000000
+#> 89    13  315  420     141   reclin2 137  1103   4 0.96999999999999997
+#> 90    13  315  420     141     diyar   8     4 133 0.06000000000000000
+#> 91    13  315  420     141  fedmatch  80   235  61 0.56999999999999995
+#> 92    14  181  212     118    FlexRL  59    18  59 0.50000000000000000
+#> 93    14  181  212     118       BRL  62    16  56 0.53000000000000003
+#> 94    14  181  212     118 multilink  72    38  46 0.60999999999999999
+#> 95    14  181  212     118  fastLink  80    65  38 0.68000000000000005
+#> 96    14  181  212     118   reclin2 117   510   1 0.98999999999999999
+#> 97    14  181  212     118     diyar  32     4  86 0.27000000000000002
+#> 98    14  181  212     118  fedmatch  69   110  49 0.57999999999999996
+#> 99    15 1324 1734     784    FlexRL  86    75 698 0.11000000000000000
+#> 100   15 1324 1734     784       BRL  62    32 722 0.08000000000000000
+#> 101   15 1324 1734     784 multilink 125   412 659 0.16000000000000000
+#> 102   15 1324 1734     784  fastLink 232   902 552 0.29999999999999999
+#> 103   15 1324 1734     784   reclin2 746 19909  38 0.94999999999999996
+#> 104   15 1324 1734     784     diyar  27    11 757 0.03000000000000000
+#> 105   15 1324 1734     784  fedmatch 274  1050 510 0.34999999999999998
+#> 106   16 1033 1041     465    FlexRL  61    49 404 0.13000000000000000
+#> 107   16 1033 1041     465       BRL  39    20 426 0.08000000000000000
+#> 108   16 1033 1041     465 multilink 104   309 361 0.22000000000000000
+#> 109   16 1033 1041     465  fastLink 169   670 296 0.35999999999999999
+#> 110   16 1033 1041     465   reclin2 444 10092  21 0.94999999999999996
+#> 111   16 1033 1041     465     diyar  13     5 452 0.03000000000000000
+#> 112   16 1033 1041     465  fedmatch 233   800 232 0.50000000000000000
+#> 113   17  155  235     103    FlexRL  52    23  51 0.50000000000000000
+#> 114   17  155  235     103       BRL  60    22  43 0.57999999999999996
+#> 115   17  155  235     103 multilink  65    40  38 0.63000000000000000
+#> 116   17  155  235     103  fastLink  65    62  38 0.63000000000000000
+#> 117   17  155  235     103   reclin2  98   375   5 0.94999999999999996
+#> 118   17  155  235     103     diyar  39     5  64 0.38000000000000000
+#> 119   17  155  235     103  fedmatch  57    98  46 0.55000000000000004
+#> 120   18  324  394     174    FlexRL  52    34 122 0.29999999999999999
+#> 121   18  324  394     174       BRL  56    26 118 0.32000000000000001
+#> 122   18  324  394     174 multilink  66    53 108 0.38000000000000000
+#> 123   18  324  394     174  fastLink  95   152  79 0.55000000000000004
+#> 124   18  324  394     174   reclin2 171  1270   3 0.97999999999999998
+#> 125   18  324  394     174     diyar  47    12 127 0.27000000000000002
+#> 126   18  324  394     174  fedmatch  90   233  84 0.52000000000000002
+#> 127   19 1213 1353     414    FlexRL  34    50 380 0.08000000000000000
+#> 128   19 1213 1353     414       BRL  14    10 400 0.03000000000000000
+#> 129   19 1213 1353     414 multilink  40   214 374 0.10000000000000001
+#> 130   19 1213 1353     414  fastLink 145   617 269 0.34999999999999998
+#> 131   19 1213 1353     414   reclin2 397 14624  17 0.95999999999999996
+#> 132   19 1213 1353     414     diyar  22    22 392 0.05000000000000000
+#> 133   19 1213 1353     414  fedmatch 160  1047 254 0.39000000000000001
+#> 134   20  709  774     332    FlexRL  88    51 244 0.27000000000000002
+#> 135   20  709  774     332       BRL  76    30 256 0.23000000000000001
+#> 136   20  709  774     332 multilink 112   128 220 0.34000000000000002
+#> 137   20  709  774     332  fastLink 165   317 167 0.50000000000000000
+#> 138   20  709  774     332   reclin2 323  4861   9 0.96999999999999997
+#> 139   20  709  774     332     diyar  22    11 310 0.07000000000000001
+#> 140   20  709  774     332  fedmatch 209   498 123 0.63000000000000000
+#>                     FDP seconds
+#> 1   0.52000000000000002    1225
+#> 2   0.39000000000000001      12
+#> 3   0.78000000000000003     370
+#> 4   0.81999999999999995      10
+#> 5   0.95999999999999996       0
+#> 6   0.51000000000000001       5
+#> 7   0.85999999999999999      11
+#> 8   0.25000000000000000      18
+#> 9   0.37000000000000000       0
+#> 10  0.40999999999999998       0
+#> 11  0.37000000000000000       1
+#> 12  0.66000000000000003       0
+#> 13  0.07000000000000001       0
+#> 14  0.51000000000000001       0
+#> 15  0.40999999999999998    1957
+#> 16  0.06000000000000000      31
+#> 17  0.88000000000000000    1425
+#> 18  0.83999999999999997      23
+#> 19  0.97999999999999998       1
+#> 20  0.39000000000000001      11
+#> 21  0.82999999999999996      19
+#> 22  0.38000000000000000     494
+#> 23  0.33000000000000002       3
+#> 24  0.56000000000000005      52
+#> 25  0.70999999999999996       5
+#> 26  0.92000000000000004       0
+#> 27  0.34999999999999998       3
+#> 28  0.66000000000000003       4
+#> 29  0.46000000000000002    1224
+#> 30  0.20000000000000001      10
+#> 31  0.81000000000000005     319
+#> 32  0.80000000000000004       9
+#> 33  0.95999999999999996       0
+#> 34  0.28000000000000003       7
+#> 35  0.78000000000000003      11
+#> 36  0.34000000000000002     297
+#> 37  0.34000000000000002       1
+#> 38  0.48999999999999999      16
+#> 39  0.59999999999999998       2
+#> 40  0.88000000000000000       0
+#> 41  0.20999999999999999       1
+#> 42  0.73999999999999999       2
+#> 43  0.42999999999999999     378
+#> 44  0.40999999999999998       2
+#> 45  0.54000000000000004      35
+#> 46  0.68999999999999995       2
+#> 47  0.91000000000000003       0
+#> 48  0.38000000000000000       1
+#> 49  0.77000000000000002       3
+#> 50  0.42999999999999999    1227
+#> 51  0.40999999999999998      13
+#> 52  0.79000000000000004     468
+#> 53  0.78000000000000003      10
+#> 54  0.96999999999999997       0
+#> 55  0.40999999999999998       7
+#> 56  0.84999999999999998      11
+#> 57  0.48999999999999999    1266
+#> 58  0.37000000000000000      10
+#> 59  0.68000000000000005     252
+#> 60  0.78000000000000003      10
+#> 61  0.95999999999999996       0
+#> 62  0.40000000000000002       5
+#> 63  0.79000000000000004      10
+#> 64  0.37000000000000000     691
+#> 65  0.27000000000000002       3
+#> 66  0.55000000000000004      71
+#> 67  0.62000000000000000       4
+#> 68  0.92000000000000004       0
+#> 69  0.25000000000000000       2
+#> 70  0.72999999999999998       5
+#> 71  0.38000000000000000     580
+#> 72  0.28000000000000003       3
+#> 73  0.47999999999999998      44
+#> 74  0.62000000000000000       4
+#> 75  0.91000000000000003       0
+#> 76  0.31000000000000000       2
+#> 77  0.68000000000000005       3
+#> 78  0.40999999999999998     903
+#> 79  0.27000000000000002      11
+#> 80  0.76000000000000001     334
+#> 81  0.72999999999999998       8
+#> 82  0.95999999999999996       0
+#> 83  0.34999999999999998       4
+#> 84  0.78000000000000003       9
+#> 85  0.46999999999999997     297
+#> 86  0.45000000000000001       1
+#> 87  0.57999999999999996      20
+#> 88  0.63000000000000000       2
+#> 89  0.89000000000000001       0
+#> 90  0.33000000000000002       1
+#> 91  0.75000000000000000       2
+#> 92  0.23000000000000001     144
+#> 93  0.20999999999999999       0
+#> 94  0.34999999999999998       4
+#> 95  0.45000000000000001       1
+#> 96  0.81000000000000005       0
+#> 97  0.11000000000000000       1
+#> 98  0.60999999999999999       1
+#> 99  0.46999999999999997    2103
+#> 100 0.34000000000000002      22
+#> 101 0.77000000000000002     649
+#> 102 0.80000000000000004      16
+#> 103 0.95999999999999996       1
+#> 104 0.28999999999999998      10
+#> 105 0.79000000000000004      16
+#> 106 0.45000000000000001    1242
+#> 107 0.34000000000000002       9
+#> 108 0.75000000000000000     280
+#> 109 0.80000000000000004       8
+#> 110 0.95999999999999996       0
+#> 111 0.28000000000000003       7
+#> 112 0.77000000000000002      12
+#> 113 0.31000000000000000     132
+#> 114 0.27000000000000002       0
+#> 115 0.38000000000000000       3
+#> 116 0.48999999999999999       1
+#> 117 0.79000000000000004       0
+#> 118 0.11000000000000000       1
+#> 119 0.63000000000000000       1
+#> 120 0.40000000000000002     318
+#> 121 0.32000000000000001       1
+#> 122 0.45000000000000001      19
+#> 123 0.62000000000000000       2
+#> 124 0.88000000000000000       0
+#> 125 0.20000000000000001       1
+#> 126 0.71999999999999997       3
+#> 127 0.59999999999999998    1432
+#> 128 0.41999999999999998      16
+#> 129 0.83999999999999997     529
+#> 130 0.81000000000000005      12
+#> 131 0.96999999999999997       1
+#> 132 0.50000000000000000       9
+#> 133 0.87000000000000000      14
+#> 134 0.37000000000000000     780
+#> 135 0.28000000000000003       5
+#> 136 0.53000000000000003     130
+#> 137 0.66000000000000003       4
+#> 138 0.93999999999999995       0
+#> 139 0.33000000000000002       4
+#> 140 0.69999999999999996       7
+```
+
+Averaged over the regions and total computing time:
+
+``` r
+
+summary_IREG <- do.call(rbind, lapply(split(results_IREG, results_IREG$method), function(d) {
+  data.frame(method = d$method[1],
+             FDP = mean(d$FDP, na.rm=TRUE),
+             sensitivity = mean(d$sensitivity, na.rm=TRUE),
+             TP = mean(d$TP, na.rm=TRUE), FP = mean(d$FP, na.rm=TRUE), FN = mean(d$FN, na.rm=TRUE),
+             minutes = sum(d$seconds) / 60)
+}))
+rownames(summary_IREG) <- summary_IREG$method
+
+round(summary_IREG[,2:7],2)
+#>            FDP sensitivity     TP      FP     FN minutes
+#> BRL       0.32        0.24  47.10   22.00 273.55    2.55
+#> diyar     0.30        0.15  31.25   15.15 289.40    1.37
+#> fastLink  0.68        0.49 135.85  410.60 184.80    2.23
+#> fedmatch  0.74        0.51 152.90  556.00 167.75    2.40
+#> FlexRL    0.41        0.25  56.35   39.95 264.30  278.47
+#> multilink 0.62        0.31  72.05  154.95 248.60   83.67
+#> reclin2   0.91        0.97 310.20 7083.90  10.45    0.05
+```
+
+``` r
+
+colours <- grDevices::hcl.colors(length(methods), "Dark 3")
+names(colours) <- methods
+plot(NA, xlim = c(0, 1), ylim = c(0, 1), xlab = "sensitivity", ylab = "FDP",
+     main = "SHIW linked region by region (one point per region)")
+for (method in methods) {
+  d <- results_IREG[results_IREG$method == method, ]
+  points(d$sensitivity, d$FDP, col = colours[method], pch = 19)
+}
+legend("bottomright", legend = methods, col = colours, pch = 19, bty = "n")
+```
+
+![plot of chunk
+shiw-regional-blocking-plot](figure/shiw-regional-blocking-plot-1.png)
+
+plot of chunk shiw-regional-blocking-plot
+
+The 4 PIVs have little discriminating power on these data (birth years,
+sex, 6 education levels, 4 marital statuses) and the two waves overlap
+on about 40% of their records (6.430 true links, 14.917 records in A,
+16.445 records in B), so the task is hard for every package. `fastLink`,
+`multilink`, `BRL` and `diyar` are not scalable (out of memory errors).
+
+We compare methods with blocking over the 20 regions: `reclin2` (EM on
+the comparison patterns, threshold at 0.5 on the posterior) links a lot
+of records reaching a high sensitivity at the price of a high FDP;
+`fastLink`, `fedmatch` and `multilink` link about half of the true pairs
+with a FDP around 0.7; `BRL` and `diyar` are the most conservative, with
+a FDP around 0.3 and a sensitivity around 0.2; `FlexRL` performance is
+between these conservative and permissive methods.
+
+In terms of computational time however, `FlexRL` and `multilink` are
+more than 10 times slower than the other methods. The results were
+computed with the code above, on a machine with Apple M1 Max ARM chip,
+8-core CPU, 32 GB of memory.

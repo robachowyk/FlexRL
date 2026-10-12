@@ -73,11 +73,10 @@ p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 cond_hazard_params <- list( V1 = c(), V2 = c(), 
                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
                            p_mistake, p_missing, cond_hazard_params, TRUE )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
-#> Warning: PIV 'V4': values out of the common support in data2 [5].
 #> '2' is the larger source, saved as B; '1' saved as A.
 PIVs <- names(PIVs_config)
 n_synth <-as.integer(0.10 * nrow(prep_data$encodedB))
@@ -86,30 +85,30 @@ new_data <- synthesise("arf", prep_data$encodedA[, c(PIVs,"local_id","source",
                       prep_data$encodedB[, c(PIVs,"local_id","source","date",
                       prep_data$PIVs_config$V4$cond_hazard_cov$covB)], PIVs, 
                       n_synth, TRUE)
-#> Iteration: 0, Accuracy: 47.52%
+#> Iteration: 0, Accuracy: 51.52%
+#> Iteration: 1, Accuracy: 42.28%
 #> Warning: executing %dopar% sequentially: no parallel backend registered
 #> Warning: PIV 'V1': synthetic records out of the common support were removed.
-#> Warning: PIV 'V2': synthetic records out of the common support were removed.
-#> Warning: PIV 'V4': synthetic records out of the common support were removed.
+#> Warning: PIV 'V3': synthetic records out of the common support were removed.
 new_data$dataA[PIVs][is.na(new_data$dataA[PIVs])] <- 0
 new_data$dataB[PIVs][is.na(new_data$dataB[PIVs])] <- 0
 # cannot model dynamics for synthetic data, set dates to 0
 new_data$dataA$date[is.na(new_data$dataA$date)] <- 0
 new_data$dataB$date[is.na(new_data$dataB$date)] <- 0
-arguments <- list(data = prep_data, StEM_iter = 5, StEM_burnin = 1, 
-                  gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5)
+arguments <- list(data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
+                  gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5)
 fit_flexrl <- link_with_FlexRL(new_data$dataA, new_data$dataB, arguments)  
 #> FlexRL
 FDP_synth(fit_flexrl$idxA, fit_flexrl$idxB, fit_flexrl$LinkScore, 0.5,
           nrow(prep_data$encodedA), nrow(prep_data$encodedB), 
           n_synth)
 #> $FDP_synth
-#> [1] 0.443997
+#> [1] 0.3529412
 #> 
 #> $n_linked_real
-#> [1] 137
+#> [1] 85
 #> 
 #> $n_linked_all
-#> [1] 143
+#> [1] 88
 #> 
 ```

@@ -21,7 +21,7 @@ StEM(
   gamma0 = NULL,
   phiA0 = NULL,
   phiB0 = NULL,
-  n_post_samp = 1000,
+  n_post_sample = 1000,
   model_dynamics = survival_model("exponential")
 )
 ```
@@ -30,7 +30,8 @@ StEM(
 
 - data:
 
-  List, typically the output of [`prepare_data()`](prepare_data.md),
+  List, typically the output of
+  [`prepare_data()`](https://robachowyk.github.io/FlexRL/reference/prepare_data.md),
   with: `encodedA` (smaller source, PIVs encoded to natural numbers, `0`
   = missing), `encodedB` (larger source, encoded), `n_values`,
   `same_mistakes` (logical: same mistake parameter shared by A and B?),
@@ -89,7 +90,7 @@ StEM(
 
   Optional starting values for `phi`; at random if `NULL`.
 
-- n_post_samp:
+- n_post_sample:
 
   Integer, number of posterior draws used to estimate the final linkage
   probabilities `Delta`. Default is set to 1000, we recommend not
@@ -97,9 +98,10 @@ StEM(
 
 - model_dynamics:
 
-  Object from [`survival_model()`](survival_model.md): the survival
-  model for the change over time of the structured PIVs (default
-  exponential).
+  Object from
+  [`survival_model()`](https://robachowyk.github.io/FlexRL/reference/survival_model.md):
+  the survival model for the change over time of the structured PIVs
+  (default exponential).
 
 ## Value
 
@@ -133,106 +135,107 @@ p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
                    
 cond_hazard_params1 <- list( V1 = c(), V2 = c(), 
                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
                            p_mistake, p_missing, cond_hazard_params1, TRUE )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
 #> '2' is the larger source, saved as B; '1' saved as A.
 fit1 <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
-              gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5,
+              gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5,
               model_dynamics = survival_model("exponential") )
 #> FlexRL
 apply(fit1$alpha$V4[2:5,], 2, mean)
-#>  intercept         Xe         Xf 
-#> -2.1929366 -0.2846951 -0.2360663 
+#>   intercept          Xe          Xf 
+#> -0.77322703 -0.06602379 -0.67843441 
 cond_hazard_params1$V4
 #> [1] -0.3566749 -0.5108256 -0.6931472
 head(fit1$Delta[fit1$Delta$x > 0.5, ])
-#>    i  j   x
-#> 1  1  1 1.0
-#> 2  3  3 1.0
-#> 4 15  5 1.0
-#> 7 43  8 1.0
-#> 8  9  9 1.0
-#> 9 10 10 0.8
+#>     i j x
+#> 1 110 1 1
+#> 2   2 2 1
+#> 3   4 4 1
+#> 4   6 6 1
+#> 5   7 7 1
+#> 6   8 8 1
 
 cond_hazard_params2 <- list( V1 = c(), V2 = c(), 
                              V3 = c(), V4 = log(c(0.3, 0.7, 0.6, 0.5)) )
-gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
                            p_mistake, p_missing, cond_hazard_params2, TRUE,
                            model_dynamics = survival_model("weibull") )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
 #> '2' is the larger source, saved as B; '1' saved as A.
 fit2 <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
-              gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5,
+              gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5,
               model_dynamics = survival_model("weibull"))
 #> FlexRL
+#> Warning: PIV 'V1', file A hit its mistake bound on 40% of StEM iterations.
+#>   PIV 'V1', file B hit its mistake bound on 40% of StEM iterations.
 apply(fit2$alpha$V4[2:5,], 2, mean)
 #>   log_shape   intercept          Xe          Xf 
-#> -0.60357550 -0.88120552 -0.17256545  0.02085412 
+#> -0.55552773  0.10282186 -0.27360562 -0.04849514 
 cond_hazard_params2$V4
 #> [1] -1.2039728 -0.3566749 -0.5108256 -0.6931472
 head(fit2$Delta[fit2$Delta$x > 0.5, ])
-#>    i j   x
-#> 1  1 1 0.6
-#> 2  2 2 0.6
-#> 5  4 4 1.0
-#> 6 50 5 1.0
-#> 7  6 6 1.0
-#> 8  7 7 1.0
+#>     i  j   x
+#> 1   1  1 0.8
+#> 2   3  3 0.6
+#> 3   4  4 0.6
+#> 4   5  5 1.0
+#> 6 131  9 1.0
+#> 7  10 10 1.0
 
 cond_hazard_params3 <- list( V1 = c(), V2 = c(), 
                              V3 = c(), V4 = log(c(0.3, 0.7, 0.6, 0.5)) )
-gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
                            p_mistake, p_missing, cond_hazard_params3, TRUE,
                            model_dynamics = survival_model("gompertz") )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
 #> '2' is the larger source, saved as B; '1' saved as A.
 fit3 <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
-              gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 5,
+              gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5,
               model_dynamics = survival_model("gompertz"))
 #> FlexRL
 apply(fit3$alpha$V4[2:5,], 2, mean)
-#>            g    intercept           Xe           Xf 
-#>  0.080275657 -1.994355256  0.007170501 -0.369704007 
+#>          g  intercept         Xe         Xf 
+#> -2.9408714  1.2970623 -0.4098417 -0.1703310 
 cond_hazard_params3$V4
 #> [1] -1.2039728 -0.3566749 -0.5108256 -0.6931472
 head(fit3$Delta[fit3$Delta$x > 0.5, ])
-#>     i j   x
-#> 1   1 1 1.0
-#> 2   3 3 0.8
-#> 3   4 4 0.8
-#> 4   6 6 1.0
-#> 5   7 7 1.0
-#> 6 129 8 1.0
+#>     i  j   x
+#> 1   1  1 1.0
+#> 3   3  3 0.8
+#> 4   4  4 1.0
+#> 9  36  9 0.8
+#> 10 10 10 1.0
+#> 11 68 11 1.0
 
 cond_hazard_params4 <- list( V1 = c(), V2 = c(), 
                              V3 = c(), V4 = log(c(0.6, 0.5, 0.4, 0.3, 0.2, 0.1)) )
-gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
                            p_mistake, p_missing, cond_hazard_params4, TRUE,
                            model_dynamics = survival_model("piecewise", cuts = c(1,2,3)) )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
+#> Warning: PIVs 'V4' and 'V2' are associated (Cramer's V = 0.32 in data1, 0.25 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
 #> '2' is the larger source, saved as B; '1' saved as A.
 fit4 <- StEM( data = prep_data, StEM_iter = 2, StEM_burnin = 1, 
-              gibbs_iter = 2, gibbs_burnin = 1, n_post_samp = 2,
+              gibbs_iter = 2, gibbs_burnin = 1, n_post_sample = 2,
               model_dynamics = survival_model("piecewise", cuts = c(1,2,3)))
 #> FlexRL
-#> Warning: PIV 'V1', file A hit its mistake bound on 50% of StEM iterations.
-#>   PIV 'V1', file B hit its mistake bound on 50% of StEM iterations.
 apply(fit4$alpha$V4, 2, mean)
 #>      log_h1      log_h2      log_h3      log_h4          Xe          Xf 
-#>   0.1623534 -22.6890089 -18.7781821  -1.3672972   0.1358512   0.0770206 
+#> -16.6468929  -1.4637499 -13.8537072  -1.2219520   0.0134000   0.2953763 
 cond_hazard_params4$V4
 #> [1] -0.5108256 -0.6931472 -0.9162907 -1.2039728 -1.6094379 -2.3025851
 head(fit4$Delta[fit4$Delta$x > 0.5, ])
-#>     i  j x
-#> 1  10  3 1
-#> 2   4  4 1
-#> 3 180  6 1
-#> 4   8  8 1
-#> 5   9  9 1
-#> 6 214 10 1
+#>    i  j x
+#> 1  1  1 1
+#> 2  4  4 1
+#> 3  5  5 1
+#> 5  8  8 1
+#> 6  9  9 1
+#> 7 10 10 1
 ```

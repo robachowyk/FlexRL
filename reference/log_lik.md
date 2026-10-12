@@ -58,5 +58,5 @@ sumRowD <- (seq_len(13) %in% links[, 1])
 sumColD <- (seq_len(15) %in% links[, 2])
 gamma <- 0.5
 log_lik(LLL, LLA, LLB, links, sumRowD, sumColD, gamma)
-#> [1] 0.5597091
+#> [1] -1.666067
 ```

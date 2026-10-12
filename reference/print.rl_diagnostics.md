@@ -14,7 +14,7 @@ print(x, threshold = 0.5, ...)
 - x:
 
   An `RL_diagnostics` object, see
-  [`RL_diagnostics()`](rl_diagnostics.md).
+  [`RL_diagnostics()`](https://robachowyk.github.io/FlexRL/reference/rl_diagnostics.md).
 
 - threshold:
 

@@ -49,29 +49,31 @@ p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 cond_hazard_params <- list( V1 = c(), V2 = c(), 
                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
                            p_mistake, p_missing, cond_hazard_params, TRUE )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
+#> Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.29 in data1, 0.31 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+#> Warning: PIVs 'V4' and 'V3' are associated (Cramer's V = 0.32 in data1, 0.21 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
 #> '2' is the larger source, saved as B; '1' saved as A.
 fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 5,
-             gibbs_iter = 10, gibbs_burnin = 5, n_post_samp = 10 )
+             gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10 )
 #> FlexRL
-#> Running StEM algorithm ■■■■■■■■■■                        30% | iter 3/10 [1s]
+#> Running StEM algorithm ■■■■■■■                           20% | iter 2/10 [1s]
 #> Running StEM algorithm ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | iter 10/10 [2s]
 #> 
 FDP_score(fit$Delta$x, 0.5)
 #> $FDP_score
-#> [1] 0.09032258
+#> [1] 0.1238636
 #> 
 #> $n_linked
-#> [1] 186
+#> [1] 88
 #> 
 FDP_score(fit$Delta$x, 0.75)
 #> $FDP_score
-#> [1] 0.04556962
+#> [1] 0.0530303
 #> 
 #> $n_linked
-#> [1] 158
+#> [1] 66
 #> 
 ```

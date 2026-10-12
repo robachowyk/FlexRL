@@ -43,13 +43,13 @@ select <- data.frame(age = rnorm(80, 43, 10), sex = sample(c("M", "F"), 80,
                     replace = TRUE, prob = c(0.6, 0.4)))
 smd(select, base, "age")
 #> $age
-#> [1] 0.2454256
+#> [1] 0.54851
 #> 
 smd(select, base, "sex", continuous = FALSE)
 #> $sex_F
-#> [1] -0.164884
+#> [1] -0.3293222
 #> 
 #> $sex_M
-#> [1] 0.164884
+#> [1] 0.3293222
 #> 
 ```

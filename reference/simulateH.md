@@ -16,7 +16,7 @@ simulateH(data, links, survivalpSameH, sumRowD, sumColD, eta, phi)
 
   List with `encodedA`, `encodedB` (the two encoded data sources,
   missing values as `0`), `n_values`, `PIVs_config` and `same_mistakes`;
-  see [`StEM()`](stEM.md).
+  see [`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md).
 
 - links:
 
@@ -73,10 +73,12 @@ p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 cond_hazard_params <- list( V1 = c(), V2 = c(), 
                             V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
                            p_mistake, p_missing, cond_hazard_params, TRUE )
 data_StEM <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
+#> Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.35 in data1, 0.25 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+#> Warning: PIVs 'V4' and 'V3' are associated (Cramer's V = 0.31 in data1, 0.22 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
 #> '2' is the larger source, saved as B; '1' saved as A.
 PIVs_stable <- sapply(data_StEM$PIVs_config, function(x)
                         x$dynamics != "structured")

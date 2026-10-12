@@ -4,9 +4,13 @@ A structured PIV may change between the two registrations. The
 probability that the true value of a linked pair is unchanged after a
 time gap `t` is modelled by a survival function `S(t | X, alpha)`, where
 `X` holds an intercept and the covariates given in `cond_hazard_cov` and
-`alpha` the parameters estimated by [`StEM()`](stEM.md). This function
-builds the model object used by [`StEM()`](stEM.md),
-[`simulateD()`](simulateD.md) and [`simulate_data()`](simulate_data.md).
+`alpha` the parameters estimated by
+[`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md). This
+function builds the model object used by
+[`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md),
+[`simulateD()`](https://robachowyk.github.io/FlexRL/reference/simulateD.md)
+and
+[`simulate_data()`](https://robachowyk.github.io/FlexRL/reference/simulate_data.md).
 
 ## Usage
 
@@ -108,21 +112,21 @@ weib$S(X, alpha = c(0.5, -1), times)
 #> [1] 0.9999978 0.9865530 0.7435143 0.6871328 0.5471930
 stats::nlminb(weib$init(ncol(X)), weib$negloglik, X = X, times = times,
               Hequal = Hequal)$par
-#> [1]  5.3792727 -0.3564221
+#> [1]  6.6904958 -0.3995899
 
 gomp <- survival_model("gompertz")
 gomp$S(X, alpha = c(0.5, -1), times)
 #> [1] 0.9996321 0.9255377 0.5098609 0.4396208 0.2824536
 stats::nlminb(gomp$init(ncol(X)), gomp$negloglik, X = X, times = times,
               Hequal = Hequal)$par
-#> [1]  112.3277 -160.6559
+#> [1]  114.9691 -163.5902
               
 pw <- survival_model("piecewise", cuts = 1)
 pw$S(X, alpha = c(-2, -1), times)
 #> [1] 0.9998647 0.9732960 0.7821575 0.7266757 0.6045840
 stats::nlminb(pw$init(ncol(X)), pw$negloglik, X = X, times = times,
               Hequal = Hequal)$par
-#> [1] -22.4570466   0.9000345
+#> [1] -22.2503635   0.9000345
 
 # a custom model: log-logistic with scale exp(X alpha[-1]) 
 # and shape exp(alpha[1])
@@ -142,5 +146,5 @@ loglogistic$S(X, alpha = c(0, -2), times)
 #> [5,] 0.7869860
 stats::nlminb(loglogistic$init(ncol(X)), loglogistic$negloglik, X = X, times = times,
               Hequal = Hequal)$par
-#> [1]  5.6941282 -0.3342964
+#> [1]  5.6077244 -0.3311609
 ```

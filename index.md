@@ -5,8 +5,8 @@
 **FlexRL** is an open-source R package for **Flexible Record Linkage and
 inference on linked data**. It links records that refer to the same
 entity across two data sources sharing no unique identifier but rather
-partially identifying variables such as birth year, sex, postal code, or
-product code, brand and category.
+partially identifying variables (PIVs) such as birth year, sex, postal
+code, or product code, brand and category.
 
 The package applies wherever two sources are expected to overlap: health
 monitoring studies at two time points, survey waves, census and
@@ -18,12 +18,12 @@ extended time periods.
 
 Without a unique identifier, probabilistic record linkage makes errors,
 and these errors propagate into the analysis that follows. FlexRL
-therefore does two things:
+contributions are therefore twofold:
 
-1.  **It links the sources** with a hierarchical model of how the data
-    were generated, and returns the linked records with their posterior
-    linkage scores.
-2.  **It makes the quality of the linked data transparent**, with tools
+1.  It **links the sources** with a hierarchical model fitting how the
+    data were generated, and returns the linked records with their
+    posterior linkage scores.
+2.  It **makes the quality of the linked data transparent**, with tools
     that tell you how many of the linked pairs are likely to be false,
     and how much the linked sample differs from the sources it comes
     from.
@@ -31,6 +31,12 @@ therefore does two things:
 Those tools work on the output of **any** record linkage method, so you
 can report linkage quality alongside your results even if you did not
 use FlexRL for linkage.
+
+#### 📣 News
+
+- Version 1.0.0 of **FlexRL** is ready for use on
+  [CRAN](https://cran.r-project.org/package=FlexRL)!
+- **FlexRL** will be soon available on [JASP](https://jasp-stats.org/)
 
 ## 🔬 FlexRL contributions: hierarchical modelling & diagnostics
 
@@ -60,17 +66,17 @@ the Royal Statistical Society: Series C*, 2025. \>
 
 ## 🧩 Flexible by design
 
-FlexRL adapts to the data you have, rather than the other way round.
+FlexRL adapts to your data:
 
 | You want to… | How FlexRL does it |
 |----|----|
 | Link variables that never change (birth year, sex) | Declare the PIV as `"stable"`, optionally bounding its probability of a mistake |
 | Link variables that may change but whose registration dates are unknown (marital status, education) | Declare it `"flexible"`: changes are absorbed by the registration error model |
 | Link variables that change over time and model the change | Declare it `"structured"`: changes follow a survival model (exponential, Weibull, Gompertz, piecewise constant, or any user-defined model), optionally with covariates |
-| Control the registration errors | Bound or fix the probability of a mistake per PIV, and choose whether both sources share the same error parameters (`same_mistakes`) |
+| Control the mistakes | Bound or fix the probability of a mistake per PIV, and choose whether both sources share the same error parameters (`same_mistakes`) |
 | Handle missing values | Missing values are modelled explicitly per PIV and per source, not dropped |
-| Get a quick baseline | [`naive_linkage()`](reference/naive_linkage.md) links records agreeing exactly on all PIVs, to gauge how hard the task is |
-| Try methods on simulated data | [`simulate_data()`](reference/simulate_data.md) generates two overlapping sources with chosen overlap, error rates and hazards of change |
+| Get a quick baseline | [`naive_linkage()`](https://robachowyk.github.io/FlexRL/reference/naive_linkage.md) links records agreeing exactly on all PIVs, to gauge how hard the task is |
+| Try methods on simulated data | [`simulate_data()`](https://robachowyk.github.io/FlexRL/reference/simulate_data.md) generates two overlapping sources with chosen overlap, error rates and hazards of change |
 | Assess another package’s linkage | Wrappers for **fastLink, BRL, reclin2, multilink, diyar and fedmatch** feed their output into the same diagnostics |
 
 ## 🔍 Inference on linked data
@@ -78,8 +84,9 @@ FlexRL adapts to the data you have, rather than the other way round.
 Record linkage is rarely the end of the analysis. A stricter decision
 rule produces fewer falsely linked pairs, but it also select fewer and
 more atypical records, and both can bias what you estimate.
-[`RL_diagnostics()`](reference/rl_diagnostics.md) gathers the tools that
-make this trade-off visible, as a function of the decision rule:
+[`RL_diagnostics()`](https://robachowyk.github.io/FlexRL/reference/rl_diagnostics.md)
+gathers the tools that make this trade-off visible, as a function of the
+decision rule:
 
 - [**Estimators of the false discovery
   proportion**](https://doi.org/10.1002/sim.70292) (Robach et al.,
@@ -87,15 +94,15 @@ make this trade-off visible, as a function of the decision rule:
   and one based on synthetic records that does not rely on the linkage
   model.
 - [**Diagnostics of the divergence between the linked sample and the
-  sources**](https://kayanerobach.github.io/blog/2025/causal-record-linkage/)
-  (Robach et al., soon on arXiv, 2026): standardised mean differences,
-  overlap of supports, maximum mean discrepancy, and agreement rates.
+  sources**](https://kayanerobach.github.io/blog/2025/causal-record-linkage/):
+  standardised mean differences, overlap of supports, maximum mean
+  discrepancy, and agreement rates.
 - **Convergence and score plots** for the StEM chains and the linkage
   scores.
 
 You can choose the decision rule so that the estimated false discovery
 proportion stays below a target, and see what that choice costs in
-sample size and representativeness.
+sample size available for inference and representativeness.
 
 ## 📦 Installation
 
@@ -105,7 +112,6 @@ The released version of FlexRL can be installed from
 ``` r
 
 install.packages("FlexRL")
-library(FlexRL)
 ```
 
 The development version is available from
@@ -118,8 +124,12 @@ remotes::install_github("robachowyk/FlexRL")
 devtools::install_github("robachowyk/FlexRL")
 ```
 
-FlexRL relies on Rcpp. When installed from GitHub, it may require
-gfortran and gcc.
+``` r
+
+library(FlexRL)
+```
+
+FlexRL relies on Rcpp.
 
 ## 🚀 Quick start
 
@@ -218,12 +228,12 @@ plot(diag_brl, "distributions", threshold = 0.75)
 
 - **Vignettes**: step-by-step examples on simulated and real data.
 - **Documentation in R**:
-  [`?simulate_data`](reference/simulate_data.md),
-  [`?prepare_data`](reference/prepare_data.md),
-  [`?naive_linkage`](reference/naive_linkage.md),
-  [`?StEM`](reference/stEM.md),
-  [`?RL_diagnostics`](reference/rl_diagnostics.md).
-- **Software article**: (Robach et al., 2026).
+  [`?simulate_data`](https://robachowyk.github.io/FlexRL/reference/simulate_data.md),
+  [`?prepare_data`](https://robachowyk.github.io/FlexRL/reference/prepare_data.md),
+  [`?naive_linkage`](https://robachowyk.github.io/FlexRL/reference/naive_linkage.md),
+  [`?StEM`](https://robachowyk.github.io/FlexRL/reference/stEM.md),
+  [`?RL_diagnostics`](https://robachowyk.github.io/FlexRL/reference/rl_diagnostics.md).
+- **Software article**: (Robach et al., soon on arXiv).
 
 ## 🤝 Contributing
 
@@ -239,7 +249,7 @@ For other requests, contact *<robachowyk@gmail.com>*.
 ## 📝 How to cite
 
 If you use FlexRL, please cite the software article and the
-methodological papers:
+methodological paper:
 
 ``` bibtex
 @article{RLrobachetal25,

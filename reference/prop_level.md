@@ -31,5 +31,5 @@ Numeric, proportion of rows where `df[[var]] == level` (na.rm=TRUE).
 ``` r
 df <- data.frame(colour = sample(c("orange", "purple"), 100, replace = TRUE))
 prop_level(df, "colour", "purple")
-#> [1] 0.49
+#> [1] 0.47
 ```

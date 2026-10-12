@@ -3,9 +3,9 @@
 Fits a generative model on `encodedB[, PIVs]` and draws `n_synth` new
 synthetic records from it, appended to `encodedB` with
 `source = "synthetic"`; used by
-[`compute_augmRL_FDP_synth()`](compute_augmRL_FDP_synth.md) to estimate
-the false discovery proportion of a record-linkage method without ground
-truth.
+[`compute_augmRL_FDP_synth()`](https://robachowyk.github.io/FlexRL/reference/compute_augmRL_FDP_synth.md)
+to estimate the false discovery proportion of a record-linkage method
+without ground truth.
 
 ## Usage
 

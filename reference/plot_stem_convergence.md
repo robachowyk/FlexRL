@@ -2,10 +2,11 @@
 
 Trace-plots the raw StEM chains of `gamma`, `eta`, `alpha` and `phi`
 across iterations, to visually judge whether the chains have stabilised
-and pick an adequate `StEM_burnin` for [`StEM()`](stEM.md). One plot per
-parameter: `gamma` (proportion linked), `eta` (PIVs distribution),
-`alpha` (hazard coefficients, for dynamic PIVs only), and `phi`
-(agreement/missing rates).
+and pick an adequate `StEM_burnin` for
+[`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md). One
+plot per parameter: `gamma` (proportion linked), `eta` (PIVs
+distribution), `alpha` (hazard coefficients, for dynamic PIVs only), and
+`phi` (agreement/missing rates).
 
 ## Usage
 
@@ -17,8 +18,10 @@ plot_StEM_convergence(fit)
 
 - fit:
 
-  List as returned by [`StEM()`](stEM.md), containing the raw chains
-  `gamma`, `eta`, `alpha`, `phi` (StEM_iter rows each).
+  List as returned by
+  [`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md),
+  containing the raw chains `gamma`, `eta`, `alpha`, `phi` (StEM_iter
+  rows each).
 
 ## Value
 
@@ -48,13 +51,13 @@ p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 cond_hazard_params <- list( V1 = c(), V2 = c(), 
                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
                            p_mistake, p_missing, cond_hazard_params, TRUE )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
 #> '2' is the larger source, saved as B; '1' saved as A.
 fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 3,
-             gibbs_iter = 10, gibbs_burnin = 3, n_post_samp = 10 )
+             gibbs_iter = 10, gibbs_burnin = 3, n_post_sample = 10 )
 #> FlexRL
 plot_StEM_convergence(fit)
 

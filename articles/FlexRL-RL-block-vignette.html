@@ -4,94 +4,71 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>FlexRL-RL-block-vignette • FlexRL</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
-<script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="FlexRL-RL-block-vignette">
-<!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
-<script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-<![endif]-->
+<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="FlexRL-RL-block-vignette">
 </head>
-<body data-spy="scroll" data-target="#toc">
+<body>
+    <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <div class="container template-article">
-      <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
-  <div class="container">
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <span class="navbar-brand">
-        <a class="navbar-link" href="../index.html">FlexRL</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.1</span>
-      </span>
-    </div>
+    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
 
-    <div id="navbar" class="navbar-collapse collapse">
-      <ul class="nav navbar-nav">
-<li>
-  <a href="../reference/index.html">Reference</a>
-</li>
-<li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-    Articles
+    <a class="navbar-brand me-2" href="../index.html">FlexRL</a>
 
-    <span class="caret"></span>
-  </a>
-  <ul class="dropdown-menu" role="menu">
-<li>
-      <a href="../articles/FlexRL-RL-block-vignette.html">FlexRL-RL-block-vignette</a>
-    </li>
-    <li>
-      <a href="../articles/FlexRL-RL-vignette.html">FlexRL-RL-vignette</a>
-    </li>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1</small>
+
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar" class="collapse navbar-collapse ms-3">
+      <ul class="navbar-nav me-auto">
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="active nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes">
+<li><a class="dropdown-item" href="../articles/FlexRL-RL-vignette.html">Record linkage with FlexRL</a></li>
+    <li><a class="dropdown-item" href="../articles/FlexRL-RL-block-vignette.html">Record linkage with blocking</a></li>
   </ul>
 </li>
-<li>
-  <a href="../news/index.html">Changelog</a>
-</li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
-<ul class="nav navbar-nav navbar-right">
-<li>
-  <a href="https://github.com/robachowyk/FlexRL/" class="external-link">
-    <span class="fab fa-github fa-lg"></span>
-
-  </a>
-</li>
+<ul class="navbar-nav">
+<li class="nav-item"><form class="form-inline" role="search">
+ <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
+</form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/robachowyk/FlexRL/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
-<!--/.nav-collapse -->
+
+
   </div>
-<!--/.container -->
-</div>
-<!--/.navbar -->
+</nav><div class="container template-article">
 
 
 
-      </header><div class="row">
-  <div class="col-md-9 contents">
-    <div class="page-header toc-ignore">
-      <h1 data-toc-skip>FlexRL-RL-block-vignette</h1>
+
+<div class="row">
+  <main id="main" class="col-md-9"><div class="page-header">
+      <img src="../logo.png" class="logo" alt=""><h1>FlexRL-RL-block-vignette</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/robachowyk/FlexRL/blob/master/vignettes/FlexRL-RL-block-vignette.Rmd" class="external-link"><code>vignettes/FlexRL-RL-block-vignette.Rmd</code></a></small>
-      <div class="hidden name"><code>FlexRL-RL-block-vignette.Rmd</code></div>
-
+      <div class="d-none name"><code>FlexRL-RL-block-vignette.Rmd</code></div>
     </div>
 
     
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/robachowyk/FlexRL" class="external-link">FlexRL</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/robachowyk/FlexRL" class="external-link">FlexRL</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; If you are happy with FlexRL, please cite us! If you are unhappy, please cite us anyway (and feel free to complain as well).</span></span></code></pre></div>
 <p><code>FlexRL</code> is a package proposing flexible probabilistic
 <strong>R</strong>ecord <strong>L</strong>inkage with diagnostic tools
 for downstream inference on linked data. The record linkage algorithm
@@ -137,7 +114,7 @@ regional blocking</p>
 <span>         fastLink  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>varnames <span class="op">=</span> <span class="va">PIVs</span>, tol.em <span class="op">=</span> <span class="fl">1e-06</span>, threshold.match <span class="op">=</span> <span class="fl">0.5</span>, return.all <span class="op">=</span> <span class="cn">TRUE</span>, n.cores <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
 <span>                       <span class="va">args</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">args</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/formals.html" class="external-link">formals</a></span><span class="op">(</span><span class="fu">fastLink</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/fastLink/man/fastLink.html" class="external-link">fastLink</a></span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span>,</span>
 <span>         multilink <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"bi"</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">PIVs</span><span class="op">)</span><span class="op">)</span>, breaks <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">as.list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">PIVs</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, <span class="va">PIVs</span><span class="op">)</span>,</span>
-<span>                            duplicates <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, n_iter <span class="op">=</span> <span class="fl">200</span>, max_cc_size <span class="op">=</span> <span class="fl">50</span><span class="op">)</span>,</span>
+<span>                            duplicates <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, n_iter <span class="op">=</span> <span class="fl">500</span>, max_cc_size <span class="op">=</span> <span class="fl">50</span><span class="op">)</span>,</span>
 <span>                       <span class="va">args</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">args</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/formals.html" class="external-link">formals</a></span><span class="op">(</span><span class="fu">multilink</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/multilink/man/create_comparison_data.html" class="external-link">create_comparison_data</a></span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                                                     <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/formals.html" class="external-link">formals</a></span><span class="op">(</span><span class="fu">multilink</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/multilink/man/reduce_comparison_data.html" class="external-link">reduce_comparison_data</a></span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                                                     <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/formals.html" class="external-link">formals</a></span><span class="op">(</span><span class="fu">multilink</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/multilink/man/specify_prior.html" class="external-link">specify_prior</a></span><span class="op">)</span><span class="op">)</span>,</span>
@@ -305,23 +282,23 @@ restriction).</p>
 <code class="sourceCode R"><span><span class="fu">show_results</span><span class="op">(</span><span class="va">df_results_NLTCS</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Record Linkage</span></span>
 <span><span class="co">#&gt;              Naive FlexRL     BRL multilink fastLink reclin2   diyar fedmatch</span></span>
-<span><span class="co">#&gt; TP          320.00 221.00 212.000    236.00   255.00  320.00 126.000   266.00</span></span>
-<span><span class="co">#&gt; FP          163.00  28.00  15.000     44.00    88.00  163.00   5.000   223.00</span></span>
-<span><span class="co">#&gt; FN           12.00 111.00 120.000     96.00    77.00   12.00 206.000    66.00</span></span>
-<span><span class="co">#&gt; sensitivity   0.96   0.67   0.639      0.71     0.77    0.96   0.380     0.80</span></span>
-<span><span class="co">#&gt; FDP           0.34   0.11   0.066      0.16     0.26    0.34   0.038     0.46</span></span>
+<span><span class="co">#&gt; TP          320.00 218.00 211.000    228.00   259.00  320.00 126.000   266.00</span></span>
+<span><span class="co">#&gt; FP          163.00  34.00  13.000     34.00    84.00  163.00   5.000   223.00</span></span>
+<span><span class="co">#&gt; FN           12.00 114.00 121.000    104.00    73.00   12.00 206.000    66.00</span></span>
+<span><span class="co">#&gt; sensitivity   0.96   0.66   0.636      0.69     0.78    0.96   0.380     0.80</span></span>
+<span><span class="co">#&gt; FDP           0.34   0.13   0.058      0.13     0.24    0.34   0.038     0.46</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; FDP estimation</span></span>
 <span><span class="co">#&gt;                Naive FlexRL   BRL multilink fastLink reclin2 diyar fedmatch</span></span>
-<span><span class="co">#&gt; hat FDP score     NA   0.16 0.151       NaN     0.30    0.49   NaN    0.075</span></span>
-<span><span class="co">#&gt; hat FDP score*    NA   0.17 0.169       NaN     0.31      NA   NaN    0.071</span></span>
-<span><span class="co">#&gt; hat FDP synth*    NA   0.13 0.093      0.17     0.22      NA  0.12      NaN</span></span>
+<span><span class="co">#&gt; hat FDP score     NA   0.16 0.152       NaN     0.30    0.49   NaN    0.075</span></span>
+<span><span class="co">#&gt; hat FDP score*    NA   0.17 0.165       NaN     0.31    0.25   NaN    0.075</span></span>
+<span><span class="co">#&gt; hat FDP synth*    NA   0.11 0.093      0.15     0.36    0.32 0.086      NaN</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Linked divergence</span></span>
 <span><span class="co">#&gt;                 Naive FlexRL   BRL multilink fastLink reclin2 diyar fedmatch</span></span>
-<span><span class="co">#&gt; max SMD            NA  0.210 0.149     0.141    0.141   0.177  0.43   0.1125</span></span>
+<span><span class="co">#&gt; max SMD            NA  0.183 0.155     0.146    0.141   0.177  0.43   0.1125</span></span>
 <span><span class="co">#&gt; min support IoU    NA  0.875 0.875     0.875    0.875   0.875  0.88   0.8750</span></span>
-<span><span class="co">#&gt; max MMD            NA  0.015 0.014     0.014    0.016   0.025  0.03   0.0093</span></span></code></pre></div>
+<span><span class="co">#&gt; max MMD            NA  0.016 0.014     0.013    0.016   0.025  0.03   0.0093</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="regional-subset-of-the-shiw-data">Regional subset of the SHIW data<a class="anchor" aria-label="anchor" href="#regional-subset-of-the-shiw-data"></a>
@@ -358,23 +335,23 @@ are <code>flexible</code>.</p>
 <code class="sourceCode R"><span><span class="fu">show_results</span><span class="op">(</span><span class="va">df_results_SHIW</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Record Linkage</span></span>
 <span><span class="co">#&gt;             Naive FlexRL   BRL multilink fastLink reclin2  diyar fedmatch</span></span>
-<span><span class="co">#&gt; TP          20.00  17.00 21.00     23.00    19.00   27.00 13.000    19.00</span></span>
-<span><span class="co">#&gt; FP           8.00   7.00 14.00     14.00    11.00   52.00  1.000    20.00</span></span>
-<span><span class="co">#&gt; FN           7.00  10.00  6.00      4.00     8.00    0.00 14.000     8.00</span></span>
-<span><span class="co">#&gt; sensitivity  0.74   0.63  0.78      0.85     0.70    1.00  0.481     0.70</span></span>
-<span><span class="co">#&gt; FDP          0.29   0.29  0.40      0.38     0.37    0.66  0.071     0.51</span></span>
+<span><span class="co">#&gt; TP          20.00  16.00 20.00     22.00    19.00   27.00 13.000    19.00</span></span>
+<span><span class="co">#&gt; FP           8.00   8.00 15.00     15.00    11.00   52.00  1.000    20.00</span></span>
+<span><span class="co">#&gt; FN           7.00  11.00  7.00      5.00     8.00    0.00 14.000     8.00</span></span>
+<span><span class="co">#&gt; sensitivity  0.74   0.59  0.74      0.81     0.70    1.00  0.481     0.70</span></span>
+<span><span class="co">#&gt; FDP          0.29   0.33  0.43      0.41     0.37    0.66  0.071     0.51</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; FDP estimation</span></span>
 <span><span class="co">#&gt;                Naive FlexRL  BRL multilink fastLink reclin2 diyar fedmatch</span></span>
-<span><span class="co">#&gt; hat FDP score     NA   0.14 0.20       NaN     0.10    0.14   NaN     0.09</span></span>
-<span><span class="co">#&gt; hat FDP score*    NA   0.14 0.21       NaN     0.12    0.14   NaN     0.09</span></span>
-<span><span class="co">#&gt; hat FDP synth*    NA   0.10 0.21      0.41     0.16    0.47  0.19      NaN</span></span>
+<span><span class="co">#&gt; hat FDP score     NA  0.159 0.20       NaN     0.10    0.14   NaN     0.09</span></span>
+<span><span class="co">#&gt; hat FDP score*    NA  0.134 0.22       NaN     0.12    0.13   NaN     0.09</span></span>
+<span><span class="co">#&gt; hat FDP synth*    NA  0.094 0.00      0.13     0.26    0.47     0      NaN</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Linked divergence</span></span>
 <span><span class="co">#&gt;                 Naive FlexRL   BRL multilink fastLink reclin2 diyar fedmatch</span></span>
-<span><span class="co">#&gt; max SMD            NA  0.357 0.081     0.120    0.190   0.123  0.64    0.168</span></span>
+<span><span class="co">#&gt; max SMD            NA  0.273 0.148     0.120    0.190   0.123  0.64    0.168</span></span>
 <span><span class="co">#&gt; min support IoU    NA  0.333 1.000     1.000    1.000   1.000  0.83    1.000</span></span>
-<span><span class="co">#&gt; max MMD            NA  0.037 0.019     0.018    0.028   0.018  0.14    0.027</span></span></code></pre></div>
+<span><span class="co">#&gt; max MMD            NA  0.037 0.023     0.018    0.028   0.018  0.14    0.027</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="full-shiw-data">Full SHIW data<a class="anchor" aria-label="anchor" href="#full-shiw-data"></a>
@@ -414,12 +391,12 @@ are <code>flexible</code>.</p>
 <span><span class="co">#&gt; Record Linkage performance on large files</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">df_results_full</span>,<span class="fl">2</span><span class="op">)</span></span>
 <span><span class="co">#&gt;              FlexRL BRL multilink fastLink    reclin2 diyar fedmatch</span></span>
-<span><span class="co">#&gt; TP          1046.00  NA        NA       NA    5936.00    NA  2756.00</span></span>
-<span><span class="co">#&gt; FP          1560.00  NA        NA       NA 1917562.00    NA 12161.00</span></span>
-<span><span class="co">#&gt; FN          5384.00  NA        NA       NA     494.00    NA  3674.00</span></span>
-<span><span class="co">#&gt; sensitivity    0.16  NA        NA       NA       0.92    NA     0.43</span></span>
-<span><span class="co">#&gt; FDP            0.60  NA        NA       NA       1.00    NA     0.82</span></span>
-<span><span class="co">#&gt; minutes      107.00  NA        NA       NA       2.00    NA     7.00</span></span></code></pre></div>
+<span><span class="co">#&gt; TP          1062.00  NA        NA       NA    5936.00    NA  2756.00</span></span>
+<span><span class="co">#&gt; FP          1521.00  NA        NA       NA 1917562.00    NA 12161.00</span></span>
+<span><span class="co">#&gt; FN          5368.00  NA        NA       NA     494.00    NA  3674.00</span></span>
+<span><span class="co">#&gt; sensitivity    0.17  NA        NA       NA       0.92    NA     0.43</span></span>
+<span><span class="co">#&gt; FDP            0.59  NA        NA       NA       1.00    NA     0.82</span></span>
+<span><span class="co">#&gt; minutes      106.00  NA        NA       NA       2.00    NA     7.00</span></span></code></pre></div>
 <p>Note that when methods do not ensure the one-to-one assignment
 constraint the number of False Positives may be high due to many-to-many
 falsely linked pairs of records.</p>
@@ -454,147 +431,288 @@ above.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Record Linkage on regional subsets"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Record Linkage on regional subsets</span></span>
 <span><span class="va">results_IREG</span></span>
-<span><span class="co">#&gt;     IREG  n_A  n_B n_links    method  TP    FP  FN  sensitivity   FDP  seconds  </span></span>
-<span><span class="co">#&gt; 1      1  965 1272     388    FlexRL  35    46 353         0.09  0.57     1181</span></span>
-<span><span class="co">#&gt; 2      1  965 1272     388       BRL  21    13 367         0.05  0.38       13</span></span>
-<span><span class="co">#&gt; 3      1  965 1272     388 multilink  50   243 338         0.13  0.83      168</span></span>
-<span><span class="co">#&gt; 4      1  965 1272     388  fastLink 133   654 255         0.34  0.83       11</span></span>
-<span><span class="co">#&gt; 5      1  965 1272     388   reclin2 350  9033  38         0.90  0.96        0</span></span>
-<span><span class="co">#&gt; 6      1  965 1272     388     diyar  36    38 352         0.09  0.51        4</span></span>
-<span><span class="co">#&gt; 7      1  965 1272     388  fedmatch 135   830 253         0.35  0.86        9</span></span>
-<span><span class="co">#&gt; 8      2   42   49      27    FlexRL  16    10  11         0.59  0.38       17</span></span>
-<span><span class="co">#&gt; 9      2   42   49      27       BRL  19    14   8         0.70  0.42        0</span></span>
-<span><span class="co">#&gt; 10     2   42   49      27 multilink  23    14   4         0.85  0.38        0</span></span>
-<span><span class="co">#&gt; 11     2   42   49      27  fastLink  19    11   8         0.70  0.37        1</span></span>
-<span><span class="co">#&gt; 12     2   42   49      27   reclin2  27    52   0         1.00  0.66        0</span></span>
-<span><span class="co">#&gt; 13     2   42   49      27     diyar  13     1  14         0.48  0.07        0</span></span>
-<span><span class="co">#&gt; 14     2   42   49      27  fedmatch  19    20   8         0.70  0.51        0</span></span>
-<span><span class="co">#&gt; 15     3 1722 1791     636    FlexRL  42    33 594         0.07  0.44     1855</span></span>
-<span><span class="co">#&gt; 16     3 1722 1791     636       BRL  13     1 623         0.02  0.07       31</span></span>
-<span><span class="co">#&gt; 17     3 1722 1791     636 multilink  37   240 599         0.06  0.87      625</span></span>
-<span><span class="co">#&gt; 18     3 1722 1791     636  fastLink 220  1096 416         0.35  0.83       20</span></span>
-<span><span class="co">#&gt; 19     3 1722 1791     636   reclin2 616 26566  20         0.97  0.98        1</span></span>
-<span><span class="co">#&gt; 20     3 1722 1791     636     diyar  40    26 596         0.06  0.39        9</span></span>
-<span><span class="co">#&gt; 21     3 1722 1791     636  fedmatch 300  1422 336         0.47  0.83       17</span></span>
-<span><span class="co">#&gt; 22     4  445  693     254    FlexRL  60    48 194         0.24  0.44      483</span></span>
-<span><span class="co">#&gt; 23     4  445  693     254       BRL  52    27 202         0.20  0.34        3</span></span>
-<span><span class="co">#&gt; 24     4  445  693     254 multilink  71   105 183         0.28  0.60       24</span></span>
-<span><span class="co">#&gt; 25     4  445  693     254  fastLink 117   250 137         0.46  0.68        4</span></span>
-<span><span class="co">#&gt; 26     4  445  693     254   reclin2 247  2784   7         0.97  0.92        0</span></span>
-<span><span class="co">#&gt; 27     4  445  693     254     diyar  13     7 241         0.05  0.35        2</span></span>
-<span><span class="co">#&gt; 28     4  445  693     254  fedmatch 151   294 103         0.59  0.66        4</span></span>
-<span><span class="co">#&gt; 29     5 1042 1122     446    FlexRL  57    43 389         0.13  0.43     1209</span></span>
-<span><span class="co">#&gt; 30     5 1042 1122     446       BRL  37     9 409         0.08  0.20       10</span></span>
-<span><span class="co">#&gt; 31     5 1042 1122     446 multilink  68   318 378         0.15  0.82      147</span></span>
-<span><span class="co">#&gt; 32     5 1042 1122     446  fastLink 184   711 262         0.41  0.79        8</span></span>
-<span><span class="co">#&gt; 33     5 1042 1122     446   reclin2 435 11856  11         0.98  0.96        0</span></span>
-<span><span class="co">#&gt; 34     5 1042 1122     446     diyar  29    11 417         0.07  0.28        5</span></span>
-<span><span class="co">#&gt; 35     5 1042 1122     446  fedmatch 234   807 212         0.52  0.78       10</span></span>
-<span><span class="co">#&gt; 36     6  326  359     165    FlexRL  52    24 113         0.32  0.32      275</span></span>
-<span><span class="co">#&gt; 37     6  326  359     165       BRL  54    29 111         0.33  0.35        1</span></span>
-<span><span class="co">#&gt; 38     6  326  359     165 multilink  65    68 100         0.39  0.51        8</span></span>
-<span><span class="co">#&gt; 39     6  326  359     165  fastLink 108   147  57         0.65  0.58        1</span></span>
-<span><span class="co">#&gt; 40     6  326  359     165   reclin2 164  1152   1         0.99  0.88        0</span></span>
-<span><span class="co">#&gt; 41     6  326  359     165     diyar  22     6 143         0.13  0.21        1</span></span>
-<span><span class="co">#&gt; 42     6  326  359     165  fedmatch  86   240  79         0.52  0.74        2</span></span>
-<span><span class="co">#&gt; 43     7  400  494     163    FlexRL  46    37 117         0.28  0.45      353</span></span>
-<span><span class="co">#&gt; 44     7  400  494     163       BRL  42    28 121         0.26  0.40        2</span></span>
-<span><span class="co">#&gt; 45     7  400  494     163 multilink  51    66 112         0.31  0.56       18</span></span>
-<span><span class="co">#&gt; 46     7  400  494     163  fastLink  93   209  70         0.57  0.69        2</span></span>
-<span><span class="co">#&gt; 47     7  400  494     163   reclin2 159  1625   4         0.98  0.91        0</span></span>
-<span><span class="co">#&gt; 48     7  400  494     163     diyar  45    27 118         0.28  0.38        1</span></span>
-<span><span class="co">#&gt; 49     7  400  494     163  fedmatch  91   304  72         0.56  0.77        3</span></span>
-<span><span class="co">#&gt; 50     8 1120 1217     418    FlexRL  41    37 377         0.10  0.47     1221</span></span>
-<span><span class="co">#&gt; 51     8 1120 1217     418       BRL  27    23 391         0.06  0.46       13</span></span>
-<span><span class="co">#&gt; 52     8 1120 1217     418 multilink  66   233 352         0.16  0.78      209</span></span>
-<span><span class="co">#&gt; 53     8 1120 1217     418  fastLink 163   617 255         0.39  0.79        9</span></span>
-<span><span class="co">#&gt; 54     8 1120 1217     418   reclin2 414 12047   4         0.99  0.97        0</span></span>
-<span><span class="co">#&gt; 55     8 1120 1217     418     diyar  26    18 392         0.06  0.41        5</span></span>
-<span><span class="co">#&gt; 56     8 1120 1217     418  fedmatch 165   955 253         0.39  0.85       11</span></span>
-<span><span class="co">#&gt; 57     9  900 1126     412    FlexRL  75    76 337         0.18  0.50     1207</span></span>
-<span><span class="co">#&gt; 58     9  900 1126     412       BRL  68    37 344         0.17  0.35       10</span></span>
-<span><span class="co">#&gt; 59     9  900 1126     412 multilink 118   250 294         0.29  0.68      116</span></span>
-<span><span class="co">#&gt; 60     9  900 1126     412  fastLink 178   577 234         0.43  0.76        9</span></span>
-<span><span class="co">#&gt; 61     9  900 1126     412   reclin2 400  8718  12         0.97  0.96        0</span></span>
-<span><span class="co">#&gt; 62     9  900 1126     412     diyar  52    35 360         0.13  0.40        4</span></span>
-<span><span class="co">#&gt; 63     9  900 1126     412  fedmatch 187   710 225         0.45  0.79        9</span></span>
-<span><span class="co">#&gt; 64    10  592  614     316    FlexRL  92    57 224         0.29  0.38      680</span></span>
-<span><span class="co">#&gt; 65    10  592  614     316       BRL  84    29 232         0.27  0.26        3</span></span>
-<span><span class="co">#&gt; 66    10  592  614     316 multilink 113   141 203         0.36  0.56       34</span></span>
-<span><span class="co">#&gt; 67    10  592  614     316  fastLink 166   299 150         0.53  0.64        4</span></span>
-<span><span class="co">#&gt; 68    10  592  614     316   reclin2 313  3620   3         0.99  0.92        0</span></span>
-<span><span class="co">#&gt; 69    10  592  614     316     diyar  60    20 256         0.19  0.25        2</span></span>
-<span><span class="co">#&gt; 70    10  592  614     316  fedmatch 161   426 155         0.51  0.73        5</span></span>
-<span><span class="co">#&gt; 71    11  439  686     278    FlexRL  87    50 191         0.31  0.36      575</span></span>
-<span><span class="co">#&gt; 72    11  439  686     278       BRL  75    30 203         0.27  0.29        3</span></span>
-<span><span class="co">#&gt; 73    11  439  686     278 multilink 104   118 174         0.37  0.53       22</span></span>
-<span><span class="co">#&gt; 74    11  439  686     278  fastLink 156   224 122         0.56  0.59        4</span></span>
-<span><span class="co">#&gt; 75    11  439  686     278   reclin2 277  2851   1         1.00  0.91        0</span></span>
-<span><span class="co">#&gt; 76    11  439  686     278     diyar  33    15 245         0.12  0.31        2</span></span>
-<span><span class="co">#&gt; 77    11  439  686     278  fedmatch 142   297 136         0.51  0.68        4</span></span>
-<span><span class="co">#&gt; 78    12  959 1115     379    FlexRL  48    32 331         0.13  0.40      885</span></span>
-<span><span class="co">#&gt; 79    12  959 1115     379       BRL  43    18 336         0.11  0.30       11</span></span>
-<span><span class="co">#&gt; 80    12  959 1115     379 multilink  64   182 315         0.17  0.74      152</span></span>
-<span><span class="co">#&gt; 81    12  959 1115     379  fastLink 163   459 216         0.43  0.74        7</span></span>
-<span><span class="co">#&gt; 82    12  959 1115     379   reclin2 369  8630  10         0.97  0.96        0       </span></span>
-<span><span class="co">#&gt; 83    12  959 1115     379     diyar  46    25 333         0.12  0.35        4</span></span>
-<span><span class="co">#&gt; 84    12  959 1115     379  fedmatch 215   744 164         0.57  0.78        9</span></span>
-<span><span class="co">#&gt; 85    13  315  420     141    FlexRL  41    37 100         0.29  0.47      296</span></span>
-<span><span class="co">#&gt; 86    13  315  420     141       BRL  36    27 105         0.26  0.43        1</span></span>
-<span><span class="co">#&gt; 87    13  315  420     141 multilink  50    56  91         0.35  0.53        9</span></span>
-<span><span class="co">#&gt; 88    13  315  420     141  fastLink  75   164  66         0.53  0.69        1</span></span>
-<span><span class="co">#&gt; 89    13  315  420     141   reclin2 137  1103   4         0.97  0.89        0</span></span>
-<span><span class="co">#&gt; 90    13  315  420     141     diyar   8     4 133         0.06  0.33        1</span></span>
-<span><span class="co">#&gt; 91    13  315  420     141  fedmatch  80   235  61         0.57  0.75        2</span></span>
-<span><span class="co">#&gt; 92    14  181  212     118    FlexRL  57    16  61         0.48  0.22      144</span></span>
-<span><span class="co">#&gt; 93    14  181  212     118       BRL  59    19  59         0.50  0.24        0</span></span>
-<span><span class="co">#&gt; 94    14  181  212     118 multilink  70    36  48         0.59  0.34        2</span></span>
-<span><span class="co">#&gt; 95    14  181  212     118  fastLink  82    63  36         0.69  0.43        1</span></span>
-<span><span class="co">#&gt; 96    14  181  212     118   reclin2 117   510   1         0.99  0.81        0</span></span>
-<span><span class="co">#&gt; 97    14  181  212     118     diyar  32     4  86         0.27  0.11        1</span></span>
-<span><span class="co">#&gt; 98    14  181  212     118  fedmatch  69   110  49         0.58  0.61        1</span></span>
-<span><span class="co">#&gt; 99    15 1324 1734     784    FlexRL  91    76 693         0.12  0.46     2076</span></span>
-<span><span class="co">#&gt; 100   15 1324 1734     784       BRL  62    32 722         0.08  0.34       22</span></span>
-<span><span class="co">#&gt; 101   15 1324 1734     784 multilink 128   446 656         0.16  0.78      294</span></span>
-<span><span class="co">#&gt; 102   15 1324 1734     784  fastLink 232   902 552         0.30  0.80       15</span></span>
-<span><span class="co">#&gt; 103   15 1324 1734     784   reclin2 746 19909  38         0.95  0.96        0</span></span>
-<span><span class="co">#&gt; 104   15 1324 1734     784     diyar  27    11 757         0.03  0.29        9</span></span>
-<span><span class="co">#&gt; 105   15 1324 1734     784  fedmatch 274  1050 510         0.35  0.79       14</span></span>
-<span><span class="co">#&gt; 106   16 1033 1041     465    FlexRL  61    52 404         0.13  0.46     1172</span></span>
-<span><span class="co">#&gt; 107   16 1033 1041     465       BRL  38    21 427         0.08  0.36        8</span></span>
-<span><span class="co">#&gt; 108   16 1033 1041     465 multilink  92   335 373         0.20  0.78      131</span></span>
-<span><span class="co">#&gt; 109   16 1033 1041     465  fastLink 173   666 292         0.37  0.79        8</span></span>
-<span><span class="co">#&gt; 110   16 1033 1041     465   reclin2 444 10092  21         0.95  0.96        0</span></span>
-<span><span class="co">#&gt; 111   16 1033 1041     465     diyar  13     5 452         0.03  0.28        6</span></span>
-<span><span class="co">#&gt; 112   16 1033 1041     465  fedmatch 233   800 232         0.50  0.77       10</span></span>
-<span><span class="co">#&gt; 113   17  155  235     103    FlexRL  54    22  49         0.52  0.29      127</span></span>
-<span><span class="co">#&gt; 114   17  155  235     103       BRL  57    24  46         0.55  0.30        0</span></span>
-<span><span class="co">#&gt; 115   17  155  235     103 multilink  64    52  39         0.62  0.45        2</span></span>
-<span><span class="co">#&gt; 116   17  155  235     103  fastLink  69    58  34         0.67  0.46        1</span></span>
-<span><span class="co">#&gt; 117   17  155  235     103   reclin2  98   375   5         0.95  0.79        0</span></span>
-<span><span class="co">#&gt; 118   17  155  235     103     diyar  39     5  64         0.38  0.11        0</span></span>
-<span><span class="co">#&gt; 119   17  155  235     103  fedmatch  57    98  46         0.55  0.63        1</span></span>
-<span><span class="co">#&gt; 120   18  324  394     174    FlexRL  53    28 121         0.30  0.34      306</span></span>
-<span><span class="co">#&gt; 121   18  324  394     174       BRL  57    27 117         0.33  0.32        1</span></span>
-<span><span class="co">#&gt; 122   18  324  394     174 multilink  70    68 104         0.40  0.49        9</span></span>
-<span><span class="co">#&gt; 123   18  324  394     174  fastLink  97   150  77         0.56  0.61        1</span></span>
-<span><span class="co">#&gt; 124   18  324  394     174   reclin2 171  1270   3         0.98  0.88        0</span></span>
-<span><span class="co">#&gt; 125   18  324  394     174     diyar  47    12 127         0.27  0.20        1</span></span>
-<span><span class="co">#&gt; 126   18  324  394     174  fedmatch  90   233  84         0.52  0.72        2</span></span>
-<span><span class="co">#&gt; 127   19 1213 1353     414    FlexRL  36    47 378         0.09  0.57     1408</span></span>
-<span><span class="co">#&gt; 128   19 1213 1353     414       BRL  15     8 399         0.04  0.35       15</span></span>
-<span><span class="co">#&gt; 129   19 1213 1353     414 multilink  53   304 361         0.13  0.85      237</span></span>
-<span><span class="co">#&gt; 130   19 1213 1353     414  fastLink 138   624 276         0.33  0.82       11</span></span>
-<span><span class="co">#&gt; 131   19 1213 1353     414   reclin2 397 14624  17         0.96  0.97        0</span></span>
-<span><span class="co">#&gt; 132   19 1213 1353     414     diyar  22    22 392         0.05  0.50        7</span></span>
-<span><span class="co">#&gt; 133   19 1213 1353     414  fedmatch 160  1047 254         0.39  0.87       12</span></span>
-<span><span class="co">#&gt; 134   20  709  774     332    FlexRL  87    50 245         0.26  0.36      735</span></span>
-<span><span class="co">#&gt; 135   20  709  774     332       BRL  76    30 256         0.23  0.28        5</span></span>
-<span><span class="co">#&gt; 136   20  709  774     332 multilink 117   178 215         0.35  0.60       60</span></span>
-<span><span class="co">#&gt; 137   20  709  774     332  fastLink 165   317 167         0.50  0.66        4</span></span>
-<span><span class="co">#&gt; 138   20  709  774     332   reclin2 323  4861   9         0.97  0.94        0</span></span>
-<span><span class="co">#&gt; 139   20  709  774     332     diyar  22    11 310         0.07  0.33        3</span></span>
-<span><span class="co">#&gt; 140   20  709  774     332  fedmatch 209   498 123         0.63  0.70        6</span></span></code></pre></div>
+<span><span class="co">#&gt;     IREG  n_A  n_B n_links    method  TP    FP  FN         sensitivity</span></span>
+<span><span class="co">#&gt; 1      1  965 1272     388    FlexRL  36    39 352 0.09000000000000000</span></span>
+<span><span class="co">#&gt; 2      1  965 1272     388       BRL  20    13 368 0.05000000000000000</span></span>
+<span><span class="co">#&gt; 3      1  965 1272     388 multilink  58   207 330 0.14999999999999999</span></span>
+<span><span class="co">#&gt; 4      1  965 1272     388  fastLink 140   647 248 0.35999999999999999</span></span>
+<span><span class="co">#&gt; 5      1  965 1272     388   reclin2 350  9033  38 0.90000000000000002</span></span>
+<span><span class="co">#&gt; 6      1  965 1272     388     diyar  36    38 352 0.09000000000000000</span></span>
+<span><span class="co">#&gt; 7      1  965 1272     388  fedmatch 135   830 253 0.34999999999999998</span></span>
+<span><span class="co">#&gt; 8      2   42   49      27    FlexRL  18     6   9 0.67000000000000004</span></span>
+<span><span class="co">#&gt; 9      2   42   49      27       BRL  22    13   5 0.81000000000000005</span></span>
+<span><span class="co">#&gt; 10     2   42   49      27 multilink  22    15   5 0.81000000000000005</span></span>
+<span><span class="co">#&gt; 11     2   42   49      27  fastLink  19    11   8 0.69999999999999996</span></span>
+<span><span class="co">#&gt; 12     2   42   49      27   reclin2  27    52   0 1.00000000000000000</span></span>
+<span><span class="co">#&gt; 13     2   42   49      27     diyar  13     1  14 0.47999999999999998</span></span>
+<span><span class="co">#&gt; 14     2   42   49      27  fedmatch  19    20   8 0.69999999999999996</span></span>
+<span><span class="co">#&gt; 15     3 1722 1791     636    FlexRL  41    28 595 0.06000000000000000</span></span>
+<span><span class="co">#&gt; 16     3 1722 1791     636       BRL  15     1 621 0.02000000000000000</span></span>
+<span><span class="co">#&gt; 17     3 1722 1791     636 multilink  33   232 603 0.05000000000000000</span></span>
+<span><span class="co">#&gt; 18     3 1722 1791     636  fastLink 210  1106 426 0.33000000000000002</span></span>
+<span><span class="co">#&gt; 19     3 1722 1791     636   reclin2 616 26566  20 0.96999999999999997</span></span>
+<span><span class="co">#&gt; 20     3 1722 1791     636     diyar  40    26 596 0.06000000000000000</span></span>
+<span><span class="co">#&gt; 21     3 1722 1791     636  fedmatch 300  1422 336 0.46999999999999997</span></span>
+<span><span class="co">#&gt; 22     4  445  693     254    FlexRL  61    38 193 0.23999999999999999</span></span>
+<span><span class="co">#&gt; 23     4  445  693     254       BRL  52    26 202 0.20000000000000001</span></span>
+<span><span class="co">#&gt; 24     4  445  693     254 multilink  68    88 186 0.27000000000000002</span></span>
+<span><span class="co">#&gt; 25     4  445  693     254  fastLink 108   259 146 0.42999999999999999</span></span>
+<span><span class="co">#&gt; 26     4  445  693     254   reclin2 247  2784   7 0.96999999999999997</span></span>
+<span><span class="co">#&gt; 27     4  445  693     254     diyar  13     7 241 0.05000000000000000</span></span>
+<span><span class="co">#&gt; 28     4  445  693     254  fedmatch 151   294 103 0.58999999999999997</span></span>
+<span><span class="co">#&gt; 29     5 1042 1122     446    FlexRL  51    44 395 0.11000000000000000</span></span>
+<span><span class="co">#&gt; 30     5 1042 1122     446       BRL  37     9 409 0.08000000000000000</span></span>
+<span><span class="co">#&gt; 31     5 1042 1122     446 multilink  68   294 378 0.14999999999999999</span></span>
+<span><span class="co">#&gt; 32     5 1042 1122     446  fastLink 179   716 267 0.40000000000000002</span></span>
+<span><span class="co">#&gt; 33     5 1042 1122     446   reclin2 435 11856  11 0.97999999999999998</span></span>
+<span><span class="co">#&gt; 34     5 1042 1122     446     diyar  29    11 417 0.07000000000000001</span></span>
+<span><span class="co">#&gt; 35     5 1042 1122     446  fedmatch 234   807 212 0.52000000000000002</span></span>
+<span><span class="co">#&gt; 36     6  326  359     165    FlexRL  52    27 113 0.32000000000000001</span></span>
+<span><span class="co">#&gt; 37     6  326  359     165       BRL  54    28 111 0.33000000000000002</span></span>
+<span><span class="co">#&gt; 38     6  326  359     165 multilink  67    64  98 0.40999999999999998</span></span>
+<span><span class="co">#&gt; 39     6  326  359     165  fastLink 103   152  62 0.62000000000000000</span></span>
+<span><span class="co">#&gt; 40     6  326  359     165   reclin2 164  1152   1 0.98999999999999999</span></span>
+<span><span class="co">#&gt; 41     6  326  359     165     diyar  22     6 143 0.13000000000000000</span></span>
+<span><span class="co">#&gt; 42     6  326  359     165  fedmatch  86   240  79 0.52000000000000002</span></span>
+<span><span class="co">#&gt; 43     7  400  494     163    FlexRL  51    38 112 0.31000000000000000</span></span>
+<span><span class="co">#&gt; 44     7  400  494     163       BRL  42    29 121 0.26000000000000001</span></span>
+<span><span class="co">#&gt; 45     7  400  494     163 multilink  54    64 109 0.33000000000000002</span></span>
+<span><span class="co">#&gt; 46     7  400  494     163  fastLink  93   209  70 0.56999999999999995</span></span>
+<span><span class="co">#&gt; 47     7  400  494     163   reclin2 159  1625   4 0.97999999999999998</span></span>
+<span><span class="co">#&gt; 48     7  400  494     163     diyar  45    27 118 0.28000000000000003</span></span>
+<span><span class="co">#&gt; 49     7  400  494     163  fedmatch  91   304  72 0.56000000000000005</span></span>
+<span><span class="co">#&gt; 50     8 1120 1217     418    FlexRL  48    36 370 0.11000000000000000</span></span>
+<span><span class="co">#&gt; 51     8 1120 1217     418       BRL  29    20 389 0.07000000000000001</span></span>
+<span><span class="co">#&gt; 52     8 1120 1217     418 multilink  58   223 360 0.14000000000000001</span></span>
+<span><span class="co">#&gt; 53     8 1120 1217     418  fastLink 168   612 250 0.40000000000000002</span></span>
+<span><span class="co">#&gt; 54     8 1120 1217     418   reclin2 414 12047   4 0.98999999999999999</span></span>
+<span><span class="co">#&gt; 55     8 1120 1217     418     diyar  26    18 392 0.06000000000000000</span></span>
+<span><span class="co">#&gt; 56     8 1120 1217     418  fedmatch 165   955 253 0.39000000000000001</span></span>
+<span><span class="co">#&gt; 57     9  900 1126     412    FlexRL  75    72 337 0.17999999999999999</span></span>
+<span><span class="co">#&gt; 58     9  900 1126     412       BRL  68    40 344 0.17000000000000001</span></span>
+<span><span class="co">#&gt; 59     9  900 1126     412 multilink 111   236 301 0.27000000000000002</span></span>
+<span><span class="co">#&gt; 60     9  900 1126     412  fastLink 168   587 244 0.40999999999999998</span></span>
+<span><span class="co">#&gt; 61     9  900 1126     412   reclin2 400  8718  12 0.96999999999999997</span></span>
+<span><span class="co">#&gt; 62     9  900 1126     412     diyar  52    35 360 0.13000000000000000</span></span>
+<span><span class="co">#&gt; 63     9  900 1126     412  fedmatch 187   710 225 0.45000000000000001</span></span>
+<span><span class="co">#&gt; 64    10  592  614     316    FlexRL  90    52 226 0.28000000000000003</span></span>
+<span><span class="co">#&gt; 65    10  592  614     316       BRL  85    32 231 0.27000000000000002</span></span>
+<span><span class="co">#&gt; 66    10  592  614     316 multilink 103   126 213 0.33000000000000002</span></span>
+<span><span class="co">#&gt; 67    10  592  614     316  fastLink 177   288 139 0.56000000000000005</span></span>
+<span><span class="co">#&gt; 68    10  592  614     316   reclin2 313  3620   3 0.98999999999999999</span></span>
+<span><span class="co">#&gt; 69    10  592  614     316     diyar  60    20 256 0.19000000000000000</span></span>
+<span><span class="co">#&gt; 70    10  592  614     316  fedmatch 161   426 155 0.51000000000000001</span></span>
+<span><span class="co">#&gt; 71    11  439  686     278    FlexRL  86    52 192 0.31000000000000000</span></span>
+<span><span class="co">#&gt; 72    11  439  686     278       BRL  76    29 202 0.27000000000000002</span></span>
+<span><span class="co">#&gt; 73    11  439  686     278 multilink 110   103 168 0.40000000000000002</span></span>
+<span><span class="co">#&gt; 74    11  439  686     278  fastLink 146   234 132 0.53000000000000003</span></span>
+<span><span class="co">#&gt; 75    11  439  686     278   reclin2 277  2851   1 1.00000000000000000</span></span>
+<span><span class="co">#&gt; 76    11  439  686     278     diyar  33    15 245 0.12000000000000000</span></span>
+<span><span class="co">#&gt; 77    11  439  686     278  fedmatch 142   297 136 0.51000000000000001</span></span>
+<span><span class="co">#&gt; 78    12  959 1115     379    FlexRL  47    32 332 0.12000000000000000</span></span>
+<span><span class="co">#&gt; 79    12  959 1115     379       BRL  37    14 342 0.10000000000000001</span></span>
+<span><span class="co">#&gt; 80    12  959 1115     379 multilink  63   196 316 0.17000000000000001</span></span>
+<span><span class="co">#&gt; 81    12  959 1115     379  fastLink 167   455 212 0.44000000000000000</span></span>
+<span><span class="co">#&gt; 82    12  959 1115     379   reclin2 369  8630  10 0.96999999999999997</span></span>
+<span><span class="co">#&gt; 83    12  959 1115     379     diyar  46    25 333 0.12000000000000000</span></span>
+<span><span class="co">#&gt; 84    12  959 1115     379  fedmatch 215   744 164 0.56999999999999995</span></span>
+<span><span class="co">#&gt; 85    13  315  420     141    FlexRL  39    35 102 0.28000000000000003</span></span>
+<span><span class="co">#&gt; 86    13  315  420     141       BRL  36    30 105 0.26000000000000001</span></span>
+<span><span class="co">#&gt; 87    13  315  420     141 multilink  42    57  99 0.29999999999999999</span></span>
+<span><span class="co">#&gt; 88    13  315  420     141  fastLink  88   151  53 0.62000000000000000</span></span>
+<span><span class="co">#&gt; 89    13  315  420     141   reclin2 137  1103   4 0.96999999999999997</span></span>
+<span><span class="co">#&gt; 90    13  315  420     141     diyar   8     4 133 0.06000000000000000</span></span>
+<span><span class="co">#&gt; 91    13  315  420     141  fedmatch  80   235  61 0.56999999999999995</span></span>
+<span><span class="co">#&gt; 92    14  181  212     118    FlexRL  59    18  59 0.50000000000000000</span></span>
+<span><span class="co">#&gt; 93    14  181  212     118       BRL  62    16  56 0.53000000000000003</span></span>
+<span><span class="co">#&gt; 94    14  181  212     118 multilink  72    38  46 0.60999999999999999</span></span>
+<span><span class="co">#&gt; 95    14  181  212     118  fastLink  80    65  38 0.68000000000000005</span></span>
+<span><span class="co">#&gt; 96    14  181  212     118   reclin2 117   510   1 0.98999999999999999</span></span>
+<span><span class="co">#&gt; 97    14  181  212     118     diyar  32     4  86 0.27000000000000002</span></span>
+<span><span class="co">#&gt; 98    14  181  212     118  fedmatch  69   110  49 0.57999999999999996</span></span>
+<span><span class="co">#&gt; 99    15 1324 1734     784    FlexRL  86    75 698 0.11000000000000000</span></span>
+<span><span class="co">#&gt; 100   15 1324 1734     784       BRL  62    32 722 0.08000000000000000</span></span>
+<span><span class="co">#&gt; 101   15 1324 1734     784 multilink 125   412 659 0.16000000000000000</span></span>
+<span><span class="co">#&gt; 102   15 1324 1734     784  fastLink 232   902 552 0.29999999999999999</span></span>
+<span><span class="co">#&gt; 103   15 1324 1734     784   reclin2 746 19909  38 0.94999999999999996</span></span>
+<span><span class="co">#&gt; 104   15 1324 1734     784     diyar  27    11 757 0.03000000000000000</span></span>
+<span><span class="co">#&gt; 105   15 1324 1734     784  fedmatch 274  1050 510 0.34999999999999998</span></span>
+<span><span class="co">#&gt; 106   16 1033 1041     465    FlexRL  61    49 404 0.13000000000000000</span></span>
+<span><span class="co">#&gt; 107   16 1033 1041     465       BRL  39    20 426 0.08000000000000000</span></span>
+<span><span class="co">#&gt; 108   16 1033 1041     465 multilink 104   309 361 0.22000000000000000</span></span>
+<span><span class="co">#&gt; 109   16 1033 1041     465  fastLink 169   670 296 0.35999999999999999</span></span>
+<span><span class="co">#&gt; 110   16 1033 1041     465   reclin2 444 10092  21 0.94999999999999996</span></span>
+<span><span class="co">#&gt; 111   16 1033 1041     465     diyar  13     5 452 0.03000000000000000</span></span>
+<span><span class="co">#&gt; 112   16 1033 1041     465  fedmatch 233   800 232 0.50000000000000000</span></span>
+<span><span class="co">#&gt; 113   17  155  235     103    FlexRL  52    23  51 0.50000000000000000</span></span>
+<span><span class="co">#&gt; 114   17  155  235     103       BRL  60    22  43 0.57999999999999996</span></span>
+<span><span class="co">#&gt; 115   17  155  235     103 multilink  65    40  38 0.63000000000000000</span></span>
+<span><span class="co">#&gt; 116   17  155  235     103  fastLink  65    62  38 0.63000000000000000</span></span>
+<span><span class="co">#&gt; 117   17  155  235     103   reclin2  98   375   5 0.94999999999999996</span></span>
+<span><span class="co">#&gt; 118   17  155  235     103     diyar  39     5  64 0.38000000000000000</span></span>
+<span><span class="co">#&gt; 119   17  155  235     103  fedmatch  57    98  46 0.55000000000000004</span></span>
+<span><span class="co">#&gt; 120   18  324  394     174    FlexRL  52    34 122 0.29999999999999999</span></span>
+<span><span class="co">#&gt; 121   18  324  394     174       BRL  56    26 118 0.32000000000000001</span></span>
+<span><span class="co">#&gt; 122   18  324  394     174 multilink  66    53 108 0.38000000000000000</span></span>
+<span><span class="co">#&gt; 123   18  324  394     174  fastLink  95   152  79 0.55000000000000004</span></span>
+<span><span class="co">#&gt; 124   18  324  394     174   reclin2 171  1270   3 0.97999999999999998</span></span>
+<span><span class="co">#&gt; 125   18  324  394     174     diyar  47    12 127 0.27000000000000002</span></span>
+<span><span class="co">#&gt; 126   18  324  394     174  fedmatch  90   233  84 0.52000000000000002</span></span>
+<span><span class="co">#&gt; 127   19 1213 1353     414    FlexRL  34    50 380 0.08000000000000000</span></span>
+<span><span class="co">#&gt; 128   19 1213 1353     414       BRL  14    10 400 0.03000000000000000</span></span>
+<span><span class="co">#&gt; 129   19 1213 1353     414 multilink  40   214 374 0.10000000000000001</span></span>
+<span><span class="co">#&gt; 130   19 1213 1353     414  fastLink 145   617 269 0.34999999999999998</span></span>
+<span><span class="co">#&gt; 131   19 1213 1353     414   reclin2 397 14624  17 0.95999999999999996</span></span>
+<span><span class="co">#&gt; 132   19 1213 1353     414     diyar  22    22 392 0.05000000000000000</span></span>
+<span><span class="co">#&gt; 133   19 1213 1353     414  fedmatch 160  1047 254 0.39000000000000001</span></span>
+<span><span class="co">#&gt; 134   20  709  774     332    FlexRL  88    51 244 0.27000000000000002</span></span>
+<span><span class="co">#&gt; 135   20  709  774     332       BRL  76    30 256 0.23000000000000001</span></span>
+<span><span class="co">#&gt; 136   20  709  774     332 multilink 112   128 220 0.34000000000000002</span></span>
+<span><span class="co">#&gt; 137   20  709  774     332  fastLink 165   317 167 0.50000000000000000</span></span>
+<span><span class="co">#&gt; 138   20  709  774     332   reclin2 323  4861   9 0.96999999999999997</span></span>
+<span><span class="co">#&gt; 139   20  709  774     332     diyar  22    11 310 0.07000000000000001</span></span>
+<span><span class="co">#&gt; 140   20  709  774     332  fedmatch 209   498 123 0.63000000000000000</span></span>
+<span><span class="co">#&gt;                     FDP seconds</span></span>
+<span><span class="co">#&gt; 1   0.52000000000000002    1225</span></span>
+<span><span class="co">#&gt; 2   0.39000000000000001      12</span></span>
+<span><span class="co">#&gt; 3   0.78000000000000003     370</span></span>
+<span><span class="co">#&gt; 4   0.81999999999999995      10</span></span>
+<span><span class="co">#&gt; 5   0.95999999999999996       0</span></span>
+<span><span class="co">#&gt; 6   0.51000000000000001       5</span></span>
+<span><span class="co">#&gt; 7   0.85999999999999999      11</span></span>
+<span><span class="co">#&gt; 8   0.25000000000000000      18</span></span>
+<span><span class="co">#&gt; 9   0.37000000000000000       0</span></span>
+<span><span class="co">#&gt; 10  0.40999999999999998       0</span></span>
+<span><span class="co">#&gt; 11  0.37000000000000000       1</span></span>
+<span><span class="co">#&gt; 12  0.66000000000000003       0</span></span>
+<span><span class="co">#&gt; 13  0.07000000000000001       0</span></span>
+<span><span class="co">#&gt; 14  0.51000000000000001       0</span></span>
+<span><span class="co">#&gt; 15  0.40999999999999998    1957</span></span>
+<span><span class="co">#&gt; 16  0.06000000000000000      31</span></span>
+<span><span class="co">#&gt; 17  0.88000000000000000    1425</span></span>
+<span><span class="co">#&gt; 18  0.83999999999999997      23</span></span>
+<span><span class="co">#&gt; 19  0.97999999999999998       1</span></span>
+<span><span class="co">#&gt; 20  0.39000000000000001      11</span></span>
+<span><span class="co">#&gt; 21  0.82999999999999996      19</span></span>
+<span><span class="co">#&gt; 22  0.38000000000000000     494</span></span>
+<span><span class="co">#&gt; 23  0.33000000000000002       3</span></span>
+<span><span class="co">#&gt; 24  0.56000000000000005      52</span></span>
+<span><span class="co">#&gt; 25  0.70999999999999996       5</span></span>
+<span><span class="co">#&gt; 26  0.92000000000000004       0</span></span>
+<span><span class="co">#&gt; 27  0.34999999999999998       3</span></span>
+<span><span class="co">#&gt; 28  0.66000000000000003       4</span></span>
+<span><span class="co">#&gt; 29  0.46000000000000002    1224</span></span>
+<span><span class="co">#&gt; 30  0.20000000000000001      10</span></span>
+<span><span class="co">#&gt; 31  0.81000000000000005     319</span></span>
+<span><span class="co">#&gt; 32  0.80000000000000004       9</span></span>
+<span><span class="co">#&gt; 33  0.95999999999999996       0</span></span>
+<span><span class="co">#&gt; 34  0.28000000000000003       7</span></span>
+<span><span class="co">#&gt; 35  0.78000000000000003      11</span></span>
+<span><span class="co">#&gt; 36  0.34000000000000002     297</span></span>
+<span><span class="co">#&gt; 37  0.34000000000000002       1</span></span>
+<span><span class="co">#&gt; 38  0.48999999999999999      16</span></span>
+<span><span class="co">#&gt; 39  0.59999999999999998       2</span></span>
+<span><span class="co">#&gt; 40  0.88000000000000000       0</span></span>
+<span><span class="co">#&gt; 41  0.20999999999999999       1</span></span>
+<span><span class="co">#&gt; 42  0.73999999999999999       2</span></span>
+<span><span class="co">#&gt; 43  0.42999999999999999     378</span></span>
+<span><span class="co">#&gt; 44  0.40999999999999998       2</span></span>
+<span><span class="co">#&gt; 45  0.54000000000000004      35</span></span>
+<span><span class="co">#&gt; 46  0.68999999999999995       2</span></span>
+<span><span class="co">#&gt; 47  0.91000000000000003       0</span></span>
+<span><span class="co">#&gt; 48  0.38000000000000000       1</span></span>
+<span><span class="co">#&gt; 49  0.77000000000000002       3</span></span>
+<span><span class="co">#&gt; 50  0.42999999999999999    1227</span></span>
+<span><span class="co">#&gt; 51  0.40999999999999998      13</span></span>
+<span><span class="co">#&gt; 52  0.79000000000000004     468</span></span>
+<span><span class="co">#&gt; 53  0.78000000000000003      10</span></span>
+<span><span class="co">#&gt; 54  0.96999999999999997       0</span></span>
+<span><span class="co">#&gt; 55  0.40999999999999998       7</span></span>
+<span><span class="co">#&gt; 56  0.84999999999999998      11</span></span>
+<span><span class="co">#&gt; 57  0.48999999999999999    1266</span></span>
+<span><span class="co">#&gt; 58  0.37000000000000000      10</span></span>
+<span><span class="co">#&gt; 59  0.68000000000000005     252</span></span>
+<span><span class="co">#&gt; 60  0.78000000000000003      10</span></span>
+<span><span class="co">#&gt; 61  0.95999999999999996       0</span></span>
+<span><span class="co">#&gt; 62  0.40000000000000002       5</span></span>
+<span><span class="co">#&gt; 63  0.79000000000000004      10</span></span>
+<span><span class="co">#&gt; 64  0.37000000000000000     691</span></span>
+<span><span class="co">#&gt; 65  0.27000000000000002       3</span></span>
+<span><span class="co">#&gt; 66  0.55000000000000004      71</span></span>
+<span><span class="co">#&gt; 67  0.62000000000000000       4</span></span>
+<span><span class="co">#&gt; 68  0.92000000000000004       0</span></span>
+<span><span class="co">#&gt; 69  0.25000000000000000       2</span></span>
+<span><span class="co">#&gt; 70  0.72999999999999998       5</span></span>
+<span><span class="co">#&gt; 71  0.38000000000000000     580</span></span>
+<span><span class="co">#&gt; 72  0.28000000000000003       3</span></span>
+<span><span class="co">#&gt; 73  0.47999999999999998      44</span></span>
+<span><span class="co">#&gt; 74  0.62000000000000000       4</span></span>
+<span><span class="co">#&gt; 75  0.91000000000000003       0</span></span>
+<span><span class="co">#&gt; 76  0.31000000000000000       2</span></span>
+<span><span class="co">#&gt; 77  0.68000000000000005       3</span></span>
+<span><span class="co">#&gt; 78  0.40999999999999998     903</span></span>
+<span><span class="co">#&gt; 79  0.27000000000000002      11</span></span>
+<span><span class="co">#&gt; 80  0.76000000000000001     334</span></span>
+<span><span class="co">#&gt; 81  0.72999999999999998       8</span></span>
+<span><span class="co">#&gt; 82  0.95999999999999996       0</span></span>
+<span><span class="co">#&gt; 83  0.34999999999999998       4</span></span>
+<span><span class="co">#&gt; 84  0.78000000000000003       9</span></span>
+<span><span class="co">#&gt; 85  0.46999999999999997     297</span></span>
+<span><span class="co">#&gt; 86  0.45000000000000001       1</span></span>
+<span><span class="co">#&gt; 87  0.57999999999999996      20</span></span>
+<span><span class="co">#&gt; 88  0.63000000000000000       2</span></span>
+<span><span class="co">#&gt; 89  0.89000000000000001       0</span></span>
+<span><span class="co">#&gt; 90  0.33000000000000002       1</span></span>
+<span><span class="co">#&gt; 91  0.75000000000000000       2</span></span>
+<span><span class="co">#&gt; 92  0.23000000000000001     144</span></span>
+<span><span class="co">#&gt; 93  0.20999999999999999       0</span></span>
+<span><span class="co">#&gt; 94  0.34999999999999998       4</span></span>
+<span><span class="co">#&gt; 95  0.45000000000000001       1</span></span>
+<span><span class="co">#&gt; 96  0.81000000000000005       0</span></span>
+<span><span class="co">#&gt; 97  0.11000000000000000       1</span></span>
+<span><span class="co">#&gt; 98  0.60999999999999999       1</span></span>
+<span><span class="co">#&gt; 99  0.46999999999999997    2103</span></span>
+<span><span class="co">#&gt; 100 0.34000000000000002      22</span></span>
+<span><span class="co">#&gt; 101 0.77000000000000002     649</span></span>
+<span><span class="co">#&gt; 102 0.80000000000000004      16</span></span>
+<span><span class="co">#&gt; 103 0.95999999999999996       1</span></span>
+<span><span class="co">#&gt; 104 0.28999999999999998      10</span></span>
+<span><span class="co">#&gt; 105 0.79000000000000004      16</span></span>
+<span><span class="co">#&gt; 106 0.45000000000000001    1242</span></span>
+<span><span class="co">#&gt; 107 0.34000000000000002       9</span></span>
+<span><span class="co">#&gt; 108 0.75000000000000000     280</span></span>
+<span><span class="co">#&gt; 109 0.80000000000000004       8</span></span>
+<span><span class="co">#&gt; 110 0.95999999999999996       0</span></span>
+<span><span class="co">#&gt; 111 0.28000000000000003       7</span></span>
+<span><span class="co">#&gt; 112 0.77000000000000002      12</span></span>
+<span><span class="co">#&gt; 113 0.31000000000000000     132</span></span>
+<span><span class="co">#&gt; 114 0.27000000000000002       0</span></span>
+<span><span class="co">#&gt; 115 0.38000000000000000       3</span></span>
+<span><span class="co">#&gt; 116 0.48999999999999999       1</span></span>
+<span><span class="co">#&gt; 117 0.79000000000000004       0</span></span>
+<span><span class="co">#&gt; 118 0.11000000000000000       1</span></span>
+<span><span class="co">#&gt; 119 0.63000000000000000       1</span></span>
+<span><span class="co">#&gt; 120 0.40000000000000002     318</span></span>
+<span><span class="co">#&gt; 121 0.32000000000000001       1</span></span>
+<span><span class="co">#&gt; 122 0.45000000000000001      19</span></span>
+<span><span class="co">#&gt; 123 0.62000000000000000       2</span></span>
+<span><span class="co">#&gt; 124 0.88000000000000000       0</span></span>
+<span><span class="co">#&gt; 125 0.20000000000000001       1</span></span>
+<span><span class="co">#&gt; 126 0.71999999999999997       3</span></span>
+<span><span class="co">#&gt; 127 0.59999999999999998    1432</span></span>
+<span><span class="co">#&gt; 128 0.41999999999999998      16</span></span>
+<span><span class="co">#&gt; 129 0.83999999999999997     529</span></span>
+<span><span class="co">#&gt; 130 0.81000000000000005      12</span></span>
+<span><span class="co">#&gt; 131 0.96999999999999997       1</span></span>
+<span><span class="co">#&gt; 132 0.50000000000000000       9</span></span>
+<span><span class="co">#&gt; 133 0.87000000000000000      14</span></span>
+<span><span class="co">#&gt; 134 0.37000000000000000     780</span></span>
+<span><span class="co">#&gt; 135 0.28000000000000003       5</span></span>
+<span><span class="co">#&gt; 136 0.53000000000000003     130</span></span>
+<span><span class="co">#&gt; 137 0.66000000000000003       4</span></span>
+<span><span class="co">#&gt; 138 0.93999999999999995       0</span></span>
+<span><span class="co">#&gt; 139 0.33000000000000002       4</span></span>
+<span><span class="co">#&gt; 140 0.69999999999999996       7</span></span></code></pre></div>
 <p>Averaged over the regions and total computing time:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">summary_IREG</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/split.html" class="external-link">split</a></span><span class="op">(</span><span class="va">results_IREG</span>, <span class="va">results_IREG</span><span class="op">$</span><span class="va">method</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">d</span><span class="op">)</span> <span class="op">{</span></span>
@@ -608,13 +726,13 @@ above.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">summary_IREG</span><span class="op">[</span>,<span class="fl">2</span><span class="op">:</span><span class="fl">7</span><span class="op">]</span>,<span class="fl">2</span><span class="op">)</span></span>
 <span><span class="co">#&gt;            FDP sensitivity     TP      FP     FN minutes</span></span>
-<span><span class="co">#&gt; BRL       0.32        0.23  46.75   22.30 273.90    2.53</span></span>
-<span><span class="co">#&gt; diyar     0.30        0.15  31.25   15.15 289.40    1.12</span></span>
-<span><span class="co">#&gt; fastLink  0.68        0.49 136.55  409.90 184.10    2.03</span></span>
-<span><span class="co">#&gt; fedmatch  0.74        0.51 152.90  556.00 167.75    2.18</span></span>
-<span><span class="co">#&gt; FlexRL    0.42        0.25  56.55   41.05 264.10  270.08</span></span>
-<span><span class="co">#&gt; multilink 0.63        0.32  73.70  172.65 246.95   37.78</span></span>
-<span><span class="co">#&gt; reclin2   0.91        0.97 310.20 7083.90  10.45    0.02</span></span></code></pre></div>
+<span><span class="co">#&gt; BRL       0.32        0.24  47.10   22.00 273.55    2.55</span></span>
+<span><span class="co">#&gt; diyar     0.30        0.15  31.25   15.15 289.40    1.37</span></span>
+<span><span class="co">#&gt; fastLink  0.68        0.49 135.85  410.60 184.80    2.23</span></span>
+<span><span class="co">#&gt; fedmatch  0.74        0.51 152.90  556.00 167.75    2.40</span></span>
+<span><span class="co">#&gt; FlexRL    0.41        0.25  56.35   39.95 264.30  278.47</span></span>
+<span><span class="co">#&gt; multilink 0.62        0.31  72.05  154.95 248.60   83.67</span></span>
+<span><span class="co">#&gt; reclin2   0.91        0.97 310.20 7083.90  10.45    0.05</span></span></code></pre></div>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">colours</span> <span class="op">&lt;-</span> <span class="fu">grDevices</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/grDevices/palettes.html" class="external-link">hcl.colors</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">methods</span><span class="op">)</span>, <span class="st">"Dark 3"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">colours</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">methods</span></span>
@@ -648,29 +766,22 @@ permissive methods.</p>
 methods. The results were computed with the code above, on a machine
 with Apple M1 Max ARM chip, 8-core CPU, 32 GB of memory.</p>
 </div>
-  </div>
-
-  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
-
-      </div>
-
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 
 
-      <footer><div class="copyright">
-  <p></p>
-<p>Developed by Kayané ROBACH, Michel H. HOF.</p>
+    <footer><div class="pkgdown-footer-left">
+  <p>Developed by Kayané ROBACH, Michel H. HOF.</p>
 </div>
 
-<div class="pkgdown">
-  <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
+<div class="pkgdown-footer-right">
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
-      </footer>
+    </footer>
 </div>
-
 
 
 

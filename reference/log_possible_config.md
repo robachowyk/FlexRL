@@ -2,8 +2,9 @@
 
 Computes `log(nB! / (nB - sumD)!)`, i.e. the log number of ways to
 choose `sumD` ordered links among `n_records_B` records of the larger
-file; used in [`log_lik()`](log_lik.md) to normalise the likelihood of
-the linkage matrix.
+file; used in
+[`log_lik()`](https://robachowyk.github.io/FlexRL/reference/log_lik.md)
+to normalise the likelihood of the linkage matrix.
 
 ## Usage
 

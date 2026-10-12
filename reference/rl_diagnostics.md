@@ -15,6 +15,7 @@ RL_diagnostics(
   encodedB,
   compare_vars,
   vars_type_cont,
+  PIVs,
   true_pairs = NULL,
   FDP_estimation = TRUE,
   ...
@@ -26,8 +27,10 @@ RL_diagnostics(
 - fit:
 
   List with either `Delta` (a data frame with columns `i`, `j`, `x`, as
-  returned by [`StEM()`](stEM.md)) or the three elements `idxA`, `idxB`,
-  `LinkScore` (e.g. the output of a link_with\_\* wrapper).
+  returned by
+  [`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md)) or
+  the three elements `idxA`, `idxB`, `LinkScore` (e.g. the output of a
+  link_with\_\* wrapper).
 
 - encodedA:
 
@@ -50,6 +53,11 @@ RL_diagnostics(
   the variable is treated as continuous, `FALSE` if categorical (one SMD
   per level).
 
+- PIVs:
+
+  Character vector, partially identifying variables to compare between
+  the linked records from A and from B.
+
 - true_pairs:
 
   Optional data frame with 2 columns of true (A, B) indices, when known,
@@ -58,17 +66,19 @@ RL_diagnostics(
 - FDP_estimation:
 
   Logical; if `TRUE`, run
-  [`compute_RL_FDP_score()`](compute_RL_FDP_score.md) and
-  [`compute_augmRL_FDP_synth()`](compute_augmRL_FDP_synth.md) to
-  estimate the FDP over thresholds 0.50 to 0.95. `RL_method` and other
-  arguments must then be given in `...`.
+  [`compute_RL_FDP_score()`](https://robachowyk.github.io/FlexRL/reference/compute_RL_FDP_score.md)
+  and
+  [`compute_augmRL_FDP_synth()`](https://robachowyk.github.io/FlexRL/reference/compute_augmRL_FDP_synth.md)
+  to estimate the FDP over thresholds 0.50 to 0.95. `RL_method` and
+  other arguments must then be given in `...`.
 
 - ...:
 
   Arguments passed to
-  [`compute_RL_FDP_score()`](compute_RL_FDP_score.md) and
-  [`compute_augmRL_FDP_synth()`](compute_augmRL_FDP_synth.md) when
-  `FDP_estimation = TRUE`: `RL_method`, `n_repeats`, `maxIter4CV`,
+  [`compute_RL_FDP_score()`](https://robachowyk.github.io/FlexRL/reference/compute_RL_FDP_score.md)
+  and
+  [`compute_augmRL_FDP_synth()`](https://robachowyk.github.io/FlexRL/reference/compute_augmRL_FDP_synth.md)
+  when `FDP_estimation = TRUE`: `RL_method`, `n_repeats`, `maxIter4CV`,
   optionally `synth_method` (default `"arf"`), `n_synth`, `PIVs`
   (default `compare_vars`), and the arguments of the chosen
   link_with\_\* wrapper.
@@ -81,11 +91,15 @@ An object of class `"RL_diagnostics"`, a list with:
 
   data frame (class `"discrepancy_curves"`), one row per threshold `xi`:
   number of linked pairs, agreement rate per variable (see
-  [`RL_agreement()`](rl_agreement.md)), standardised mean differences
-  (one per continuous variable or per level, see [`smd()`](SMD.md)),
-  support overlap per variable (see [`support_iou()`](support_iou.md))
-  and multivariate discrepancy (see [`mmd()`](mmd.md)), each for the
-  linked subset of A vs. A and of B vs. B
+  [`RL_agreement()`](https://robachowyk.github.io/FlexRL/reference/rl_agreement.md)),
+  standardised mean differences (one per continuous variable or per
+  level, see
+  [`smd()`](https://robachowyk.github.io/FlexRL/reference/SMD.md)),
+  support overlap per variable (see
+  [`support_iou()`](https://robachowyk.github.io/FlexRL/reference/support_iou.md))
+  and multivariate discrepancy (see
+  [`mmd()`](https://robachowyk.github.io/FlexRL/reference/mmd.md)), each
+  for the linked subset of A vs. A and of B vs. B
 
 - FDP_measures:
 
@@ -150,369 +164,138 @@ gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100,
                            p_mistake, p_missing, cond_hazard_params, TRUE )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
-#> Warning: PIV 'V4': values out of the common support in data2 [6].
-#> Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.33 in data1, 0.23 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+#> Warning: PIV 'V4': values out of the common support in data2 [1].
 #> '2' is the larger source, saved as B; '1' saved as A.
 PIVs <- names(PIVs_config)  
 PIVs_type <- list(V1=FALSE, V2=FALSE, V3=FALSE, V4=TRUE)
-
-fit_flexrl <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2,
-                    gibbs_iter = 5, gibbs_burnin = 2, n_post_samp = 10 )
-#> FlexRL
-diag_flexrl <- RL_diagnostics(fit_flexrl, prep_data$encodedA, prep_data$encodedB,
-                              PIVs, PIVs_type, true_pairs = prep_data$true_pairs,
-                              FDP_estimation = TRUE, RL_method = "FlexRL", 
-                              data = prep_data,
-                              StEM_iter = 5, StEM_burnin = 2, 
-                              gibbs_iter = 5, gibbs_burnin = 2,
-                              n_post_samp = 10,
-                              maxIter4CV = 1, n_repeats = 1)
-#> Iteration: 0, Accuracy: 50.65%
-#> Iteration: 1, Accuracy: 39.84%
-#> Warning: PIV 'V1': synthetic records out of the common support were removed.
-#> Warning: PIV 'V2': synthetic records out of the common support were removed.
-#> Warning: PIV 'V3': synthetic records out of the common support were removed.
-#> FlexRL
-#> FlexRL results (average over 1 iterations):
-#>                            0.50  0.51  0.52  0.53  0.54  0.55  0.56  0.57  0.58
-#> FDP model score estimator  0.14  0.14  0.14  0.14  0.14  0.14  0.14  0.14  0.14
-#> FDP synth data estimator   0.14  0.14  0.14  0.14  0.14  0.14  0.14  0.14  0.14
-#> Linked pairs (augm. RL)   73.00 73.00 73.00 73.00 73.00 73.00 73.00 73.00 73.00
-#> Linked pairs (RL)         74.00 74.00 74.00 74.00 74.00 74.00 74.00 74.00 74.00
-#>                            0.59  0.60  0.61  0.62  0.63  0.64  0.65  0.66  0.67
-#> FDP model score estimator  0.14  0.10  0.10  0.10  0.10  0.10  0.10  0.10  0.10
-#> FDP synth data estimator   0.14  0.16  0.16  0.16  0.16  0.16  0.16  0.16  0.16
-#> Linked pairs (augm. RL)   73.00 63.00 63.00 63.00 63.00 63.00 63.00 63.00 63.00
-#> Linked pairs (RL)         74.00 64.00 64.00 64.00 64.00 64.00 64.00 64.00 64.00
-#>                            0.68  0.69  0.70  0.71  0.72  0.73  0.74  0.75  0.76
-#> FDP model score estimator  0.10  0.10  0.06  0.06  0.06  0.06  0.06  0.06  0.06
-#> FDP synth data estimator   0.16  0.16  0.00  0.00  0.00  0.00  0.00  0.00  0.00
-#> Linked pairs (augm. RL)   63.00 63.00 52.00 52.00 52.00 52.00 52.00 52.00 52.00
-#> Linked pairs (RL)         64.00 64.00 52.00 52.00 52.00 52.00 52.00 52.00 52.00
-#>                            0.77  0.78  0.79  0.80  0.81  0.82  0.83  0.84  0.85
-#> FDP model score estimator  0.06  0.06  0.06  0.03  0.03  0.03  0.03  0.03  0.03
-#> FDP synth data estimator   0.00  0.00  0.00  0.00  0.00  0.00  0.00  0.00  0.00
-#> Linked pairs (augm. RL)   52.00 52.00 52.00 44.00 44.00 44.00 44.00 44.00 44.00
-#> Linked pairs (RL)         52.00 52.00 52.00 44.00 44.00 44.00 44.00 44.00 44.00
-#>                            0.86  0.87  0.88  0.89 0.90 0.91 0.92 0.93 0.94 0.95
-#> FDP model score estimator  0.03  0.03  0.03  0.03    0    0    0    0    0    0
-#> FDP synth data estimator   0.00  0.00  0.00  0.00    0    0    0    0    0    0
-#> Linked pairs (augm. RL)   44.00 44.00 44.00 44.00   31   31   31   31   31   31
-#> Linked pairs (RL)         44.00 44.00 44.00 44.00   31   31   31   31   31   31
-#>                           0.96 0.97 0.98 0.99
-#> FDP model score estimator    0    0    0    0
-#> FDP synth data estimator     0    0    0    0
-#> Linked pairs (augm. RL)     31   31   31   31
-#> Linked pairs (RL)           31   31   31   31
-#> FlexRL
-#> FlexRL results (average over 1 iterations):
-#>                            0.50  0.51  0.52  0.53  0.54  0.55  0.56  0.57  0.58
-#> FDP model score estimator  0.14  0.14  0.14  0.14  0.14  0.14  0.14  0.14  0.14
-#> Linked pairs (RL)         87.00 87.00 87.00 87.00 87.00 87.00 87.00 87.00 87.00
-#>                            0.59 0.60 0.61 0.62 0.63 0.64 0.65 0.66 0.67 0.68
-#> FDP model score estimator  0.14  0.1  0.1  0.1  0.1  0.1  0.1  0.1  0.1  0.1
-#> Linked pairs (RL)         87.00 76.0 76.0 76.0 76.0 76.0 76.0 76.0 76.0 76.0
-#>                           0.69  0.70  0.71  0.72  0.73  0.74  0.75  0.76  0.77
-#> FDP model score estimator  0.1  0.05  0.05  0.05  0.05  0.05  0.05  0.05  0.05
-#> Linked pairs (RL)         76.0 62.00 62.00 62.00 62.00 62.00 62.00 62.00 62.00
-#>                            0.78  0.79  0.80  0.81  0.82  0.83  0.84  0.85  0.86
-#> FDP model score estimator  0.05  0.05  0.02  0.02  0.02  0.02  0.02  0.02  0.02
-#> Linked pairs (RL)         62.00 62.00 52.00 52.00 52.00 52.00 52.00 52.00 52.00
-#>                            0.87  0.88  0.89 0.90 0.91 0.92 0.93 0.94 0.95 0.96
-#> FDP model score estimator  0.02  0.02  0.02    0    0    0    0    0    0    0
-#> Linked pairs (RL)         52.00 52.00 52.00   40   40   40   40   40   40   40
-#>                           0.97 0.98 0.99
-#> FDP model score estimator    0    0    0
-#> Linked pairs (RL)           40   40   40
-diag_flexrl # print(diag_flexrl)
-#> <RL_diagnostics>
-#> 
-#>   Linked pairs  (score > 0.50):  72
-#> 
-#>   FDP           (true pairs):    0.375
-#>   Sensitivity   (true pairs):    0.464
-#> 
-#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.136
-#>                                                threshold 0.50: FDP ~ 0.136
-#>                                            max threshold 0.99: FDP ~ 0.000
-#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.142
-#>                                                threshold 0.50: FDP ~ 0.142
-#>                                            max threshold 0.99: FDP ~ 0.000
-#>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.140
-#>                                                threshold 0.50: FDP ~ 0.140
-#>                                            max threshold 0.99: FDP ~ 0.000
-#>   The score-based estimator is valid when the linkage model is well calibrated to the data.
-#>   The synthetic-data estimator is valid when the augmented task is equivalent to the
-#>   original one, which requires links and non-links to have similar distributions; similar
-#>   score-based FDP estimates on the original and augmented tasks support this prerequisite.
-#> 
-#>   Multivariate MMD  (linked A vs. A):  0.0115
-#>   Multivariate MMD  (linked B vs. B):  0.0141
-#> 
-#>   IoU support V1  (linked A vs. A):  0.8000
-#>   IoU support V2  (linked A vs. A):  1.0000
-#>   IoU support V3  (linked A vs. A):  0.8571
-#>   IoU support V4  (linked A vs. A):  1.0000
-#>   IoU support V1  (linked B vs. B):  0.8000
-#>   IoU support V2  (linked B vs. B):  0.8333
-#>   IoU support V3  (linked B vs. B):  0.8571
-#>   IoU support V4  (linked B vs. B):  0.8182
-#> 
-#>   Agreement V1  (linked A vs. linked B):  0.9722
-#>   Agreement V2  (linked A vs. linked B):  0.9583
-#>   Agreement V3  (linked A vs. linked B):  0.9444
-#>   Agreement V4  (linked A vs. linked B):  0.8194
-#>   Agreement V1  (true pairs):  0.9485
-#>   Agreement V2  (true pairs):  0.9278
-#>   Agreement V3  (true pairs):  0.8969
-#>   Agreement V4  (true pairs):  0.7732
-#> 
-#>   SMD V1 values: {0, 2, 4, ...}  (linked A vs. A):  -0.1159, 0.0922, -0.0565, ...
-#>   SMD V2 values: {2, 5, 6, ...}  (linked A vs. A):  0.1677, 0.0909, -0.2645, ...
-#>   SMD V3 values: {0, 1, 6, ...}  (linked A vs. A):  -0.1159, 0.1562, -0.1222, ...
-#>   SMD V4                         (linked A vs. A):  -0.0319
-#>   SMD V1 values: {1, 2, 5, ...}  (linked B vs. B):  0.1038, 0.1699, -0.1400, ...
-#>   SMD V2 values: {0, 1, 6, ...}  (linked B vs. B):  -0.0718, 0.1781, -0.2074, ...
-#>   SMD V3 values: {1, 6, 7, ...}  (linked B vs. B):  0.2112, -0.1316, 0.1968, ...
-#>   SMD V4                         (linked B vs. B):  0.0931
-print(diag_flexrl, threshold = 0.75)
-#> <RL_diagnostics>
-#> 
-#>   Linked pairs  (score > 0.75):  55
-#> 
-#>   FDP           (true pairs):    0.291
-#>   Sensitivity   (true pairs):    0.402
-#> 
-#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.136
-#>                                                threshold 0.75: FDP ~ 0.052
-#>                                            max threshold 0.99: FDP ~ 0.000
-#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.142
-#>                                                threshold 0.75: FDP ~ 0.056
-#>                                            max threshold 0.99: FDP ~ 0.000
-#>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.140
-#>                                                threshold 0.75: FDP ~ 0.000
-#>                                            max threshold 0.99: FDP ~ 0.000
-#>   The score-based estimator is valid when the linkage model is well calibrated to the data.
-#>   The synthetic-data estimator is valid when the augmented task is equivalent to the
-#>   original one, which requires links and non-links to have similar distributions; similar
-#>   score-based FDP estimates on the original and augmented tasks support this prerequisite.
-#> 
-#>   Multivariate MMD  (linked A vs. A):  0.0173
-#>   Multivariate MMD  (linked B vs. B):  0.0209
-#> 
-#>   IoU support V1  (linked A vs. A):  0.8000
-#>   IoU support V2  (linked A vs. A):  1.0000
-#>   IoU support V3  (linked A vs. A):  0.8571
-#>   IoU support V4  (linked A vs. A):  0.8182
-#>   IoU support V1  (linked B vs. B):  0.8000
-#>   IoU support V2  (linked B vs. B):  0.8333
-#>   IoU support V3  (linked B vs. B):  0.8571
-#>   IoU support V4  (linked B vs. B):  0.7273
-#> 
-#>   Agreement V1  (linked A vs. linked B):  0.9818
-#>   Agreement V2  (linked A vs. linked B):  0.9636
-#>   Agreement V3  (linked A vs. linked B):  0.9455
-#>   Agreement V4  (linked A vs. linked B):  0.8909
-#>   Agreement V1  (true pairs):  0.9485
-#>   Agreement V2  (true pairs):  0.9278
-#>   Agreement V3  (true pairs):  0.8969
-#>   Agreement V4  (true pairs):  0.7732
-#> 
-#>   SMD V1 values: {0, 2, 3, ...}  (linked A vs. A):  -0.1159, 0.1660, -0.0734, ...
-#>   SMD V2 values: {1, 2, 6, ...}  (linked A vs. A):  0.1438, 0.1582, -0.2311, ...
-#>   SMD V3 values: {0, 1, 7, ...}  (linked A vs. A):  -0.1159, 0.2060, -0.0760, ...
-#>   SMD V4                         (linked A vs. A):  -0.0632
-#>   SMD V1 values: {2, 3, 5, ...}  (linked B vs. B):  0.2084, -0.1830, -0.1984, ...
-#>   SMD V2 values: {1, 2, 6, ...}  (linked B vs. B):  0.3223, 0.0867, -0.2045, ...
-#>   SMD V3 values: {0, 1, 3, ...}  (linked B vs. B):  -0.1250, 0.2492, -0.0853, ...
-#>   SMD V4                         (linked B vs. B):  -0.0643
-plot(diag_flexrl, "scores")
-
-plot(diag_flexrl, "distributions", threshold = 0.75)
-
-
-plot(diag_flexrl, "convergence")
-
-
-
-
-
-
-
-
-
-
-plot(diag_flexrl, "FDP")
-
-plot(diag_flexrl, "discrepancy")
-
-
-
-
-
 fit_brl <- link_with_BRL( prep_data$encodedA, prep_data$encodedB, 
                           list( flds = PIVs, 
-                                types = rep("bi",length(PIVs)) ) )
+                                types = rep("bi",length(PIVs)),
+                                nIter = 500 ) )
 diag_brl <- RL_diagnostics(fit_brl, prep_data$encodedA, prep_data$encodedB,
-                           PIVs, PIVs_type, true_pairs = prep_data$true_pairs,
+                           PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs,
                            FDP_estimation = TRUE, RL_method = "BRL", 
-                           flds = PIVs, types = rep("bi",length(PIVs)),
+                           flds = PIVs, types = rep("bi",length(PIVs)), nIter = 500,
                            maxIter4CV = 1, n_repeats = 1)
-#> Iteration: 0, Accuracy: 49.74%
-#> Warning: PIV 'V2': synthetic records out of the common support were removed.
+#> 
+#> FDP estimation on augmented RL taskIteration: 0, Accuracy: 42.97%
+#> Warning: PIV 'V1': synthetic records out of the common support were removed.
 #> Warning: PIV 'V3': synthetic records out of the common support were removed.
-#> BRL results (average over 1 iterations):
-#>                            0.50  0.51  0.52  0.53  0.54  0.55  0.56  0.57  0.58
-#> FDP model score estimator  0.21  0.21  0.21  0.21  0.21  0.21  0.21  0.21  0.21
-#> FDP synth data estimator   0.00  0.00  0.00  0.00  0.00  0.00  0.00  0.00  0.00
-#> Linked pairs (augm. RL)   55.00 54.00 54.00 54.00 54.00 54.00 54.00 54.00 54.00
-#> Linked pairs (RL)         55.00 54.00 54.00 54.00 54.00 54.00 54.00 54.00 54.00
-#>                            0.59  0.60  0.61  0.62  0.63  0.64  0.65  0.66  0.67
-#> FDP model score estimator  0.21  0.21  0.21  0.21  0.21  0.21  0.21  0.21  0.21
-#> FDP synth data estimator   0.00  0.00  0.00  0.00  0.00  0.00  0.00  0.00  0.00
-#> Linked pairs (augm. RL)   54.00 54.00 54.00 54.00 54.00 54.00 54.00 54.00 54.00
-#> Linked pairs (RL)         54.00 54.00 54.00 54.00 54.00 54.00 54.00 54.00 54.00
-#>                           0.68 0.69 0.70 0.71 0.72 0.73 0.74 0.75 0.76  0.77
-#> FDP model score estimator  0.2  0.2  0.2  0.2  0.2  0.2  0.2  0.2  0.2  0.19
-#> FDP synth data estimator   0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.00
-#> Linked pairs (augm. RL)   52.0 52.0 52.0 52.0 52.0 52.0 49.0 49.0 48.0 43.00
-#> Linked pairs (RL)         52.0 52.0 52.0 52.0 52.0 52.0 49.0 49.0 48.0 43.00
-#>                            0.78  0.79  0.80  0.81  0.82 0.83 0.84 0.85 0.86
-#> FDP model score estimator  0.19  0.18  0.18  0.17  0.16 0.15 0.15 0.15    0
-#> FDP synth data estimator   0.00  0.00  0.00  0.00  0.00 0.00 0.00 0.00    0
-#> Linked pairs (augm. RL)   38.00 34.00 26.00 17.00 12.00 8.00 8.00 1.00    0
-#> Linked pairs (RL)         38.00 34.00 26.00 17.00 12.00 8.00 8.00 1.00    0
-#>                           0.87 0.88 0.89 0.90 0.91 0.92 0.93 0.94 0.95 0.96
-#> FDP model score estimator    0    0    0    0    0    0    0    0    0    0
-#> FDP synth data estimator     0    0    0    0    0    0    0    0    0    0
-#> Linked pairs (augm. RL)      0    0    0    0    0    0    0    0    0    0
-#> Linked pairs (RL)            0    0    0    0    0    0    0    0    0    0
-#>                           0.97 0.98 0.99
-#> FDP model score estimator    0    0    0
-#> FDP synth data estimator     0    0    0
-#> Linked pairs (augm. RL)      0    0    0
-#> Linked pairs (RL)            0    0    0
-#> BRL results (average over 1 iterations):
-#>                           0.50  0.51  0.52  0.53  0.54  0.55  0.56  0.57  0.58
-#> FDP model score estimator  0.2  0.19  0.19  0.19  0.19  0.18  0.18  0.18  0.18
-#> Linked pairs (RL)         55.0 54.00 54.00 54.00 54.00 53.00 53.00 53.00 53.00
-#>                            0.59  0.60  0.61  0.62  0.63  0.64  0.65  0.66  0.67
-#> FDP model score estimator  0.18  0.18  0.18  0.18  0.18  0.18  0.18  0.18  0.18
-#> Linked pairs (RL)         53.00 53.00 53.00 53.00 53.00 53.00 53.00 53.00 53.00
-#>                            0.68  0.69  0.70  0.71  0.72  0.73  0.74  0.75  0.76
-#> FDP model score estimator  0.18  0.18  0.18  0.18  0.18  0.18  0.18  0.18  0.18
-#> Linked pairs (RL)         53.00 53.00 52.00 51.00 51.00 51.00 51.00 51.00 50.00
-#>                            0.77  0.78  0.79  0.80  0.81  0.82  0.83  0.84 0.85
-#> FDP model score estimator  0.18  0.18  0.17  0.17  0.16  0.16  0.15  0.15 0.14
-#> Linked pairs (RL)         50.00 46.00 43.00 38.00 31.00 26.00 18.00 13.00 8.00
-#>                           0.86 0.87 0.88 0.89 0.90 0.91 0.92 0.93 0.94 0.95
-#> FDP model score estimator 0.14    0    0    0    0    0    0    0    0    0
-#> Linked pairs (RL)         3.00    0    0    0    0    0    0    0    0    0
-#>                           0.96 0.97 0.98 0.99
-#> FDP model score estimator    0    0    0    0
-#> Linked pairs (RL)            0    0    0    0
+#> Warning: PIV 'V4': synthetic records out of the common support were removed.
+#> BRL results (average over 1 iterations) (augmented RL task) `compute_augmRL_FDP_synth`
+#> Decision rule threshold      0.5 0.55    0.6 0.65    0.7 0.75    0.8 0.85    0.9 0.95
+#> FDP model score estimator    0.19    0.18    0.18    0.18    0.18    0.17    0.15    0.13    0.1 0
+#> FDP synth data estimator     0   0   0   0   0   0   0   0   0   0
+#> Linked pairs (augm. RL)      54  52  52  52  51  47  34  14  2   0
+#> Linked pairs (RL)            54  52  52  52  51  47  34  14  2   0
+#> 
+#> FDP estimation on original RL task
+#> BRL results (average over 1 iterations) (original RL task) `compute_RL_FDP_score`
+#> Decision rule threshold      0.5 0.55    0.6 0.65    0.7 0.75    0.8 0.85    0.9 0.95
+#> FDP model score estimator    0.18    0.18    0.17    0.17    0.17    0.16    0.14    0.12    0.07    0
+#> Linked pairs (RL)            56  55  53  53  53  48  39  22  1   0
 diag_brl # print(diag_brl)
 #> <RL_diagnostics>
 #> 
-#>   Linked pairs  (score > 0.50):  55
+#>   Linked pairs  (score > 0.50):  56
 #> 
-#>   FDP           (true pairs):    0.127
-#>   Sensitivity   (true pairs):    0.495
+#>   FDP           (true pairs):    0.107
+#>   Sensitivity   (true pairs):    0.521
 #> 
-#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.195
-#>                                                threshold 0.50: FDP ~ 0.195
-#>                                            max threshold 0.85: FDP ~ 0.140
-#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.211
-#>                                                threshold 0.50: FDP ~ 0.211
-#>                                            max threshold 0.85: FDP ~ 0.149
+#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.183
+#>                                                threshold 0.50: FDP ~ 0.183
+#>                                            max threshold 0.90: FDP ~ 0.073
+#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.194
+#>                                                threshold 0.50: FDP ~ 0.194
+#>                                            max threshold 0.90: FDP ~ 0.097
 #>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.000
 #>                                                threshold 0.50: FDP ~ 0.000
-#>                                            max threshold 0.85: FDP ~ 0.000
+#>                                            max threshold 0.90: FDP ~ 0.000
 #>   The score-based estimator is valid when the linkage model is well calibrated to the data.
 #>   The synthetic-data estimator is valid when the augmented task is equivalent to the
 #>   original one, which requires links and non-links to have similar distributions; similar
 #>   score-based FDP estimates on the original and augmented tasks support this prerequisite.
 #> 
-#>   Multivariate MMD  (linked A vs. A):  0.0183
-#>   Multivariate MMD  (linked B vs. B):  0.0187
+#>   Multivariate MMD  (linked A vs. A):  0.0151
+#>   Multivariate MMD  (linked B vs. B):  0.0109
 #> 
-#>   IoU support V1  (linked A vs. A):  0.8000
-#>   IoU support V2  (linked A vs. A):  1.0000
-#>   IoU support V3  (linked A vs. A):  0.8571
-#>   IoU support V4  (linked A vs. A):  0.7273
+#>   IoU support V1  (linked A vs. A):  1.0000
+#>   IoU support V2  (linked A vs. A):  0.8333
+#>   IoU support V3  (linked A vs. A):  1.0000
+#>   IoU support V4  (linked A vs. A):  0.9167
 #>   IoU support V1  (linked B vs. B):  0.8000
 #>   IoU support V2  (linked B vs. B):  0.8333
-#>   IoU support V3  (linked B vs. B):  0.8571
-#>   IoU support V4  (linked B vs. B):  0.7273
+#>   IoU support V3  (linked B vs. B):  1.0000
+#>   IoU support V4  (linked B vs. B):  0.8333
 #> 
 #>   Agreement V1  (linked A vs. linked B):  1.0000
 #>   Agreement V2  (linked A vs. linked B):  1.0000
 #>   Agreement V3  (linked A vs. linked B):  1.0000
 #>   Agreement V4  (linked A vs. linked B):  1.0000
-#>   Agreement V1  (true pairs):  0.9485
-#>   Agreement V2  (true pairs):  0.9278
-#>   Agreement V3  (true pairs):  0.8969
-#>   Agreement V4  (true pairs):  0.7732
+#>   Agreement V1  (true pairs):  0.9375
+#>   Agreement V2  (true pairs):  0.9375
+#>   Agreement V3  (true pairs):  0.9271
+#>   Agreement V4  (true pairs):  0.7708
 #> 
-#>   SMD V1 values: {3, 4, 5, ...}  (linked A vs. A):  0.1181, -0.1499, 0.1613, ...
-#>   SMD V2 values: {1, 2, 5, ...}  (linked A vs. A):  0.0150, 0.1010, -0.1054, ...
-#>   SMD V3 values: {0, 3, 5, ...}  (linked A vs. A):  -0.1159, 0.0969, 0.0665, ...
-#>   SMD V4                         (linked A vs. A):  0.1380
-#>   SMD V1 values: {0, 4, 5, ...}  (linked B vs. B):  -0.0718, -0.0478, 0.0330, ...
-#>   SMD V2 values: {0, 1, 5, ...}  (linked B vs. B):  -0.0718, 0.0507, -0.1497, ...
-#>   SMD V3 values: {0, 2, 7, ...}  (linked B vs. B):  -0.1250, -0.1013, 0.1210, ...
-#>   SMD V4                         (linked B vs. B):  0.0403
+#>   SMD V1 values: {2, 4, 5, ...}  (linked A vs. A):  0.0990, 0.1067, -0.2388, ...
+#>   SMD V2 values: {0, 3, 4, ...}  (linked A vs. A):  -0.0816, 0.1353, -0.1922, ...
+#>   SMD V3 values: {1, 2, 5, ...}  (linked A vs. A):  0.1170, 0.0904, -0.0964, ...
+#>   SMD V4                         (linked A vs. A):  -0.0939
+#>   SMD V1 values: {0, 3, 5, ...}  (linked B vs. B):  -0.1018, 0.1813, -0.1101, ...
+#>   SMD V2 values: {1, 3, 4, ...}  (linked B vs. B):  0.1542, 0.1647, -0.2679, ...
+#>   SMD V3 values: {5, 6, 7, ...}  (linked B vs. B):  -0.0461, -0.1373, 0.1559, ...
+#>   SMD V4                         (linked B vs. B):  -0.0385
 print(diag_brl, threshold = 0.75)
 #> <RL_diagnostics>
 #> 
-#>   Linked pairs  (score > 0.75):  51
+#>   Linked pairs  (score > 0.75):  48
 #> 
-#>   FDP           (true pairs):    0.137
-#>   Sensitivity   (true pairs):    0.454
+#>   FDP           (true pairs):    0.083
+#>   Sensitivity   (true pairs):    0.458
 #> 
-#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.195
-#>                                                threshold 0.75: FDP ~ 0.180
-#>                                            max threshold 0.85: FDP ~ 0.140
-#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.211
-#>                                                threshold 0.75: FDP ~ 0.197
-#>                                            max threshold 0.85: FDP ~ 0.149
+#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.183
+#>                                                threshold 0.75: FDP ~ 0.157
+#>                                            max threshold 0.90: FDP ~ 0.073
+#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.194
+#>                                                threshold 0.75: FDP ~ 0.172
+#>                                            max threshold 0.90: FDP ~ 0.097
 #>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.000
 #>                                                threshold 0.75: FDP ~ 0.000
-#>                                            max threshold 0.85: FDP ~ 0.000
+#>                                            max threshold 0.90: FDP ~ 0.000
 #>   The score-based estimator is valid when the linkage model is well calibrated to the data.
 #>   The synthetic-data estimator is valid when the augmented task is equivalent to the
 #>   original one, which requires links and non-links to have similar distributions; similar
 #>   score-based FDP estimates on the original and augmented tasks support this prerequisite.
 #> 
-#>   Multivariate MMD  (linked A vs. A):  0.0210
-#>   Multivariate MMD  (linked B vs. B):  0.0216
+#>   Multivariate MMD  (linked A vs. A):  0.0219
+#>   Multivariate MMD  (linked B vs. B):  0.0160
 #> 
-#>   IoU support V1  (linked A vs. A):  0.8000
-#>   IoU support V2  (linked A vs. A):  1.0000
-#>   IoU support V3  (linked A vs. A):  0.8571
-#>   IoU support V4  (linked A vs. A):  0.7273
+#>   IoU support V1  (linked A vs. A):  1.0000
+#>   IoU support V2  (linked A vs. A):  0.8333
+#>   IoU support V3  (linked A vs. A):  1.0000
+#>   IoU support V4  (linked A vs. A):  0.9167
 #>   IoU support V1  (linked B vs. B):  0.8000
 #>   IoU support V2  (linked B vs. B):  0.8333
-#>   IoU support V3  (linked B vs. B):  0.8571
-#>   IoU support V4  (linked B vs. B):  0.7273
+#>   IoU support V3  (linked B vs. B):  1.0000
+#>   IoU support V4  (linked B vs. B):  0.8333
 #> 
 #>   Agreement V1  (linked A vs. linked B):  1.0000
 #>   Agreement V2  (linked A vs. linked B):  1.0000
 #>   Agreement V3  (linked A vs. linked B):  1.0000
 #>   Agreement V4  (linked A vs. linked B):  1.0000
-#>   Agreement V1  (true pairs):  0.9485
-#>   Agreement V2  (true pairs):  0.9278
-#>   Agreement V3  (true pairs):  0.8969
-#>   Agreement V4  (true pairs):  0.7732
+#>   Agreement V1  (true pairs):  0.9375
+#>   Agreement V2  (true pairs):  0.9375
+#>   Agreement V3  (true pairs):  0.9271
+#>   Agreement V4  (true pairs):  0.7708
 #> 
-#>   SMD V1 values: {1, 3, 4, ...}  (linked A vs. A):  -0.1275, 0.1631, -0.1170, ...
-#>   SMD V2 values: {2, 5, 6, ...}  (linked A vs. A):  0.1369, -0.0762, -0.1132, ...
-#>   SMD V3 values: {0, 3, 5, ...}  (linked A vs. A):  -0.1159, 0.1254, 0.0988, ...
-#>   SMD V4                         (linked A vs. A):  0.1527
-#>   SMD V1 values: {0, 2, 5, ...}  (linked B vs. B):  -0.0718, 0.0454, -0.0343, ...
-#>   SMD V2 values: {1, 5, 6, ...}  (linked B vs. B):  0.0774, -0.1216, -0.0848, ...
-#>   SMD V3 values: {0, 1, 7, ...}  (linked B vs. B):  -0.1250, 0.0882, 0.1346, ...
-#>   SMD V4                         (linked B vs. B):  0.0545
+#>   SMD V1 values: {1, 2, 5, ...}  (linked A vs. A):  0.1022, 0.1880, -0.2957, ...
+#>   SMD V2 values: {0, 3, 4, ...}  (linked A vs. A):  -0.0816, 0.1275, -0.2084, ...
+#>   SMD V3 values: {1, 2, 7, ...}  (linked A vs. A):  0.1733, 0.1498, -0.1541, ...
+#>   SMD V4                         (linked A vs. A):  0.0146
+#>   SMD V1 values: {0, 3, 5, ...}  (linked B vs. B):  -0.1018, 0.2229, -0.1708, ...
+#>   SMD V2 values: {1, 3, 4, ...}  (linked B vs. B):  0.0787, 0.1568, -0.2828, ...
+#>   SMD V3 values: {1, 2, 6, ...}  (linked B vs. B):  0.0889, 0.1003, -0.1164, ...
+#>   SMD V4                         (linked B vs. B):  0.0668
 plot(diag_brl, "scores")
 
 plot(diag_brl, "distributions", threshold = 0.75)

@@ -68,8 +68,8 @@ simulate_data(
 
   Named list (one entry per PIV) of numeric vectors for the survival
   model generating the changes (see
-  [`survival_model()`](survival_model.md)); only used for
-  `dynamics = "structured"` PIVs.
+  [`survival_model()`](https://robachowyk.github.io/FlexRL/reference/survival_model.md));
+  only used for `dynamics = "structured"` PIVs.
 
 - enforce_estimability:
 
@@ -78,8 +78,10 @@ simulate_data(
 
 - model_dynamics:
 
-  Object from [`survival_model()`](survival_model.md) used to generate
-  the changes of the structured PIVs (default exponential).
+  Object from
+  [`survival_model()`](https://robachowyk.github.io/FlexRL/reference/survival_model.md)
+  used to generate the changes of the structured PIVs (default
+  exponential).
 
 ## Value
 
@@ -114,14 +116,14 @@ p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
 cond_hazard_params <- list( V1 = c(), V2 = c(), 
                             V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
-gen_data <- simulate_data( PIVs_config, n_values, c(250, 300), 200, 
+gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
                            p_mistake, p_missing, cond_hazard_params, TRUE )
 str(gen_data, max.level = 1)
 #> List of 6
-#>  $ data1          :'data.frame': 250 obs. of  11 variables:
-#>  $ data2          :'data.frame': 300 obs. of  9 variables:
+#>  $ data1          :'data.frame': 150 obs. of  11 variables:
+#>  $ data2          :'data.frame': 200 obs. of  9 variables:
 #>  $ n_values       : int [1:4] 5 6 7 12
-#>  $ time_difference: num [1:200] 0.00673 0.00642 0.00671 0.00503 0.00642 ...
-#>  $ proba_same_H   : num [1:200, 1:4] 1 1 1 1 1 1 1 1 1 1 ...
-#>  $ true_pairs     :'data.frame': 200 obs. of  2 variables:
+#>  $ time_difference: num [1:100] 0.00333 0.0042 0.00267 0.00799 0.00669 ...
+#>  $ proba_same_H   : num [1:100, 1:4] 1 1 1 1 1 1 1 1 1 1 ...
+#>  $ true_pairs     :'data.frame': 100 obs. of  2 variables:
 ```
