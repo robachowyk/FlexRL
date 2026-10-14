@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <meta name="generator" content="litedown 0.11">
-<title>FlexRL-RL-vignette</title>
+<title>Record Linkage with FlexRL</title>
 <style type="text/css">
 body {
   font-family: sans-serif;
@@ -115,12 +115,10 @@ section.footnotes {
 </head>
 <body>
 <div class="frontmatter">
-<div class="title"><h1>FlexRL-RL-vignette</h1></div>
+<div class="title"><h1>Record Linkage with FlexRL</h1></div>
 </div>
 <div class="body">
-<pre><code class="language-r">set.seed(0)
-library(FlexRL)
-#&gt; If you are happy with FlexRL, please cite us! If you are unhappy, please cite us anyway (and feel free to complain as well).
+<pre><code class="language-r">library(FlexRL)
 </code></pre>
 <p><code>FlexRL</code> is a package proposing flexible probabilistic <strong>R</strong>ecord <strong>L</strong>inkage with diagnostic tools for downstream inference on linked data. The record linkage algorithm <code>StEM()</code> uses a <strong>St</strong>ochastic <strong>E</strong>xpectation <strong>M</strong>aximisation approach to combine 2 data sources and outputs the set of records referring to the same entities.</p>
 <p>More details on the <a href="https://doi.org/10.1093/jrsssc/qlaf016">record linkage methodology</a>; on the <a href="https://doi.org/10.1002/sim.70292">false discovery proportion estimation</a>; and on the potential risks of downstream inference on linked data (Robach et al., in preparation).</p>
@@ -141,9 +139,6 @@ library(FlexRL)
                                cond_hazard_cov = list(cov1 = c(&quot;Xe&quot;, &quot;Xf&quot;),
                                                       cov2 = c()))
 )
-PIVs &lt;- names(PIVs_config)
-PIVs_stable &lt;- sapply(PIVs_config, function(x) x$dynamics != &quot;structured&quot;)
-PIVs_type &lt;- list( V1 = FALSE, V2 = FALSE, V3 = FALSE, V4 = TRUE )
 </code></pre>
 <p>With PIVs that evolve over time, when modelling is possible, it is natural to parametrise the probability that underlying true values of the registered data for a pair of linked records coincide using a survival function. It is possible to use an exponential model, whose baseline hazard is constant in time; a Weibull model, whose baseline hazard is monotone in time; a Gompertz model, whose baseline hazard grows or decays exponentially in time; a piecewise-constant model, whose baseline hazard takes one value on each interval defined by given cut points; a custom model, supplied as a survival function <code>S(X, alpha, times)</code> together with a number of parameters and their starting values. These models may assume proportional hazards, accelerated failure time, proportional odds, additive hazards, … If the covariates are categorical, make sure to encode them into dummies and drop one category (an intercept is included automatically). Since only the agreement of the true values at the observed time gap is used, the likelihood is the same for every model, <code>-sum(Hequal \* log(S) + (1 - Hequal) \* log(1 - S))</code>, and the parameters are estimated with <code>stats::nlminb()</code> at each M-step.</p>
 <pre><code class="language-r">n_values  &lt;- c(8, 9, 10, 15)
@@ -151,6 +146,8 @@ p_mistake &lt;- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
                   V3 = c(0.02, 0.02), V4 = c(0.02, 0.02))
 p_missing &lt;- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+PIVs &lt;- names(PIVs_config)
+PIVs_type &lt;- list( V1 = FALSE, V2 = FALSE, V3 = FALSE, V4 = TRUE )
 cond_hazard_params &lt;- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(-0.35, -0.50, -0.70))
 
 gen_data &lt;- simulate_data(
@@ -282,8 +279,8 @@ df_results
 #&gt; max SMD                  NA         NA
 #&gt; min support IoU          NA         NA
 #&gt; max MMD                  NA         NA
-#&gt; time (secs)            0.00     148.00
-#&gt; memory (Mb)            2.00      52.00
+#&gt; time (secs)            0.00     151.00
+#&gt; memory (Mb)            2.00      35.00
 </code></pre>
 <p>Let us run record linkage diagnostics:</p>
 <pre><code class="language-r">diag &lt;- RL_diagnostics(fit = fit, encodedA = prep_data$encodedA, encodedB = prep_data$encodedB,
@@ -680,11 +677,11 @@ round(df_results[9:11,],2)
 #&gt; Computational time and memory required
 round(df_results[12:13,],2)
 #&gt;                  Naive      FlexRL     BRL        multilink  fastLink  
-#&gt; time (secs)               0        148          2         28          1
-#&gt; memory (Mb)               2         52         64        191         29
+#&gt; time (secs)               0        151          2         30          1
+#&gt; memory (Mb)               2         35         46        182         29
 #&gt;                  reclin2    diyar      fedmatch  
-#&gt; time (secs)               0          2          2
-#&gt; memory (Mb)             106        106         59
+#&gt; time (secs)               0          2          3
+#&gt; memory (Mb)              97         97         65
 </code></pre>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js" defer></script>

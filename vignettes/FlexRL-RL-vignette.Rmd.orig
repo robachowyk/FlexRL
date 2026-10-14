@@ -1,5 +1,5 @@
 ---
-title: "FlexRL-RL-vignette"
+title: "Record Linkage with FlexRL"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{FlexRL-RL-vignette}
@@ -7,20 +7,20 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup-1, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 ```
 
-```{r, include = FALSE}
+```{r setup-2, include = FALSE}
 pak::pak("robachowyk/FlexRL")
 options(digits = 2, scipen = 999)
+set.seed(0)
 ```
 
-```{r setup}
-set.seed(0)
+```{r setup-3}
 library(FlexRL)
 ```
 
@@ -48,9 +48,6 @@ PIVs_config <- list( V1 = list(dynamics = "stable",
                                cond_hazard_cov = list(cov1 = c("Xe", "Xf"),
                                                       cov2 = c()))
 )
-PIVs <- names(PIVs_config)
-PIVs_stable <- sapply(PIVs_config, function(x) x$dynamics != "structured")
-PIVs_type <- list( V1 = FALSE, V2 = FALSE, V3 = FALSE, V4 = TRUE )
 ```
 
 With PIVs that evolve over time, when modelling is possible, it is natural to parametrise the probability that underlying true values of the registered data for a pair of linked records coincide using a survival function. It is possible to use an exponential model, whose baseline hazard is constant in time; a Weibull model, whose baseline hazard is monotone in time; a Gompertz model, whose baseline hazard grows or decays exponentially in time; a piecewise-constant model, whose baseline hazard takes one value on each interval defined by given cut points; a custom model, supplied as a survival function `S(X, alpha, times)` together with a number of parameters and their starting values. These models may assume proportional hazards, accelerated failure time, proportional odds, additive hazards, ... If the covariates are categorical, make sure to encode them into dummies and drop one category (an intercept is included automatically). Since only the agreement of the true values at the observed time gap is used, the likelihood is the same for every model, `-sum(Hequal \* log(S) + (1 - Hequal) \* log(1 - S))`, and the parameters are estimated with `stats::nlminb()` at each M-step.
@@ -61,6 +58,8 @@ p_mistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
                   V3 = c(0.02, 0.02), V4 = c(0.02, 0.02))
 p_missing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+PIVs <- names(PIVs_config)
+PIVs_type <- list( V1 = FALSE, V2 = FALSE, V3 = FALSE, V4 = TRUE )
 cond_hazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(-0.35, -0.50, -0.70))
 
 gen_data <- simulate_data(

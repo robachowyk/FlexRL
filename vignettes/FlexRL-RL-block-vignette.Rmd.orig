@@ -1,5 +1,5 @@
 ---
-title: "FlexRL-RL-block-vignette"
+title: "Scalable Record Linkage with FlexRL"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{FlexRL-RL-block-vignette}
@@ -7,20 +7,20 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup-1, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 ```
 
-```{r, include = FALSE}
+```{r setup-2, include = FALSE}
 pak::pak("robachowyk/FlexRL")
 options(digits = 2, scipen = 999)
+set.seed(0)
 ```
 
-```{r setup}
-set.seed(0)
+```{r setup-3}
 library(FlexRL)
 ```
 
@@ -32,8 +32,7 @@ Several other algorithms for record linkage are available in R. The `link_with_*
 
 This vignette runs these wrappers on the same pipeline for:
 - a regional subset of the [NLTCS](https://www.icpsr.umich.edu/web/NACDA/studies/9681/versions/V5) data (1982 and 1994 waves)
-- a regional subset of the [SHIW](https://www.bancaditalia.it/statistiche/tematiche/indagini-famiglie-imprese/bilanci-famiglie/distribuzione-microdati/index.html) data (2016 and 2020 waves)
-- the full SHIW data with and without regional blocking
+- the [SHIW](https://www.bancaditalia.it/statistiche/tematiche/indagini-famiglie-imprese/bilanci-famiglie/distribuzione-microdati/index.html) data (2012 and 2014 waves) data with and without regional blocking
 
 ## One pipeline for all the wrappers
 
@@ -41,16 +40,15 @@ This vignette runs these wrappers on the same pipeline for:
 wrapper_args <- function(method, prep_data, ...) {
   PIVs <- names(prep_data$PIVs_config)
   args <- c(...)
-
     switch(method,
-         FlexRL    = c(list(data = prep_data, StEM_iter = 10, StEM_burnin = 5, gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10),
+         FlexRL    = c(list(data = prep_data),
                        args[intersect(names(args), names(formals(FlexRL::StEM)))]),
          BRL       = c(list(flds = PIVs, types = rep("bi", length(PIVs)), nIter = 1000),
                        args[intersect(names(args), c(names(formals(BRL::compareRecords)), names(formals(BRL::bipartiteGibbs))))]),
          fastLink  = c(list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, return.all = TRUE, n.cores = 1),
                        args[intersect(names(args), names(formals(fastLink::fastLink)))]),
          multilink = c(list(types = rep("bi", length(PIVs)), breaks = stats::setNames(as.list(rep(NA, length(PIVs))), PIVs),
-                            duplicates = c(0, 0), n_iter = 300, max_cc_size = 50),
+                            duplicates = c(0, 0), n_iter = 1000, max_cc_size = 50),
                        args[intersect(names(args), c(names(formals(multilink::create_comparison_data)),
                                                      names(formals(multilink::reduce_comparison_data)),
                                                      names(formals(multilink::specify_prior)),
@@ -82,7 +80,6 @@ run_wrapper <- function(method, prep_data, arguments) {
     prep_data$encodedA <- prep_data$encodedA[, c(PIVs, "local_id", "source")]
     prep_data$encodedB <- prep_data$encodedB[, c(PIVs, "local_id", "source")]
   }
-
   tryCatch(link_with(prep_data$encodedA, prep_data$encodedB, arguments),
            error = function(e) {
              if (grepl("cannot allocate|memory|bad_alloc|too large|long vectors", conditionMessage(e), ignore.case = TRUE)) {
@@ -106,45 +103,33 @@ evaluate_linkage <- function(fit, true_pairs, threshold = 0.5) {
     FDP = false_positive / (true_positive + false_positive))
 }
 
-results_rows <- c("TP",
-                  "FP",
-                  "FN",
-                  "sensitivity",
-                  "FDP",
-                  "hat FDP score",
-                  "hat FDP score*",
-                  "hat FDP synth*",
-                  "max SMD",
-                  "min support IoU",
+results_rows <- c("TP", "FP", "FN", "sensitivity", "FDP",
+                  "est. FDP score", "est. FDP score \u22C6",
+                  "est. FDP synth \u22C6", "max SMD", "min support IoU", 
                   "max MMD")
 
 run_all_wrappers <- function(prep_data, PIVs_type, methods, FDP_estimation = TRUE,
                              maxIter4CV = 3, n_repeats = 5, ...) {
   args <- list(...)
-
   op <- options()
   on.exit(options(op))
   PIVs <- names(prep_data$PIVs_config)
   true_pairs <- do.call(paste, c(prep_data$true_pairs, list(sep = "_")))
   df_results <- data.frame(matrix(NA, nrow = length(results_rows), ncol = 0))
   rownames(df_results) <- results_rows
-
   naive_fit <- naive_linkage(PIVs = PIVs, encodedA = prep_data$encodedA, encodedB = prep_data$encodedB)
   df_results[1:5, "Naive"] <- evaluate_linkage(list(idxA = naive_fit[[1]], idxB = naive_fit[[2]]), true_pairs)
-
   for (method in methods) {
     arguments <- wrapper_args(method, prep_data, args)
     fit <- run_wrapper(method, prep_data, arguments)
     df_results[1:5, method] <- evaluate_linkage(fit, true_pairs)
     if (is.null(fit) || length(fit$idxA) == 0) next
-
     encodedA <- prep_data$encodedA
     encodedB <- prep_data$encodedB
     if (method == "diyar") {
       encodedA <- encodedA[, c(PIVs, "local_id", "source")]
       encodedB <- encodedB[, c(PIVs, "local_id", "source")]
     }
-
     diag <- do.call(RL_diagnostics, c(list(fit, encodedA, encodedB, PIVs, PIVs_type, PIVs,
                                            true_pairs = prep_data$true_pairs, FDP_estimation = FDP_estimation,
                                            RL_method = method, data = prep_data, maxIter4CV = maxIter4CV, n_repeats = n_repeats),
@@ -185,7 +170,6 @@ PIVs_config <- list(
   DOB_MONTH = list(dynamics = "stable",   bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
   DOB_YEAR  = list(dynamics = "stable",   bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
   STATE     = list(dynamics = "flexible", bound_mistakes = c(NA, NA),     fix_mistakes = c(NA, NA)))
-PIVs <- names(PIVs_config)
 PIVs_type <- list(SEX = FALSE, DOB_MONTH = TRUE, DOB_YEAR = TRUE, STATE = FALSE)
 ```
 
@@ -207,51 +191,106 @@ df_results_NLTCS <- run_all_wrappers(prep_data, PIVs_type, methods)
 show_results(df_results_NLTCS)
 ```
 
-## Regional subset of the SHIW data
-
-We use 4 **P**artially **I**dentifying **V**ariable**s** to link the records: sex and birth year are `stable`, education level and marital status are `flexible`.
-
-```{r shiw-block, warning=FALSE}
-df2016 <- read.csv("ex-reg-SHIW-16.csv", row.names = 1)
-df2020 <- read.csv("ex-reg-SHIW-20.csv", row.names = 1)
-
-PIVs_config <- list(
-  ANASCI = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
-  SESSO  = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
-  STUDIO = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
-  STACIV = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)))
-PIVs <- names(PIVs_config)
-PIVs_type <- list(ANASCI = TRUE, SESSO = FALSE, STUDIO = FALSE, STACIV = FALSE)
-
-prep_data <- prepare_data(df2016, df2020, "2016", "2020", PIVs_config, same_mistakes = TRUE, uniq_id = "ID")
-
-c(n_A = nrow(prep_data$encodedA), n_B = nrow(prep_data$encodedB), n_links = nrow(prep_data$true_pairs))
-
-prep_data$n_values
-```
-
-```{r shiw-block-results, warning=FALSE, message=FALSE, results="hide"}
-df_results_SHIW <- run_all_wrappers(prep_data, PIVs_type, methods)
-```
-
-```{r}
-show_results(df_results_SHIW)
-```
-
 ## Full SHIW data
 
+```{r shiw-0, include=FALSE}
+temp <- tempfile()
+utils::download.file("https://www.bancaditalia.it/statistiche/tematiche/indagini-famiglie-imprese/bilanci-famiglie/distribuzione-microdati/documenti/storico/storico_ascii.zip", temp, mode="wb")
+utils::unzip(temp, "CSV/comp.csv")
+comp <- utils::read.csv("CSV/comp.csv", stringsAsFactors = FALSE)
+unlink(temp)
+# Filter out years before 1989, since they do not contain NORDP (household member id)
+comp <- comp[comp$ANNO >= 1989,]
+# Construct NORD (household member id) which will be constant across waves
+comp["NORDC"] <- NA
+# Pre-sort
+comp <- comp[order(comp$NQUEST, comp$ANNO, comp$NORD),]
+# Loop through records by NQUEST, ANNO, then NORD, computing a corrected 
+# NORDC based on NORDP (household member id in the previous wave)
+# Initialize
+i <- 1
+prev.NQUEST <- -1
+prev.ANNO <- -1
+prev.NORDCs <- new.env(hash = TRUE)
+this.NORDCs <- new.env(hash = TRUE)
+ctr.NORDC <- 1
+first.ANNO <- TRUE
+comp.nrow <- nrow(comp)
+# For printing progress
+increment5 <- floor(0.025*comp.nrow) # 2.5% of rows
+countdown <- increment5
+while (i <= comp.nrow) {
+  if (prev.NQUEST != comp$NQUEST[i]) {
+    # Starting a new NQUEST
+    prev.NORDCs <- new.env(hash = TRUE)
+    this.NORDCs <- new.env(hash = TRUE)
+    ctr.NORDC <- 1
+    first.ANNO <- TRUE
+    prev.NQUEST <- comp$NQUEST[i]
+    prev.ANNO <- comp$ANNO[i]
+  } else {
+    # Still in same NQUEST
+    if (prev.ANNO != comp$ANNO[i]) {
+      # Starting a new ANNO
+      prev.NORDCs <- this.NORDCs
+      this.NORDCs <- new.env(hash = TRUE)
+      first.ANNO <- FALSE
+      prev.ANNO <- comp$ANNO[i]
+    }
+  }
+  # Need to convert to strings, so they can be used as keys for prev.NORDCs, this.NORDCs
+  NORD <- as.character(comp$NORD[i])
+  NORDP <- as.character(comp$NORDP[i])
+  if (is.na(NORDP) || first.ANNO) {
+    # A new household member (never seen before)
+    this.NORDC <- ctr.NORDC
+    ctr.NORDC <- ctr.NORDC + 1
+  } else {
+    # Household member should exist in the previous wave
+    prev.NORDC <- prev.NORDCs[[NORDP]]
+    if (is.null(prev.NORDC)) {
+      # NORDP references a household member in the previous wave that doesn't 
+      # exist. Assume household member is new.
+      this.NORDC <- ctr.NORDC
+      ctr.NORDC <- ctr.NORDC + 1
+    } else this.NORDC <- prev.NORDC
+  }
+  this.NORDCs[[NORD]] <- this.NORDC
+  comp$NORDC[i] <- this.NORDC
+  i <- i + 1
+  # Show progress
+  countdown <- countdown - 1
+  if (countdown == 0) {
+    countdown <- increment5
+    cat(".")
+  }
+}
+comp$ID = do.call(paste, c(comp[,c("NQUEST", "NORDC")], list(sep="_")))
+comp$SETTP11QUALP10 <- do.call(paste, c(comp[,c("SETTP11", "QUALP10")], list(sep="_")))
+var_of_interest <- c("ANASC","SESSO","STACIV","NASCREG","IREG","SETTP11QUALP10","ETA","etapen","ID")
+```
+
+We use 5 **P**artially **I**dentifying **V**ariable**s** to link the records: birth year, sex, birth region  are `stable`, marital status and occupation are `flexible`. The occupation is built by combining the working status and the branch of activity together as one PIV. We create such variable because the high association level between working status and branch of activity may damage the record linkage performance.
+
 ```{r shiw, warning=FALSE}
-df2016 <- read.csv("SHIW2016.csv", row.names = 1)
-df2020 <- read.csv("SHIW2020.csv", row.names = 1)
-df2016 <- df2016[!df2016$ID %in% df2016$ID[duplicated(df2016$ID)], ]
-df2020 <- df2020[!df2020$ID %in% df2020$ID[duplicated(df2020$ID)], ]
+df2012 <- comp[comp$ANNO == 2012, var_of_interest]
+df2014 <- comp[comp$ANNO == 2014, var_of_interest]
+df2012 <- df2012[!df2012$ID %in% df2012$ID[duplicated(df2012$ID)], ]
+df2014 <- df2014[!df2014$ID %in% df2014$ID[duplicated(df2014$ID)], ]
+
+PIVs_config <- list(
+  ANASC          = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
+  SESSO          = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
+  STACIV         = list(dynamics = "flexible", bound_mistakes = c(NA, NA), fix_mistakes = c(NA, NA)),
+  NASCREG        = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
+  SETTP11QUALP10 = list(dynamics = "flexible", bound_mistakes = c(NA, NA), fix_mistakes = c(NA, NA)))
+PIVs_type <- list(ANASCI = TRUE, SESSO = FALSE, STACIV = FALSE, NASCREG = FALSE, SETTP11QUALP10 = FALSE)
 
 PIVs_config_full <- c(PIVs_config,
-  list(IREG = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA))))
-PIVs_full <- names(PIVs_config_full)
+  list(IREG = list(dynamics = "flexible", bound_mistakes = c(NA, NA), fix_mistakes = c(NA, NA))))
 PIVs_type_full <- c(PIVs_type, IREG = FALSE)
 
-prep_data_full <- prepare_data(df2016, df2020, "2016", "2020", PIVs_config_full, same_mistakes = TRUE, uniq_id = "ID")
+prep_data_full <- prepare_data(df2012, df2014, "2012", "2014", PIVs_config_full, same_mistakes = TRUE, uniq_id = "ID")
 true_pairs_full <- do.call(paste, c(prep_data_full$true_pairs, list(sep = "_")))
 ```
 
@@ -260,8 +299,8 @@ df_results_full <- data.frame(matrix(NA, nrow = 6, ncol = 0))
 rownames(df_results_full) <- c("TP", "FP", "FN", "sensitivity", "FDP", "minutes")
 for (method in methods) {
   t0 <- Sys.time()           
-  args <- list(StEM_iter = 2, StEM_burnin = 1, gibbs_iter = 2, gibbs_burnin = 1, 
-               n_post_sample = 2, n_iter = 100, max_cc_size = 50, n.cores = 4)
+  args <- list(StEM_iter = 15, StEM_burnin = 7, gibbs_iter = 15, gibbs_burnin = 7, 
+               n_post_sample = 100, n_iter = 500, max_cc_size = 50, n.cores = 4)
   fit <- run_wrapper(method, prep_data_full, wrapper_args(method, prep_data_full, args))
   df_results_full[1:5, method] <- evaluate_linkage(fit, true_pairs_full)
   df_results_full[6, method] <- if (is.null(fit)) NA else round(as.numeric(Sys.time() - t0, units = "mins"))
@@ -285,12 +324,12 @@ Note that when methods do not ensure the one-to-one assignment constraint the nu
 Blocking on the region code `IREG` splits the task into 20 smaller ones. Within a region, `IREG` is constant and the linkage uses the 4 other PIVs. Region 2 is the regional subset used above.
 
 ```{r shiw-regional-blocking, warning=FALSE, message=FALSE, results="hide"}
-regions <- sort(unique(c(df2016$IREG, df2020$IREG)))
+regions <- sort(unique(c(df2012$IREG, df2014$IREG)))
 results_IREG <- list()
 for (r in regions) {
-  block2016 <- df2016[df2016$IREG == r, ]
-  block2020 <- df2020[df2020$IREG == r, ]
-  prep_data_r <- prepare_data(block2016, block2020, "2016", "2020", PIVs_config, same_mistakes = TRUE, uniq_id = "ID")
+  block2012 <- df2012[df2012$IREG == r, ]
+  block2014 <- df2014[df2014$IREG == r, ]
+  prep_data_r <- prepare_data(block2012, block2014, "2012", "2014", PIVs_config, same_mistakes = TRUE, uniq_id = "ID")
   true_pairs_r <- do.call(paste, c(prep_data_r$true_pairs, list(sep = "_")))
   for (method in methods) {
     t0 <- Sys.time()
@@ -338,7 +377,7 @@ for (method in methods) {
 legend("bottomright", legend = methods, col = colours, pch = 19, bty = "n")
 ```
 
-The 4 PIVs have little discriminating power on these data (birth years, sex, 6 education levels, 4 marital statuses) and the two waves overlap on about 40% of their records (6.430 true links, 14.917 records in A, 16.445 records in B), so the task is hard for every package. `fastLink`, `multilink`, `BRL` and `diyar` are not scalable (out of memory errors).
+The 5 PIVs have little discriminating power on these data and the two waves overlap on about 50% of their records (10.568 true links, 19.362 records in A, 20.016 records in B), so the task is hard for every package. `fastLink`, `multilink`, `BRL` and `diyar` are not scalable (out of memory errors).
 
 We compare methods with blocking over the 20 regions: `reclin2` (EM on the comparison patterns, threshold at 0.5 on the posterior) links a lot of records reaching a high sensitivity at the price of a high FDP; `fastLink`, `fedmatch` and `multilink` link about half of the true pairs with a FDP around 0.7; `BRL` and `diyar` are the most conservative, with a FDP around 0.3 and a sensitivity around 0.2; `FlexRL` performance is between these conservative and permissive methods.
 
