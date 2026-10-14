@@ -227,7 +227,7 @@ fit4 <- StEM( data = prep_data, StEM_iter = 2, StEM_burnin = 1,
 #> FlexRL
 apply(fit4$alpha$V4, 2, mean)
 #>      log_h1      log_h2      log_h3      log_h4          Xe          Xf 
-#> -16.6468929  -1.4637499 -13.8537072  -1.2219520   0.0134000   0.2953763 
+#> -16.6413864  -1.4637499 -13.8483833  -1.2219520   0.0134000   0.2953763 
 cond_hazard_params4$V4
 #> [1] -0.5108256 -0.6931472 -0.9162907 -1.2039728 -1.6094379 -2.3025851
 head(fit4$Delta[fit4$Delta$x > 0.5, ])

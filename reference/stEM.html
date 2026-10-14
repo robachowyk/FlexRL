@@ -23,12 +23,12 @@ methodology paper https://10.1093/jrsssc/qlaf016 for details."><meta property="o
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="nav-item dropdown">
+      <ul class="navbar-nav me-auto"><li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/FlexRL-RL-vignette.html">Record linkage with FlexRL</a></li>
-    <li><a class="dropdown-item" href="../articles/FlexRL-RL-block-vignette.html">Record linkage with blocking</a></li>
+    <li><a class="dropdown-item" href="../articles/FlexRL-RL-block-vignette.html">Scalable Record Linkage with FlexRL</a></li>
   </ul></li>
+<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -271,7 +271,7 @@ chains for each parameter.</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> FlexRL</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">fit4</span><span class="op">$</span><span class="va">alpha</span><span class="op">$</span><span class="va">V4</span>, <span class="fl">2</span>, <span class="va">mean</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      log_h1      log_h2      log_h3      log_h4          Xe          Xf </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> -16.6468929  -1.4637499 -13.8537072  -1.2219520   0.0134000   0.2953763 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> -16.6413864  -1.4637499 -13.8483833  -1.2219520   0.0134000   0.2953763 </span>
 <span class="r-in"><span><span class="va">cond_hazard_params4</span><span class="op">$</span><span class="va">V4</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] -0.5108256 -0.6931472 -0.9162907 -1.2039728 -1.6094379 -2.3025851</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">fit4</span><span class="op">$</span><span class="va">Delta</span><span class="op">[</span><span class="va">fit4</span><span class="op">$</span><span class="va">Delta</span><span class="op">$</span><span class="va">x</span> <span class="op">&gt;</span> <span class="fl">0.5</span>, <span class="op">]</span><span class="op">)</span></span></span>

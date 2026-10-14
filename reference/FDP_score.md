@@ -59,9 +59,6 @@ prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 5,
              gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10 )
 #> FlexRL
-#> Running StEM algorithm ■■■■■■■                           20% | iter 2/10 [1s]
-#> Running StEM algorithm ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | iter 10/10 [2s]
-#> 
 FDP_score(fit$Delta$x, 0.5)
 #> $FDP_score
 #> [1] 0.1238636

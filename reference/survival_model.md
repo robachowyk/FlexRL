@@ -119,7 +119,7 @@ gomp$S(X, alpha = c(0.5, -1), times)
 #> [1] 0.9996321 0.9255377 0.5098609 0.4396208 0.2824536
 stats::nlminb(gomp$init(ncol(X)), gomp$negloglik, X = X, times = times,
               Hequal = Hequal)$par
-#> [1]  114.9691 -163.5902
+#> [1]  116.0923 -162.0432
               
 pw <- survival_model("piecewise", cuts = 1)
 pw$S(X, alpha = c(-2, -1), times)
@@ -146,5 +146,5 @@ loglogistic$S(X, alpha = c(0, -2), times)
 #> [5,] 0.7869860
 stats::nlminb(loglogistic$init(ncol(X)), loglogistic$negloglik, X = X, times = times,
               Hequal = Hequal)$par
-#> [1]  5.6077244 -0.3311609
+#> [1]  5.679192 -0.332847
 ```

@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>FlexRL-RL-vignette • FlexRL</title>
+<title>Record Linkage with FlexRL • FlexRL</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="FlexRL-RL-vignette">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Record Linkage with FlexRL">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -29,14 +29,14 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes">
 <li><a class="dropdown-item" href="../articles/FlexRL-RL-vignette.html">Record linkage with FlexRL</a></li>
-    <li><a class="dropdown-item" href="../articles/FlexRL-RL-block-vignette.html">Record linkage with blocking</a></li>
+    <li><a class="dropdown-item" href="../articles/FlexRL-RL-block-vignette.html">Scalable Record Linkage with FlexRL</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -56,7 +56,7 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="../logo.png" class="logo" alt=""><h1>FlexRL-RL-vignette</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>Record Linkage with FlexRL</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/robachowyk/FlexRL/blob/master/vignettes/FlexRL-RL-vignette.Rmd" class="external-link"><code>vignettes/FlexRL-RL-vignette.Rmd</code></a></small>
@@ -66,9 +66,7 @@
     
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/robachowyk/FlexRL" class="external-link">FlexRL</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; If you are happy with FlexRL, please cite us! If you are unhappy, please cite us anyway (and feel free to complain as well).</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/robachowyk/FlexRL" class="external-link">FlexRL</a></span><span class="op">)</span></span></code></pre></div>
 <p><code>FlexRL</code> is a package proposing flexible probabilistic
 <strong>R</strong>ecord <strong>L</strong>inkage with diagnostic tools
 for downstream inference on linked data. The record linkage algorithm
@@ -107,10 +105,7 @@ the algorithm flexible about the other
 <span>                               fix_mistakes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.02</span>,<span class="fl">0.02</span><span class="op">)</span>,</span>
 <span>                               cond_hazard_cov <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>cov1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Xe"</span>, <span class="st">"Xf"</span><span class="op">)</span>,</span>
 <span>                                                      cov2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">PIVs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">PIVs_config</span><span class="op">)</span></span>
-<span><span class="va">PIVs_stable</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">PIVs_config</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">x</span><span class="op">$</span><span class="va">dynamics</span> <span class="op">!=</span> <span class="st">"structured"</span><span class="op">)</span></span>
-<span><span class="va">PIVs_type</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span> V1 <span class="op">=</span> <span class="cn">FALSE</span>, V2 <span class="op">=</span> <span class="cn">FALSE</span>, V3 <span class="op">=</span> <span class="cn">FALSE</span>, V4 <span class="op">=</span> <span class="cn">TRUE</span> <span class="op">)</span></span></code></pre></div>
+<span><span class="op">)</span></span></code></pre></div>
 <p>With PIVs that evolve over time, when modelling is possible, it is
 natural to parametrise the probability that underlying true values of
 the registered data for a pair of linked records coincide using a
@@ -136,6 +131,8 @@ M-step.</p>
 <span>                  V3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.02</span>, <span class="fl">0.02</span><span class="op">)</span>, V4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.02</span>, <span class="fl">0.02</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">p_missing</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>V1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.005</span>, <span class="fl">0.005</span><span class="op">)</span>, V2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.005</span>, <span class="fl">0.005</span><span class="op">)</span>,</span>
 <span>                  V3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.005</span>, <span class="fl">0.005</span><span class="op">)</span>, V4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.005</span>, <span class="fl">0.005</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">PIVs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">PIVs_config</span><span class="op">)</span></span>
+<span><span class="va">PIVs_type</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span> V1 <span class="op">=</span> <span class="cn">FALSE</span>, V2 <span class="op">=</span> <span class="cn">FALSE</span>, V3 <span class="op">=</span> <span class="cn">FALSE</span>, V4 <span class="op">=</span> <span class="cn">TRUE</span> <span class="op">)</span></span>
 <span><span class="va">cond_hazard_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>V1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>, V2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>, V3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>, V4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.35</span>, <span class="op">-</span><span class="fl">0.50</span>, <span class="op">-</span><span class="fl">0.70</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">gen_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_data.html">simulate_data</a></span><span class="op">(</span></span>
@@ -293,8 +290,8 @@ dependencies among PIVs, are obstacles to the linkage.</p>
 <span><span class="co">#&gt; max SMD                  NA         NA</span></span>
 <span><span class="co">#&gt; min support IoU          NA         NA</span></span>
 <span><span class="co">#&gt; max MMD                  NA         NA</span></span>
-<span><span class="co">#&gt; time (secs)            0.00     148.00</span></span>
-<span><span class="co">#&gt; memory (Mb)            2.00      52.00</span></span></code></pre></div>
+<span><span class="co">#&gt; time (secs)            0.00     151.00</span></span>
+<span><span class="co">#&gt; memory (Mb)            2.00      35.00</span></span></code></pre></div>
 <p>Let us run record linkage diagnostics:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">diag</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rl_diagnostics.html">RL_diagnostics</a></span><span class="op">(</span>fit <span class="op">=</span> <span class="va">fit</span>, encodedA <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedA</span>, encodedB <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span>,</span>
@@ -712,11 +709,11 @@ records with “multilink”, “fastLink”, “BRL”, “reclin2”, “diyar
 <span><span class="co">#&gt; Computational time and memory required</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">df_results</span><span class="op">[</span><span class="fl">12</span><span class="op">:</span><span class="fl">13</span>,<span class="op">]</span>,<span class="fl">2</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                  Naive      FlexRL     BRL        multilink  fastLink  </span></span>
-<span><span class="co">#&gt; time (secs)               0        148          2         28          1</span></span>
-<span><span class="co">#&gt; memory (Mb)               2         52         64        191         29</span></span>
+<span><span class="co">#&gt; time (secs)               0        151          2         30          1</span></span>
+<span><span class="co">#&gt; memory (Mb)               2         35         46        182         29</span></span>
 <span><span class="co">#&gt;                  reclin2    diyar      fedmatch  </span></span>
-<span><span class="co">#&gt; time (secs)               0          2          2</span></span>
-<span><span class="co">#&gt; memory (Mb)             106        106         59</span></span></code></pre></div>
+<span><span class="co">#&gt; time (secs)               0          2          3</span></span>
+<span><span class="co">#&gt; memory (Mb)              97         97         65</span></span></code></pre></div>
   </main>
 </div>
 

@@ -1,10 +1,8 @@
-# FlexRL-RL-vignette
+# Record Linkage with FlexRL
 
 ``` r
 
-set.seed(0)
 library(FlexRL)
-#> If you are happy with FlexRL, please cite us! If you are unhappy, please cite us anyway (and feel free to complain as well).
 ```
 
 `FlexRL` is a package proposing flexible probabilistic **R**ecord
@@ -52,9 +50,6 @@ PIVs_config <- list( V1 = list(dynamics = "stable",
                                cond_hazard_cov = list(cov1 = c("Xe", "Xf"),
                                                       cov2 = c()))
 )
-PIVs <- names(PIVs_config)
-PIVs_stable <- sapply(PIVs_config, function(x) x$dynamics != "structured")
-PIVs_type <- list( V1 = FALSE, V2 = FALSE, V3 = FALSE, V4 = TRUE )
 ```
 
 With PIVs that evolve over time, when modelling is possible, it is
@@ -84,6 +79,8 @@ p_mistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
                   V3 = c(0.02, 0.02), V4 = c(0.02, 0.02))
 p_missing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
+PIVs <- names(PIVs_config)
+PIVs_type <- list( V1 = FALSE, V2 = FALSE, V3 = FALSE, V4 = TRUE )
 cond_hazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(-0.35, -0.50, -0.70))
 
 gen_data <- simulate_data(
@@ -267,8 +264,8 @@ df_results
 #> max SMD                  NA         NA
 #> min support IoU          NA         NA
 #> max MMD                  NA         NA
-#> time (secs)            0.00     148.00
-#> memory (Mb)            2.00      52.00
+#> time (secs)            0.00     151.00
+#> memory (Mb)            2.00      35.00
 ```
 
 Let us run record linkage diagnostics:
@@ -780,9 +777,9 @@ cat("Computational time and memory required ")
 #> Computational time and memory required
 round(df_results[12:13,],2)
 #>                  Naive      FlexRL     BRL        multilink  fastLink  
-#> time (secs)               0        148          2         28          1
-#> memory (Mb)               2         52         64        191         29
+#> time (secs)               0        151          2         30          1
+#> memory (Mb)               2         35         46        182         29
 #>                  reclin2    diyar      fedmatch  
-#> time (secs)               0          2          2
-#> memory (Mb)             106        106         59
+#> time (secs)               0          2          3
+#> memory (Mb)              97         97         65
 ```

@@ -1,8 +1,7 @@
-# FlexRL-RL-block-vignette
+# Scalable Record Linkage with FlexRL
 
 ``` r
 
-set.seed(0)
 library(FlexRL)
 #> If you are happy with FlexRL, please cite us! If you are unhappy, please cite us anyway (and feel free to complain as well).
 ```
@@ -41,10 +40,9 @@ any).
 This vignette runs these wrappers on the same pipeline for: - a regional
 subset of the
 [NLTCS](https://www.icpsr.umich.edu/web/NACDA/studies/9681/versions/V5)
-data (1982 and 1994 waves) - a regional subset of the
+data (1982 and 1994 waves) - the
 [SHIW](https://www.bancaditalia.it/statistiche/tematiche/indagini-famiglie-imprese/bilanci-famiglie/distribuzione-microdati/index.html)
-data (2016 and 2020 waves) - the full SHIW data with and without
-regional blocking
+data (2012 and 2014 waves) data with and without regional blocking
 
 ## One pipeline for all the wrappers
 
@@ -53,8 +51,7 @@ regional blocking
 wrapper_args <- function(method, prep_data, ...) {
   PIVs <- names(prep_data$PIVs_config)
   args <- c(...)
-
-  switch(method,
+    switch(method,
          FlexRL    = c(list(data = prep_data),
                        args[intersect(names(args), names(formals(FlexRL::StEM)))]),
          BRL       = c(list(flds = PIVs, types = rep("bi", length(PIVs)), nIter = 1000),
@@ -62,7 +59,7 @@ wrapper_args <- function(method, prep_data, ...) {
          fastLink  = c(list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, return.all = TRUE, n.cores = 1),
                        args[intersect(names(args), names(formals(fastLink::fastLink)))]),
          multilink = c(list(types = rep("bi", length(PIVs)), breaks = stats::setNames(as.list(rep(NA, length(PIVs))), PIVs),
-                            duplicates = c(0, 0), n_iter = 500, max_cc_size = 50),
+                            duplicates = c(0, 0), n_iter = 1000, max_cc_size = 50),
                        args[intersect(names(args), c(names(formals(multilink::create_comparison_data)),
                                                      names(formals(multilink::reduce_comparison_data)),
                                                      names(formals(multilink::specify_prior)),
@@ -84,7 +81,7 @@ wrapper_args <- function(method, prep_data, ...) {
                               compare_type = rep("indicator", length(PIVs)),
                               wgts = rep(1 / length(PIVs), length(PIVs)))),
                        args[intersect(names(args), names(formals(fedmatch::merge_plus)))])
-         )
+  )
 }
 
 run_wrapper <- function(method, prep_data, arguments) {
@@ -94,7 +91,6 @@ run_wrapper <- function(method, prep_data, arguments) {
     prep_data$encodedA <- prep_data$encodedA[, c(PIVs, "local_id", "source")]
     prep_data$encodedB <- prep_data$encodedB[, c(PIVs, "local_id", "source")]
   }
-
   tryCatch(link_with(prep_data$encodedA, prep_data$encodedB, arguments),
            error = function(e) {
              if (grepl("cannot allocate|memory|bad_alloc|too large|long vectors", conditionMessage(e), ignore.case = TRUE)) {
@@ -118,45 +114,33 @@ evaluate_linkage <- function(fit, true_pairs, threshold = 0.5) {
     FDP = false_positive / (true_positive + false_positive))
 }
 
-results_rows <- c("TP",
-                  "FP",
-                  "FN",
-                  "sensitivity",
-                  "FDP",
-                  "hat FDP score",
-                  "hat FDP score*",
-                  "hat FDP synth*",
-                  "max SMD",
-                  "min support IoU",
+results_rows <- c("TP", "FP", "FN", "sensitivity", "FDP",
+                  "est. FDP score", "est. FDP score \u22C6",
+                  "est. FDP synth \u22C6", "max SMD", "min support IoU", 
                   "max MMD")
 
 run_all_wrappers <- function(prep_data, PIVs_type, methods, FDP_estimation = TRUE,
                              maxIter4CV = 3, n_repeats = 5, ...) {
   args <- list(...)
-
   op <- options()
   on.exit(options(op))
   PIVs <- names(prep_data$PIVs_config)
   true_pairs <- do.call(paste, c(prep_data$true_pairs, list(sep = "_")))
   df_results <- data.frame(matrix(NA, nrow = length(results_rows), ncol = 0))
   rownames(df_results) <- results_rows
-
   naive_fit <- naive_linkage(PIVs = PIVs, encodedA = prep_data$encodedA, encodedB = prep_data$encodedB)
   df_results[1:5, "Naive"] <- evaluate_linkage(list(idxA = naive_fit[[1]], idxB = naive_fit[[2]]), true_pairs)
-
   for (method in methods) {
     arguments <- wrapper_args(method, prep_data, args)
     fit <- run_wrapper(method, prep_data, arguments)
     df_results[1:5, method] <- evaluate_linkage(fit, true_pairs)
     if (is.null(fit) || length(fit$idxA) == 0) next
-
     encodedA <- prep_data$encodedA
     encodedB <- prep_data$encodedB
     if (method == "diyar") {
       encodedA <- encodedA[, c(PIVs, "local_id", "source")]
       encodedB <- encodedB[, c(PIVs, "local_id", "source")]
     }
-
     diag <- do.call(RL_diagnostics, c(list(fit, encodedA, encodedB, PIVs, PIVs_type, PIVs,
                                            true_pairs = prep_data$true_pairs, FDP_estimation = FDP_estimation,
                                            RL_method = method, data = prep_data, maxIter4CV = maxIter4CV, n_repeats = n_repeats),
@@ -204,7 +188,6 @@ PIVs_config <- list(
   DOB_MONTH = list(dynamics = "stable",   bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
   DOB_YEAR  = list(dynamics = "stable",   bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
   STATE     = list(dynamics = "flexible", bound_mistakes = c(NA, NA),     fix_mistakes = c(NA, NA)))
-PIVs <- names(PIVs_config)
 PIVs_type <- list(SEX = FALSE, DOB_MONTH = TRUE, DOB_YEAR = TRUE, STATE = FALSE)
 ```
 
@@ -241,101 +224,55 @@ df_results_NLTCS <- run_all_wrappers(prep_data, PIVs_type, methods)
 show_results(df_results_NLTCS)
 #> Record Linkage
 #>              Naive FlexRL     BRL multilink fastLink reclin2   diyar fedmatch
-#> TP          320.00 218.00 211.000    228.00   259.00  320.00 126.000   266.00
-#> FP          163.00  34.00  13.000     34.00    84.00  163.00   5.000   223.00
-#> FN           12.00 114.00 121.000    104.00    73.00   12.00 206.000    66.00
-#> sensitivity   0.96   0.66   0.636      0.69     0.78    0.96   0.380     0.80
-#> FDP           0.34   0.13   0.058      0.13     0.24    0.34   0.038     0.46
+#> TP          320.00 218.00 211.000    221.00   265.00  320.00 126.000   266.00
+#> FP          163.00  34.00  13.000     26.00    78.00  163.00   5.000   223.00
+#> FN           12.00 114.00 121.000    111.00    67.00   12.00 206.000    66.00
+#> sensitivity   0.96   0.66   0.636      0.67     0.80    0.96   0.380     0.80
+#> FDP           0.34   0.13   0.058      0.11     0.23    0.34   0.038     0.46
 #> 
 #> FDP estimation
-#>                Naive FlexRL   BRL multilink fastLink reclin2 diyar fedmatch
-#> hat FDP score     NA   0.16 0.152       NaN     0.30    0.49   NaN    0.075
-#> hat FDP score*    NA   0.17 0.165       NaN     0.31    0.25   NaN    0.075
-#> hat FDP synth*    NA   0.11 0.093      0.15     0.36    0.32 0.086      NaN
+#>                  Naive FlexRL   BRL multilink fastLink reclin2 diyar fedmatch
+#> est. FDP score      NA   0.16 0.152       NaN     0.30    0.49   NaN    0.075
+#> est. FDP score ⋆    NA   0.17 0.165       NaN     0.31    0.25   NaN    0.073
+#> est. FDP synth ⋆    NA   0.11 0.093      0.13     0.40    0.32 0.039      NaN
 #> 
 #> Linked divergence
 #>                 Naive FlexRL   BRL multilink fastLink reclin2 diyar fedmatch
-#> max SMD            NA  0.183 0.155     0.146    0.141   0.177  0.43   0.1125
+#> max SMD            NA  0.183 0.155     0.133    0.141   0.177  0.43   0.1125
 #> min support IoU    NA  0.875 0.875     0.875    0.875   0.875  0.88   0.8750
-#> max MMD            NA  0.016 0.014     0.013    0.016   0.025  0.03   0.0093
-```
-
-## Regional subset of the SHIW data
-
-We use 4 **P**artially **I**dentifying **V**ariable**s** to link the
-records: sex and birth year are `stable`, education level and marital
-status are `flexible`.
-
-``` r
-
-df2016 <- read.csv("ex-reg-SHIW-16.csv", row.names = 1)
-df2020 <- read.csv("ex-reg-SHIW-20.csv", row.names = 1)
-
-PIVs_config <- list(
-  ANASCI = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
-  SESSO  = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
-  STUDIO = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
-  STACIV = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)))
-PIVs <- names(PIVs_config)
-PIVs_type <- list(ANASCI = TRUE, SESSO = FALSE, STUDIO = FALSE, STACIV = FALSE)
-
-prep_data <- prepare_data(df2016, df2020, "2016", "2020", PIVs_config, same_mistakes = TRUE, uniq_id = "ID")
-#> '2016' is the larger source, saved as B; '2020' saved as A.
-
-c(n_A = nrow(prep_data$encodedA), n_B = nrow(prep_data$encodedB), n_links = nrow(prep_data$true_pairs))
-#>     n_A     n_B n_links 
-#>      42      49      27
-
-prep_data$n_values
-#> ANASCI  SESSO STUDIO STACIV 
-#>     28      2      5      4
-```
-
-``` r
-
-df_results_SHIW <- run_all_wrappers(prep_data, PIVs_type, methods)
-```
-
-``` r
-
-show_results(df_results_SHIW)
-#> Record Linkage
-#>             Naive FlexRL   BRL multilink fastLink reclin2  diyar fedmatch
-#> TP          20.00  16.00 20.00     22.00    19.00   27.00 13.000    19.00
-#> FP           8.00   8.00 15.00     15.00    11.00   52.00  1.000    20.00
-#> FN           7.00  11.00  7.00      5.00     8.00    0.00 14.000     8.00
-#> sensitivity  0.74   0.59  0.74      0.81     0.70    1.00  0.481     0.70
-#> FDP          0.29   0.33  0.43      0.41     0.37    0.66  0.071     0.51
-#> 
-#> FDP estimation
-#>                Naive FlexRL  BRL multilink fastLink reclin2 diyar fedmatch
-#> hat FDP score     NA  0.159 0.20       NaN     0.10    0.14   NaN     0.09
-#> hat FDP score*    NA  0.134 0.22       NaN     0.12    0.13   NaN     0.09
-#> hat FDP synth*    NA  0.094 0.00      0.13     0.26    0.47     0      NaN
-#> 
-#> Linked divergence
-#>                 Naive FlexRL   BRL multilink fastLink reclin2 diyar fedmatch
-#> max SMD            NA  0.273 0.148     0.120    0.190   0.123  0.64    0.168
-#> min support IoU    NA  0.333 1.000     1.000    1.000   1.000  0.83    1.000
-#> max MMD            NA  0.037 0.023     0.018    0.028   0.018  0.14    0.027
+#> max MMD            NA  0.016 0.014     0.012    0.016   0.025  0.03   0.0093
 ```
 
 ## Full SHIW data
 
+We use 5 **P**artially **I**dentifying **V**ariable**s** to link the
+records: birth year, sex, birth region are `stable`, marital status and
+occupation are `flexible`. The occupation is built by combining the
+working status and the branch of activity together as one PIV. We create
+such variable because the high association level between working status
+and branch of activity may damage the record linkage performance.
+
 ``` r
 
-df2016 <- read.csv("SHIW2016.csv", row.names = 1)
-df2020 <- read.csv("SHIW2020.csv", row.names = 1)
-df2016 <- df2016[!df2016$ID %in% df2016$ID[duplicated(df2016$ID)], ]
-df2020 <- df2020[!df2020$ID %in% df2020$ID[duplicated(df2020$ID)], ]
+df2012 <- comp[comp$ANNO == 2012, var_of_interest]
+df2014 <- comp[comp$ANNO == 2014, var_of_interest]
+df2012 <- df2012[!df2012$ID %in% df2012$ID[duplicated(df2012$ID)], ]
+df2014 <- df2014[!df2014$ID %in% df2014$ID[duplicated(df2014$ID)], ]
+
+PIVs_config <- list(
+  ANASC          = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
+  SESSO          = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
+  STACIV         = list(dynamics = "flexible", bound_mistakes = c(NA, NA), fix_mistakes = c(NA, NA)),
+  NASCREG        = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA)),
+  SETTP11QUALP10 = list(dynamics = "flexible", bound_mistakes = c(NA, NA), fix_mistakes = c(NA, NA)))
+PIVs_type <- list(ANASCI = TRUE, SESSO = FALSE, STACIV = FALSE, NASCREG = FALSE, SETTP11QUALP10 = FALSE)
 
 PIVs_config_full <- c(PIVs_config,
-  list(IREG = list(dynamics = "stable", bound_mistakes = c(0.10, 0.10), fix_mistakes = c(NA, NA))))
-PIVs_full <- names(PIVs_config_full)
+  list(IREG = list(dynamics = "flexible", bound_mistakes = c(NA, NA), fix_mistakes = c(NA, NA))))
 PIVs_type_full <- c(PIVs_type, IREG = FALSE)
 
-prep_data_full <- prepare_data(df2016, df2020, "2016", "2020", PIVs_config_full, same_mistakes = TRUE, uniq_id = "ID")
-#> '2016' is the larger source, saved as B; '2020' saved as A.
+prep_data_full <- prepare_data(df2012, df2014, "2012", "2014", PIVs_config_full, same_mistakes = TRUE, uniq_id = "ID")
+#> '2012' is the larger source, saved as B; '2014' saved as A.
 true_pairs_full <- do.call(paste, c(prep_data_full$true_pairs, list(sep = "_")))
 ```
 
@@ -345,7 +282,7 @@ df_results_full <- data.frame(matrix(NA, nrow = 6, ncol = 0))
 rownames(df_results_full) <- c("TP", "FP", "FN", "sensitivity", "FDP", "minutes")
 for (method in methods) {
   t0 <- Sys.time()           
-  args <- list(StEM_iter = 20, StEM_burnin = 10, gibbs_iter = 20, gibbs_burnin = 10, 
+  args <- list(StEM_iter = 15, StEM_burnin = 7, gibbs_iter = 15, gibbs_burnin = 7, 
                n_post_sample = 100, n_iter = 500, max_cc_size = 50, n.cores = 4)
   fit <- run_wrapper(method, prep_data_full, wrapper_args(method, prep_data_full, args))
   df_results_full[1:5, method] <- evaluate_linkage(fit, true_pairs_full)
@@ -363,13 +300,13 @@ for (method in methods) {
 cat("Record Linkage performance on large files")
 #> Record Linkage performance on large files
 round(df_results_full,2)
-#>              FlexRL BRL multilink fastLink    reclin2 diyar fedmatch
-#> TP          1062.00  NA        NA       NA    5936.00    NA  2756.00
-#> FP          1521.00  NA        NA       NA 1917562.00    NA 12161.00
-#> FN          5368.00  NA        NA       NA     494.00    NA  3674.00
-#> sensitivity    0.17  NA        NA       NA       0.92    NA     0.43
-#> FDP            0.59  NA        NA       NA       1.00    NA     0.82
-#> minutes      106.00  NA        NA       NA       2.00    NA     7.00
+#>              FlexRL BRL multilink               fastLink reclin2 diyar fedmatch
+#> TP          4478.00  NA        NA  5027.0000000000000000      NA    NA  5057.00
+#> FP          7919.00  NA        NA 11209.0000000000000000      NA    NA 14154.00
+#> FN          6090.00  NA        NA  5541.0000000000000000      NA    NA  5511.00
+#> sensitivity    0.42  NA        NA     0.4800000000000000      NA    NA     0.48
+#> FDP            0.64  NA        NA     0.6899999999999999      NA    NA     0.74
+#> minutes      181.00  NA        NA     8.0000000000000000      NA    NA     6.00
 ```
 
 Note that when methods do not ensure the one-to-one assignment
@@ -384,12 +321,12 @@ PIVs. Region 2 is the regional subset used above.
 
 ``` r
 
-regions <- sort(unique(c(df2016$IREG, df2020$IREG)))
+regions <- sort(unique(c(df2012$IREG, df2014$IREG)))
 results_IREG <- list()
 for (r in regions) {
-  block2016 <- df2016[df2016$IREG == r, ]
-  block2020 <- df2020[df2020$IREG == r, ]
-  prep_data_r <- prepare_data(block2016, block2020, "2016", "2020", PIVs_config, same_mistakes = TRUE, uniq_id = "ID")
+  block2012 <- df2012[df2012$IREG == r, ]
+  block2014 <- df2014[df2014$IREG == r, ]
+  prep_data_r <- prepare_data(block2012, block2014, "2012", "2014", PIVs_config, same_mistakes = TRUE, uniq_id = "ID")
   true_pairs_r <- do.call(paste, c(prep_data_r$true_pairs, list(sep = "_")))
   for (method in methods) {
     t0 <- Sys.time()
@@ -397,10 +334,11 @@ for (r in regions) {
     results_IREG[[length(results_IREG) + 1]] <- data.frame(
       IREG = r, n_A = nrow(prep_data_r$encodedA),
       n_B = nrow(prep_data_r$encodedB), n_links = length(true_pairs_r),
-      method = method, round(t(evaluate_linkage(fit, true_pairs_r)),2),
+      method = method, sprintf("%.2f",t(evaluate_linkage(fit, true_pairs_r))),
       seconds = round(as.numeric(Sys.time() - t0, units = "secs")))
   }
 }
+
 results_IREG <- do.call(rbind, results_IREG)
 ```
 
@@ -409,288 +347,1408 @@ results_IREG <- do.call(rbind, results_IREG)
 cat("Record Linkage on regional subsets")
 #> Record Linkage on regional subsets
 results_IREG
-#>     IREG  n_A  n_B n_links    method  TP    FP  FN         sensitivity
-#> 1      1  965 1272     388    FlexRL  36    39 352 0.09000000000000000
-#> 2      1  965 1272     388       BRL  20    13 368 0.05000000000000000
-#> 3      1  965 1272     388 multilink  58   207 330 0.14999999999999999
-#> 4      1  965 1272     388  fastLink 140   647 248 0.35999999999999999
-#> 5      1  965 1272     388   reclin2 350  9033  38 0.90000000000000002
-#> 6      1  965 1272     388     diyar  36    38 352 0.09000000000000000
-#> 7      1  965 1272     388  fedmatch 135   830 253 0.34999999999999998
-#> 8      2   42   49      27    FlexRL  18     6   9 0.67000000000000004
-#> 9      2   42   49      27       BRL  22    13   5 0.81000000000000005
-#> 10     2   42   49      27 multilink  22    15   5 0.81000000000000005
-#> 11     2   42   49      27  fastLink  19    11   8 0.69999999999999996
-#> 12     2   42   49      27   reclin2  27    52   0 1.00000000000000000
-#> 13     2   42   49      27     diyar  13     1  14 0.47999999999999998
-#> 14     2   42   49      27  fedmatch  19    20   8 0.69999999999999996
-#> 15     3 1722 1791     636    FlexRL  41    28 595 0.06000000000000000
-#> 16     3 1722 1791     636       BRL  15     1 621 0.02000000000000000
-#> 17     3 1722 1791     636 multilink  33   232 603 0.05000000000000000
-#> 18     3 1722 1791     636  fastLink 210  1106 426 0.33000000000000002
-#> 19     3 1722 1791     636   reclin2 616 26566  20 0.96999999999999997
-#> 20     3 1722 1791     636     diyar  40    26 596 0.06000000000000000
-#> 21     3 1722 1791     636  fedmatch 300  1422 336 0.46999999999999997
-#> 22     4  445  693     254    FlexRL  61    38 193 0.23999999999999999
-#> 23     4  445  693     254       BRL  52    26 202 0.20000000000000001
-#> 24     4  445  693     254 multilink  68    88 186 0.27000000000000002
-#> 25     4  445  693     254  fastLink 108   259 146 0.42999999999999999
-#> 26     4  445  693     254   reclin2 247  2784   7 0.96999999999999997
-#> 27     4  445  693     254     diyar  13     7 241 0.05000000000000000
-#> 28     4  445  693     254  fedmatch 151   294 103 0.58999999999999997
-#> 29     5 1042 1122     446    FlexRL  51    44 395 0.11000000000000000
-#> 30     5 1042 1122     446       BRL  37     9 409 0.08000000000000000
-#> 31     5 1042 1122     446 multilink  68   294 378 0.14999999999999999
-#> 32     5 1042 1122     446  fastLink 179   716 267 0.40000000000000002
-#> 33     5 1042 1122     446   reclin2 435 11856  11 0.97999999999999998
-#> 34     5 1042 1122     446     diyar  29    11 417 0.07000000000000001
-#> 35     5 1042 1122     446  fedmatch 234   807 212 0.52000000000000002
-#> 36     6  326  359     165    FlexRL  52    27 113 0.32000000000000001
-#> 37     6  326  359     165       BRL  54    28 111 0.33000000000000002
-#> 38     6  326  359     165 multilink  67    64  98 0.40999999999999998
-#> 39     6  326  359     165  fastLink 103   152  62 0.62000000000000000
-#> 40     6  326  359     165   reclin2 164  1152   1 0.98999999999999999
-#> 41     6  326  359     165     diyar  22     6 143 0.13000000000000000
-#> 42     6  326  359     165  fedmatch  86   240  79 0.52000000000000002
-#> 43     7  400  494     163    FlexRL  51    38 112 0.31000000000000000
-#> 44     7  400  494     163       BRL  42    29 121 0.26000000000000001
-#> 45     7  400  494     163 multilink  54    64 109 0.33000000000000002
-#> 46     7  400  494     163  fastLink  93   209  70 0.56999999999999995
-#> 47     7  400  494     163   reclin2 159  1625   4 0.97999999999999998
-#> 48     7  400  494     163     diyar  45    27 118 0.28000000000000003
-#> 49     7  400  494     163  fedmatch  91   304  72 0.56000000000000005
-#> 50     8 1120 1217     418    FlexRL  48    36 370 0.11000000000000000
-#> 51     8 1120 1217     418       BRL  29    20 389 0.07000000000000001
-#> 52     8 1120 1217     418 multilink  58   223 360 0.14000000000000001
-#> 53     8 1120 1217     418  fastLink 168   612 250 0.40000000000000002
-#> 54     8 1120 1217     418   reclin2 414 12047   4 0.98999999999999999
-#> 55     8 1120 1217     418     diyar  26    18 392 0.06000000000000000
-#> 56     8 1120 1217     418  fedmatch 165   955 253 0.39000000000000001
-#> 57     9  900 1126     412    FlexRL  75    72 337 0.17999999999999999
-#> 58     9  900 1126     412       BRL  68    40 344 0.17000000000000001
-#> 59     9  900 1126     412 multilink 111   236 301 0.27000000000000002
-#> 60     9  900 1126     412  fastLink 168   587 244 0.40999999999999998
-#> 61     9  900 1126     412   reclin2 400  8718  12 0.96999999999999997
-#> 62     9  900 1126     412     diyar  52    35 360 0.13000000000000000
-#> 63     9  900 1126     412  fedmatch 187   710 225 0.45000000000000001
-#> 64    10  592  614     316    FlexRL  90    52 226 0.28000000000000003
-#> 65    10  592  614     316       BRL  85    32 231 0.27000000000000002
-#> 66    10  592  614     316 multilink 103   126 213 0.33000000000000002
-#> 67    10  592  614     316  fastLink 177   288 139 0.56000000000000005
-#> 68    10  592  614     316   reclin2 313  3620   3 0.98999999999999999
-#> 69    10  592  614     316     diyar  60    20 256 0.19000000000000000
-#> 70    10  592  614     316  fedmatch 161   426 155 0.51000000000000001
-#> 71    11  439  686     278    FlexRL  86    52 192 0.31000000000000000
-#> 72    11  439  686     278       BRL  76    29 202 0.27000000000000002
-#> 73    11  439  686     278 multilink 110   103 168 0.40000000000000002
-#> 74    11  439  686     278  fastLink 146   234 132 0.53000000000000003
-#> 75    11  439  686     278   reclin2 277  2851   1 1.00000000000000000
-#> 76    11  439  686     278     diyar  33    15 245 0.12000000000000000
-#> 77    11  439  686     278  fedmatch 142   297 136 0.51000000000000001
-#> 78    12  959 1115     379    FlexRL  47    32 332 0.12000000000000000
-#> 79    12  959 1115     379       BRL  37    14 342 0.10000000000000001
-#> 80    12  959 1115     379 multilink  63   196 316 0.17000000000000001
-#> 81    12  959 1115     379  fastLink 167   455 212 0.44000000000000000
-#> 82    12  959 1115     379   reclin2 369  8630  10 0.96999999999999997
-#> 83    12  959 1115     379     diyar  46    25 333 0.12000000000000000
-#> 84    12  959 1115     379  fedmatch 215   744 164 0.56999999999999995
-#> 85    13  315  420     141    FlexRL  39    35 102 0.28000000000000003
-#> 86    13  315  420     141       BRL  36    30 105 0.26000000000000001
-#> 87    13  315  420     141 multilink  42    57  99 0.29999999999999999
-#> 88    13  315  420     141  fastLink  88   151  53 0.62000000000000000
-#> 89    13  315  420     141   reclin2 137  1103   4 0.96999999999999997
-#> 90    13  315  420     141     diyar   8     4 133 0.06000000000000000
-#> 91    13  315  420     141  fedmatch  80   235  61 0.56999999999999995
-#> 92    14  181  212     118    FlexRL  59    18  59 0.50000000000000000
-#> 93    14  181  212     118       BRL  62    16  56 0.53000000000000003
-#> 94    14  181  212     118 multilink  72    38  46 0.60999999999999999
-#> 95    14  181  212     118  fastLink  80    65  38 0.68000000000000005
-#> 96    14  181  212     118   reclin2 117   510   1 0.98999999999999999
-#> 97    14  181  212     118     diyar  32     4  86 0.27000000000000002
-#> 98    14  181  212     118  fedmatch  69   110  49 0.57999999999999996
-#> 99    15 1324 1734     784    FlexRL  86    75 698 0.11000000000000000
-#> 100   15 1324 1734     784       BRL  62    32 722 0.08000000000000000
-#> 101   15 1324 1734     784 multilink 125   412 659 0.16000000000000000
-#> 102   15 1324 1734     784  fastLink 232   902 552 0.29999999999999999
-#> 103   15 1324 1734     784   reclin2 746 19909  38 0.94999999999999996
-#> 104   15 1324 1734     784     diyar  27    11 757 0.03000000000000000
-#> 105   15 1324 1734     784  fedmatch 274  1050 510 0.34999999999999998
-#> 106   16 1033 1041     465    FlexRL  61    49 404 0.13000000000000000
-#> 107   16 1033 1041     465       BRL  39    20 426 0.08000000000000000
-#> 108   16 1033 1041     465 multilink 104   309 361 0.22000000000000000
-#> 109   16 1033 1041     465  fastLink 169   670 296 0.35999999999999999
-#> 110   16 1033 1041     465   reclin2 444 10092  21 0.94999999999999996
-#> 111   16 1033 1041     465     diyar  13     5 452 0.03000000000000000
-#> 112   16 1033 1041     465  fedmatch 233   800 232 0.50000000000000000
-#> 113   17  155  235     103    FlexRL  52    23  51 0.50000000000000000
-#> 114   17  155  235     103       BRL  60    22  43 0.57999999999999996
-#> 115   17  155  235     103 multilink  65    40  38 0.63000000000000000
-#> 116   17  155  235     103  fastLink  65    62  38 0.63000000000000000
-#> 117   17  155  235     103   reclin2  98   375   5 0.94999999999999996
-#> 118   17  155  235     103     diyar  39     5  64 0.38000000000000000
-#> 119   17  155  235     103  fedmatch  57    98  46 0.55000000000000004
-#> 120   18  324  394     174    FlexRL  52    34 122 0.29999999999999999
-#> 121   18  324  394     174       BRL  56    26 118 0.32000000000000001
-#> 122   18  324  394     174 multilink  66    53 108 0.38000000000000000
-#> 123   18  324  394     174  fastLink  95   152  79 0.55000000000000004
-#> 124   18  324  394     174   reclin2 171  1270   3 0.97999999999999998
-#> 125   18  324  394     174     diyar  47    12 127 0.27000000000000002
-#> 126   18  324  394     174  fedmatch  90   233  84 0.52000000000000002
-#> 127   19 1213 1353     414    FlexRL  34    50 380 0.08000000000000000
-#> 128   19 1213 1353     414       BRL  14    10 400 0.03000000000000000
-#> 129   19 1213 1353     414 multilink  40   214 374 0.10000000000000001
-#> 130   19 1213 1353     414  fastLink 145   617 269 0.34999999999999998
-#> 131   19 1213 1353     414   reclin2 397 14624  17 0.95999999999999996
-#> 132   19 1213 1353     414     diyar  22    22 392 0.05000000000000000
-#> 133   19 1213 1353     414  fedmatch 160  1047 254 0.39000000000000001
-#> 134   20  709  774     332    FlexRL  88    51 244 0.27000000000000002
-#> 135   20  709  774     332       BRL  76    30 256 0.23000000000000001
-#> 136   20  709  774     332 multilink 112   128 220 0.34000000000000002
-#> 137   20  709  774     332  fastLink 165   317 167 0.50000000000000000
-#> 138   20  709  774     332   reclin2 323  4861   9 0.96999999999999997
-#> 139   20  709  774     332     diyar  22    11 310 0.07000000000000001
-#> 140   20  709  774     332  fedmatch 209   498 123 0.63000000000000000
-#>                     FDP seconds
-#> 1   0.52000000000000002    1225
-#> 2   0.39000000000000001      12
-#> 3   0.78000000000000003     370
-#> 4   0.81999999999999995      10
-#> 5   0.95999999999999996       0
-#> 6   0.51000000000000001       5
-#> 7   0.85999999999999999      11
-#> 8   0.25000000000000000      18
-#> 9   0.37000000000000000       0
-#> 10  0.40999999999999998       0
-#> 11  0.37000000000000000       1
-#> 12  0.66000000000000003       0
-#> 13  0.07000000000000001       0
-#> 14  0.51000000000000001       0
-#> 15  0.40999999999999998    1957
-#> 16  0.06000000000000000      31
-#> 17  0.88000000000000000    1425
-#> 18  0.83999999999999997      23
-#> 19  0.97999999999999998       1
-#> 20  0.39000000000000001      11
-#> 21  0.82999999999999996      19
-#> 22  0.38000000000000000     494
-#> 23  0.33000000000000002       3
-#> 24  0.56000000000000005      52
-#> 25  0.70999999999999996       5
-#> 26  0.92000000000000004       0
-#> 27  0.34999999999999998       3
-#> 28  0.66000000000000003       4
-#> 29  0.46000000000000002    1224
-#> 30  0.20000000000000001      10
-#> 31  0.81000000000000005     319
-#> 32  0.80000000000000004       9
-#> 33  0.95999999999999996       0
-#> 34  0.28000000000000003       7
-#> 35  0.78000000000000003      11
-#> 36  0.34000000000000002     297
-#> 37  0.34000000000000002       1
-#> 38  0.48999999999999999      16
-#> 39  0.59999999999999998       2
-#> 40  0.88000000000000000       0
-#> 41  0.20999999999999999       1
-#> 42  0.73999999999999999       2
-#> 43  0.42999999999999999     378
-#> 44  0.40999999999999998       2
-#> 45  0.54000000000000004      35
-#> 46  0.68999999999999995       2
-#> 47  0.91000000000000003       0
-#> 48  0.38000000000000000       1
-#> 49  0.77000000000000002       3
-#> 50  0.42999999999999999    1227
-#> 51  0.40999999999999998      13
-#> 52  0.79000000000000004     468
-#> 53  0.78000000000000003      10
-#> 54  0.96999999999999997       0
-#> 55  0.40999999999999998       7
-#> 56  0.84999999999999998      11
-#> 57  0.48999999999999999    1266
-#> 58  0.37000000000000000      10
-#> 59  0.68000000000000005     252
-#> 60  0.78000000000000003      10
-#> 61  0.95999999999999996       0
-#> 62  0.40000000000000002       5
-#> 63  0.79000000000000004      10
-#> 64  0.37000000000000000     691
-#> 65  0.27000000000000002       3
-#> 66  0.55000000000000004      71
-#> 67  0.62000000000000000       4
-#> 68  0.92000000000000004       0
-#> 69  0.25000000000000000       2
-#> 70  0.72999999999999998       5
-#> 71  0.38000000000000000     580
-#> 72  0.28000000000000003       3
-#> 73  0.47999999999999998      44
-#> 74  0.62000000000000000       4
-#> 75  0.91000000000000003       0
-#> 76  0.31000000000000000       2
-#> 77  0.68000000000000005       3
-#> 78  0.40999999999999998     903
-#> 79  0.27000000000000002      11
-#> 80  0.76000000000000001     334
-#> 81  0.72999999999999998       8
-#> 82  0.95999999999999996       0
-#> 83  0.34999999999999998       4
-#> 84  0.78000000000000003       9
-#> 85  0.46999999999999997     297
-#> 86  0.45000000000000001       1
-#> 87  0.57999999999999996      20
-#> 88  0.63000000000000000       2
-#> 89  0.89000000000000001       0
-#> 90  0.33000000000000002       1
-#> 91  0.75000000000000000       2
-#> 92  0.23000000000000001     144
-#> 93  0.20999999999999999       0
-#> 94  0.34999999999999998       4
-#> 95  0.45000000000000001       1
-#> 96  0.81000000000000005       0
-#> 97  0.11000000000000000       1
-#> 98  0.60999999999999999       1
-#> 99  0.46999999999999997    2103
-#> 100 0.34000000000000002      22
-#> 101 0.77000000000000002     649
-#> 102 0.80000000000000004      16
-#> 103 0.95999999999999996       1
-#> 104 0.28999999999999998      10
-#> 105 0.79000000000000004      16
-#> 106 0.45000000000000001    1242
-#> 107 0.34000000000000002       9
-#> 108 0.75000000000000000     280
-#> 109 0.80000000000000004       8
-#> 110 0.95999999999999996       0
-#> 111 0.28000000000000003       7
-#> 112 0.77000000000000002      12
-#> 113 0.31000000000000000     132
-#> 114 0.27000000000000002       0
-#> 115 0.38000000000000000       3
-#> 116 0.48999999999999999       1
-#> 117 0.79000000000000004       0
-#> 118 0.11000000000000000       1
-#> 119 0.63000000000000000       1
-#> 120 0.40000000000000002     318
-#> 121 0.32000000000000001       1
-#> 122 0.45000000000000001      19
-#> 123 0.62000000000000000       2
-#> 124 0.88000000000000000       0
-#> 125 0.20000000000000001       1
-#> 126 0.71999999999999997       3
-#> 127 0.59999999999999998    1432
-#> 128 0.41999999999999998      16
-#> 129 0.83999999999999997     529
-#> 130 0.81000000000000005      12
-#> 131 0.96999999999999997       1
-#> 132 0.50000000000000000       9
-#> 133 0.87000000000000000      14
-#> 134 0.37000000000000000     780
-#> 135 0.28000000000000003       5
-#> 136 0.53000000000000003     130
-#> 137 0.66000000000000003       4
-#> 138 0.93999999999999995       0
-#> 139 0.33000000000000002       4
-#> 140 0.69999999999999996       7
+#>     IREG  n_A  n_B n_links    method
+#> 1      1 1360 1495     645    FlexRL
+#> 2      1 1360 1495     645    FlexRL
+#> 3      1 1360 1495     645    FlexRL
+#> 4      1 1360 1495     645    FlexRL
+#> 5      1 1360 1495     645    FlexRL
+#> 6      1 1360 1495     645       BRL
+#> 7      1 1360 1495     645       BRL
+#> 8      1 1360 1495     645       BRL
+#> 9      1 1360 1495     645       BRL
+#> 10     1 1360 1495     645       BRL
+#> 11     1 1360 1495     645 multilink
+#> 12     1 1360 1495     645 multilink
+#> 13     1 1360 1495     645 multilink
+#> 14     1 1360 1495     645 multilink
+#> 15     1 1360 1495     645 multilink
+#> 16     1 1360 1495     645  fastLink
+#> 17     1 1360 1495     645  fastLink
+#> 18     1 1360 1495     645  fastLink
+#> 19     1 1360 1495     645  fastLink
+#> 20     1 1360 1495     645  fastLink
+#> 21     1 1360 1495     645   reclin2
+#> 22     1 1360 1495     645   reclin2
+#> 23     1 1360 1495     645   reclin2
+#> 24     1 1360 1495     645   reclin2
+#> 25     1 1360 1495     645   reclin2
+#> 26     1 1360 1495     645     diyar
+#> 27     1 1360 1495     645     diyar
+#> 28     1 1360 1495     645     diyar
+#> 29     1 1360 1495     645     diyar
+#> 30     1 1360 1495     645     diyar
+#> 31     1 1360 1495     645  fedmatch
+#> 32     1 1360 1495     645  fedmatch
+#> 33     1 1360 1495     645  fedmatch
+#> 34     1 1360 1495     645  fedmatch
+#> 35     1 1360 1495     645  fedmatch
+#> 36     2   44   53      24    FlexRL
+#> 37     2   44   53      24    FlexRL
+#> 38     2   44   53      24    FlexRL
+#> 39     2   44   53      24    FlexRL
+#> 40     2   44   53      24    FlexRL
+#> 41     2   44   53      24       BRL
+#> 42     2   44   53      24       BRL
+#> 43     2   44   53      24       BRL
+#> 44     2   44   53      24       BRL
+#> 45     2   44   53      24       BRL
+#> 46     2   44   53      24 multilink
+#> 47     2   44   53      24 multilink
+#> 48     2   44   53      24 multilink
+#> 49     2   44   53      24 multilink
+#> 50     2   44   53      24 multilink
+#> 51     2   44   53      24  fastLink
+#> 52     2   44   53      24  fastLink
+#> 53     2   44   53      24  fastLink
+#> 54     2   44   53      24  fastLink
+#> 55     2   44   53      24  fastLink
+#> 56     2   44   53      24   reclin2
+#> 57     2   44   53      24   reclin2
+#> 58     2   44   53      24   reclin2
+#> 59     2   44   53      24   reclin2
+#> 60     2   44   53      24   reclin2
+#> 61     2   44   53      24     diyar
+#> 62     2   44   53      24     diyar
+#> 63     2   44   53      24     diyar
+#> 64     2   44   53      24     diyar
+#> 65     2   44   53      24     diyar
+#> 66     2   44   53      24  fedmatch
+#> 67     2   44   53      24  fedmatch
+#> 68     2   44   53      24  fedmatch
+#> 69     2   44   53      24  fedmatch
+#> 70     2   44   53      24  fedmatch
+#> 71     3 2103 2140     918    FlexRL
+#> 72     3 2103 2140     918    FlexRL
+#> 73     3 2103 2140     918    FlexRL
+#> 74     3 2103 2140     918    FlexRL
+#> 75     3 2103 2140     918    FlexRL
+#> 76     3 2103 2140     918       BRL
+#> 77     3 2103 2140     918       BRL
+#> 78     3 2103 2140     918       BRL
+#> 79     3 2103 2140     918       BRL
+#> 80     3 2103 2140     918       BRL
+#> 81     3 2103 2140     918 multilink
+#> 82     3 2103 2140     918 multilink
+#> 83     3 2103 2140     918 multilink
+#> 84     3 2103 2140     918 multilink
+#> 85     3 2103 2140     918 multilink
+#> 86     3 2103 2140     918  fastLink
+#> 87     3 2103 2140     918  fastLink
+#> 88     3 2103 2140     918  fastLink
+#> 89     3 2103 2140     918  fastLink
+#> 90     3 2103 2140     918  fastLink
+#> 91     3 2103 2140     918   reclin2
+#> 92     3 2103 2140     918   reclin2
+#> 93     3 2103 2140     918   reclin2
+#> 94     3 2103 2140     918   reclin2
+#> 95     3 2103 2140     918   reclin2
+#> 96     3 2103 2140     918     diyar
+#> 97     3 2103 2140     918     diyar
+#> 98     3 2103 2140     918     diyar
+#> 99     3 2103 2140     918     diyar
+#> 100    3 2103 2140     918     diyar
+#> 101    3 2103 2140     918  fedmatch
+#> 102    3 2103 2140     918  fedmatch
+#> 103    3 2103 2140     918  fedmatch
+#> 104    3 2103 2140     918  fedmatch
+#> 105    3 2103 2140     918  fedmatch
+#> 106    4  437  541     229    FlexRL
+#> 107    4  437  541     229    FlexRL
+#> 108    4  437  541     229    FlexRL
+#> 109    4  437  541     229    FlexRL
+#> 110    4  437  541     229    FlexRL
+#> 111    4  437  541     229       BRL
+#> 112    4  437  541     229       BRL
+#> 113    4  437  541     229       BRL
+#> 114    4  437  541     229       BRL
+#> 115    4  437  541     229       BRL
+#> 116    4  437  541     229 multilink
+#> 117    4  437  541     229 multilink
+#> 118    4  437  541     229 multilink
+#> 119    4  437  541     229 multilink
+#> 120    4  437  541     229 multilink
+#> 121    4  437  541     229  fastLink
+#> 122    4  437  541     229  fastLink
+#> 123    4  437  541     229  fastLink
+#> 124    4  437  541     229  fastLink
+#> 125    4  437  541     229  fastLink
+#> 126    4  437  541     229   reclin2
+#> 127    4  437  541     229   reclin2
+#> 128    4  437  541     229   reclin2
+#> 129    4  437  541     229   reclin2
+#> 130    4  437  541     229   reclin2
+#> 131    4  437  541     229     diyar
+#> 132    4  437  541     229     diyar
+#> 133    4  437  541     229     diyar
+#> 134    4  437  541     229     diyar
+#> 135    4  437  541     229     diyar
+#> 136    4  437  541     229  fedmatch
+#> 137    4  437  541     229  fedmatch
+#> 138    4  437  541     229  fedmatch
+#> 139    4  437  541     229  fedmatch
+#> 140    4  437  541     229  fedmatch
+#> 141    5 1181 1319     750    FlexRL
+#> 142    5 1181 1319     750    FlexRL
+#> 143    5 1181 1319     750    FlexRL
+#> 144    5 1181 1319     750    FlexRL
+#> 145    5 1181 1319     750    FlexRL
+#> 146    5 1181 1319     750       BRL
+#> 147    5 1181 1319     750       BRL
+#> 148    5 1181 1319     750       BRL
+#> 149    5 1181 1319     750       BRL
+#> 150    5 1181 1319     750       BRL
+#> 151    5 1181 1319     750 multilink
+#> 152    5 1181 1319     750 multilink
+#> 153    5 1181 1319     750 multilink
+#> 154    5 1181 1319     750 multilink
+#> 155    5 1181 1319     750 multilink
+#> 156    5 1181 1319     750  fastLink
+#> 157    5 1181 1319     750  fastLink
+#> 158    5 1181 1319     750  fastLink
+#> 159    5 1181 1319     750  fastLink
+#> 160    5 1181 1319     750  fastLink
+#> 161    5 1181 1319     750   reclin2
+#> 162    5 1181 1319     750   reclin2
+#> 163    5 1181 1319     750   reclin2
+#> 164    5 1181 1319     750   reclin2
+#> 165    5 1181 1319     750   reclin2
+#> 166    5 1181 1319     750     diyar
+#> 167    5 1181 1319     750     diyar
+#> 168    5 1181 1319     750     diyar
+#> 169    5 1181 1319     750     diyar
+#> 170    5 1181 1319     750     diyar
+#> 171    5 1181 1319     750  fedmatch
+#> 172    5 1181 1319     750  fedmatch
+#> 173    5 1181 1319     750  fedmatch
+#> 174    5 1181 1319     750  fedmatch
+#> 175    5 1181 1319     750  fedmatch
+#> 176    6  459  513     238    FlexRL
+#> 177    6  459  513     238    FlexRL
+#> 178    6  459  513     238    FlexRL
+#> 179    6  459  513     238    FlexRL
+#> 180    6  459  513     238    FlexRL
+#> 181    6  459  513     238       BRL
+#> 182    6  459  513     238       BRL
+#> 183    6  459  513     238       BRL
+#> 184    6  459  513     238       BRL
+#> 185    6  459  513     238       BRL
+#> 186    6  459  513     238 multilink
+#> 187    6  459  513     238 multilink
+#> 188    6  459  513     238 multilink
+#> 189    6  459  513     238 multilink
+#> 190    6  459  513     238 multilink
+#> 191    6  459  513     238  fastLink
+#> 192    6  459  513     238  fastLink
+#> 193    6  459  513     238  fastLink
+#> 194    6  459  513     238  fastLink
+#> 195    6  459  513     238  fastLink
+#> 196    6  459  513     238   reclin2
+#> 197    6  459  513     238   reclin2
+#> 198    6  459  513     238   reclin2
+#> 199    6  459  513     238   reclin2
+#> 200    6  459  513     238   reclin2
+#> 201    6  459  513     238     diyar
+#> 202    6  459  513     238     diyar
+#> 203    6  459  513     238     diyar
+#> 204    6  459  513     238     diyar
+#> 205    6  459  513     238     diyar
+#> 206    6  459  513     238  fedmatch
+#> 207    6  459  513     238  fedmatch
+#> 208    6  459  513     238  fedmatch
+#> 209    6  459  513     238  fedmatch
+#> 210    6  459  513     238  fedmatch
+#> 211    7  670  710     321    FlexRL
+#> 212    7  670  710     321    FlexRL
+#> 213    7  670  710     321    FlexRL
+#> 214    7  670  710     321    FlexRL
+#> 215    7  670  710     321    FlexRL
+#> 216    7  670  710     321       BRL
+#> 217    7  670  710     321       BRL
+#> 218    7  670  710     321       BRL
+#> 219    7  670  710     321       BRL
+#> 220    7  670  710     321       BRL
+#> 221    7  670  710     321 multilink
+#> 222    7  670  710     321 multilink
+#> 223    7  670  710     321 multilink
+#> 224    7  670  710     321 multilink
+#> 225    7  670  710     321 multilink
+#> 226    7  670  710     321  fastLink
+#> 227    7  670  710     321  fastLink
+#> 228    7  670  710     321  fastLink
+#> 229    7  670  710     321  fastLink
+#> 230    7  670  710     321  fastLink
+#> 231    7  670  710     321   reclin2
+#> 232    7  670  710     321   reclin2
+#> 233    7  670  710     321   reclin2
+#> 234    7  670  710     321   reclin2
+#> 235    7  670  710     321   reclin2
+#> 236    7  670  710     321     diyar
+#> 237    7  670  710     321     diyar
+#> 238    7  670  710     321     diyar
+#> 239    7  670  710     321     diyar
+#> 240    7  670  710     321     diyar
+#> 241    7  670  710     321  fedmatch
+#> 242    7  670  710     321  fedmatch
+#> 243    7  670  710     321  fedmatch
+#> 244    7  670  710     321  fedmatch
+#> 245    7  670  710     321  fedmatch
+#> 246    8 1479 1524     898    FlexRL
+#> 247    8 1479 1524     898    FlexRL
+#> 248    8 1479 1524     898    FlexRL
+#> 249    8 1479 1524     898    FlexRL
+#> 250    8 1479 1524     898    FlexRL
+#> 251    8 1479 1524     898       BRL
+#> 252    8 1479 1524     898       BRL
+#> 253    8 1479 1524     898       BRL
+#> 254    8 1479 1524     898       BRL
+#> 255    8 1479 1524     898       BRL
+#> 256    8 1479 1524     898 multilink
+#> 257    8 1479 1524     898 multilink
+#> 258    8 1479 1524     898 multilink
+#> 259    8 1479 1524     898 multilink
+#> 260    8 1479 1524     898 multilink
+#> 261    8 1479 1524     898  fastLink
+#> 262    8 1479 1524     898  fastLink
+#> 263    8 1479 1524     898  fastLink
+#> 264    8 1479 1524     898  fastLink
+#> 265    8 1479 1524     898  fastLink
+#> 266    8 1479 1524     898   reclin2
+#> 267    8 1479 1524     898   reclin2
+#> 268    8 1479 1524     898   reclin2
+#> 269    8 1479 1524     898   reclin2
+#> 270    8 1479 1524     898   reclin2
+#> 271    8 1479 1524     898     diyar
+#> 272    8 1479 1524     898     diyar
+#> 273    8 1479 1524     898     diyar
+#> 274    8 1479 1524     898     diyar
+#> 275    8 1479 1524     898     diyar
+#> 276    8 1479 1524     898  fedmatch
+#> 277    8 1479 1524     898  fedmatch
+#> 278    8 1479 1524     898  fedmatch
+#> 279    8 1479 1524     898  fedmatch
+#> 280    8 1479 1524     898  fedmatch
+#> 281    9 1363 1500     711    FlexRL
+#> 282    9 1363 1500     711    FlexRL
+#> 283    9 1363 1500     711    FlexRL
+#> 284    9 1363 1500     711    FlexRL
+#> 285    9 1363 1500     711    FlexRL
+#> 286    9 1363 1500     711       BRL
+#> 287    9 1363 1500     711       BRL
+#> 288    9 1363 1500     711       BRL
+#> 289    9 1363 1500     711       BRL
+#> 290    9 1363 1500     711       BRL
+#> 291    9 1363 1500     711 multilink
+#> 292    9 1363 1500     711 multilink
+#> 293    9 1363 1500     711 multilink
+#> 294    9 1363 1500     711 multilink
+#> 295    9 1363 1500     711 multilink
+#> 296    9 1363 1500     711  fastLink
+#> 297    9 1363 1500     711  fastLink
+#> 298    9 1363 1500     711  fastLink
+#> 299    9 1363 1500     711  fastLink
+#> 300    9 1363 1500     711  fastLink
+#> 301    9 1363 1500     711   reclin2
+#> 302    9 1363 1500     711   reclin2
+#> 303    9 1363 1500     711   reclin2
+#> 304    9 1363 1500     711   reclin2
+#> 305    9 1363 1500     711   reclin2
+#> 306    9 1363 1500     711     diyar
+#> 307    9 1363 1500     711     diyar
+#> 308    9 1363 1500     711     diyar
+#> 309    9 1363 1500     711     diyar
+#> 310    9 1363 1500     711     diyar
+#> 311    9 1363 1500     711  fedmatch
+#> 312    9 1363 1500     711  fedmatch
+#> 313    9 1363 1500     711  fedmatch
+#> 314    9 1363 1500     711  fedmatch
+#> 315    9 1363 1500     711  fedmatch
+#> 316   10  658  687     384    FlexRL
+#> 317   10  658  687     384    FlexRL
+#> 318   10  658  687     384    FlexRL
+#> 319   10  658  687     384    FlexRL
+#> 320   10  658  687     384    FlexRL
+#> 321   10  658  687     384       BRL
+#> 322   10  658  687     384       BRL
+#> 323   10  658  687     384       BRL
+#> 324   10  658  687     384       BRL
+#> 325   10  658  687     384       BRL
+#> 326   10  658  687     384 multilink
+#> 327   10  658  687     384 multilink
+#> 328   10  658  687     384 multilink
+#> 329   10  658  687     384 multilink
+#> 330   10  658  687     384 multilink
+#> 331   10  658  687     384  fastLink
+#> 332   10  658  687     384  fastLink
+#> 333   10  658  687     384  fastLink
+#> 334   10  658  687     384  fastLink
+#> 335   10  658  687     384  fastLink
+#> 336   10  658  687     384   reclin2
+#> 337   10  658  687     384   reclin2
+#> 338   10  658  687     384   reclin2
+#> 339   10  658  687     384   reclin2
+#> 340   10  658  687     384   reclin2
+#> 341   10  658  687     384     diyar
+#> 342   10  658  687     384     diyar
+#> 343   10  658  687     384     diyar
+#> 344   10  658  687     384     diyar
+#> 345   10  658  687     384     diyar
+#> 346   10  658  687     384  fedmatch
+#> 347   10  658  687     384  fedmatch
+#> 348   10  658  687     384  fedmatch
+#> 349   10  658  687     384  fedmatch
+#> 350   10  658  687     384  fedmatch
+#> 351   11  762  872     486    FlexRL
+#> 352   11  762  872     486    FlexRL
+#> 353   11  762  872     486    FlexRL
+#> 354   11  762  872     486    FlexRL
+#> 355   11  762  872     486    FlexRL
+#> 356   11  762  872     486       BRL
+#> 357   11  762  872     486       BRL
+#> 358   11  762  872     486       BRL
+#> 359   11  762  872     486       BRL
+#> 360   11  762  872     486       BRL
+#> 361   11  762  872     486 multilink
+#> 362   11  762  872     486 multilink
+#> 363   11  762  872     486 multilink
+#> 364   11  762  872     486 multilink
+#> 365   11  762  872     486 multilink
+#> 366   11  762  872     486  fastLink
+#> 367   11  762  872     486  fastLink
+#> 368   11  762  872     486  fastLink
+#> 369   11  762  872     486  fastLink
+#> 370   11  762  872     486  fastLink
+#> 371   11  762  872     486   reclin2
+#> 372   11  762  872     486   reclin2
+#> 373   11  762  872     486   reclin2
+#> 374   11  762  872     486   reclin2
+#> 375   11  762  872     486   reclin2
+#> 376   11  762  872     486     diyar
+#> 377   11  762  872     486     diyar
+#> 378   11  762  872     486     diyar
+#> 379   11  762  872     486     diyar
+#> 380   11  762  872     486     diyar
+#> 381   11  762  872     486  fedmatch
+#> 382   11  762  872     486  fedmatch
+#> 383   11  762  872     486  fedmatch
+#> 384   11  762  872     486  fedmatch
+#> 385   11  762  872     486  fedmatch
+#> 386   12  977 1142     455    FlexRL
+#> 387   12  977 1142     455    FlexRL
+#> 388   12  977 1142     455    FlexRL
+#> 389   12  977 1142     455    FlexRL
+#> 390   12  977 1142     455    FlexRL
+#> 391   12  977 1142     455       BRL
+#> 392   12  977 1142     455       BRL
+#> 393   12  977 1142     455       BRL
+#> 394   12  977 1142     455       BRL
+#> 395   12  977 1142     455       BRL
+#> 396   12  977 1142     455 multilink
+#> 397   12  977 1142     455 multilink
+#> 398   12  977 1142     455 multilink
+#> 399   12  977 1142     455 multilink
+#> 400   12  977 1142     455 multilink
+#> 401   12  977 1142     455  fastLink
+#> 402   12  977 1142     455  fastLink
+#> 403   12  977 1142     455  fastLink
+#> 404   12  977 1142     455  fastLink
+#> 405   12  977 1142     455  fastLink
+#> 406   12  977 1142     455   reclin2
+#> 407   12  977 1142     455   reclin2
+#> 408   12  977 1142     455   reclin2
+#> 409   12  977 1142     455   reclin2
+#> 410   12  977 1142     455   reclin2
+#> 411   12  977 1142     455     diyar
+#> 412   12  977 1142     455     diyar
+#> 413   12  977 1142     455     diyar
+#> 414   12  977 1142     455     diyar
+#> 415   12  977 1142     455     diyar
+#> 416   12  977 1142     455  fedmatch
+#> 417   12  977 1142     455  fedmatch
+#> 418   12  977 1142     455  fedmatch
+#> 419   12  977 1142     455  fedmatch
+#> 420   12  977 1142     455  fedmatch
+#> 421   13  454  493     311    FlexRL
+#> 422   13  454  493     311    FlexRL
+#> 423   13  454  493     311    FlexRL
+#> 424   13  454  493     311    FlexRL
+#> 425   13  454  493     311    FlexRL
+#> 426   13  454  493     311       BRL
+#> 427   13  454  493     311       BRL
+#> 428   13  454  493     311       BRL
+#> 429   13  454  493     311       BRL
+#> 430   13  454  493     311       BRL
+#> 431   13  454  493     311 multilink
+#> 432   13  454  493     311 multilink
+#> 433   13  454  493     311 multilink
+#> 434   13  454  493     311 multilink
+#> 435   13  454  493     311 multilink
+#> 436   13  454  493     311  fastLink
+#> 437   13  454  493     311  fastLink
+#> 438   13  454  493     311  fastLink
+#> 439   13  454  493     311  fastLink
+#> 440   13  454  493     311  fastLink
+#> 441   13  454  493     311   reclin2
+#> 442   13  454  493     311   reclin2
+#> 443   13  454  493     311   reclin2
+#> 444   13  454  493     311   reclin2
+#> 445   13  454  493     311   reclin2
+#> 446   13  454  493     311     diyar
+#> 447   13  454  493     311     diyar
+#> 448   13  454  493     311     diyar
+#> 449   13  454  493     311     diyar
+#> 450   13  454  493     311     diyar
+#> 451   13  454  493     311  fedmatch
+#> 452   13  454  493     311  fedmatch
+#> 453   13  454  493     311  fedmatch
+#> 454   13  454  493     311  fedmatch
+#> 455   13  454  493     311  fedmatch
+#> 456   14  280  299     183    FlexRL
+#> 457   14  280  299     183    FlexRL
+#> 458   14  280  299     183    FlexRL
+#> 459   14  280  299     183    FlexRL
+#> 460   14  280  299     183    FlexRL
+#> 461   14  280  299     183       BRL
+#> 462   14  280  299     183       BRL
+#> 463   14  280  299     183       BRL
+#> 464   14  280  299     183       BRL
+#> 465   14  280  299     183       BRL
+#> 466   14  280  299     183 multilink
+#> 467   14  280  299     183 multilink
+#> 468   14  280  299     183 multilink
+#> 469   14  280  299     183 multilink
+#> 470   14  280  299     183 multilink
+#> 471   14  280  299     183  fastLink
+#> 472   14  280  299     183  fastLink
+#> 473   14  280  299     183  fastLink
+#> 474   14  280  299     183  fastLink
+#> 475   14  280  299     183  fastLink
+#> 476   14  280  299     183   reclin2
+#> 477   14  280  299     183   reclin2
+#> 478   14  280  299     183   reclin2
+#> 479   14  280  299     183   reclin2
+#> 480   14  280  299     183   reclin2
+#> 481   14  280  299     183     diyar
+#> 482   14  280  299     183     diyar
+#> 483   14  280  299     183     diyar
+#> 484   14  280  299     183     diyar
+#> 485   14  280  299     183     diyar
+#> 486   14  280  299     183  fedmatch
+#> 487   14  280  299     183  fedmatch
+#> 488   14  280  299     183  fedmatch
+#> 489   14  280  299     183  fedmatch
+#> 490   14  280  299     183  fedmatch
+#> 491   15 1939 2160    1069    FlexRL
+#> 492   15 1939 2160    1069    FlexRL
+#> 493   15 1939 2160    1069    FlexRL
+#> 494   15 1939 2160    1069    FlexRL
+#> 495   15 1939 2160    1069    FlexRL
+#> 496   15 1939 2160    1069       BRL
+#> 497   15 1939 2160    1069       BRL
+#> 498   15 1939 2160    1069       BRL
+#> 499   15 1939 2160    1069       BRL
+#> 500   15 1939 2160    1069       BRL
+#> 501   15 1939 2160    1069 multilink
+#> 502   15 1939 2160    1069 multilink
+#> 503   15 1939 2160    1069 multilink
+#> 504   15 1939 2160    1069 multilink
+#> 505   15 1939 2160    1069 multilink
+#> 506   15 1939 2160    1069  fastLink
+#> 507   15 1939 2160    1069  fastLink
+#> 508   15 1939 2160    1069  fastLink
+#> 509   15 1939 2160    1069  fastLink
+#> 510   15 1939 2160    1069  fastLink
+#> 511   15 1939 2160    1069   reclin2
+#> 512   15 1939 2160    1069   reclin2
+#> 513   15 1939 2160    1069   reclin2
+#> 514   15 1939 2160    1069   reclin2
+#> 515   15 1939 2160    1069   reclin2
+#> 516   15 1939 2160    1069     diyar
+#> 517   15 1939 2160    1069     diyar
+#> 518   15 1939 2160    1069     diyar
+#> 519   15 1939 2160    1069     diyar
+#> 520   15 1939 2160    1069     diyar
+#> 521   15 1939 2160    1069  fedmatch
+#> 522   15 1939 2160    1069  fedmatch
+#> 523   15 1939 2160    1069  fedmatch
+#> 524   15 1939 2160    1069  fedmatch
+#> 525   15 1939 2160    1069  fedmatch
+#> 526   16 1130 1354     683    FlexRL
+#> 527   16 1130 1354     683    FlexRL
+#> 528   16 1130 1354     683    FlexRL
+#> 529   16 1130 1354     683    FlexRL
+#> 530   16 1130 1354     683    FlexRL
+#> 531   16 1130 1354     683       BRL
+#> 532   16 1130 1354     683       BRL
+#> 533   16 1130 1354     683       BRL
+#> 534   16 1130 1354     683       BRL
+#> 535   16 1130 1354     683       BRL
+#> 536   16 1130 1354     683 multilink
+#> 537   16 1130 1354     683 multilink
+#> 538   16 1130 1354     683 multilink
+#> 539   16 1130 1354     683 multilink
+#> 540   16 1130 1354     683 multilink
+#> 541   16 1130 1354     683  fastLink
+#> 542   16 1130 1354     683  fastLink
+#> 543   16 1130 1354     683  fastLink
+#> 544   16 1130 1354     683  fastLink
+#> 545   16 1130 1354     683  fastLink
+#> 546   16 1130 1354     683   reclin2
+#> 547   16 1130 1354     683   reclin2
+#> 548   16 1130 1354     683   reclin2
+#> 549   16 1130 1354     683   reclin2
+#> 550   16 1130 1354     683   reclin2
+#> 551   16 1130 1354     683     diyar
+#> 552   16 1130 1354     683     diyar
+#> 553   16 1130 1354     683     diyar
+#> 554   16 1130 1354     683     diyar
+#> 555   16 1130 1354     683     diyar
+#> 556   16 1130 1354     683  fedmatch
+#> 557   16 1130 1354     683  fedmatch
+#> 558   16 1130 1354     683  fedmatch
+#> 559   16 1130 1354     683  fedmatch
+#> 560   16 1130 1354     683  fedmatch
+#> 561   17  264  276     193    FlexRL
+#> 562   17  264  276     193    FlexRL
+#> 563   17  264  276     193    FlexRL
+#> 564   17  264  276     193    FlexRL
+#> 565   17  264  276     193    FlexRL
+#> 566   17  264  276     193       BRL
+#> 567   17  264  276     193       BRL
+#> 568   17  264  276     193       BRL
+#> 569   17  264  276     193       BRL
+#> 570   17  264  276     193       BRL
+#> 571   17  264  276     193 multilink
+#> 572   17  264  276     193 multilink
+#> 573   17  264  276     193 multilink
+#> 574   17  264  276     193 multilink
+#> 575   17  264  276     193 multilink
+#> 576   17  264  276     193  fastLink
+#> 577   17  264  276     193  fastLink
+#> 578   17  264  276     193  fastLink
+#> 579   17  264  276     193  fastLink
+#> 580   17  264  276     193  fastLink
+#> 581   17  264  276     193   reclin2
+#> 582   17  264  276     193   reclin2
+#> 583   17  264  276     193   reclin2
+#> 584   17  264  276     193   reclin2
+#> 585   17  264  276     193   reclin2
+#> 586   17  264  276     193     diyar
+#> 587   17  264  276     193     diyar
+#> 588   17  264  276     193     diyar
+#> 589   17  264  276     193     diyar
+#> 590   17  264  276     193     diyar
+#> 591   17  264  276     193  fedmatch
+#> 592   17  264  276     193  fedmatch
+#> 593   17  264  276     193  fedmatch
+#> 594   17  264  276     193  fedmatch
+#> 595   17  264  276     193  fedmatch
+#> 596   18  501  554     362    FlexRL
+#> 597   18  501  554     362    FlexRL
+#> 598   18  501  554     362    FlexRL
+#> 599   18  501  554     362    FlexRL
+#> 600   18  501  554     362    FlexRL
+#> 601   18  501  554     362       BRL
+#> 602   18  501  554     362       BRL
+#> 603   18  501  554     362       BRL
+#> 604   18  501  554     362       BRL
+#> 605   18  501  554     362       BRL
+#> 606   18  501  554     362 multilink
+#> 607   18  501  554     362 multilink
+#> 608   18  501  554     362 multilink
+#> 609   18  501  554     362 multilink
+#> 610   18  501  554     362 multilink
+#> 611   18  501  554     362  fastLink
+#> 612   18  501  554     362  fastLink
+#> 613   18  501  554     362  fastLink
+#> 614   18  501  554     362  fastLink
+#> 615   18  501  554     362  fastLink
+#> 616   18  501  554     362   reclin2
+#> 617   18  501  554     362   reclin2
+#> 618   18  501  554     362   reclin2
+#> 619   18  501  554     362   reclin2
+#> 620   18  501  554     362   reclin2
+#> 621   18  501  554     362     diyar
+#> 622   18  501  554     362     diyar
+#> 623   18  501  554     362     diyar
+#> 624   18  501  554     362     diyar
+#> 625   18  501  554     362     diyar
+#> 626   18  501  554     362  fedmatch
+#> 627   18  501  554     362  fedmatch
+#> 628   18  501  554     362  fedmatch
+#> 629   18  501  554     362  fedmatch
+#> 630   18  501  554     362  fedmatch
+#> 631   19 1524 1625    1010    FlexRL
+#> 632   19 1524 1625    1010    FlexRL
+#> 633   19 1524 1625    1010    FlexRL
+#> 634   19 1524 1625    1010    FlexRL
+#> 635   19 1524 1625    1010    FlexRL
+#> 636   19 1524 1625    1010       BRL
+#> 637   19 1524 1625    1010       BRL
+#> 638   19 1524 1625    1010       BRL
+#> 639   19 1524 1625    1010       BRL
+#> 640   19 1524 1625    1010       BRL
+#> 641   19 1524 1625    1010 multilink
+#> 642   19 1524 1625    1010 multilink
+#> 643   19 1524 1625    1010 multilink
+#> 644   19 1524 1625    1010 multilink
+#> 645   19 1524 1625    1010 multilink
+#> 646   19 1524 1625    1010  fastLink
+#> 647   19 1524 1625    1010  fastLink
+#> 648   19 1524 1625    1010  fastLink
+#> 649   19 1524 1625    1010  fastLink
+#> 650   19 1524 1625    1010  fastLink
+#> 651   19 1524 1625    1010   reclin2
+#> 652   19 1524 1625    1010   reclin2
+#> 653   19 1524 1625    1010   reclin2
+#> 654   19 1524 1625    1010   reclin2
+#> 655   19 1524 1625    1010   reclin2
+#> 656   19 1524 1625    1010     diyar
+#> 657   19 1524 1625    1010     diyar
+#> 658   19 1524 1625    1010     diyar
+#> 659   19 1524 1625    1010     diyar
+#> 660   19 1524 1625    1010     diyar
+#> 661   19 1524 1625    1010  fedmatch
+#> 662   19 1524 1625    1010  fedmatch
+#> 663   19 1524 1625    1010  fedmatch
+#> 664   19 1524 1625    1010  fedmatch
+#> 665   19 1524 1625    1010  fedmatch
+#> 666   20  826  827     478    FlexRL
+#> 667   20  826  827     478    FlexRL
+#> 668   20  826  827     478    FlexRL
+#> 669   20  826  827     478    FlexRL
+#> 670   20  826  827     478    FlexRL
+#> 671   20  826  827     478       BRL
+#> 672   20  826  827     478       BRL
+#> 673   20  826  827     478       BRL
+#> 674   20  826  827     478       BRL
+#> 675   20  826  827     478       BRL
+#> 676   20  826  827     478 multilink
+#> 677   20  826  827     478 multilink
+#> 678   20  826  827     478 multilink
+#> 679   20  826  827     478 multilink
+#> 680   20  826  827     478 multilink
+#> 681   20  826  827     478  fastLink
+#> 682   20  826  827     478  fastLink
+#> 683   20  826  827     478  fastLink
+#> 684   20  826  827     478  fastLink
+#> 685   20  826  827     478  fastLink
+#> 686   20  826  827     478   reclin2
+#> 687   20  826  827     478   reclin2
+#> 688   20  826  827     478   reclin2
+#> 689   20  826  827     478   reclin2
+#> 690   20  826  827     478   reclin2
+#> 691   20  826  827     478     diyar
+#> 692   20  826  827     478     diyar
+#> 693   20  826  827     478     diyar
+#> 694   20  826  827     478     diyar
+#> 695   20  826  827     478     diyar
+#> 696   20  826  827     478  fedmatch
+#> 697   20  826  827     478  fedmatch
+#> 698   20  826  827     478  fedmatch
+#> 699   20  826  827     478  fedmatch
+#> 700   20  826  827     478  fedmatch
+#>     sprintf....2f...t.evaluate_linkage.fit..true_pairs_r... seconds
+#> 1                                                    197.00    2332
+#> 2                                                    117.00    2332
+#> 3                                                    448.00    2332
+#> 4                                                      0.31    2332
+#> 5                                                      0.37    2332
+#> 6                                                     62.00      18
+#> 7                                                     21.00      18
+#> 8                                                    583.00      18
+#> 9                                                      0.10      18
+#> 10                                                     0.25      18
+#> 11                                                   153.00    1115
+#> 12                                                   399.00    1115
+#> 13                                                   492.00    1115
+#> 14                                                     0.24    1115
+#> 15                                                     0.72    1115
+#> 16                                                   321.00       2
+#> 17                                                   812.00       2
+#> 18                                                   324.00       2
+#> 19                                                     0.50       2
+#> 20                                                     0.72       2
+#> 21                                                   632.00       1
+#> 22                                                 25520.00       1
+#> 23                                                    13.00       1
+#> 24                                                     0.98       1
+#> 25                                                     0.98       1
+#> 26                                                    47.00      11
+#> 27                                                     5.00      11
+#> 28                                                   598.00      11
+#> 29                                                     0.07      11
+#> 30                                                     0.10      11
+#> 31                                                   402.00      11
+#> 32                                                   958.00      11
+#> 33                                                   243.00      11
+#> 34                                                     0.62      11
+#> 35                                                     0.70      11
+#> 36                                                    22.00      22
+#> 37                                                     1.00      22
+#> 38                                                     2.00      22
+#> 39                                                     0.92      22
+#> 40                                                     0.04      22
+#> 41                                                    22.00       0
+#> 42                                                    10.00       0
+#> 43                                                     2.00       0
+#> 44                                                     0.92       0
+#> 45                                                     0.31       0
+#> 46                                                    23.00       1
+#> 47                                                    10.00       1
+#> 48                                                     1.00       1
+#> 49                                                     0.96       1
+#> 50                                                     0.30       1
+#> 51                                                    21.00       1
+#> 52                                                    14.00       1
+#> 53                                                     3.00       1
+#> 54                                                     0.88       1
+#> 55                                                     0.40       1
+#> 56                                                    23.00       0
+#> 57                                                    50.00       0
+#> 58                                                     1.00       0
+#> 59                                                     0.96       0
+#> 60                                                     0.68       0
+#> 61                                                    10.00       0
+#> 62                                                     0.00       0
+#> 63                                                    14.00       0
+#> 64                                                     0.42       0
+#> 65                                                     0.00       0
+#> 66                                                    22.00       0
+#> 67                                                    22.00       0
+#> 68                                                     2.00       0
+#> 69                                                     0.92       0
+#> 70                                                     0.50       0
+#> 71                                                   278.00    7881
+#> 72                                                   144.00    7881
+#> 73                                                   640.00    7881
+#> 74                                                     0.30    7881
+#> 75                                                     0.34    7881
+#> 76                                                    41.00      38
+#> 77                                                    12.00      38
+#> 78                                                   877.00      38
+#> 79                                                     0.04      38
+#> 80                                                     0.23      38
+#> 81                                                   121.00    3576
+#> 82                                                   585.00    3576
+#> 83                                                   797.00    3576
+#> 84                                                     0.13    3576
+#> 85                                                     0.83    3576
+#> 86                                                   450.00       5
+#> 87                                                  1383.00       5
+#> 88                                                   468.00       5
+#> 89                                                     0.49       5
+#> 90                                                     0.75       5
+#> 91                                                   911.00       1
+#> 92                                                 54782.00       1
+#> 93                                                     7.00       1
+#> 94                                                     0.99       1
+#> 95                                                     0.98       1
+#> 96                                                    54.00      20
+#> 97                                                     1.00      20
+#> 98                                                   864.00      20
+#> 99                                                     0.06      20
+#> 100                                                    0.02      20
+#> 101                                                  545.00      20
+#> 102                                                 1558.00      20
+#> 103                                                  373.00      20
+#> 104                                                    0.59      20
+#> 105                                                    0.74      20
+#> 106                                                   73.00     590
+#> 107                                                   28.00     590
+#> 108                                                  156.00     590
+#> 109                                                    0.32     590
+#> 110                                                    0.28     590
+#> 111                                                   81.00       2
+#> 112                                                   28.00       2
+#> 113                                                  148.00       2
+#> 114                                                    0.35       2
+#> 115                                                    0.26       2
+#> 116                                                   96.00      74
+#> 117                                                   83.00      74
+#> 118                                                  133.00      74
+#> 119                                                    0.42      74
+#> 120                                                    0.46      74
+#> 121                                                  141.00       4
+#> 122                                                  233.00       4
+#> 123                                                   88.00       4
+#> 124                                                    0.62       4
+#> 125                                                    0.62       4
+#> 126                                                  228.00       0
+#> 127                                                16275.00       0
+#> 128                                                    1.00       0
+#> 129                                                    1.00       0
+#> 130                                                    0.99       0
+#> 131                                                   10.00       3
+#> 132                                                    0.00       3
+#> 133                                                  219.00       3
+#> 134                                                    0.04       3
+#> 135                                                    0.00       3
+#> 136                                                  157.00       3
+#> 137                                                  280.00       3
+#> 138                                                   72.00       3
+#> 139                                                    0.69       3
+#> 140                                                    0.64       3
+#> 141                                                  198.00    2379
+#> 142                                                   94.00    2379
+#> 143                                                  552.00    2379
+#> 144                                                    0.26    2379
+#> 145                                                    0.32    2379
+#> 146                                                  154.00      13
+#> 147                                                   32.00      13
+#> 148                                                  596.00      13
+#> 149                                                    0.21      13
+#> 150                                                    0.17      13
+#> 151                                                  266.00     619
+#> 152                                                  410.00     619
+#> 153                                                  484.00     619
+#> 154                                                    0.35     619
+#> 155                                                    0.61     619
+#> 156                                                  365.00      23
+#> 157                                                  710.00      23
+#> 158                                                  385.00      23
+#> 159                                                    0.49      23
+#> 160                                                    0.66      23
+#> 161                                                  598.00       1
+#> 162                                               341135.00       1
+#> 163                                                  152.00       1
+#> 164                                                    0.80       1
+#> 165                                                    1.00       1
+#> 166                                                    4.00      12
+#> 167                                                    0.00      12
+#> 168                                                  746.00      12
+#> 169                                                    0.01      12
+#> 170                                                    0.00      12
+#> 171                                                  349.00       8
+#> 172                                                  832.00       8
+#> 173                                                  401.00       8
+#> 174                                                    0.47       8
+#> 175                                                    0.70       8
+#> 176                                                   87.00     589
+#> 177                                                   50.00     589
+#> 178                                                  151.00     589
+#> 179                                                    0.37     589
+#> 180                                                    0.36     589
+#> 181                                                   92.00       2
+#> 182                                                   37.00       2
+#> 183                                                  146.00       2
+#> 184                                                    0.39       2
+#> 185                                                    0.29       2
+#> 186                                                  122.00      70
+#> 187                                                   84.00      70
+#> 188                                                  116.00      70
+#> 189                                                    0.51      70
+#> 190                                                    0.41      70
+#> 191                                                  153.00       3
+#> 192                                                  202.00       3
+#> 193                                                   85.00       3
+#> 194                                                    0.64       3
+#> 195                                                    0.57       3
+#> 196                                                  236.00       0
+#> 197                                                 2752.00       0
+#> 198                                                    2.00       0
+#> 199                                                    0.99       0
+#> 200                                                    0.92       0
+#> 201                                                    6.00       3
+#> 202                                                    0.00       3
+#> 203                                                  232.00       3
+#> 204                                                    0.03       3
+#> 205                                                    0.00       3
+#> 206                                                  169.00       3
+#> 207                                                  289.00       3
+#> 208                                                   69.00       3
+#> 209                                                    0.71       3
+#> 210                                                    0.63       3
+#> 211                                                  129.00     953
+#> 212                                                   55.00     953
+#> 213                                                  192.00     953
+#> 214                                                    0.40     953
+#> 215                                                    0.30     953
+#> 216                                                   80.00       4
+#> 217                                                   32.00       4
+#> 218                                                  241.00       4
+#> 219                                                    0.25       4
+#> 220                                                    0.29       4
+#> 221                                                  132.00     179
+#> 222                                                  151.00     179
+#> 223                                                  189.00     179
+#> 224                                                    0.41     179
+#> 225                                                    0.53     179
+#> 226                                                  210.00       3
+#> 227                                                  337.00       3
+#> 228                                                  111.00       3
+#> 229                                                    0.65       3
+#> 230                                                    0.62       3
+#> 231                                                  316.00       0
+#> 232                                                 6320.00       0
+#> 233                                                    5.00       0
+#> 234                                                    0.98       0
+#> 235                                                    0.95       0
+#> 236                                                   34.00       5
+#> 237                                                    2.00       5
+#> 238                                                  287.00       5
+#> 239                                                    0.11       5
+#> 240                                                    0.06       5
+#> 241                                                  227.00       4
+#> 242                                                  443.00       4
+#> 243                                                   94.00       4
+#> 244                                                    0.71       4
+#> 245                                                    0.66       4
+#> 246                                                  304.00    2796
+#> 247                                                   89.00    2796
+#> 248                                                  594.00    2796
+#> 249                                                    0.34    2796
+#> 250                                                    0.23    2796
+#> 251                                                  156.00      18
+#> 252                                                   23.00      18
+#> 253                                                  742.00      18
+#> 254                                                    0.17      18
+#> 255                                                    0.13      18
+#> 256                                                  290.00    1143
+#> 257                                                  421.00    1143
+#> 258                                                  608.00    1143
+#> 259                                                    0.32    1143
+#> 260                                                    0.59    1143
+#> 261                                                  452.00      35
+#> 262                                                  865.00      35
+#> 263                                                  446.00      35
+#> 264                                                    0.50      35
+#> 265                                                    0.66      35
+#> 266                                                  721.00       1
+#> 267                                               339232.00       1
+#> 268                                                  177.00       1
+#> 269                                                    0.80       1
+#> 270                                                    1.00       1
+#> 271                                                   20.00      14
+#> 272                                                    0.00      14
+#> 273                                                  878.00      14
+#> 274                                                    0.02      14
+#> 275                                                    0.00      14
+#> 276                                                  510.00      13
+#> 277                                                  969.00      13
+#> 278                                                  388.00      13
+#> 279                                                    0.57      13
+#> 280                                                    0.66      13
+#> 281                                                  198.00    2564
+#> 282                                                   81.00    2564
+#> 283                                                  513.00    2564
+#> 284                                                    0.28    2564
+#> 285                                                    0.29    2564
+#> 286                                                   43.00      18
+#> 287                                                   13.00      18
+#> 288                                                  668.00      18
+#> 289                                                    0.06      18
+#> 290                                                    0.23      18
+#> 291                                                  107.00    1075
+#> 292                                                  371.00    1075
+#> 293                                                  604.00    1075
+#> 294                                                    0.15    1075
+#> 295                                                    0.78    1075
+#> 296                                                  343.00      34
+#> 297                                                  857.00      34
+#> 298                                                  368.00      34
+#> 299                                                    0.48      34
+#> 300                                                    0.71      34
+#> 301                                                    8.00       1
+#> 302                                               188790.00       1
+#> 303                                                  703.00       1
+#> 304                                                    0.01       1
+#> 305                                                    1.00       1
+#> 306                                                   27.00      12
+#> 307                                                    0.00      12
+#> 308                                                  684.00      12
+#> 309                                                    0.04      12
+#> 310                                                    0.00      12
+#> 311                                                  338.00      10
+#> 312                                                 1025.00      10
+#> 313                                                  373.00      10
+#> 314                                                    0.48      10
+#> 315                                                    0.75      10
+#> 316                                                  117.00     977
+#> 317                                                   53.00     977
+#> 318                                                  267.00     977
+#> 319                                                    0.30     977
+#> 320                                                    0.31     977
+#> 321                                                   70.00       4
+#> 322                                                   14.00       4
+#> 323                                                  314.00       4
+#> 324                                                    0.18       4
+#> 325                                                    0.17       4
+#> 326                                                  119.00     159
+#> 327                                                  139.00     159
+#> 328                                                  265.00     159
+#> 329                                                    0.31     159
+#> 330                                                    0.54     159
+#> 331                                                  206.00       6
+#> 332                                                  359.00       6
+#> 333                                                  178.00       6
+#> 334                                                    0.54       6
+#> 335                                                    0.64       6
+#> 336                                                  321.00       0
+#> 337                                               102152.00       0
+#> 338                                                   63.00       0
+#> 339                                                    0.84       0
+#> 340                                                    1.00       0
+#> 341                                                    2.00       5
+#> 342                                                    0.00       5
+#> 343                                                  382.00       5
+#> 344                                                    0.01       5
+#> 345                                                    0.00       5
+#> 346                                                  238.00       4
+#> 347                                                  420.00       4
+#> 348                                                  146.00       4
+#> 349                                                    0.62       4
+#> 350                                                    0.64       4
+#> 351                                                  137.00    1326
+#> 352                                                   53.00    1326
+#> 353                                                  349.00    1326
+#> 354                                                    0.28    1326
+#> 355                                                    0.28    1326
+#> 356                                                  111.00       6
+#> 357                                                   38.00       6
+#> 358                                                  375.00       6
+#> 359                                                    0.23       6
+#> 360                                                    0.26       6
+#> 361                                                  182.00     220
+#> 362                                                  213.00     220
+#> 363                                                  304.00     220
+#> 364                                                    0.37     220
+#> 365                                                    0.54     220
+#> 366                                                  249.00       8
+#> 367                                                  422.00       8
+#> 368                                                  237.00       8
+#> 369                                                    0.51       8
+#> 370                                                    0.63       8
+#> 371                                                  394.00       1
+#> 372                                               135933.00       1
+#> 373                                                   92.00       1
+#> 374                                                    0.81       1
+#> 375                                                    1.00       1
+#> 376                                                    4.00       6
+#> 377                                                    0.00       6
+#> 378                                                  482.00       6
+#> 379                                                    0.01       6
+#> 380                                                    0.00       6
+#> 381                                                  251.00       5
+#> 382                                                  511.00       5
+#> 383                                                  235.00       5
+#> 384                                                    0.52       5
+#> 385                                                    0.67       5
+#> 386                                                  150.00    1565
+#> 387                                                   68.00    1565
+#> 388                                                  305.00    1565
+#> 389                                                    0.33    1565
+#> 390                                                    0.31    1565
+#> 391                                                   40.00      10
+#> 392                                                   13.00      10
+#> 393                                                  415.00      10
+#> 394                                                    0.09      10
+#> 395                                                    0.25      10
+#> 396                                                  125.00     513
+#> 397                                                  235.00     513
+#> 398                                                  330.00     513
+#> 399                                                    0.27     513
+#> 400                                                    0.65     513
+#> 401                                                  240.00      16
+#> 402                                                  567.00      16
+#> 403                                                  215.00      16
+#> 404                                                    0.53      16
+#> 405                                                    0.70      16
+#> 406                                                  375.00       0
+#> 407                                                 3911.00       0
+#> 408                                                   80.00       0
+#> 409                                                    0.82       0
+#> 410                                                    0.91       0
+#> 411                                                    6.00       9
+#> 412                                                    0.00       9
+#> 413                                                  449.00       9
+#> 414                                                    0.01       9
+#> 415                                                    0.00       9
+#> 416                                                  254.00       7
+#> 417                                                  722.00       7
+#> 418                                                  201.00       7
+#> 419                                                    0.56       7
+#> 420                                                    0.74       7
+#> 421                                                  149.00     688
+#> 422                                                   36.00     688
+#> 423                                                  162.00     688
+#> 424                                                    0.48     688
+#> 425                                                    0.19     688
+#> 426                                                  142.00       2
+#> 427                                                   24.00       2
+#> 428                                                  169.00       2
+#> 429                                                    0.46       2
+#> 430                                                    0.14       2
+#> 431                                                  164.00      56
+#> 432                                                   95.00      56
+#> 433                                                  147.00      56
+#> 434                                                    0.53      56
+#> 435                                                    0.37      56
+#> 436                                                  197.00       3
+#> 437                                                  203.00       3
+#> 438                                                  114.00       3
+#> 439                                                    0.63       3
+#> 440                                                    0.51       3
+#> 441                                                  310.00       0
+#> 442                                                17730.00       0
+#> 443                                                    1.00       0
+#> 444                                                    1.00       0
+#> 445                                                    0.98       0
+#> 446                                                   39.00       3
+#> 447                                                    0.00       3
+#> 448                                                  272.00       3
+#> 449                                                    0.13       3
+#> 450                                                    0.00       3
+#> 451                                                  198.00       3
+#> 452                                                  255.00       3
+#> 453                                                  113.00       3
+#> 454                                                    0.64       3
+#> 455                                                    0.56       3
+#> 456                                                  108.00     348
+#> 457                                                   26.00     348
+#> 458                                                   75.00     348
+#> 459                                                    0.59     348
+#> 460                                                    0.19     348
+#> 461                                                  100.00       1
+#> 462                                                   21.00       1
+#> 463                                                   83.00       1
+#> 464                                                    0.55       1
+#> 465                                                    0.17       1
+#> 466                                                  113.00      18
+#> 467                                                   44.00      18
+#> 468                                                   70.00      18
+#> 469                                                    0.62      18
+#> 470                                                    0.28      18
+#> 471                                                  131.00       2
+#> 472                                                  106.00       2
+#> 473                                                   52.00       2
+#> 474                                                    0.72       2
+#> 475                                                    0.45       2
+#> 476                                                  182.00       0
+#> 477                                                 7282.00       0
+#> 478                                                    1.00       0
+#> 479                                                    0.99       0
+#> 480                                                    0.98       0
+#> 481                                                    2.00       1
+#> 482                                                    0.00       1
+#> 483                                                  181.00       1
+#> 484                                                    0.01       1
+#> 485                                                    0.00       1
+#> 486                                                  137.00       2
+#> 487                                                  143.00       2
+#> 488                                                   46.00       2
+#> 489                                                    0.75       2
+#> 490                                                    0.51       2
+#> 491                                                  110.00    4127
+#> 492                                                  119.00    4127
+#> 493                                                  959.00    4127
+#> 494                                                    0.10    4127
+#> 495                                                    0.52    4127
+#> 496                                                   25.00      35
+#> 497                                                   22.00      35
+#> 498                                                 1044.00      35
+#> 499                                                    0.02      35
+#> 500                                                    0.47      35
+#> 501                                                   69.00    2247
+#> 502                                                  648.00    2247
+#> 503                                                 1000.00    2247
+#> 504                                                    0.06    2247
+#> 505                                                    0.90    2247
+#> 506                                                  276.00      70
+#> 507                                                 1526.00      70
+#> 508                                                  793.00      70
+#> 509                                                    0.26      70
+#> 510                                                    0.85      70
+#> 511                                                 1069.00       2
+#> 512                                              1572964.00       2
+#> 513                                                    0.00       2
+#> 514                                                    1.00       2
+#> 515                                                    1.00       2
+#> 516                                                    1.00      21
+#> 517                                                    0.00      21
+#> 518                                                 1068.00      21
+#> 519                                                    0.00      21
+#> 520                                                    0.00      21
+#> 521                                                  280.00      14
+#> 522                                                 1659.00      14
+#> 523                                                  789.00      14
+#> 524                                                    0.26      14
+#> 525                                                    0.86      14
+#> 526                                                  146.00    2263
+#> 527                                                   68.00    2263
+#> 528                                                  537.00    2263
+#> 529                                                    0.21    2263
+#> 530                                                    0.32    2263
+#> 531                                                   46.00      13
+#> 532                                                   12.00      13
+#> 533                                                  637.00      13
+#> 534                                                    0.07      13
+#> 535                                                    0.21      13
+#> 536                                                  112.00     526
+#> 537                                                  470.00     526
+#> 538                                                  571.00     526
+#> 539                                                    0.16     526
+#> 540                                                    0.81     526
+#> 541                                                  266.00      23
+#> 542                                                  774.00      23
+#> 543                                                  417.00      23
+#> 544                                                    0.39      23
+#> 545                                                    0.74      23
+#> 546                                                  681.00       1
+#> 547                                               404295.00       1
+#> 548                                                    2.00       1
+#> 549                                                    1.00       1
+#> 550                                                    1.00       1
+#> 551                                                    9.00      10
+#> 552                                                    1.00      10
+#> 553                                                  674.00      10
+#> 554                                                    0.01      10
+#> 555                                                    0.10      10
+#> 556                                                  290.00       8
+#> 557                                                  840.00       8
+#> 558                                                  393.00       8
+#> 559                                                    0.42       8
+#> 560                                                    0.74       8
+#> 561                                                  125.00     374
+#> 562                                                   46.00     374
+#> 563                                                   68.00     374
+#> 564                                                    0.65     374
+#> 565                                                    0.27     374
+#> 566                                                  115.00       1
+#> 567                                                   41.00       1
+#> 568                                                   78.00       1
+#> 569                                                    0.60       1
+#> 570                                                    0.26       1
+#> 571                                                  122.00      13
+#> 572                                                   78.00      13
+#> 573                                                   71.00      13
+#> 574                                                    0.63      13
+#> 575                                                    0.39      13
+#> 576                                                  130.00       1
+#> 577                                                  100.00       1
+#> 578                                                   63.00       1
+#> 579                                                    0.67       1
+#> 580                                                    0.43       1
+#> 581                                                  193.00       0
+#> 582                                                 7266.00       0
+#> 583                                                    0.00       0
+#> 584                                                    1.00       0
+#> 585                                                    0.97       0
+#> 586                                                   16.00       1
+#> 587                                                    1.00       1
+#> 588                                                  177.00       1
+#> 589                                                    0.08       1
+#> 590                                                    0.06       1
+#> 591                                                  127.00       2
+#> 592                                                  137.00       2
+#> 593                                                   66.00       2
+#> 594                                                    0.66       2
+#> 595                                                    0.52       2
+#> 596                                                  119.00     907
+#> 597                                                   49.00     907
+#> 598                                                  243.00     907
+#> 599                                                    0.33     907
+#> 600                                                    0.29     907
+#> 601                                                   94.00       2
+#> 602                                                   18.00       2
+#> 603                                                  268.00       2
+#> 604                                                    0.26       2
+#> 605                                                    0.16       2
+#> 606                                                  151.00      60
+#> 607                                                  131.00      60
+#> 608                                                  211.00      60
+#> 609                                                    0.42      60
+#> 610                                                    0.46      60
+#> 611                                                  205.00       4
+#> 612                                                  246.00       4
+#> 613                                                  157.00       4
+#> 614                                                    0.57       4
+#> 615                                                    0.55       4
+#> 616                                                  311.00       0
+#> 617                                               118067.00       0
+#> 618                                                   51.00       0
+#> 619                                                    0.86       0
+#> 620                                                    1.00       0
+#> 621                                                    7.00       3
+#> 622                                                    0.00       3
+#> 623                                                  355.00       3
+#> 624                                                    0.02       3
+#> 625                                                    0.00       3
+#> 626                                                  194.00       3
+#> 627                                                  307.00       3
+#> 628                                                  168.00       3
+#> 629                                                    0.54       3
+#> 630                                                    0.61       3
+#> 631                                                  161.00    3198
+#> 632                                                   73.00    3198
+#> 633                                                  849.00    3198
+#> 634                                                    0.16    3198
+#> 635                                                    0.31    3198
+#> 636                                                   56.00      19
+#> 637                                                    7.00      19
+#> 638                                                  954.00      19
+#> 639                                                    0.06      19
+#> 640                                                    0.11      19
+#> 641                                                  138.00     992
+#> 642                                                  574.00     992
+#> 643                                                  872.00     992
+#> 644                                                    0.14     992
+#> 645                                                    0.81     992
+#> 646                                                  354.00      37
+#> 647                                                 1057.00      37
+#> 648                                                  656.00      37
+#> 649                                                    0.35      37
+#> 650                                                    0.75      37
+#> 651                                                 1006.00       1
+#> 652                                               677113.00       1
+#> 653                                                    4.00       1
+#> 654                                                    1.00       1
+#> 655                                                    1.00       1
+#> 656                                                    5.00      14
+#> 657                                                    0.00      14
+#> 658                                                 1005.00      14
+#> 659                                                    0.00      14
+#> 660                                                    0.00      14
+#> 661                                                  351.00      12
+#> 662                                                 1173.00      12
+#> 663                                                  659.00      12
+#> 664                                                    0.35      12
+#> 665                                                    0.77      12
+#> 666                                                  125.00    1432
+#> 667                                                   79.00    1432
+#> 668                                                  353.00    1432
+#> 669                                                    0.26    1432
+#> 670                                                    0.39    1432
+#> 671                                                   71.00       5
+#> 672                                                   26.00       5
+#> 673                                                  407.00       5
+#> 674                                                    0.15       5
+#> 675                                                    0.27       5
+#> 676                                                  142.00     240
+#> 677                                                  273.00     240
+#> 678                                                  336.00     240
+#> 679                                                    0.30     240
+#> 680                                                    0.66     240
+#> 681                                                  232.00       9
+#> 682                                                  491.00       9
+#> 683                                                  246.00       9
+#> 684                                                    0.49       9
+#> 685                                                    0.68       9
+#> 686                                                  478.00       0
+#> 687                                                71205.00       0
+#> 688                                                    0.00       0
+#> 689                                                    1.00       0
+#> 690                                                    0.99       0
+#> 691                                                   13.00       6
+#> 692                                                    2.00       6
+#> 693                                                  465.00       6
+#> 694                                                    0.03       6
+#> 695                                                    0.13       6
+#> 696                                                  245.00       5
+#> 697                                                  580.00       5
+#> 698                                                  233.00       5
+#> 699                                                    0.51       5
+#> 700                                                    0.70       5
 ```
 
 Averaged over the regions and total computing time:
@@ -699,22 +1757,86 @@ Averaged over the regions and total computing time:
 
 summary_IREG <- do.call(rbind, lapply(split(results_IREG, results_IREG$method), function(d) {
   data.frame(method = d$method[1],
-             FDP = mean(d$FDP, na.rm=TRUE),
-             sensitivity = mean(d$sensitivity, na.rm=TRUE),
+             FDP = sprintf("%.2f",mean(d$FDP, na.rm=TRUE)),
+             sensitivity = sprintf("%.2f",mean(d$sensitivity, na.rm=TRUE)),
              TP = mean(d$TP, na.rm=TRUE), FP = mean(d$FP, na.rm=TRUE), FN = mean(d$FN, na.rm=TRUE),
              minutes = sum(d$seconds) / 60)
 }))
+#> Warning in mean.default(d$FDP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$sensitivity, na.rm = TRUE): argument is not numeric
+#> or logical: returning NA
+#> Warning in mean.default(d$TP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FN, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FDP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$sensitivity, na.rm = TRUE): argument is not numeric
+#> or logical: returning NA
+#> Warning in mean.default(d$TP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FN, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FDP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$sensitivity, na.rm = TRUE): argument is not numeric
+#> or logical: returning NA
+#> Warning in mean.default(d$TP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FN, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FDP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$sensitivity, na.rm = TRUE): argument is not numeric
+#> or logical: returning NA
+#> Warning in mean.default(d$TP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FN, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FDP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$sensitivity, na.rm = TRUE): argument is not numeric
+#> or logical: returning NA
+#> Warning in mean.default(d$TP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FN, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FDP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$sensitivity, na.rm = TRUE): argument is not numeric
+#> or logical: returning NA
+#> Warning in mean.default(d$TP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FN, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FDP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$sensitivity, na.rm = TRUE): argument is not numeric
+#> or logical: returning NA
+#> Warning in mean.default(d$TP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FP, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
+#> Warning in mean.default(d$FN, na.rm = TRUE): argument is not numeric or
+#> logical: returning NA
 rownames(summary_IREG) <- summary_IREG$method
 
 round(summary_IREG[,2:7],2)
-#>            FDP sensitivity     TP      FP     FN minutes
-#> BRL       0.32        0.24  47.10   22.00 273.55    2.55
-#> diyar     0.30        0.15  31.25   15.15 289.40    1.37
-#> fastLink  0.68        0.49 135.85  410.60 184.80    2.23
-#> fedmatch  0.74        0.51 152.90  556.00 167.75    2.40
-#> FlexRL    0.41        0.25  56.35   39.95 264.30  278.47
-#> multilink 0.62        0.31  72.05  154.95 248.60   83.67
-#> reclin2   0.91        0.97 310.20 7083.90  10.45    0.05
+#> Error in `Math.data.frame()`:
+#> ! non-numeric-alike variable(s) in data frame: FDP, sensitivity
 ```
 
 ``` r
@@ -735,11 +1857,11 @@ shiw-regional-blocking-plot](figure/shiw-regional-blocking-plot-1.png)
 
 plot of chunk shiw-regional-blocking-plot
 
-The 4 PIVs have little discriminating power on these data (birth years,
-sex, 6 education levels, 4 marital statuses) and the two waves overlap
-on about 40% of their records (6.430 true links, 14.917 records in A,
-16.445 records in B), so the task is hard for every package. `fastLink`,
-`multilink`, `BRL` and `diyar` are not scalable (out of memory errors).
+The 5 PIVs have little discriminating power on these data and the two
+waves overlap on about 50% of their records (10.568 true links, 19.362
+records in A, 20.016 records in B), so the task is hard for every
+package. `fastLink`, `multilink`, `BRL` and `diyar` are not scalable
+(out of memory errors).
 
 We compare methods with blocking over the 20 regions: `reclin2` (EM on
 the comparison patterns, threshold at 0.5 on the posterior) links a lot
