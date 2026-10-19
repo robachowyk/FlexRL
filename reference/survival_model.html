@@ -27,7 +27,8 @@ used by StEM(), simulateD() and simulate_data()."><meta property="og:image" cont
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/FlexRL-RL-vignette.html">Record linkage with FlexRL</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/Article-FlexRL.html">FlexRL an R package for Flexible Record Linkage and Linked Data Quality Assessment</a></li>
+    <li><a class="dropdown-item" href="../articles/FlexRL-RL-vignette.html">Linkage and Diagnostics with FlexRL</a></li>
     <li><a class="dropdown-item" href="../articles/FlexRL-RL-block-vignette.html">Scalable Record Linkage with FlexRL</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
@@ -158,7 +159,7 @@ with <code><a href="https://rdrr.io/r/stats/nlminb.html" class="external-link">s
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.9996321 0.9255377 0.5098609 0.4396208 0.2824536</span>
 <span class="r-in"><span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/nlminb.html" class="external-link">nlminb</a></span><span class="op">(</span><span class="va">gomp</span><span class="op">$</span><span class="fu">init</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span><span class="op">)</span>, <span class="va">gomp</span><span class="op">$</span><span class="va">negloglik</span>, X <span class="op">=</span> <span class="va">X</span>, times <span class="op">=</span> <span class="va">times</span>,</span></span>
 <span class="r-in"><span>              Hequal <span class="op">=</span> <span class="va">Hequal</span><span class="op">)</span><span class="op">$</span><span class="va">par</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1]  116.0923 -162.0432</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1]  114.9691 -163.5902</span>
 <span class="r-in"><span>              </span></span>
 <span class="r-in"><span><span class="va">pw</span> <span class="op">&lt;-</span> <span class="fu">survival_model</span><span class="op">(</span><span class="st">"piecewise"</span>, cuts <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">pw</span><span class="op">$</span><span class="fu">S</span><span class="op">(</span><span class="va">X</span>, alpha <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span>, <span class="va">times</span><span class="op">)</span></span></span>
@@ -185,7 +186,7 @@ with <code><a href="https://rdrr.io/r/stats/nlminb.html" class="external-link">s
 <span class="r-out co"><span class="r-pr">#&gt;</span> [5,] 0.7869860</span>
 <span class="r-in"><span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/nlminb.html" class="external-link">nlminb</a></span><span class="op">(</span><span class="va">loglogistic</span><span class="op">$</span><span class="fu">init</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span><span class="op">)</span>, <span class="va">loglogistic</span><span class="op">$</span><span class="va">negloglik</span>, X <span class="op">=</span> <span class="va">X</span>, times <span class="op">=</span> <span class="va">times</span>,</span></span>
 <span class="r-in"><span>              Hequal <span class="op">=</span> <span class="va">Hequal</span><span class="op">)</span><span class="op">$</span><span class="va">par</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1]  5.679192 -0.332847</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1]  5.6077244 -0.3311609</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

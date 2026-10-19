@@ -1,4 +1,4 @@
-# Record Linkage with FlexRL
+# Linkage and Diagnostics with FlexRL
 
 ``` r
 
@@ -35,21 +35,22 @@ flexible about the other (`dynamics = "flexible"`).
 
 ``` r
 
-PIVs_config <- list( V1 = list(dynamics = "stable",
-                               bound_mistakes = c(0.10,0.10),
-                               fix_mistakes = c(NA,NA)),
-                     V2 = list(dynamics = "stable",
-                               bound_mistakes = c(0.10,0.10),
-                               fix_mistakes = c(NA,NA)),
-                     V3 = list(dynamics = "flexible",
-                               bound_mistakes = c(NA,NA),
-                               fix_mistakes = c(NA,NA)),
-                     V4 = list(dynamics = "structured",
-                               bound_mistakes = c(NA,NA),
-                               fix_mistakes = c(0.02,0.02),
-                               cond_hazard_cov = list(cov1 = c("Xe", "Xf"),
-                                                      cov2 = c()))
-)
+PIVs_config <- list( PIV1 = list(dynamics         = "stable",
+                                 bound_mistakes   = c(0.10,0.10),
+                                 fix_mistakes     = c(NA,NA)),
+                     PIV2 = list(dynamics         = "stable",
+                                 bound_mistakes   = c(0.10,0.10),
+                                 fix_mistakes     = c(NA,NA)),
+                     PIV3 = list(dynamics         = "flexible",
+                                 bound_mistakes   = c(NA,NA),
+                                 fix_mistakes     = c(NA,NA)),
+                     PIV4 = list(dynamics         = "structured",
+                                 bound_mistakes   = c(NA,NA),
+                                 fix_mistakes     = c(0.02,0.02),
+                                 cond_hazard_cov  = list(cov1 = c("Xe", "Xf"),
+                                                         cov2 = c())) )
+PIVs <- names(PIVs_config)
+PIVs_type <- list( PIV1 = FALSE, PIV2 = FALSE, PIV3 = FALSE, PIV4 = FALSE )
 ```
 
 With PIVs that evolve over time, when modelling is possible, it is
@@ -74,21 +75,21 @@ parameters are estimated with
 
 ``` r
 
-n_values  <- c(8, 9, 10, 15)
-p_mistake <- list(V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
-                  V3 = c(0.02, 0.02), V4 = c(0.02, 0.02))
-p_missing <- list(V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
-                  V3 = c(0.005, 0.005), V4 = c(0.005, 0.005))
-PIVs <- names(PIVs_config)
-PIVs_type <- list( V1 = FALSE, V2 = FALSE, V3 = FALSE, V4 = TRUE )
-cond_hazard_params <- list(V1 = c(), V2 = c(), V3 = c(), V4 = c(-0.35, -0.50, -0.70))
+n_values  <- c(7, 8, 9, 10)
 
-gen_data <- simulate_data(
-  PIVs_config = PIVs_config, n_values = n_values, n_records = c(450, 500), 
-  n_links = 400, p_mistake = p_mistake, p_missing = p_missing, 
-  cond_hazard_params = cond_hazard_params, enforce_estimability = TRUE,
-  model_dynamics = survival_model("exponential")
-)
+p_mistake <- list(PIV1 = c(0.02, 0.02), PIV2 = c(0.02, 0.02),
+                  PIV3 = c(0.02, 0.02), PIV4 = c(0.02, 0.02))
+
+p_missing <- list(PIV1 = c(0.005, 0.005), PIV2 = c(0.005, 0.005),
+                  PIV3 = c(0.005, 0.005), PIV4 = c(0.005, 0.005))
+
+cond_hazard_params <- list(PIV1 = c(), PIV2 = c(), 
+                           PIV3 = c(), PIV4 = c(-0.35, -0.50, -0.70))
+
+gen_data <- simulate_data(PIVs_config = PIVs_config, n_values = n_values, 
+    n_records = c(350, 400), n_links = 300, p_mistake = p_mistake, 
+    p_missing = p_missing, cond_hazard_params = cond_hazard_params, 
+    enforce_estimability = TRUE, model_dynamics = survival_model("exponential"))
 ```
 
 We pre-process the data for the record linkage task: remove the records
@@ -100,36 +101,34 @@ source as `A` and the largest as `B`.
 
 ``` r
 
-prep_data <- prepare_data(
-  data1 = gen_data$data1, data2 = gen_data$data2, label1 = "1", label2 = "2", 
-  PIVs_config = PIVs_config, same_mistakes = TRUE, uniq_id = "entity_id",
-  restrict_support_intersection = TRUE
-)
+prep_data <- prepare_data(data1 = gen_data$data1, data2 = gen_data$data2, 
+    label1 = "1", label2 = "2", PIVs_config = PIVs_config, same_mistakes = TRUE, 
+    uniq_id = "entity_id", restrict_support_intersection = TRUE)
 #> '2' is the larger source, saved as B; '1' saved as A.
 ```
 
 ``` r
 
 head(prep_data$encodedA)
-#>   V1 V2 V3 V4 change     date     Xe     Xf local_id entity_id source
-#> 1  2  9  3  9  FALSE 0.000089  0.749 -0.687        1         1      1
-#> 2  7  1  6 13  FALSE 0.004949  0.484  0.161        2         2      1
-#> 3  7  7  7 13  FALSE 0.001941  0.636  0.830        3         3      1
-#> 4  6  8  2 13  FALSE 0.008252  1.029  1.845        4         4      1
-#> 5  2  9  3 11  FALSE 0.006445  1.899  0.027        5         5      1
-#> 6  8  9  3 12  FALSE 0.001100 -0.033  2.421        6         6      1
+#>   PIV1 PIV2 PIV3 PIV4 change   date     Xe    Xf local_id entity_id source
+#> 1    6    1    5    9  FALSE 0.0027  0.452  0.94        1         1      1
+#> 2    7    8    8   10  FALSE 0.0016  1.128  0.90        2         2      1
+#> 3    5    6    6    6  FALSE 0.0066  1.936  0.31        3         3      1
+#> 4    3    2    6    2  FALSE 0.0018  1.150  0.69        4         4      1
+#> 5    5    6    8    7  FALSE 0.0086 -0.625 -0.59        5         5      1
+#> 6    6    6    5    3  FALSE 0.0021  0.061 -0.39        6         6      1
 ```
 
 ``` r
 
 head(prep_data$encodedB)
-#>   V1 V2 V3 V4 change   date local_id entity_id source
-#> 1  2  9  3  9  FALSE 0.0029        1         1      2
-#> 2  7  1  6 13  FALSE 0.0017        2         2      2
-#> 3  7  7  7 13  FALSE 0.0087        3         3      2
-#> 4  6  8  2  9  FALSE 0.0062        4         4      2
-#> 5  2  9  3 11  FALSE 0.0029        5         5      2
-#> 6  8  9  3 12  FALSE 0.0034        6         6      2
+#>   PIV1 PIV2 PIV3 PIV4 change   date local_id entity_id source
+#> 1    6    1    5    9  FALSE 0.0067        1         1      2
+#> 2    7    8    8   10  FALSE 0.0039        2         2      2
+#> 3    5    6    6    6  FALSE 0.0046        3         3      2
+#> 4    3    2    6    2  FALSE 0.0064        4         4      2
+#> 5    5    6    8    7  FALSE 0.0075        5         5      2
+#> 6    6    6    5    3  FALSE 0.0024        6         6      2
 ```
 
 For this example we know the true linkage structure.
@@ -152,8 +151,8 @@ discriminating power:
 ``` r
 
 prep_data$n_values
-#> V1 V2 V3 V4 
-#>  8  9 10 15
+#> PIV1 PIV2 PIV3 PIV4 
+#>    7    8    9   10
 ```
 
 We gauge how hard the record linkage task is using a naive linkage
@@ -169,19 +168,19 @@ MeM <- peakRAMNew(naive_fit <- naive_linkage(PIVs = PIVs,
 elapsed <- as.numeric(Sys.time() - t0, units = "secs")
 
 df_results <- data.frame( matrix(NA, nrow = 13, ncol = 0) )
-rownames(df_results) <- c("TP              ",
-                          "FP              ",
-                          "FN              ",
-                          "sensitivity     ",
-                          "FDP             ",
-                          "hat FDP score   ",
-                          "hat FDP score*  ",
-                          "hat FDP synth*  ",
-                          "max SMD         ",
-                          "min support IoU ",
-                          "max MMD         ",
-                          "time (secs)     ",
-                          "memory (Mb)     ")
+rownames(df_results) <- c("TP               ", 
+                          "FP               ", 
+                          "FN               ", 
+                          "sensitivity      ", 
+                          "FDP              ", 
+                          "est. FDP score   ", 
+                          "est. FDP* score  ", 
+                          "est. FDP* synth  ", 
+                          "max SMD          ", 
+                          "min support IoU  ", 
+                          "max MMD          ", 
+                          "time (secs)      ", 
+                          "memory (Mb)      ")
 
 true_pairs      <- do.call(paste, c(prep_data$true_pairs, list(sep="_")))
 linked_pairs    <- do.call(paste, c(naive_fit, list(sep = "_")))
@@ -190,24 +189,25 @@ false_positive  <- length( setdiff(linked_pairs, true_pairs) )
 false_negative  <- length( setdiff(true_pairs, linked_pairs) )
 sensitivity     <- true_positive / (true_positive + false_negative) 
 fdp             <- false_positive / (true_positive + false_positive) 
-df_results[1:5,  "Naive     "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[1:5,  "Naive     "] <- c(true_positive,false_positive,
+                                    false_negative,sensitivity,fdp)
 df_results[12:13,"Naive     "] <- c(round(elapsed),round(MeM$Peak_RAM_Used_MiB))
 
 df_results
-#>                  Naive     
-#> TP                   274.00
-#> FP                    89.00
-#> FN                   126.00
-#> sensitivity            0.69
-#> FDP                    0.25
-#> hat FDP score            NA
-#> hat FDP score*           NA
-#> hat FDP synth*           NA
-#> max SMD                  NA
-#> min support IoU          NA
-#> max MMD                  NA
-#> time (secs)            0.00
-#> memory (Mb)            2.00
+#>                   Naive     
+#> TP                    189.00
+#> FP                     90.00
+#> FN                    111.00
+#> sensitivity             0.63
+#> FDP                     0.32
+#> est. FDP score            NA
+#> est. FDP* score           NA
+#> est. FDP* synth           NA
+#> max SMD                   NA
+#> min support IoU           NA
+#> max MMD                   NA
+#> time (secs)             0.00
+#> memory (Mb)             1.00
 ```
 
 We run record linkage with `FlexRL`. The `data` should contain encodedA,
@@ -248,35 +248,37 @@ false_negative  <- length( setdiff(true_pairs, linked_pairs) )
 sensitivity     <- true_positive / (true_positive + false_negative) 
 fdp             <- false_positive / (true_positive + false_positive)  
 
-df_results[1:5,  "FlexRL    "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[1:5,  "FlexRL    "] <- c(true_positive,false_positive,
+                                    false_negative,sensitivity,fdp)
 df_results[12:13,"FlexRL    "] <- c(round(elapsed),round(MeM$Peak_RAM_Used_MiB))
 
 df_results
-#>                  Naive      FlexRL    
-#> TP                   274.00     286.00
-#> FP                    89.00      46.00
-#> FN                   126.00     114.00
-#> sensitivity            0.69       0.71
-#> FDP                    0.25       0.14
-#> hat FDP score            NA         NA
-#> hat FDP score*           NA         NA
-#> hat FDP synth*           NA         NA
-#> max SMD                  NA         NA
-#> min support IoU          NA         NA
-#> max MMD                  NA         NA
-#> time (secs)            0.00     151.00
-#> memory (Mb)            2.00      35.00
+#>                   Naive      FlexRL    
+#> TP                    189.00     199.00
+#> FP                     90.00      32.00
+#> FN                    111.00     101.00
+#> sensitivity             0.63       0.66
+#> FDP                     0.32       0.14
+#> est. FDP score            NA         NA
+#> est. FDP* score           NA         NA
+#> est. FDP* synth           NA         NA
+#> max SMD                   NA         NA
+#> min support IoU           NA         NA
+#> max MMD                   NA         NA
+#> time (secs)             0.00     102.00
+#> memory (Mb)             1.00     115.00
 ```
 
 Let us run record linkage diagnostics:
 
 ``` r
 
-diag <- RL_diagnostics(fit = fit, encodedA = prep_data$encodedA, encodedB = prep_data$encodedB,
-                      compare_vars = PIVs, vars_type_cont = PIVs_type, PIVs = PIVs, 
-                      true_pairs = prep_data$true_pairs, FDP_estimation = TRUE, 
-                      RL_method = "FlexRL", data = prep_data,
-                      maxIter4CV = 1, n_repeats = 2)
+diag <- RL_diagnostics(fit = fit, encodedA = prep_data$encodedA, 
+                       encodedB = prep_data$encodedB, compare_vars = PIVs, 
+                       vars_type_cont = PIVs_type, PIVs = PIVs, 
+                       true_pairs = prep_data$true_pairs, FDP_estimation = TRUE, 
+                       RL_method = "FlexRL", data = prep_data,
+                       maxIter4CV = 1, n_repeats = 2)
 
 df_results[6,"FlexRL    "] <- diag$FDP_measures$curve$RL_FDP_score[1]
 df_results[7,"FlexRL    "] <- diag$FDP_measures$curve$augmRL_FDP_score[1]
@@ -296,54 +298,54 @@ df_results[11,"FlexRL    "] <- max(diag$discrepancy_measures[1,mmd_idx])
 diag # default, equivalent to print(diag)
 #> <RL_diagnostics>
 #> 
-#>   Linked pairs  (score > 0.50):  332
+#>   Linked pairs  (score > 0.50):  231
 #> 
 #>   FDP           (true pairs):    0.139
-#>   Sensitivity   (true pairs):    0.715
+#>   Sensitivity   (true pairs):    0.663
 #> 
-#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.105
-#>                                                threshold 0.50: FDP ~ 0.105
-#>                                            max threshold 0.99: FDP ~ 0.004
-#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.122
-#>                                                threshold 0.50: FDP ~ 0.122
-#>                                            max threshold 0.99: FDP ~ 0.004
-#>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.217
-#>                                                threshold 0.50: FDP ~ 0.217
+#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.137
+#>                                                threshold 0.50: FDP ~ 0.137
+#>                                            max threshold 0.99: FDP ~ 0.005
+#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.149
+#>                                                threshold 0.50: FDP ~ 0.149
+#>                                            max threshold 0.99: FDP ~ 0.005
+#>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.271
+#>                                                threshold 0.50: FDP ~ 0.271
 #>                                            max threshold 0.99: FDP ~ 0.000
 #>   The score-based estimator is valid when the linkage model is well calibrated to the data.
 #>   The synthetic-data estimator is valid when the augmented task is equivalent to the
 #>   original one, which requires links and non-links to have similar distributions; similar
 #>   score-based FDP estimates on the original and augmented tasks support this prerequisite.
 #> 
-#>   Multivariate MMD  (linked A vs. A):  0.0018
-#>   Multivariate MMD  (linked B vs. B):  0.0024
+#>   Multivariate MMD  (linked A vs. A):  0.0035
+#>   Multivariate MMD  (linked B vs. B):  0.0042
 #> 
-#>   IoU support V1  (linked A vs. A):  0.8750
-#>   IoU support V2  (linked A vs. A):  1.0000
-#>   IoU support V3  (linked A vs. A):  0.9000
-#>   IoU support V4  (linked A vs. A):  1.0000
-#>   IoU support V1  (linked B vs. B):  1.0000
-#>   IoU support V2  (linked B vs. B):  1.0000
-#>   IoU support V3  (linked B vs. B):  1.0000
-#>   IoU support V4  (linked B vs. B):  1.0000
+#>   IoU support PIV1  (linked A vs. A):  0.8571
+#>   IoU support PIV2  (linked A vs. A):  0.8750
+#>   IoU support PIV3  (linked A vs. A):  0.8889
+#>   IoU support PIV4  (linked A vs. A):  1.0000
+#>   IoU support PIV1  (linked B vs. B):  1.0000
+#>   IoU support PIV2  (linked B vs. B):  1.0000
+#>   IoU support PIV3  (linked B vs. B):  1.0000
+#>   IoU support PIV4  (linked B vs. B):  1.0000
 #> 
-#>   Agreement V1  (linked A vs. linked B):  1.0000
-#>   Agreement V2  (linked A vs. linked B):  0.9970
-#>   Agreement V3  (linked A vs. linked B):  1.0000
-#>   Agreement V4  (linked A vs. linked B):  0.7922
-#>   Agreement V1  (true pairs):  0.9525
-#>   Agreement V2  (true pairs):  0.9550
-#>   Agreement V3  (true pairs):  0.9700
-#>   Agreement V4  (true pairs):  0.7400
+#>   Agreement PIV1  (linked A vs. linked B):  0.9913
+#>   Agreement PIV2  (linked A vs. linked B):  0.9957
+#>   Agreement PIV3  (linked A vs. linked B):  0.9957
+#>   Agreement PIV4  (linked A vs. linked B):  0.7489
+#>   Agreement PIV1  (true pairs):  0.9533
+#>   Agreement PIV2  (true pairs):  0.9500
+#>   Agreement PIV3  (true pairs):  0.9400
+#>   Agreement PIV4  (true pairs):  0.7000
 #> 
-#>   SMD V1 values: {0, 4, 7, ...}  (linked A vs. A):  -0.0471, 0.0460, -0.0439, ...
-#>   SMD V2 values: {6, 7, 8, ...}  (linked A vs. A):  0.0425, -0.0552, -0.0428, ...
-#>   SMD V3 values: {0, 4, 7, ...}  (linked A vs. A):  -0.0471, 0.0446, -0.0422, ...
-#>   SMD V4                         (linked A vs. A):  -0.0090
-#>   SMD V1 values: {1, 3, 8, ...}  (linked B vs. B):  0.0535, 0.0461, -0.0727, ...
-#>   SMD V2 values: {2, 6, 7, ...}  (linked B vs. B):  0.0426, 0.0511, -0.0480, ...
-#>   SMD V3 values: {4, 8, 9, ...}  (linked B vs. B):  0.0690, 0.0422, -0.0639, ...
-#>   SMD V4                         (linked B vs. B):  0.0059
+#>   SMD PIV1 values: {1, 4, 7, ...}   (linked A vs. A):  0.0851, 0.0608, -0.0905, ...
+#>   SMD PIV2 values: {0, 2, 5, ...}   (linked A vs. A):  -0.0757, 0.0587, -0.0628, ...
+#>   SMD PIV3 values: {0, 4, 5, ...}   (linked A vs. A):  -0.0757, 0.0798, -0.0502, ...
+#>   SMD PIV4 values: {0, 1, 10, ...}  (linked A vs. A):  0.0390, 0.0363, -0.0462, ...
+#>   SMD PIV1 values: {1, 2, 7, ...}   (linked B vs. B):  0.0572, 0.0880, -0.0652, ...
+#>   SMD PIV2 values: {2, 5, 8, ...}   (linked B vs. B):  0.0994, -0.0836, -0.1019, ...
+#>   SMD PIV3 values: {3, 4, 5, ...}   (linked B vs. B):  0.0561, 0.1194, -0.0741, ...
+#>   SMD PIV4 values: {0, 4, 10, ...}  (linked B vs. B):  0.0734, 0.0778, -0.0628, ...
 ```
 
 ``` r
@@ -351,54 +353,54 @@ diag # default, equivalent to print(diag)
 print(diag, threshold = 0.75)
 #> <RL_diagnostics>
 #> 
-#>   Linked pairs  (score > 0.75):  276
+#>   Linked pairs  (score > 0.75):  176
 #> 
-#>   FDP           (true pairs):    0.065
-#>   Sensitivity   (true pairs):    0.645
+#>   FDP           (true pairs):    0.062
+#>   Sensitivity   (true pairs):    0.550
 #> 
-#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.105
-#>                                                threshold 0.75: FDP ~ 0.051
-#>                                            max threshold 0.99: FDP ~ 0.004
-#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.122
-#>                                                threshold 0.75: FDP ~ 0.056
-#>                                            max threshold 0.99: FDP ~ 0.004
-#>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.217
-#>                                                threshold 0.75: FDP ~ 0.058
+#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.137
+#>                                                threshold 0.75: FDP ~ 0.064
+#>                                            max threshold 0.99: FDP ~ 0.005
+#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.149
+#>                                                threshold 0.75: FDP ~ 0.065
+#>                                            max threshold 0.99: FDP ~ 0.005
+#>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.271
+#>                                                threshold 0.75: FDP ~ 0.153
 #>                                            max threshold 0.99: FDP ~ 0.000
 #>   The score-based estimator is valid when the linkage model is well calibrated to the data.
 #>   The synthetic-data estimator is valid when the augmented task is equivalent to the
 #>   original one, which requires links and non-links to have similar distributions; similar
 #>   score-based FDP estimates on the original and augmented tasks support this prerequisite.
 #> 
-#>   Multivariate MMD  (linked A vs. A):  0.0046
-#>   Multivariate MMD  (linked B vs. B):  0.0042
+#>   Multivariate MMD  (linked A vs. A):  0.0105
+#>   Multivariate MMD  (linked B vs. B):  0.0104
 #> 
-#>   IoU support V1  (linked A vs. A):  0.8750
-#>   IoU support V2  (linked A vs. A):  0.8889
-#>   IoU support V3  (linked A vs. A):  0.9000
-#>   IoU support V4  (linked A vs. A):  1.0000
-#>   IoU support V1  (linked B vs. B):  1.0000
-#>   IoU support V2  (linked B vs. B):  1.0000
-#>   IoU support V3  (linked B vs. B):  1.0000
-#>   IoU support V4  (linked B vs. B):  1.0000
+#>   IoU support PIV1  (linked A vs. A):  0.8571
+#>   IoU support PIV2  (linked A vs. A):  0.8750
+#>   IoU support PIV3  (linked A vs. A):  0.8889
+#>   IoU support PIV4  (linked A vs. A):  1.0000
+#>   IoU support PIV1  (linked B vs. B):  1.0000
+#>   IoU support PIV2  (linked B vs. B):  0.8750
+#>   IoU support PIV3  (linked B vs. B):  1.0000
+#>   IoU support PIV4  (linked B vs. B):  1.0000
 #> 
-#>   Agreement V1  (linked A vs. linked B):  1.0000
-#>   Agreement V2  (linked A vs. linked B):  1.0000
-#>   Agreement V3  (linked A vs. linked B):  1.0000
-#>   Agreement V4  (linked A vs. linked B):  0.8297
-#>   Agreement V1  (true pairs):  0.9525
-#>   Agreement V2  (true pairs):  0.9550
-#>   Agreement V3  (true pairs):  0.9700
-#>   Agreement V4  (true pairs):  0.7400
+#>   Agreement PIV1  (linked A vs. linked B):  0.9943
+#>   Agreement PIV2  (linked A vs. linked B):  1.0000
+#>   Agreement PIV3  (linked A vs. linked B):  0.9943
+#>   Agreement PIV4  (linked A vs. linked B):  0.8011
+#>   Agreement PIV1  (true pairs):  0.9533
+#>   Agreement PIV2  (true pairs):  0.9500
+#>   Agreement PIV3  (true pairs):  0.9400
+#>   Agreement PIV4  (true pairs):  0.7000
 #> 
-#>   SMD V1 values: {5, 7, 8, ...}  (linked A vs. A):  0.0845, -0.0674, -0.0849, ...
-#>   SMD V2 values: {3, 6, 7, ...}  (linked A vs. A):  0.0969, 0.0731, -0.0892, ...
-#>   SMD V3 values: {3, 4, 5, ...}  (linked A vs. A):  -0.1027, 0.0782, 0.0707, ...
-#>   SMD V4                         (linked A vs. A):  -0.0763
-#>   SMD V1 values: {1, 5, 8, ...}  (linked B vs. B):  0.0916, 0.0814, -0.1335, ...
-#>   SMD V2 values: {2, 6, 7, ...}  (linked B vs. B):  0.0734, 0.0819, -0.0903, ...
-#>   SMD V3 values: {3, 4, 9, ...}  (linked B vs. B):  -0.0783, 0.1043, -0.0676, ...
-#>   SMD V4                         (linked B vs. B):  -0.0276
+#>   SMD PIV1 values: {1, 2, 7, ...}  (linked A vs. A):  0.1113, 0.0939, -0.1079, ...
+#>   SMD PIV2 values: {2, 4, 8, ...}  (linked A vs. A):  0.1196, 0.1366, -0.1049, ...
+#>   SMD PIV3 values: {2, 4, 8, ...}  (linked A vs. A):  0.0786, 0.1154, -0.0859, ...
+#>   SMD PIV4 values: {2, 8, 9, ...}  (linked A vs. A):  -0.1040, 0.0755, 0.0757, ...
+#>   SMD PIV1 values: {1, 2, 7, ...}  (linked B vs. B):  0.0822, 0.1447, -0.0829, ...
+#>   SMD PIV2 values: {2, 4, 8, ...}  (linked B vs. B):  0.1641, 0.1350, -0.1520, ...
+#>   SMD PIV3 values: {2, 3, 4, ...}  (linked B vs. B):  0.0938, 0.1029, 0.1573, ...
+#>   SMD PIV4 values: {4, 5, 8, ...}  (linked B vs. B):  0.1237, -0.0938, 0.0820, ...
 ```
 
 These summaries provide information on the linked data. We can also look
@@ -498,24 +500,30 @@ With `link_with_<pkg>()` wrappers we can link records with “multilink”,
 
 brl_args <- list(flds = PIVs, types = rep("bi",length(PIVs)))
 t0 <- Sys.time()
-MeM <- peakRAMNew(fit_brl <- link_with_BRL(prep_data$encodedA, prep_data$encodedB, brl_args))
+MeM <- peakRAMNew(fit_brl <- link_with_BRL(prep_data$encodedA, 
+                                           prep_data$encodedB, brl_args))
 elapsed <- as.numeric(Sys.time() - t0, units = "secs")
 
 delta_result    <- as.data.frame(fit_brl)
 delta_result    <- delta_result[delta_result$LinkScore>0.5, ]
-linked_pairs    <- do.call(paste, c(delta_result[,c("idxA","idxB")], list(sep = "_")))
+linked_pairs    <- do.call(paste, c(delta_result[,c("idxA","idxB")], 
+                                    list(sep = "_")))
 true_positive   <- length( intersect(linked_pairs, true_pairs) )
 false_positive  <- length( setdiff(linked_pairs, true_pairs) )
 false_negative  <- length( setdiff(true_pairs, linked_pairs) )
 sensitivity     <- true_positive / (true_positive + false_negative) 
 fdp             <- false_positive / (true_positive + false_positive) 
 
-df_results[1:5,  "BRL       "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[1:5,  "BRL       "] <- c(true_positive,false_positive,
+                                    false_negative,sensitivity,fdp)
 df_results[12:13,"BRL       "] <- c(round(elapsed),round(MeM$Peak_RAM_Used_MiB))
 
-diag_brl <- do.call(RL_diagnostics, c(list(fit_brl, prep_data$encodedA, prep_data$encodedB,
-                           PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs,
-                           FDP_estimation = TRUE, RL_method = "BRL", maxIter4CV = 1, n_repeats = 2),
+diag_brl <- do.call(RL_diagnostics, c(list(fit_brl, prep_data$encodedA, 
+                                           prep_data$encodedB, PIVs, PIVs_type, 
+                                           PIVs, true_pairs = prep_data$true_pairs,
+                                           FDP_estimation = TRUE, 
+                                           RL_method = "BRL", maxIter4CV = 1, 
+                                           n_repeats = 2),
                            brl_args))
 
 df_results[6,"BRL       "] <- diag_brl$FDP_measures$curve$RL_FDP_score[1]
@@ -533,26 +541,35 @@ df_results[11,"BRL       "] <- max(diag_brl$discrepancy_measures[1,mmd_idx])
 
 ``` r
 
-multilink_args <- list(types = rep("bi",length(PIVs)), breaks = list(V1 = NA, V2 = NA, V3 = NA, V4 = NA),
+multilink_args <- list(types = rep("bi",length(PIVs)), 
+                       breaks = list(PIV1 = NA, PIV2 = NA, PIV3 = NA, PIV4 = NA),
                        duplicates = c(0,0), n_iter = 500, max_cc_size = 50)
 t0 <- Sys.time()
-MeM <- peakRAMNew(fit_multilink <- link_with_multilink(prep_data$encodedA, prep_data$encodedB, multilink_args))
+MeM <- peakRAMNew(fit_multilink <- link_with_multilink(prep_data$encodedA, 
+                                                       prep_data$encodedB, 
+                                                       multilink_args))
 elapsed <- as.numeric(Sys.time() - t0, units = "secs")
 
 delta_result    <- as.data.frame(fit_multilink[c("idxA", "idxB")])
-linked_pairs    <- do.call(paste, c(delta_result[,c("idxA","idxB")], list(sep = "_")))
+linked_pairs    <- do.call(paste, c(delta_result[,c("idxA","idxB")], 
+                                    list(sep = "_")))
 true_positive   <- length( intersect(linked_pairs, true_pairs) )
 false_positive  <- length( setdiff(linked_pairs, true_pairs) )
 false_negative  <- length( setdiff(true_pairs, linked_pairs) )
 sensitivity     <- true_positive / (true_positive + false_negative) 
 fdp             <- false_positive / (true_positive + false_positive) 
 
-df_results[1:5,  "multilink "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[1:5,  "multilink "] <- c(true_positive,false_positive,
+                                    false_negative,sensitivity,fdp)
 df_results[12:13,"multilink "] <- c(round(elapsed),round(MeM$Peak_RAM_Used_MiB))
 
-diag_multilink <- do.call(RL_diagnostics, c(list(fit_multilink, prep_data$encodedA, prep_data$encodedB,
-                                PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs,
-                                FDP_estimation = TRUE, RL_method = "multilink", maxIter4CV = 1, n_repeats = 2),
+diag_multilink <- do.call(RL_diagnostics, c(list(fit_multilink, prep_data$encodedA, 
+                                                 prep_data$encodedB, PIVs, 
+                                                 PIVs_type, PIVs, 
+                                                 true_pairs = prep_data$true_pairs,
+                                                 FDP_estimation = TRUE, 
+                                                 RL_method = "multilink", 
+                                                 maxIter4CV = 1, n_repeats = 2),
                                 multilink_args))
 
 df_results[6,"multilink "] <- diag_multilink$FDP_measures$curve$RL_FDP_score[1]
@@ -570,26 +587,34 @@ df_results[11,"multilink "] <- max(diag_multilink$discrepancy_measures[1,mmd_idx
 
 ``` r
 
-fastLink_args <- list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, return.all = TRUE, n.cores = 1 )
+fastLink_args <- list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, 
+                      return.all = TRUE, n.cores = 1 )
 t0 <- Sys.time()
-MeM <- peakRAMNew(fit_fastLink <- link_with_fastLink(prep_data$encodedA, prep_data$encodedB, fastLink_args))
+MeM <- peakRAMNew(fit_fastLink <- link_with_fastLink(prep_data$encodedA, 
+                                                     prep_data$encodedB, 
+                                                     fastLink_args))
 elapsed <- as.numeric(Sys.time() - t0, units = "secs")
 
 delta_result    <- as.data.frame(fit_fastLink)
 delta_result    <- delta_result[delta_result$LinkScore>0.5, ]
-linked_pairs    <- do.call(paste, c(delta_result[,c("idxA","idxB")], list(sep = "_")))
+linked_pairs    <- do.call(paste, c(delta_result[,c("idxA","idxB")], 
+                                    list(sep = "_")))
 true_positive   <- length( intersect(linked_pairs, true_pairs) )
 false_positive  <- length( setdiff(linked_pairs, true_pairs) )
 false_negative  <- length( setdiff(true_pairs, linked_pairs) )
 sensitivity     <- true_positive / (true_positive + false_negative) 
 fdp             <- false_positive / (true_positive + false_positive) 
 
-df_results[1:5,  "fastLink  "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[1:5,  "fastLink  "] <- c(true_positive,false_positive,
+                                    false_negative,sensitivity,fdp)
 df_results[12:13,"fastLink  "] <- c(round(elapsed),round(MeM$Peak_RAM_Used_MiB))
 
-diag_fastLink <- do.call(RL_diagnostics, c(list(fit_fastLink, prep_data$encodedA, prep_data$encodedB,
-                                PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs,
-                                FDP_estimation = TRUE, RL_method = "fastLink", maxIter4CV = 1, n_repeats = 2),
+diag_fastLink <- do.call(RL_diagnostics, c(list(fit_fastLink, prep_data$encodedA, 
+                                                prep_data$encodedB, PIVs, PIVs_type, 
+                                                PIVs, true_pairs = prep_data$true_pairs,
+                                                FDP_estimation = TRUE, 
+                                                RL_method = "fastLink", 
+                                                maxIter4CV = 1, n_repeats = 2),
                                 fastLink_args))
 
 df_results[6,"fastLink  "] <- diag_fastLink$FDP_measures$curve$RL_FDP_score[1]
@@ -607,27 +632,36 @@ df_results[11,"fastLink  "] <- max(diag_fastLink$discrepancy_measures[1,mmd_idx]
 
 ``` r
 
-reclin2_args <- list(on = PIVs, formula = stats::as.formula(paste("~", paste(PIVs, collapse = "+"))),
-                     type = "mpost", add = TRUE, variable = "selected", score = "mpost", threshold = 0.5)
+reclin2_args <- list(on = PIVs, 
+                     formula = stats::as.formula(paste("~", paste(PIVs, collapse = "+"))),
+                     type = "mpost", add = TRUE, variable = "selected", 
+                     score = "mpost", threshold = 0.5)
 t0 <- Sys.time()
-MeM <- peakRAMNew(fit_reclin2 <- link_with_reclin2(prep_data$encodedA, prep_data$encodedB, reclin2_args))
+MeM <- peakRAMNew(fit_reclin2 <- link_with_reclin2(prep_data$encodedA, 
+                                                   prep_data$encodedB, 
+                                                   reclin2_args))
 elapsed <- as.numeric(Sys.time() - t0, units = "secs")
 
 delta_result    <- as.data.frame(fit_reclin2)
 delta_result    <- delta_result[delta_result$LinkScore>0.5, ]
-linked_pairs    <- do.call(paste, c(delta_result[,c("idxA","idxB")], list(sep = "_")))
+linked_pairs    <- do.call(paste, c(delta_result[,c("idxA","idxB")], 
+                                    list(sep = "_")))
 true_positive   <- length( intersect(linked_pairs, true_pairs) )
 false_positive  <- length( setdiff(linked_pairs, true_pairs) )
 false_negative  <- length( setdiff(true_pairs, linked_pairs) )
 sensitivity     <- true_positive / (true_positive + false_negative) 
 fdp             <- false_positive / (true_positive + false_positive) 
 
-df_results[1:5,  "reclin2   "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[1:5,  "reclin2   "] <- c(true_positive,false_positive,
+                                    false_negative,sensitivity,fdp)
 df_results[12:13,"reclin2   "] <- c(round(elapsed),round(MeM$Peak_RAM_Used_MiB))
 
-diag_reclin2 <- do.call(RL_diagnostics, c(list(fit_reclin2, prep_data$encodedA, prep_data$encodedB, 
-                               PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs, 
-                               FDP_estimation = TRUE, RL_method = "reclin2", maxIter4CV = 1, n_repeats = 2),
+diag_reclin2 <- do.call(RL_diagnostics, c(list(fit_reclin2, prep_data$encodedA, 
+                                               prep_data$encodedB, PIVs, PIVs_type, 
+                                               PIVs, true_pairs = prep_data$true_pairs, 
+                                               FDP_estimation = TRUE, 
+                                               RL_method = "reclin2", 
+                                               maxIter4CV = 1, n_repeats = 2),
                                reclin2_args))
 
 df_results[6,"reclin2   "] <- diag_reclin2$FDP_measures$curve$RL_FDP_score[1]
@@ -647,25 +681,31 @@ df_results[11,"reclin2   "] <- max(diag_reclin2$discrepancy_measures[1,mmd_idx])
 
 diyar_args <- list(probabilistic = TRUE, return_weights = TRUE)
 t0 <- Sys.time()
-MeM <- peakRAMNew(fit_diyar <- link_with_diyar(prep_data$encodedA[, PIVs], prep_data$encodedB[, PIVs], diyar_args))
+MeM <- peakRAMNew(fit_diyar <- link_with_diyar(prep_data$encodedA[, PIVs], 
+                                               prep_data$encodedB[, PIVs], 
+                                               diyar_args))
 elapsed <- as.numeric(Sys.time() - t0, units = "secs")
 
 delta_result    <- as.data.frame(fit_diyar[c("idxA", "idxB")])
-linked_pairs    <- do.call(paste, c(delta_result[,c("idxA","idxB")], list(sep = "_")))
+linked_pairs    <- do.call(paste, c(delta_result[,c("idxA","idxB")], 
+                                    list(sep = "_")))
 true_positive   <- length( intersect(linked_pairs, true_pairs) )
 false_positive  <- length( setdiff(linked_pairs, true_pairs) )
 false_negative  <- length( setdiff(true_pairs, linked_pairs) )
 sensitivity     <- true_positive / (true_positive + false_negative) 
 fdp             <- false_positive / (true_positive + false_positive) 
 
-df_results[1:5,  "diyar     "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[1:5,  "diyar     "] <- c(true_positive,false_positive,
+                                    false_negative,sensitivity,fdp)
 df_results[12:13,"diyar     "] <- c(round(elapsed),round(MeM$Peak_RAM_Used_MiB))
 
 names4diag <- c(PIVs, "local_id", "source")
 diag_diyar <- do.call(RL_diagnostics, c(list(fit_diyar, 
-                             prep_data$encodedA[, names4diag], prep_data$encodedB[, names4diag], 
+                             prep_data$encodedA[, names4diag], 
+                             prep_data$encodedB[, names4diag], 
                              PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs, 
-                             FDP_estimation = TRUE, RL_method = "diyar", maxIter4CV = 1, n_repeats = 2),
+                             FDP_estimation = TRUE, RL_method = "diyar", 
+                             maxIter4CV = 1, n_repeats = 2),
                              diyar_args))
 
 df_results[6,"diyar     "] <- diag_diyar$FDP_measures$curve$RL_FDP_score[1]
@@ -684,29 +724,37 @@ df_results[11,"diyar     "] <- max(diag_diyar$discrepancy_measures[1,mmd_idx])
 ``` r
 
 fedmatch_args <- list(by = PIVs, match_type = "multivar", 
-                      unique_key_1 = "unique_key_A", unique_key_2 = "unique_key_B",
+                      unique_key_1 = "unique_key_A", 
+                      unique_key_2 = "unique_key_B",
                       multivar_settings = fedmatch::build_multivar_settings(
                         compare_type = rep("indicator", length(PIVs)),
                         wgts = rep(1/length(PIVs), length(PIVs))))
 t0 <- Sys.time()
-MeM <- peakRAMNew(fit_fedmatch <- link_with_fedmatch(prep_data$encodedA, prep_data$encodedB, fedmatch_args))
+MeM <- peakRAMNew(fit_fedmatch <- link_with_fedmatch(prep_data$encodedA, 
+                                                     prep_data$encodedB, 
+                                                     fedmatch_args))
 elapsed <- as.numeric(Sys.time() - t0, units = "secs")
 
 delta_result    <- as.data.frame(fit_fedmatch)
 delta_result    <- delta_result[delta_result$LinkScore>0.5, ]
-linked_pairs    <- do.call(paste, c(delta_result[,c("idxA","idxB")], list(sep = "_")))
+linked_pairs    <- do.call(paste, c(delta_result[,c("idxA","idxB")], 
+                                    list(sep = "_")))
 true_positive   <- length( intersect(linked_pairs, true_pairs) )
 false_positive  <- length( setdiff(linked_pairs, true_pairs) )
 false_negative  <- length( setdiff(true_pairs, linked_pairs) )
 sensitivity     <- true_positive / (true_positive + false_negative) 
 fdp             <- false_positive / (true_positive + false_positive) 
 
-df_results[1:5,  "fedmatch  "] <- c(true_positive,false_positive,false_negative,sensitivity,fdp)
+df_results[1:5,  "fedmatch  "] <- c(true_positive,false_positive,
+                                    false_negative,sensitivity,fdp)
 df_results[12:13,"fedmatch  "] <- c(round(elapsed),round(MeM$Peak_RAM_Used_MiB))
 
-diag_fedmatch <- do.call(RL_diagnostics, c(list(fit_fedmatch, prep_data$encodedA, prep_data$encodedB, 
-                               PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs, 
-                               FDP_estimation = TRUE, RL_method = "fedmatch", maxIter4CV = 1, n_repeats = 2),
+diag_fedmatch <- do.call(RL_diagnostics, c(list(fit_fedmatch, prep_data$encodedA, 
+                                                prep_data$encodedB, PIVs, PIVs_type, 
+                                                PIVs, true_pairs = prep_data$true_pairs, 
+                                                FDP_estimation = TRUE, 
+                                                RL_method = "fedmatch", 
+                                                maxIter4CV = 1, n_repeats = 2),
                                fedmatch_args))
 
 df_results[6,"fedmatch  "] <- diag_fedmatch$FDP_measures$curve$RL_FDP_score[1]
@@ -722,64 +770,119 @@ df_results[10,"fedmatch  "] <- min(diag_fedmatch$discrepancy_measures[1,iou_idx]
 df_results[11,"fedmatch  "] <- max(diag_fedmatch$discrepancy_measures[1,mmd_idx])
 ```
 
+We also investigate how does the *FlexRL* record linkage compares with
+and without taking account of temporal dynamics among PIVs.
+
+``` r
+
+PIVs_config_WhatIfStable <- list( PIV1 = list(dynamics = "stable",
+                                              bound_mistakes = c(0.10,0.10),
+                                              fix_mistakes = c(NA,NA)),
+                                  PIV2 = list(dynamics = "stable",
+                                              bound_mistakes = c(0.10,0.10),
+                                              fix_mistakes = c(NA,NA)),
+                                  PIV3 = list(dynamics = "flexible",
+                                              bound_mistakes = c(NA,NA),
+                                              fix_mistakes = c(NA,NA)),
+                                  PIV4 = list(dynamics = "flexible",
+                                              bound_mistakes = c(NA,NA),
+                                              fix_mistakes = c(NA,NA)) )
+
+prep_data_WhatIfStable <- prepare_data(data1 = gen_data$data1, 
+  data2 = gen_data$data2, label1 = "1", label2 = "2", 
+  PIVs_config = PIVs_config_WhatIfStable, same_mistakes = TRUE, 
+  uniq_id = "entity_id", restrict_support_intersection = TRUE)
+
+t0 <- Sys.time()
+MeM <- peakRAMNew(fit <- StEM(data = prep_data_WhatIfStable))
+elapsed <- as.numeric(Sys.time() - t0, units = "secs")
+
+delta_result <- fit$Delta
+delta_result <- delta_result[delta_result$x>0.5, ]
+
+linked_pairs    <- do.call(paste, c(delta_result[,c("i","j")], list(sep = "_")))
+true_positive   <- length( intersect(linked_pairs, true_pairs) ) 
+false_positive  <- length( setdiff(linked_pairs, true_pairs) ) 
+false_negative  <- length( setdiff(true_pairs, linked_pairs) )
+sensitivity     <- true_positive / (true_positive + false_negative) 
+fdp             <- false_positive / (true_positive + false_positive)  
+
+df_results[1:5,  "FlexRL (no dynamic) "] <- c(true_positive,false_positive,
+                                              false_negative,sensitivity,fdp)
+df_results[12:13,"FlexRL (no dynamic) "] <- c(round(elapsed),round(MeM$Peak_RAM_Used_MiB))
+
+diag <- RL_diagnostics(fit = fit, encodedA = prep_data_WhatIfStable$encodedA, 
+                       encodedB = prep_data_WhatIfStable$encodedB,
+                       compare_vars = PIVs, vars_type_cont = PIVs_type, 
+                       PIVs = PIVs, true_pairs = prep_data_WhatIfStable$true_pairs, 
+                       FDP_estimation = TRUE, RL_method = "FlexRL", 
+                       data = prep_data_WhatIfStable,
+                       maxIter4CV = 1, n_repeats = 2)
+
+df_results[6,"FlexRL (no dynamic) "] <- diag$FDP_measures$curve$RL_FDP_score[1]
+df_results[7,"FlexRL (no dynamic) "] <- diag$FDP_measures$curve$augmRL_FDP_score[1]
+df_results[8,"FlexRL (no dynamic) "] <- diag$FDP_measures$curve$augmRL_FDP_synth[1]
+
+smd_idx <- grep("smd", names(diag$discrepancy_measures))
+iou_idx <- grep("iou", names(diag$discrepancy_measures))
+mmd_idx <- grep("mmd", names(diag$discrepancy_measures))
+
+df_results[9, "FlexRL (no dynamic) "] <- max(diag$discrepancy_measures[1,smd_idx])
+df_results[10,"FlexRL (no dynamic) "] <- min(diag$discrepancy_measures[1,iou_idx])
+df_results[11,"FlexRL (no dynamic) "] <- max(diag$discrepancy_measures[1,mmd_idx])
+
+df_results[is.na(df_results)] <- NA
+```
+
 ``` r
 
 cat("Record Linkage ")
 #> Record Linkage
-round(df_results[1:5,],2)
-#>                  Naive      FlexRL     BRL        multilink  fastLink  
-#> TP                   274.00     286.00     268.00     275.00     243.00
-#> FP                    89.00      46.00      26.00      40.00      47.00
-#> FN                   126.00     114.00     132.00     125.00     157.00
-#> sensitivity            0.69       0.72       0.67       0.69       0.61
-#> FDP                    0.25       0.14       0.09       0.13       0.16
-#>                  reclin2    diyar      fedmatch  
-#> TP                   262.00     106.00     286.00
-#> FP                    71.00       1.00     155.00
-#> FN                   138.00     294.00     114.00
-#> sensitivity            0.66       0.26       0.72
-#> FDP                    0.21       0.01       0.35
+knitr::kable(df_results[1:5,], digits = 2, align=rep('c', ncol(df_results)))
 ```
+
+|  | Naive | FlexRL | BRL | multilink | fastLink | reclin2 | diyar | fedmatch | FlexRL (no dynamic) |
+|:---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| TP | 189.00 | 199.00 | 180.00 | 186.00 | 160.00 | 178.00 | 97.00 | 199.00 | 164.00 |
+| FP | 90.00 | 32.00 | 30.00 | 38.00 | 46.00 | 65.00 | 2.00 | 147.00 | 20.00 |
+| FN | 111.00 | 101.00 | 120.00 | 114.00 | 140.00 | 122.00 | 203.00 | 101.00 | 136.00 |
+| sensitivity | 0.63 | 0.66 | 0.60 | 0.62 | 0.53 | 0.59 | 0.32 | 0.66 | 0.55 |
+| FDP | 0.32 | 0.14 | 0.14 | 0.17 | 0.22 | 0.27 | 0.02 | 0.42 | 0.11 |
 
 ``` r
 
 cat("FDP estimation ")
 #> FDP estimation
-round(df_results[6:8,],2)
-#>                  Naive      FlexRL     BRL        multilink  fastLink  
-#> hat FDP score            NA       0.10       0.14        NaN       0.24
-#> hat FDP score*           NA       0.12       0.12        NaN       0.25
-#> hat FDP synth*           NA       0.22       0.02       0.25       0.10
-#>                  reclin2    diyar      fedmatch  
-#> hat FDP score          0.33        NaN       0.09
-#> hat FDP score*         0.34        NaN       0.09
-#> hat FDP synth*         0.39       0.03        NaN
+knitr::kable(df_results[6:8,], digits = 2, align=rep('c', ncol(df_results)))
 ```
+
+|  | Naive | FlexRL | BRL | multilink | fastLink | reclin2 | diyar | fedmatch | FlexRL (no dynamic) |
+|:---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| est. FDP score | NA | 0.14 | 0.18 | NA | 0.26 | 0.27 | NA | 0.1 | 0.12 |
+| est. FDP\* score | NA | 0.15 | 0.17 | NA | 0.28 | 0.32 | NA | 0.1 | 0.13 |
+| est. FDP\* synth | NA | 0.27 | 0.22 | 0.15 | 0.17 | 0.53 | 0 | NA | 0.25 |
 
 ``` r
 
 cat("Linked divergence ")
 #> Linked divergence
-round(df_results[9:11,],2)
-#>                  Naive      FlexRL     BRL        multilink  fastLink  
-#> max SMD                  NA       0.07       0.09       0.07       0.17
-#> min support IoU          NA       0.88       0.88       0.88       0.88
-#> max MMD                  NA       0.00       0.00       0.00       0.01
-#>                  reclin2    diyar      fedmatch  
-#> max SMD                0.21       0.53       0.15
-#> min support IoU        0.88       0.88       0.90
-#> max MMD                0.01       0.05       0.01
+knitr::kable(df_results[9:11,], digits = 2, align=rep('c', ncol(df_results)))
 ```
+
+|  | Naive | FlexRL | BRL | multilink | fastLink | reclin2 | diyar | fedmatch | FlexRL (no dynamic) |
+|:---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| max SMD | NA | 0.12 | 0.16 | 0.13 | 0.14 | 0.21 | 0.37 | 0.08 | 0.17 |
+| min support IoU | NA | 0.86 | 0.88 | 0.88 | 0.86 | 0.86 | 0.86 | 0.88 | 0.86 |
+| max MMD | NA | 0.00 | 0.01 | 0.00 | 0.01 | 0.01 | 0.03 | 0.00 | 0.00 |
 
 ``` r
 
-cat("Computational time and memory required ")
-#> Computational time and memory required
-round(df_results[12:13,],2)
-#>                  Naive      FlexRL     BRL        multilink  fastLink  
-#> time (secs)               0        151          2         30          1
-#> memory (Mb)               2         35         46        182         29
-#>                  reclin2    diyar      fedmatch  
-#> time (secs)               0          2          3
-#> memory (Mb)              97         97         65
+cat("Computational time and memory ")
+#> Computational time and memory
+knitr::kable(df_results[12:13,], digits = 2, align=rep('c', ncol(df_results)))
 ```
+
+|  | Naive | FlexRL | BRL | multilink | fastLink | reclin2 | diyar | fedmatch | FlexRL (no dynamic) |
+|:---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| time (secs) | 0 | 102 | 1 | 17 | 1 | 0 | 2 | 2 | 79 |
+| memory (Mb) | 1 | 115 | 115 | 146 | 17 | 79 | 109 | 44 | 105 |
