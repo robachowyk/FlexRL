@@ -60,7 +60,7 @@ fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 5,
              gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10 )
 #> FlexRL
 #> Running StEM algorithm ■■■■■■■                           20% | iter 2/10 [1.1s]
-#> Running StEM algorithm ■■■■■■■■■■■■■                     40% | iter 4/10 [1.3s]
+#> Running StEM algorithm ■■■■■■■■■■                        30% | iter 3/10 [1.2s]
 #> Running StEM algorithm ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | iter 10/10 [2.1s]
 #> 
 FDP_score(fit$Delta$x, 0.5)
