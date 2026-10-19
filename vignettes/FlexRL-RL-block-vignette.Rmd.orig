@@ -10,7 +10,8 @@ vignette: >
 ```{r setup-1, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  cache = TRUE
 )
 ```
 
@@ -210,10 +211,10 @@ run_all_wrappers <- function(prep_data, PIVs_type, methods, FDP_estimation = TRU
 }
 
 show_results <- function(df_results) {
-  cat("Record Linkage\n");      print(df_results[1:5, ],  2)
-  cat("\nFDP estimation\n");    print(df_results[6:8, ],  2)
-  cat("\nLinked divergence\n"); print(df_results[9:11, ], 2)
-  cat("\nComputational time and memory\n"); print(df_results[12:13, ], 2)
+  cat("Record Linkage\n");      knitr::kable(df_results[1:5, ], digits = 2, align=rep('c', ncol(df_results)))
+  cat("\nFDP estimation\n");    knitr::kable(df_results[6:8, ], digits = 2, align=rep('c', ncol(df_results)))
+  cat("\nLinked divergence\n"); knitr::kable(df_results[9:11, ], digits = 2, align=rep('c', ncol(df_results)))
+  cat("\nComputational time and memory\n"); knitr::kable(df_results[12:13, ], digits = 2, align=rep('c', ncol(df_results)))
 }
 
 methods <- c("BRL", "multilink", "fastLink", "reclin2", "diyar", "fedmatch", "FlexRL")
@@ -411,7 +412,7 @@ for (r in regions) {
     results_IREG[[length(results_IREG) + 1]] <- data.frame(
       IREG = r, n_A = nrow(prep_data_r$encodedA),
       n_B = nrow(prep_data_r$encodedB), n_links = length(true_pairs_r),
-      method = method, sprintf("%.2f",t(evaluate_linkage(fit, true_pairs_r))),
+      method = method, round(t(evaluate_linkage(fit, true_pairs_r)),2),
       seconds = round(as.numeric(Sys.time() - t0, units = "secs")))
   }
 }

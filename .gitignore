@@ -7,3 +7,6 @@
 inst/doc
 *.o
 docs
+vignettes/.*_cache$
+vignettes/.*_files$
+vignettes/figure/
