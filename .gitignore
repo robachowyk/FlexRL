@@ -7,3 +7,6 @@
 inst/doc
 *.o
 docs
+*.so
+*.tar.gz
+FlexRL.Rcheck/

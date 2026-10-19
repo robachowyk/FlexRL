@@ -85,6 +85,9 @@ simulate_data <- function(PIVs_config, n_values, n_records, n_links, p_mistake, 
   if (n_links > min(n_records)) {
     stop("`n_links` cannot exceed the size of the smallest file.", call. = FALSE)
   }
+  if (any(n_values < 2)) {
+    stop("`n_values` entries must all be at least 2 (a PIV with a single value cannot be linked on).", call. = FALSE)
+  }
 
   PIVs <- names(PIVs_config)
   PIVs_stable <- sapply(PIVs_config, function(x) x$dynamics != "structured")
@@ -191,8 +194,8 @@ simulate_data <- function(PIVs_config, n_values, n_records, n_links, p_mistake, 
       # registrations
       for (i in seq_len(n_links)) {
         is_not_changing <- stats::rbinom(1, 1, proba_same_H[i, k])
-        if (!is_not_changing && !is.na(data1[i, x])) {
-          data2[i, x] <- sample((1:n_values[x])[-c(data1[i, x])], 1)
+        if (!is_not_changing && !is.na(data1[i, k])) {
+          data2[i, k] <- sample((1:n_values[k])[-c(data1[i, k])], 1)
           data2[i, "change"] <- TRUE
         }
       }
@@ -561,7 +564,12 @@ simulateD <- function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamm
   }
 
   # Contribution to the log-likelihood if a candidate pair IS linked
-  LLL <- Matrix::Matrix(0, nrow = nrow(data$encodedA[, PIVs, drop=FALSE]), ncol = nrow(data$encodedB[, PIVs, drop=FALSE]), sparse = TRUE)
+  # sparseMatrix (not Matrix(0, ..., sparse=TRUE)): for square inputs Matrix(0, ...)
+  # returns a diagonalMatrix; a diagonal LLL would silently change assignment
+  # semantics and any later general-sparse handling of it.
+  LLL <- Matrix::sparseMatrix(i = integer(0), j = integer(0), x = numeric(0),
+                              dims = c(nrow(data$encodedA[, PIVs, drop=FALSE]),
+                                       nrow(data$encodedB[, PIVs, drop=FALSE])))
   for (k in seq_along(data$n_values)) {
     HA <- truepivsA[select[, 1], k]
     HB <- truepivsB[select[, 2], k]
@@ -913,6 +921,26 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
   encodedB <- data$encodedB
 
   PIVs <- names(data$PIVs_config)
+
+  # Encoded PIV columns must hold integers in 0..n_values with 0 = missing
+  # (the contract of prepare_data()). An NA would flow into the C++ Gibbs
+  # kernels as NA_INTEGER and overflow integer arithmetic there (crash:
+  # "Index out of bounds: index=2147483647"), so reject it up front.
+  for (k in seq_along(PIVs)) {
+    x <- PIVs[k]
+    for (nm in c("encodedA", "encodedB")) {
+      v <- data[[nm]][[x]]
+      nv <- data$n_values[k]
+      if (is.null(v) || !is.numeric(v) || anyNA(v) || is.na(nv) ||
+          any(v < 0 | v > nv | v != floor(v))) {
+        stop(sprintf(
+          "`data$%s$%s` must contain only integers in 0..%d (0 = missing). Re-run prepare_data() if the encoded data was edited by hand.",
+          nm, x, nv
+        ), call. = FALSE)
+      }
+    }
+  }
+
   PIVs_stable <- sapply(data$PIVs_config, function(x) x$dynamics != "structured")
   PIVs_boundMistakes <- sapply(data$PIVs_config, function(x) x$bound_mistakes)
   PIVs_fixMistakes <- sapply(data$PIVs_config, function(x) x$fix_mistakes)
@@ -1223,7 +1251,13 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
   alpha_avg <- lapply(alpha.iter,   function(x) apply(x[StEM_burnin:StEM_iter, , drop = FALSE], 2, mean))
   phi_avg   <- lapply(phi.iter,     function(x) apply(x[StEM_burnin:StEM_iter, , drop = FALSE], 2, mean))
 
-  Delta <- Matrix::Matrix(0, nrow = nrow(encodedA), ncol = nrow(encodedB), sparse = TRUE)
+  # sparseMatrix (not Matrix(0, ..., sparse=TRUE)): for square inputs Matrix(0, ...)
+  # returns a diagonalMatrix, and Matrix::summary() of a diagonalMatrix is a
+  # diagSummary (not the i/j/x triplets), which as.data.frame() below cannot
+  # convert ('dimnames' applied to non-array) whenever nA == nB and every
+  # posterior link fell on the diagonal (or Delta stayed empty).
+  Delta <- Matrix::sparseMatrix(i = integer(0), j = integer(0), x = numeric(0),
+                                dims = c(nrow(encodedA), nrow(encodedB)))
   pbfinal_id <- cli::cli_progress_bar(
     format = "Drawing Delta          {cli::pb_bar} {cli::pb_percent} [{cli::pb_elapsed}]",
     total = n_post_sample, clear = FALSE
@@ -1439,12 +1473,16 @@ link_with_FlexRL <- function(dataA, dataB, arguments, ...) {
 #' @export
 #'
 link_with_fedmatch <- function(dataA, dataB, arguments, ...) {
-  dataA[, arguments$unique_key_1] <- rownames(dataA)
-  dataB[, arguments$unique_key_2] <- rownames(dataB)
+  # Key the records by their row POSITION: `rownames()` are character and are
+  # not guaranteed to equal the row positions once rows have been filtered
+  # (e.g. by the support restriction), which would silently return wrong
+  # indices — and character "indices" break every downstream numeric use.
+  dataA[, arguments$unique_key_1] <- seq_len(nrow(dataA))
+  dataB[, arguments$unique_key_2] <- seq_len(nrow(dataB))
   arguments$data1 <- dataA
   arguments$data2 <- dataB
   results <- do.call(fedmatch::merge_plus, arguments[intersect(names(arguments), names(formals(fedmatch::merge_plus)))])
-  list(idxA = results$matches$unique_key_A, idxB = results$matches$unique_key_B,
+  list(idxA = as.integer(results$matches$unique_key_A), idxB = as.integer(results$matches$unique_key_B),
        LinkScore = results$matches$multivar_score)
 }
 
@@ -1929,7 +1967,10 @@ prepare_data <- function(data1, data2, label1, label2, PIVs_config,
     stop("`dynamics` must be one of 'stable', 'flexible', 'structured'; problem for: ",
          paste(PIVs[bad_dynamics], collapse = ", "), ".", call. = FALSE)
   }
-  is_numeric_or_na <- function(v) is.vector(v) && length(v) == 2 && all(is.na(v) | grepl("^-?[0-9.]+$", v))
+  # Only true numerics (or NAs) are accepted: string numerics like "0.02" pass
+  # this check but crash later inside StEM ("non-numeric argument to binary
+  # operator" in `1 - PIVs_fixMistakes[, k]`).
+  is_numeric_or_na <- function(v) is.vector(v) && length(v) == 2 && (is.numeric(v) || all(is.na(v)))
   bad_fix <- !vapply(PIVs_config, function(x) is_numeric_or_na(x$fix_mistakes), logical(1))
   if (any(bad_fix)) stop("`fix_mistakes` must be a length-2 numeric/NA vector; problem for: ", paste(PIVs[bad_fix], collapse = ", "), ".", call. = FALSE)
   bad_bound <- !vapply(PIVs_config, function(x) is_numeric_or_na(x$bound_mistakes), logical(1))
@@ -2309,7 +2350,12 @@ synthesise <- function(method, encodedA, encodedB, PIVs, n_synth, restrict_suppo
   rownames(encodedA) <- seq_len(nrow(encodedA))
   rownames(encodedNewB) <- seq_len(nrow(encodedNewB))
 
-  list(dataA = encodedA, dataB = encodedNewB)
+  # Number of synthetic records actually present after the support restriction;
+  # needed by compute_augmRL_FDP_synth to scale the FDP estimator correctly
+  # (paper Eq. 2 uses N_synth = the number of synthetic records in B~).
+  n_synth_actual <- sum(encodedNewB$source == "synthetic")
+
+  list(dataA = encodedA, dataB = encodedNewB, n_synth_actual = n_synth_actual)
 }
 
 #' Standardised mean difference between a selected set and a baseline
@@ -2777,6 +2823,17 @@ compute_augmRL_FDP_synth <- function(synth_method, encodedA, encodedB, PIVs, n_s
                             restrict_support_intersection)
     }
 
+    # The estimator's scaling (paper Eq. 2) must use the number of synthetic
+    # records actually present in the augmented file, not the requested count:
+    # synthesise() drops synthetic records that fall outside the common support.
+    n_synth_actual <- if (!is.null(new_data$n_synth_actual)) new_data$n_synth_actual else n_synth
+    n_real_kept <- nrow(new_data$dataB) - n_synth_actual
+    if (n_real_kept != n_records_B) {
+      warning(sprintf(
+        "%s real records were dropped from file B during synthesis; the real/synthetic index split used by the FDP_synth estimator is invalid for data that was not support-restricted by prepare_data().",
+        n_records_B - n_real_kept), call. = FALSE)
+    }
+
     any_valid_estimate <- FALSE
     n_tries <- 0
 
@@ -2789,7 +2846,7 @@ compute_augmRL_FDP_synth <- function(synth_method, encodedA, encodedB, PIVs, n_s
       if (is.null(res_LinkScore)) {
         n_linked <- length(res_idxA)
         if (n_linked > 0) {
-          est <- FDP_synth(res_idxA, res_idxB, res_LinkScore, NULL, n_records_A, n_records_B, n_synth)
+          est <- FDP_synth(res_idxA, res_idxB, res_LinkScore, NULL, n_records_A, n_records_B, n_synth_actual)
           FDP_synth_res[i, 1] <- est$FDP_synth
           n_linked_synth_res[i, 1] <- est$n_linked_real
         } else {
@@ -2801,7 +2858,7 @@ compute_augmRL_FDP_synth <- function(synth_method, encodedA, encodedB, PIVs, n_s
         for (j in seq_along(thresholds)) {
           n_linked <- sum(res_LinkScore > thresholds[j], na.rm = TRUE)
           if (n_linked > 0) {
-            est_synth <- FDP_synth(res_idxA, res_idxB, res_LinkScore, thresholds[j], n_records_A, n_records_B, n_synth)
+            est_synth <- FDP_synth(res_idxA, res_idxB, res_LinkScore, thresholds[j], n_records_A, n_records_B, n_synth_actual)
             est_score <- FDP_score(res_LinkScore, thresholds[j])
             FDP_synth_res[i, j] <- est_synth$FDP_synth
             FDP_score_res[i, j] <- est_score$FDP_score

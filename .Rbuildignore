@@ -13,3 +13,4 @@
 ^\.github$
 ^vignettes/.*\.orig$
 ^vignettes/.*\.html$
+^review$

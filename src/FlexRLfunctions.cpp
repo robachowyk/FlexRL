@@ -111,6 +111,15 @@ using namespace Rcpp;
    int i = 0, j = 0;
    int sz = A.nrow();
    CharacterVector res(sz);
+   // Guard against datasets with no stable PIVs: a 0-column matrix has no
+   // elements to read, and A(i,0) below would be an out-of-bounds access.
+   // All records then share a single pattern (blocking degenerates to the
+   // full Cartesian product of candidate pairs).
+   if (A.ncol() == 0)
+   {
+     for (i = 0; i < sz; i++) res[i] = "";
+     return res;
+   }
    for (std::ostringstream oss; i < sz; i++, oss.str(""))
    {
      oss << A(i,0);
@@ -204,13 +213,20 @@ using namespace Rcpp;
               LogicalVector & sumRowD,
               LogicalVector & sumColD)
  {
+   // Work on copies: when a caller passes a length-1 logical (e.g. the result
+   // of a scalar comparison), R hands us its interned TRUE/FALSE constant and
+   // writing through the reference corrupts R's global constant (seen as
+   // "internal FALSE value has been modified" and flipped comparison results
+   // session-wide, e.g. `1 > 2` evaluating to TRUE).
+   LogicalVector rowD = Rcpp::clone(sumRowD);
+   LogicalVector colD = Rcpp::clone(sumColD);
    // Iterate over every candidate pair
    for (int q = 0; q < S.nrow(); q++)
    {
      int i = S(q,0)-1;
      int j = S(q,1)-1;
      // If non-linked -> possibly becomes linked
-     if((sumRowD(i)==false) && (sumColD(j)==false))
+     if((rowD(i)==false) && (colD(j)==false))
      {
        // Log-likelihood if this pair were linked:
        // remove the two "unlinked" contributions, add the "linked" contribution,
@@ -231,8 +247,8 @@ using namespace Rcpp;
        {
          loglik = loglikNew;
          _DeltaMap[i].insert(j);
-         sumRowD(i) = true;
-         sumColD(j) = true;
+         rowD(i) = true;
+         colD(j) = true;
          nlinkrec = nlinkrec + 1;
        }
      }else if(_DeltaMap.count(i) && _DeltaMap.at(i).count(j))
@@ -254,8 +270,8 @@ using namespace Rcpp;
          loglik = loglikNew;
          if(_DeltaMap.count(i) && _DeltaMap[i].count(j))
            _DeltaMap[i].erase(j);
-         sumRowD(i) = false;
-         sumColD(j) = false;
+         rowD(i) = false;
+         colD(j) = false;
          nlinkrec = nlinkrec - 1;
        }
      }
@@ -265,8 +281,8 @@ using namespace Rcpp;
    // Return to R
    List ret;
    ret["links"] = links;
-   ret["sumRowD"] = sumRowD;
-   ret["sumColD"] = sumColD;
+   ret["sumRowD"] = rowD;
+   ret["sumColD"] = colD;
    ret["loglik"] = loglik;
    ret["nlinkrec"] = nlinkrec;
    return ret;
@@ -498,7 +514,10 @@ using namespace Rcpp;
        IntegerVector values = generateSequence(nvalues[k]);
        choice_set = ExpandGrid(values, values);
        choice_equal = choice_set(_,1) == choice_set(_,0);
-       eta_choice = eta_k[choice_set(_,1) - 1];
+       // eta is indexed by the true value of A (paper Eq. 4: marginal of H^A
+      // is eta; H^B | H^A follows the survival mechanism), expanded per grid
+      // row so it multiplies elementwise against probH inside sampleL.
+      eta_choice = eta_k[choice_set(_,0) - 1];
        NumericVector survivalpSameH_k = survivalpSameH(_,k);
        // Jointly sample true values for linked pairs
        IntegerVector out = sampleL(pivsA_k_L, pivsB_k_L, survivalpSameH_k, choice_set, choice_equal, nvalues[k], phi_k_A, phi_k_B, eta_choice);
