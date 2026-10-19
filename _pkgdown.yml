@@ -11,7 +11,9 @@ navbar:
     articles:
       text: Vignettes
       menu:
-        - text: Record linkage with FlexRL
+	- text: FlexRL: an R package for Flexible Record Linkage and Linked Data Quality Assessment
+	- href: articles/Article-FlexRL.html
+        - text: Linkage and Diagnostics with FlexRL
           href: articles/FlexRL-RL-vignette.html
         - text: Scalable Record Linkage with FlexRL
           href: articles/FlexRL-RL-block-vignette.html
