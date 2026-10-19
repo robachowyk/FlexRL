@@ -11,10 +11,11 @@ Roxygen: list(markdown = TRUE)
 Depends: R (>= 4.1.0)
 Imports: Matrix (>= 1.7), Rcpp (>= 1.0.13), cli, graphics, grDevices, stats, utils, BRL, arf, diyar, fastLink, fedmatch, mice, multilink, reclin2, synthpop
 LinkingTo: Rcpp
+VignetteBuilder: knitr, quarto
 Suggests: 
-    knitr,
-    rmarkdown
-VignetteBuilder: knitr
+   knitr, 
+   rmarkdown, 
+   quarto
 URL: https://github.com/robachowyk/FlexRL, https://robachowyk.github.io/FlexRL/
 BugReports: https://github.com/robachowyk/FlexRL/issues
 Config/roxygen2/version: 8.1.0
