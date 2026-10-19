@@ -34,14 +34,14 @@ link_with_FlexRL(dataA, dataB, arguments, ...)
 - arguments:
 
   List of extra arguments forwarded to
-  [`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md)
+  [`StEM()`](https://robachowyk.github.io/FlexRL/reference/StEM.md)
   (e.g. `data`, `StEM_iter`, `StEM_burnin`, `gibbs_iter`,
   `gibbs_burnin`).
 
 - ...:
 
   Ignored; kept for compatibility with
-  [`RL_diagnostics()`](https://robachowyk.github.io/FlexRL/reference/rl_diagnostics.md).
+  [`RL_diagnostics()`](https://robachowyk.github.io/FlexRL/reference/RL_diagnostics.md).
 
 ## Value
 

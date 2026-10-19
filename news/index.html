@@ -34,7 +34,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/robachowyk/FlexRL/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/robachowyk/FlexRL/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
@@ -44,9 +44,9 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.0" id="flexrl-100-release-candidate">FlexRL 1.0.0 (release candidate)<a class="anchor" aria-label="anchor" href="#flexrl-100-release-candidate"></a></h2><p class="text-muted">CRAN release: 2026-10-07</p>
 <ul><li>Functions and arguments renamed, data configuration functions added.</li>
-<li>New <code><a href="../reference/survival_model.html">survival_model()</a></code>: the change over time of a structured PIV can be modelled with an exponential (default), Weibull, Gompertz, piecewise-constant or user-defined survival function, passed to <code><a href="../reference/stEM.html">StEM()</a></code> through the <code>survival_model</code> argument. <code>alpha</code> chains are named after the model parameters. <code>SurvivalUnstable()</code> and <code>loglikSurvival()</code> are obsolete. <code>cond_hazard_params</code> are now given on the parameter scale of the model (log-hazards for the exponential model).</li>
-<li>New <code><a href="../reference/rl_diagnostics.html">RL_diagnostics()</a></code>: provides record linkage diagnostics over linkage decision rules (thresholds from 0.50 to 0.99); internally computes FDP_measures and discrepancy_measures useful for downstream inference; <code>print(x, threshold = )</code> and <code>plot(x, type = )</code> display the diagnostics,</li>
-<li>New <code>link_with_&lt;pkg&gt;()</code> record linkage wrappers created for several packages: multilink, fastLink, BRL, reclin2, diyar, fedmatch, FlexRL. They return a named list (<code>idxA</code>, <code>idxB</code>, <code>LinkScore</code>) that can be passed directly to <code><a href="../reference/rl_diagnostics.html">RL_diagnostics()</a></code>.</li>
+<li>New <code><a href="../reference/survival_model.html">survival_model()</a></code>: the change over time of a structured PIV can be modelled with an exponential (default), Weibull, Gompertz, piecewise-constant or user-defined survival function, passed to <code><a href="../reference/StEM.html">StEM()</a></code> through the <code>survival_model</code> argument. <code>alpha</code> chains are named after the model parameters. <code>SurvivalUnstable()</code> and <code>loglikSurvival()</code> are obsolete. <code>cond_hazard_params</code> are now given on the parameter scale of the model (log-hazards for the exponential model).</li>
+<li>New <code><a href="../reference/RL_diagnostics.html">RL_diagnostics()</a></code>: provides record linkage diagnostics over linkage decision rules (thresholds from 0.50 to 0.99); internally computes FDP_measures and discrepancy_measures useful for downstream inference; <code>print(x, threshold = )</code> and <code>plot(x, type = )</code> display the diagnostics,</li>
+<li>New <code>link_with_&lt;pkg&gt;()</code> record linkage wrappers created for several packages: multilink, fastLink, BRL, reclin2, diyar, fedmatch, FlexRL. They return a named list (<code>idxA</code>, <code>idxB</code>, <code>LinkScore</code>) that can be passed directly to <code><a href="../reference/RL_diagnostics.html">RL_diagnostics()</a></code>.</li>
 <li>Useless dependencies dropped; R &gt;= 4.1.0.</li>
 <li>Bugs corrected, warnings added.</li>
 </ul></div>

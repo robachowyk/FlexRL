@@ -3,7 +3,7 @@
 Trace-plots the raw StEM chains of `gamma`, `eta`, `alpha` and `phi`
 across iterations, to visually judge whether the chains have stabilised
 and pick an adequate `StEM_burnin` for
-[`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md). One
+[`StEM()`](https://robachowyk.github.io/FlexRL/reference/StEM.md). One
 plot per parameter: `gamma` (proportion linked), `eta` (PIVs
 distribution), `alpha` (hazard coefficients, for dynamic PIVs only), and
 `phi` (agreement/missing rates).
@@ -19,7 +19,7 @@ plot_StEM_convergence(fit)
 - fit:
 
   List as returned by
-  [`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md),
+  [`StEM()`](https://robachowyk.github.io/FlexRL/reference/StEM.md),
   containing the raw chains `gamma`, `eta`, `alpha`, `phi` (StEM_iter
   rows each).
 
@@ -55,6 +55,7 @@ gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100,
                            p_mistake, p_missing, cond_hazard_params, TRUE )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
+#> Warning: PIV 'V4': values out of the common support in data2 [1].
 #> '2' is the larger source, saved as B; '1' saved as A.
 fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 3,
              gibbs_iter = 10, gibbs_burnin = 3, n_post_sample = 10 )

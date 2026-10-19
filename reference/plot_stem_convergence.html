@@ -42,14 +42,14 @@ coefficients, for dynamic PIVs only), and phi (agreement/missing rates)."><meta 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Monte Carlo convergence (trace) plots for a fitted StEM model</h1>
-      <small class="dont-index">Source: <a href="https://github.com/robachowyk/FlexRL/blob/master/R/FlexRecordLinkage.r" class="external-link"><code>R/FlexRecordLinkage.r</code></a></small>
-      <div class="d-none name"><code>plot_stem_convergence.Rd</code></div>
+      <small class="dont-index">Source: <a href="https://github.com/robachowyk/FlexRL/blob/HEAD/R/FlexRecordLinkage.r" class="external-link"><code>R/FlexRecordLinkage.r</code></a></small>
+      <div class="d-none name"><code>plot_StEM_convergence.Rd</code></div>
     </div>
 
     <div class="ref-description section level2">
     <p>Trace-plots the raw StEM chains of <code>gamma</code>, <code>eta</code>, <code>alpha</code> and <code>phi</code>
 across iterations, to visually judge whether the chains have stabilised
-and pick an adequate <code>StEM_burnin</code> for <code><a href="stEM.html">StEM()</a></code>. One plot per parameter:
+and pick an adequate <code>StEM_burnin</code> for <code><a href="StEM.html">StEM()</a></code>. One plot per parameter:
 <code>gamma</code> (proportion linked), <code>eta</code> (PIVs distribution), <code>alpha</code> (hazard
 coefficients, for dynamic PIVs only), and <code>phi</code> (agreement/missing rates).</p>
     </div>
@@ -64,7 +64,7 @@ coefficients, for dynamic PIVs only), and <code>phi</code> (agreement/missing ra
 
 
 <dl><dt id="arg-fit">fit<a class="anchor" aria-label="anchor" href="#arg-fit"></a></dt>
-<dd><p>List as returned by <code><a href="stEM.html">StEM()</a></code>, containing the raw chains
+<dd><p>List as returned by <code><a href="StEM.html">StEM()</a></code>, containing the raw chains
 <code>gamma</code>, <code>eta</code>, <code>alpha</code>, <code>phi</code> (StEM_iter rows each).</p></dd>
 
 </dl></div>
@@ -100,21 +100,22 @@ coefficients, for dynamic PIVs only), and <code>phi</code> (agreement/missing ra
 <span class="r-in"><span>                           <span class="va">p_mistake</span>, <span class="va">p_missing</span>, <span class="va">cond_hazard_params</span>, <span class="cn">TRUE</span> <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">prep_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="prepare_data.html">prepare_data</a></span><span class="op">(</span> <span class="va">gen_data</span><span class="op">$</span><span class="va">data1</span>, <span class="va">gen_data</span><span class="op">$</span><span class="va">data2</span>, <span class="st">"1"</span>, <span class="st">"2"</span>,</span></span>
 <span class="r-in"><span>                           <span class="va">PIVs_config</span>, <span class="cn">TRUE</span>, <span class="st">"entity_id"</span>, <span class="cn">TRUE</span> <span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIV 'V4': values out of the common support in data2 [1].</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> '2' is the larger source, saved as B; '1' saved as A.</span>
-<span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="stEM.html">StEM</a></span><span class="op">(</span> data <span class="op">=</span> <span class="va">prep_data</span>, StEM_iter <span class="op">=</span> <span class="fl">10</span>, StEM_burnin <span class="op">=</span> <span class="fl">3</span>,</span></span>
+<span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="StEM.html">StEM</a></span><span class="op">(</span> data <span class="op">=</span> <span class="va">prep_data</span>, StEM_iter <span class="op">=</span> <span class="fl">10</span>, StEM_burnin <span class="op">=</span> <span class="fl">3</span>,</span></span>
 <span class="r-in"><span>             gibbs_iter <span class="op">=</span> <span class="fl">10</span>, gibbs_burnin <span class="op">=</span> <span class="fl">3</span>, n_post_sample <span class="op">=</span> <span class="fl">10</span> <span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> FlexRL</span>
 <span class="r-in"><span><span class="fu">plot_StEM_convergence</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="plot_stem_convergence-1.png" alt="" width="700" height="433"></span>
-<span class="r-plt img"><img src="plot_stem_convergence-2.png" alt="" width="700" height="433"></span>
-<span class="r-plt img"><img src="plot_stem_convergence-3.png" alt="" width="700" height="433"></span>
-<span class="r-plt img"><img src="plot_stem_convergence-4.png" alt="" width="700" height="433"></span>
-<span class="r-plt img"><img src="plot_stem_convergence-5.png" alt="" width="700" height="433"></span>
-<span class="r-plt img"><img src="plot_stem_convergence-6.png" alt="" width="700" height="433"></span>
-<span class="r-plt img"><img src="plot_stem_convergence-7.png" alt="" width="700" height="433"></span>
-<span class="r-plt img"><img src="plot_stem_convergence-8.png" alt="" width="700" height="433"></span>
-<span class="r-plt img"><img src="plot_stem_convergence-9.png" alt="" width="700" height="433"></span>
-<span class="r-plt img"><img src="plot_stem_convergence-10.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="plot_StEM_convergence-1.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="plot_StEM_convergence-2.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="plot_StEM_convergence-3.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="plot_StEM_convergence-4.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="plot_StEM_convergence-5.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="plot_StEM_convergence-6.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="plot_StEM_convergence-7.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="plot_StEM_convergence-8.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="plot_StEM_convergence-9.png" alt="" width="700" height="433"></span>
+<span class="r-plt img"><img src="plot_StEM_convergence-10.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

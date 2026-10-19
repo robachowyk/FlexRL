@@ -1,7 +1,7 @@
-# Prepare two data sources for [`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md)
+# Prepare two data sources for [`StEM()`](https://robachowyk.github.io/FlexRL/reference/StEM.md)
 
 Wraps the data-preparation steps needed before calling
-[`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md): tags
+[`StEM()`](https://robachowyk.github.io/FlexRL/reference/StEM.md): tags
 each source with a `source` column, labels the larger source as `B`,
 adjusting `cond_hazard_cov`/`bound_mistakes`/`fix_mistakes` accordingly
 if A and B are swapped), drops records whose PIV values fall outside the
@@ -67,7 +67,7 @@ prepare_data(
 ## Value
 
 A list ready to use as the `data` argument of
-[`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md):
+[`StEM()`](https://robachowyk.github.io/FlexRL/reference/StEM.md):
 `encodedA`, `encodedB`, `n_values`, `PIVs_config`, `same_mistakes`, and
 `true_pairs` (`NULL` if `uniq_id` was not supplied).
 

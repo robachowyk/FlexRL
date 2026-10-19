@@ -1,7 +1,7 @@
 # Book-keeping data frame for parameters of PIVs dynamics
 
 Internal helper used by
-[`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md) to
+[`StEM()`](https://robachowyk.github.io/FlexRL/reference/StEM.md) to
 accumulate, across Gibbs iterations, the covariates, true-value
 agreement indicator, and time gaps needed to re-estimate the survival
 (hazard) parameters of a dynamic structured PIV.

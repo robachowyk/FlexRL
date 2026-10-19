@@ -8,7 +8,7 @@ library(FlexRL)
 `FlexRL` is a package proposing flexible probabilistic **R**ecord
 **L**inkage with diagnostic tools for downstream inference on linked
 data. The record linkage algorithm
-[`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md) uses a
+[`StEM()`](https://robachowyk.github.io/FlexRL/reference/StEM.md) uses a
 **St**ochastic **E**xpectation **M**aximisation approach to combine 2
 data sources and outputs the set of records referring to the same
 entities.
@@ -24,7 +24,7 @@ This vignette uses example subsets from the
 data, from the
 [NLTCS](https://www.icpsr.umich.edu/web/NACDA/studies/9681/versions/V5)
 data, and synthetic data to showcase how `FlexRL` works, how
-[`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md) adapts
+[`StEM()`](https://robachowyk.github.io/FlexRL/reference/StEM.md) adapts
 to dynamic PIVs, how `RL_diagnostics` may guide downstream inference.
 
 We use 4 **P**artially **I**dentifying **V**ariable**s** to link the
@@ -481,7 +481,7 @@ plot of chunk diagnostic-linkage-plots
 
 Several other algorithms for **R**ecord **L**inkage have been developed
 so far in the literature. Each has its own qualities and flaws.
-[`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md)
+[`StEM()`](https://robachowyk.github.io/FlexRL/reference/StEM.md)
 usually outperforms in scenarios where the **PIVs** have low
 discriminative power with few expected registration errors; it is
 particularly efficient when there is enough information to model the

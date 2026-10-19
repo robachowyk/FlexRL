@@ -14,14 +14,14 @@ plot(x, type, threshold = NULL, ...)
 - x:
 
   An `RL_diagnostics` object, see
-  [`RL_diagnostics()`](https://robachowyk.github.io/FlexRL/reference/rl_diagnostics.md).
+  [`RL_diagnostics()`](https://robachowyk.github.io/FlexRL/reference/RL_diagnostics.md).
 
 - type:
 
   One of `"scores"` (linkage score histogram), `"distributions"` (linked
   subset vs. data sources, per variable, at `threshold`),
   `"convergence"` (StEM trace plots, see
-  [`plot_StEM_convergence()`](https://robachowyk.github.io/FlexRL/reference/plot_stem_convergence.md)),
+  [`plot_StEM_convergence()`](https://robachowyk.github.io/FlexRL/reference/plot_StEM_convergence.md)),
   `"FDP"` (FDP estimates by threshold, only if `FDP_estimation = TRUE`
   was used) or `"discrepancy"` (MMD, SMD, IoU and agreement by
   threshold, see

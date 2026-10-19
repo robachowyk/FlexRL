@@ -5,9 +5,9 @@ probability that the true value of a linked pair is unchanged after a
 time gap `t` is modelled by a survival function `S(t | X, alpha)`, where
 `X` holds an intercept and the covariates given in `cond_hazard_cov` and
 `alpha` the parameters estimated by
-[`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md). This
+[`StEM()`](https://robachowyk.github.io/FlexRL/reference/StEM.md). This
 function builds the model object used by
-[`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md),
+[`StEM()`](https://robachowyk.github.io/FlexRL/reference/StEM.md),
 [`simulateD()`](https://robachowyk.github.io/FlexRL/reference/simulateD.md)
 and
 [`simulate_data()`](https://robachowyk.github.io/FlexRL/reference/simulate_data.md).
@@ -105,28 +105,28 @@ expo$S(X, alpha = log(0.3), times)
 #> [1] 0.9997000 0.9417645 0.6770569 0.6376282 0.5488116
 stats::nlminb(expo$init(ncol(X)), expo$negloglik, X = X, times = times,
               Hequal = Hequal)$par
-#> [1] -0.3719637
+#> [1] -0.3719642
 
 weib <- survival_model("weibull")
 weib$S(X, alpha = c(0.5, -1), times)
 #> [1] 0.9999978 0.9865530 0.7435143 0.6871328 0.5471930
 stats::nlminb(weib$init(ncol(X)), weib$negloglik, X = X, times = times,
               Hequal = Hequal)$par
-#> [1]  6.6904958 -0.3995899
+#> [1]  5.8031240 -0.3252972
 
 gomp <- survival_model("gompertz")
 gomp$S(X, alpha = c(0.5, -1), times)
 #> [1] 0.9996321 0.9255377 0.5098609 0.4396208 0.2824536
 stats::nlminb(gomp$init(ncol(X)), gomp$negloglik, X = X, times = times,
               Hequal = Hequal)$par
-#> [1]  114.9691 -163.5902
+#> [1]  119.3072 -171.0037
               
 pw <- survival_model("piecewise", cuts = 1)
 pw$S(X, alpha = c(-2, -1), times)
 #> [1] 0.9998647 0.9732960 0.7821575 0.7266757 0.6045840
 stats::nlminb(pw$init(ncol(X)), pw$negloglik, X = X, times = times,
               Hequal = Hequal)$par
-#> [1] -22.2503635   0.9000345
+#> [1] -22.6158708   0.9000345
 
 # a custom model: log-logistic with scale exp(X alpha[-1]) 
 # and shape exp(alpha[1])
@@ -146,5 +146,5 @@ loglogistic$S(X, alpha = c(0, -2), times)
 #> [5,] 0.7869860
 stats::nlminb(loglogistic$init(ncol(X)), loglogistic$negloglik, X = X, times = times,
               Hequal = Hequal)$par
-#> [1]  5.6077244 -0.3311609
+#> [1]  6.2346434 -0.3664586
 ```

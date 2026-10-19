@@ -36,7 +36,7 @@ its conditional distribution, and returns the updated log-likelihood."><meta pro
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Simulate the linkage matrix D</h1>
-      <small class="dont-index">Source: <a href="https://github.com/robachowyk/FlexRL/blob/master/R/FlexRecordLinkage.r" class="external-link"><code>R/FlexRecordLinkage.r</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/robachowyk/FlexRL/blob/HEAD/R/FlexRecordLinkage.r" class="external-link"><code>R/FlexRecordLinkage.r</code></a></small>
       <div class="d-none name"><code>simulateD.Rd</code></div>
     </div>
 
@@ -69,7 +69,7 @@ its conditional distribution, and returns the updated log-likelihood.</p>
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
 <dd><p>List with <code>encodedA</code>, <code>encodedB</code> (the two encoded data
 sources, missing values as <code>0</code>), <code>n_values</code>, <code>PIVs_config</code> and
-<code>same_mistakes</code>; see <code><a href="stEM.html">StEM()</a></code>.</p></dd>
+<code>same_mistakes</code>; see <code><a href="StEM.html">StEM()</a></code>.</p></dd>
 
 
 <dt id="arg-linksr">linksR<a class="anchor" aria-label="anchor" href="#arg-linksr"></a></dt>
@@ -153,7 +153,6 @@ linked records</p>
 <span class="r-in"><span>                           <span class="va">p_mistake</span>, <span class="va">p_missing</span>, <span class="va">cond_hazard_params</span>, <span class="cn">TRUE</span> <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">data_StEM</span> <span class="op">&lt;-</span> <span class="fu"><a href="prepare_data.html">prepare_data</a></span><span class="op">(</span> <span class="va">gen_data</span><span class="op">$</span><span class="va">data1</span>, <span class="va">gen_data</span><span class="op">$</span><span class="va">data2</span>, <span class="st">"1"</span>, <span class="st">"2"</span>,</span></span>
 <span class="r-in"><span>                           <span class="va">PIVs_config</span>, <span class="cn">TRUE</span>, <span class="st">"entity_id"</span>, <span class="cn">TRUE</span> <span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIV 'V4': values out of the common support in data1 [1].</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> '2' is the larger source, saved as B; '1' saved as A.</span>
 <span class="r-in"><span><span class="va">PIVs_stable</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">data_StEM</span><span class="op">$</span><span class="va">PIVs_config</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></span>
 <span class="r-in"><span>                        <span class="va">x</span><span class="op">$</span><span class="va">dynamics</span> <span class="op">!=</span> <span class="st">"structured"</span><span class="op">)</span></span></span>

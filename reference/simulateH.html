@@ -38,7 +38,7 @@ and the current parameters."><meta property="og:image" content="https://robachow
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Simulate the true PIV values underlying the registered records</h1>
-      <small class="dont-index">Source: <a href="https://github.com/robachowyk/FlexRL/blob/master/R/FlexRecordLinkage.r" class="external-link"><code>R/FlexRecordLinkage.r</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/robachowyk/FlexRL/blob/HEAD/R/FlexRecordLinkage.r" class="external-link"><code>R/FlexRecordLinkage.r</code></a></small>
       <div class="d-none name"><code>simulateH.Rd</code></div>
     </div>
 
@@ -60,7 +60,7 @@ and the current parameters.</p>
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
 <dd><p>List with <code>encodedA</code>, <code>encodedB</code> (the two encoded data
 sources, missing values as <code>0</code>), <code>n_values</code>, <code>PIVs_config</code> and
-<code>same_mistakes</code>; see <code><a href="stEM.html">StEM()</a></code>.</p></dd>
+<code>same_mistakes</code>; see <code><a href="StEM.html">StEM()</a></code>.</p></dd>
 
 
 <dt id="arg-links">links<a class="anchor" aria-label="anchor" href="#arg-links"></a></dt>
@@ -125,8 +125,6 @@ input data) of simulated true PIV values.</p>
 <span class="r-in"><span>                           <span class="va">p_mistake</span>, <span class="va">p_missing</span>, <span class="va">cond_hazard_params</span>, <span class="cn">TRUE</span> <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">data_StEM</span> <span class="op">&lt;-</span> <span class="fu"><a href="prepare_data.html">prepare_data</a></span><span class="op">(</span> <span class="va">gen_data</span><span class="op">$</span><span class="va">data1</span>, <span class="va">gen_data</span><span class="op">$</span><span class="va">data2</span>, <span class="st">"1"</span>, <span class="st">"2"</span>,</span></span>
 <span class="r-in"><span>                           <span class="va">PIVs_config</span>, <span class="cn">TRUE</span>, <span class="st">"entity_id"</span>, <span class="cn">TRUE</span> <span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIVs 'V4' and 'V1' are associated (Cramer's V = 0.35 in data1, 0.25 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIVs 'V4' and 'V3' are associated (Cramer's V = 0.31 in data1, 0.22 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> '2' is the larger source, saved as B; '1' saved as A.</span>
 <span class="r-in"><span><span class="va">PIVs_stable</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">data_StEM</span><span class="op">$</span><span class="va">PIVs_config</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></span>
 <span class="r-in"><span>                        <span class="va">x</span><span class="op">$</span><span class="va">dynamics</span> <span class="op">!=</span> <span class="st">"structured"</span><span class="op">)</span></span></span>

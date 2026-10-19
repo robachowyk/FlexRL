@@ -34,7 +34,7 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="active nav-item dropdown">
+<li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes">
 <li><a class="dropdown-item" href="../articles/Article-FlexRL.html">Flexible Record Linkage and Linked Data Quality Assessment</a></li>
@@ -65,7 +65,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Linkage and Diagnostics with FlexRL</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/robachowyk/FlexRL/blob/master/vignettes/FlexRL-RL-vignette.Rmd" class="external-link"><code>vignettes/FlexRL-RL-vignette.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/robachowyk/FlexRL/blob/HEAD/vignettes/FlexRL-RL-vignette.Rmd" class="external-link"><code>vignettes/FlexRL-RL-vignette.Rmd</code></a></small>
       <div class="d-none name"><code>FlexRL-RL-vignette.Rmd</code></div>
     </div>
 
@@ -76,7 +76,7 @@
 <p><code>FlexRL</code> is a package proposing flexible probabilistic
 <strong>R</strong>ecord <strong>L</strong>inkage with diagnostic tools
 for downstream inference on linked data. The record linkage algorithm
-<code><a href="../reference/stEM.html">StEM()</a></code> uses a <strong>St</strong>ochastic
+<code><a href="../reference/StEM.html">StEM()</a></code> uses a <strong>St</strong>ochastic
 <strong>E</strong>xpectation <strong>M</strong>aximisation approach to
 combine 2 data sources and outputs the set of records referring to the
 same entities.</p>
@@ -87,7 +87,7 @@ linked data (Robach et al., in preparation).</p>
 <p>This vignette uses example subsets from the <a href="https://www.bancaditalia.it/statistiche/tematiche/indagini-famiglie-imprese/bilanci-famiglie/distribuzione-microdati/index.html" class="external-link">SHIW</a>
 data, from the <a href="https://www.icpsr.umich.edu/web/NACDA/studies/9681/versions/V5" class="external-link">NLTCS</a>
 data, and synthetic data to showcase how <code>FlexRL</code> works, how
-<code><a href="../reference/stEM.html">StEM()</a></code> adapts to dynamic PIVs, how
+<code><a href="../reference/StEM.html">StEM()</a></code> adapts to dynamic PIVs, how
 <code>RL_diagnostics</code> may guide downstream inference.</p>
 <p>We use 4 <strong>P</strong>artially <strong>I</strong>dentifying
 <strong>V</strong>ariable<strong>s</strong> to link the records: 2
@@ -260,7 +260,7 @@ drawn a posteriori to provide a linkage estimate with
 <code>n_post_sample</code> (set to 1000 as default).</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">t0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.time</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="va">MeM</span> <span class="op">&lt;-</span> <span class="fu">peakRAMNew</span><span class="op">(</span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stEM.html">StEM</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">prep_data</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">MeM</span> <span class="op">&lt;-</span> <span class="fu">peakRAMNew</span><span class="op">(</span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/StEM.html">StEM</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">prep_data</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">elapsed</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.time</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="va">t0</span>, units <span class="op">=</span> <span class="st">"secs"</span><span class="op">)</span></span></code></pre></div>
 <p>The missing values and potential mistakes in the registration, the
 size of the overlapping set of records between the files, the total
@@ -301,7 +301,7 @@ dependencies among PIVs, are obstacles to the linkage.</p>
 <span><span class="co">#&gt; memory (Mb)             1.00     115.00</span></span></code></pre></div>
 <p>Let us run record linkage diagnostics:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">diag</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rl_diagnostics.html">RL_diagnostics</a></span><span class="op">(</span>fit <span class="op">=</span> <span class="va">fit</span>, encodedA <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedA</span>, </span>
+<code class="sourceCode R"><span><span class="va">diag</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RL_diagnostics.html">RL_diagnostics</a></span><span class="op">(</span>fit <span class="op">=</span> <span class="va">fit</span>, encodedA <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedA</span>, </span>
 <span>                       encodedB <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span>, compare_vars <span class="op">=</span> <span class="va">PIVs</span>, </span>
 <span>                       vars_type_cont <span class="op">=</span> <span class="va">PIVs_type</span>, PIVs <span class="op">=</span> <span class="va">PIVs</span>, </span>
 <span>                       true_pairs <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">true_pairs</span>, FDP_estimation <span class="op">=</span> <span class="cn">TRUE</span>, </span>
@@ -449,7 +449,7 @@ the data sources, the FDP estimation.</p>
 </div>
 <p>Several other algorithms for <strong>R</strong>ecord
 <strong>L</strong>inkage have been developed so far in the literature.
-Each has its own qualities and flaws. <code><a href="../reference/stEM.html">StEM()</a></code> usually
+Each has its own qualities and flaws. <code><a href="../reference/StEM.html">StEM()</a></code> usually
 outperforms in scenarios where the <strong>PIVs</strong> have low
 discriminative power with few expected registration errors; it is
 particularly efficient when there is enough information to model the
@@ -741,7 +741,7 @@ PIVs.</p>
 <span>  uniq_id <span class="op">=</span> <span class="st">"entity_id"</span>, restrict_support_intersection <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">t0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.time</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="va">MeM</span> <span class="op">&lt;-</span> <span class="fu">peakRAMNew</span><span class="op">(</span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stEM.html">StEM</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">prep_data_WhatIfStable</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">MeM</span> <span class="op">&lt;-</span> <span class="fu">peakRAMNew</span><span class="op">(</span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/StEM.html">StEM</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">prep_data_WhatIfStable</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">elapsed</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.time</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="va">t0</span>, units <span class="op">=</span> <span class="st">"secs"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">delta_result</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="va">Delta</span></span>
@@ -758,7 +758,7 @@ PIVs.</p>
 <span>                                              <span class="va">false_negative</span>,<span class="va">sensitivity</span>,<span class="va">fdp</span><span class="op">)</span></span>
 <span><span class="va">df_results</span><span class="op">[</span><span class="fl">12</span><span class="op">:</span><span class="fl">13</span>,<span class="st">"FlexRL (no dynamic) "</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">elapsed</span><span class="op">)</span>,<span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">MeM</span><span class="op">$</span><span class="va">Peak_RAM_Used_MiB</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">diag</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rl_diagnostics.html">RL_diagnostics</a></span><span class="op">(</span>fit <span class="op">=</span> <span class="va">fit</span>, encodedA <span class="op">=</span> <span class="va">prep_data_WhatIfStable</span><span class="op">$</span><span class="va">encodedA</span>, </span>
+<span><span class="va">diag</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RL_diagnostics.html">RL_diagnostics</a></span><span class="op">(</span>fit <span class="op">=</span> <span class="va">fit</span>, encodedA <span class="op">=</span> <span class="va">prep_data_WhatIfStable</span><span class="op">$</span><span class="va">encodedA</span>, </span>
 <span>                       encodedB <span class="op">=</span> <span class="va">prep_data_WhatIfStable</span><span class="op">$</span><span class="va">encodedB</span>,</span>
 <span>                       compare_vars <span class="op">=</span> <span class="va">PIVs</span>, vars_type_cont <span class="op">=</span> <span class="va">PIVs_type</span>, </span>
 <span>                       PIVs <span class="op">=</span> <span class="va">PIVs</span>, true_pairs <span class="op">=</span> <span class="va">prep_data_WhatIfStable</span><span class="op">$</span><span class="va">true_pairs</span>, </span>

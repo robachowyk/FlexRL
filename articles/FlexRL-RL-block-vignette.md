@@ -8,7 +8,7 @@ library(FlexRL)
 `FlexRL` is a package proposing flexible probabilistic **R**ecord
 **L**inkage with diagnostic tools for downstream inference on linked
 data. The record linkage algorithm
-[`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md) uses a
+[`StEM()`](https://robachowyk.github.io/FlexRL/reference/StEM.md) uses a
 **St**ochastic **E**xpectation **M**aximisation approach to combine 2
 data sources and outputs the set of records referring to the same
 entities.

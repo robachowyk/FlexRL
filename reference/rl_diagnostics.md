@@ -28,7 +28,7 @@ RL_diagnostics(
 
   List with either `Delta` (a data frame with columns `i`, `j`, `x`, as
   returned by
-  [`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md)) or
+  [`StEM()`](https://robachowyk.github.io/FlexRL/reference/StEM.md)) or
   the three elements `idxA`, `idxB`, `LinkScore` (e.g. the output of a
   link_with\_\* wrapper).
 
@@ -91,10 +91,10 @@ An object of class `"RL_diagnostics"`, a list with:
 
   data frame (class `"discrepancy_curves"`), one row per threshold `xi`:
   number of linked pairs, agreement rate per variable (see
-  [`RL_agreement()`](https://robachowyk.github.io/FlexRL/reference/rl_agreement.md)),
+  [`RL_agreement()`](https://robachowyk.github.io/FlexRL/reference/RL_agreement.md)),
   standardised mean differences (one per continuous variable or per
   level, see
-  [`smd()`](https://robachowyk.github.io/FlexRL/reference/SMD.md)),
+  [`smd()`](https://robachowyk.github.io/FlexRL/reference/smd.md)),
   support overlap per variable (see
   [`support_iou()`](https://robachowyk.github.io/FlexRL/reference/support_iou.md))
   and multivariate discrepancy (see
@@ -164,7 +164,6 @@ gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100,
                            p_mistake, p_missing, cond_hazard_params, TRUE )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
-#> Warning: PIV 'V4': values out of the common support in data2 [1].
 #> '2' is the larger source, saved as B; '1' saved as A.
 PIVs <- names(PIVs_config)  
 PIVs_type <- list(V1=FALSE, V2=FALSE, V3=FALSE, V4=TRUE)
@@ -178,124 +177,124 @@ diag_brl <- RL_diagnostics(fit_brl, prep_data$encodedA, prep_data$encodedB,
                            flds = PIVs, types = rep("bi",length(PIVs)), nIter = 500,
                            maxIter4CV = 1, n_repeats = 1)
 #> 
-#> FDP estimation on augmented RL taskIteration: 0, Accuracy: 42.97%
+#> FDP estimation on augmented RL taskIteration: 0, Accuracy: 48.61%
 #> Warning: PIV 'V1': synthetic records out of the common support were removed.
 #> Warning: PIV 'V3': synthetic records out of the common support were removed.
 #> Warning: PIV 'V4': synthetic records out of the common support were removed.
 #> BRL results (average over 1 iterations) (augmented RL task) `compute_augmRL_FDP_synth`
 #> Decision rule threshold      0.5 0.55    0.6 0.65    0.7 0.75    0.8 0.85    0.9 0.95
-#> FDP model score estimator    0.19    0.18    0.18    0.18    0.18    0.17    0.15    0.13    0.1 0
+#> FDP model score estimator    0.16    0.14    0.14    0.14    0.14    0.14    0.13    0.12    0.09    0
 #> FDP synth data estimator     0   0   0   0   0   0   0   0   0   0
-#> Linked pairs (augm. RL)      54  52  52  52  51  47  34  14  2   0
-#> Linked pairs (RL)            54  52  52  52  51  47  34  14  2   0
+#> Linked pairs (augm. RL)      59  55  55  55  55  55  52  39  3   0
+#> Linked pairs (RL)            59  55  55  55  55  55  52  39  3   0
 #> 
 #> FDP estimation on original RL task
 #> BRL results (average over 1 iterations) (original RL task) `compute_RL_FDP_score`
 #> Decision rule threshold      0.5 0.55    0.6 0.65    0.7 0.75    0.8 0.85    0.9 0.95
-#> FDP model score estimator    0.18    0.18    0.17    0.17    0.17    0.16    0.14    0.12    0.07    0
-#> Linked pairs (RL)            56  55  53  53  53  48  39  22  1   0
+#> FDP model score estimator    0.16    0.15    0.13    0.13    0.13    0.13    0.12    0.11    0.08    0.05
+#> Linked pairs (RL)            62  60  56  56  56  56  51  41  14  1
 diag_brl # print(diag_brl)
 #> <RL_diagnostics>
 #> 
-#>   Linked pairs  (score > 0.50):  56
+#>   Linked pairs  (score > 0.50):  61
 #> 
-#>   FDP           (true pairs):    0.107
-#>   Sensitivity   (true pairs):    0.521
+#>   FDP           (true pairs):    0.131
+#>   Sensitivity   (true pairs):    0.530
 #> 
-#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.183
-#>                                                threshold 0.50: FDP ~ 0.183
-#>                                            max threshold 0.90: FDP ~ 0.073
-#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.194
-#>                                                threshold 0.50: FDP ~ 0.194
-#>                                            max threshold 0.90: FDP ~ 0.097
+#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.159
+#>                                                threshold 0.50: FDP ~ 0.159
+#>                                            max threshold 0.91: FDP ~ 0.075
+#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.160
+#>                                                threshold 0.50: FDP ~ 0.160
+#>                                            max threshold 0.91: FDP ~ 0.086
 #>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.000
 #>                                                threshold 0.50: FDP ~ 0.000
-#>                                            max threshold 0.90: FDP ~ 0.000
+#>                                            max threshold 0.91: FDP ~ 0.000
 #>   The score-based estimator is valid when the linkage model is well calibrated to the data.
 #>   The synthetic-data estimator is valid when the augmented task is equivalent to the
 #>   original one, which requires links and non-links to have similar distributions; similar
 #>   score-based FDP estimates on the original and augmented tasks support this prerequisite.
 #> 
-#>   Multivariate MMD  (linked A vs. A):  0.0151
-#>   Multivariate MMD  (linked B vs. B):  0.0109
+#>   Multivariate MMD  (linked A vs. A):  0.0091
+#>   Multivariate MMD  (linked B vs. B):  0.0119
 #> 
-#>   IoU support V1  (linked A vs. A):  1.0000
+#>   IoU support V1  (linked A vs. A):  0.8000
 #>   IoU support V2  (linked A vs. A):  0.8333
-#>   IoU support V3  (linked A vs. A):  1.0000
+#>   IoU support V3  (linked A vs. A):  0.8571
 #>   IoU support V4  (linked A vs. A):  0.9167
 #>   IoU support V1  (linked B vs. B):  0.8000
 #>   IoU support V2  (linked B vs. B):  0.8333
 #>   IoU support V3  (linked B vs. B):  1.0000
-#>   IoU support V4  (linked B vs. B):  0.8333
+#>   IoU support V4  (linked B vs. B):  1.0000
 #> 
 #>   Agreement V1  (linked A vs. linked B):  1.0000
 #>   Agreement V2  (linked A vs. linked B):  1.0000
 #>   Agreement V3  (linked A vs. linked B):  1.0000
 #>   Agreement V4  (linked A vs. linked B):  1.0000
-#>   Agreement V1  (true pairs):  0.9375
-#>   Agreement V2  (true pairs):  0.9375
-#>   Agreement V3  (true pairs):  0.9271
-#>   Agreement V4  (true pairs):  0.7708
+#>   Agreement V1  (true pairs):  0.9600
+#>   Agreement V2  (true pairs):  0.9600
+#>   Agreement V3  (true pairs):  0.8700
+#>   Agreement V4  (true pairs):  0.7800
 #> 
-#>   SMD V1 values: {2, 4, 5, ...}  (linked A vs. A):  0.0990, 0.1067, -0.2388, ...
-#>   SMD V2 values: {0, 3, 4, ...}  (linked A vs. A):  -0.0816, 0.1353, -0.1922, ...
-#>   SMD V3 values: {1, 2, 5, ...}  (linked A vs. A):  0.1170, 0.0904, -0.0964, ...
-#>   SMD V4                         (linked A vs. A):  -0.0939
-#>   SMD V1 values: {0, 3, 5, ...}  (linked B vs. B):  -0.1018, 0.1813, -0.1101, ...
-#>   SMD V2 values: {1, 3, 4, ...}  (linked B vs. B):  0.1542, 0.1647, -0.2679, ...
-#>   SMD V3 values: {5, 6, 7, ...}  (linked B vs. B):  -0.0461, -0.1373, 0.1559, ...
-#>   SMD V4                         (linked B vs. B):  -0.0385
+#>   SMD V1 values: {0, 3, 5, ...}  (linked A vs. A):  -0.1159, 0.0859, -0.1010, ...
+#>   SMD V2 values: {3, 5, 6, ...}  (linked A vs. A):  0.1035, -0.1775, 0.1369, ...
+#>   SMD V3 values: {0, 1, 2, ...}  (linked A vs. A):  -0.1159, -0.0747, 0.0995, ...
+#>   SMD V4                         (linked A vs. A):  0.0360
+#>   SMD V1 values: {0, 4, 5, ...}  (linked B vs. B):  -0.0707, 0.0542, -0.1011, ...
+#>   SMD V2 values: {2, 5, 6, ...}  (linked B vs. B):  0.1434, -0.1983, 0.0765, ...
+#>   SMD V3 values: {3, 6, 7, ...}  (linked B vs. B):  -0.0280, -0.0325, 0.0642, ...
+#>   SMD V4                         (linked B vs. B):  -0.1395
 print(diag_brl, threshold = 0.75)
 #> <RL_diagnostics>
 #> 
-#>   Linked pairs  (score > 0.75):  48
+#>   Linked pairs  (score > 0.75):  56
 #> 
-#>   FDP           (true pairs):    0.083
-#>   Sensitivity   (true pairs):    0.458
+#>   FDP           (true pairs):    0.107
+#>   Sensitivity   (true pairs):    0.500
 #> 
-#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.183
-#>                                                threshold 0.75: FDP ~ 0.157
-#>                                            max threshold 0.90: FDP ~ 0.073
-#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.194
-#>                                                threshold 0.75: FDP ~ 0.172
-#>                                            max threshold 0.90: FDP ~ 0.097
+#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.159
+#>                                                threshold 0.75: FDP ~ 0.129
+#>                                            max threshold 0.91: FDP ~ 0.075
+#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.160
+#>                                                threshold 0.75: FDP ~ 0.138
+#>                                            max threshold 0.91: FDP ~ 0.086
 #>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.000
 #>                                                threshold 0.75: FDP ~ 0.000
-#>                                            max threshold 0.90: FDP ~ 0.000
+#>                                            max threshold 0.91: FDP ~ 0.000
 #>   The score-based estimator is valid when the linkage model is well calibrated to the data.
 #>   The synthetic-data estimator is valid when the augmented task is equivalent to the
 #>   original one, which requires links and non-links to have similar distributions; similar
 #>   score-based FDP estimates on the original and augmented tasks support this prerequisite.
 #> 
-#>   Multivariate MMD  (linked A vs. A):  0.0219
-#>   Multivariate MMD  (linked B vs. B):  0.0160
+#>   Multivariate MMD  (linked A vs. A):  0.0114
+#>   Multivariate MMD  (linked B vs. B):  0.0112
 #> 
-#>   IoU support V1  (linked A vs. A):  1.0000
+#>   IoU support V1  (linked A vs. A):  0.8000
 #>   IoU support V2  (linked A vs. A):  0.8333
-#>   IoU support V3  (linked A vs. A):  1.0000
+#>   IoU support V3  (linked A vs. A):  0.8571
 #>   IoU support V4  (linked A vs. A):  0.9167
 #>   IoU support V1  (linked B vs. B):  0.8000
 #>   IoU support V2  (linked B vs. B):  0.8333
 #>   IoU support V3  (linked B vs. B):  1.0000
-#>   IoU support V4  (linked B vs. B):  0.8333
+#>   IoU support V4  (linked B vs. B):  1.0000
 #> 
 #>   Agreement V1  (linked A vs. linked B):  1.0000
 #>   Agreement V2  (linked A vs. linked B):  1.0000
 #>   Agreement V3  (linked A vs. linked B):  1.0000
 #>   Agreement V4  (linked A vs. linked B):  1.0000
-#>   Agreement V1  (true pairs):  0.9375
-#>   Agreement V2  (true pairs):  0.9375
-#>   Agreement V3  (true pairs):  0.9271
-#>   Agreement V4  (true pairs):  0.7708
+#>   Agreement V1  (true pairs):  0.9600
+#>   Agreement V2  (true pairs):  0.9600
+#>   Agreement V3  (true pairs):  0.8700
+#>   Agreement V4  (true pairs):  0.7800
 #> 
-#>   SMD V1 values: {1, 2, 5, ...}  (linked A vs. A):  0.1022, 0.1880, -0.2957, ...
-#>   SMD V2 values: {0, 3, 4, ...}  (linked A vs. A):  -0.0816, 0.1275, -0.2084, ...
-#>   SMD V3 values: {1, 2, 7, ...}  (linked A vs. A):  0.1733, 0.1498, -0.1541, ...
-#>   SMD V4                         (linked A vs. A):  0.0146
-#>   SMD V1 values: {0, 3, 5, ...}  (linked B vs. B):  -0.1018, 0.2229, -0.1708, ...
-#>   SMD V2 values: {1, 3, 4, ...}  (linked B vs. B):  0.0787, 0.1568, -0.2828, ...
-#>   SMD V3 values: {1, 2, 6, ...}  (linked B vs. B):  0.0889, 0.1003, -0.1164, ...
-#>   SMD V4                         (linked B vs. B):  0.0668
+#>   SMD V1 values: {0, 3, 5, ...}  (linked A vs. A):  -0.1159, 0.0426, -0.0600, ...
+#>   SMD V2 values: {1, 3, 5, ...}  (linked A vs. A):  -0.1172, 0.1424, -0.1434, ...
+#>   SMD V3 values: {0, 1, 4, ...}  (linked A vs. A):  -0.1159, -0.1172, -0.0944, ...
+#>   SMD V4                         (linked A vs. A):  0.0693
+#>   SMD V1 values: {0, 1, 5, ...}  (linked B vs. B):  -0.0707, 0.0299, -0.0601, ...
+#>   SMD V2 values: {0, 2, 5, ...}  (linked B vs. B):  -0.0707, 0.1220, -0.1645, ...
+#>   SMD V3 values: {1, 4, 7, ...}  (linked B vs. B):  -0.0462, -0.0395, 0.0773, ...
+#>   SMD V4                         (linked B vs. B):  -0.1094
 plot(diag_brl, "scores")
 
 plot(diag_brl, "distributions", threshold = 0.75)

@@ -72,7 +72,7 @@ gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100,
                            p_mistake, p_missing, cond_hazard_params, TRUE )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
-#> Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.32 in data1, 0.23 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+#> Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.34 in data1, 0.28 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
 #> '2' is the larger source, saved as B; '1' saved as A.
 fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 5, 
              gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10 )                         
@@ -81,13 +81,13 @@ linked_pairs <- fit$Delta[fit$Delta$x > 0.5, ]
 RL_agreement( prep_data$encodedA, prep_data$encodedB,
               names(PIVs_config), linked_pairs )
 #> $agreements
-#>        V1        V2        V3        V4 
-#> 0.9883721 0.9534884 0.9767442 0.8372093 
+#>     V1     V2     V3     V4 
+#> 0.9250 1.0000 0.9875 0.8375 
 #> 
 RL_agreement( prep_data$encodedA, prep_data$encodedB,
               names(PIVs_config), prep_data$true_pairs )
 #> $agreements
 #>   V1   V2   V3   V4 
-#> 0.95 0.98 0.89 0.78 
+#> 0.95 0.93 0.91 0.73 
 #> 
 ```

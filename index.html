@@ -159,7 +159,7 @@
 <div class="section level2">
 <h2 id="mag-inference-on-linked-data">🔍 Inference on linked data<a class="anchor" aria-label="anchor" href="#mag-inference-on-linked-data"></a>
 </h2>
-<p>Record linkage is rarely the end of the analysis. A stricter decision rule produces fewer falsely linked pairs, but it also select fewer and more atypical records, and both can bias what you estimate. <code><a href="reference/rl_diagnostics.html">RL_diagnostics()</a></code> gathers the tools that make this trade-off visible, as a function of the decision rule:</p>
+<p>Record linkage is rarely the end of the analysis. A stricter decision rule produces fewer falsely linked pairs, but it also select fewer and more atypical records, and both can bias what you estimate. <code><a href="reference/RL_diagnostics.html">RL_diagnostics()</a></code> gathers the tools that make this trade-off visible, as a function of the decision rule:</p>
 <ul>
 <li>
 <a href="https://doi.org/10.1002/sim.70292" class="external-link"><strong>Estimators of the false discovery proportion</strong></a> (Robach et al., <em>Statistics in Medicine</em>, 2025): one computed from the linkage scores, and one based on synthetic records that does not rely on the linkage model.</li>
@@ -179,8 +179,8 @@
 <p>The development version is available from <a href="https://github.com/robachowyk/FlexRL" class="external-link">GitHub</a>, with one of:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"robachowyk/FlexRL"</span><span class="op">)</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"robachowyk/FlexRL"</span><span class="op">)</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"robachowyk/FlexRL"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"robachowyk/FlexRL"</span><span class="op">)</span></span>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/install-deprecated.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"robachowyk/FlexRL"</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/robachowyk/FlexRL" class="external-link">FlexRL</a></span><span class="op">)</span></span></code></pre></div>
 <p>FlexRL relies on Rcpp.</p>
@@ -220,14 +220,14 @@
 <span>        <span class="va">fp</span> <span class="op">/</span> <span class="op">(</span><span class="va">tp</span> <span class="op">+</span> <span class="va">fp</span><span class="op">)</span>, <span class="va">tp</span> <span class="op">/</span> <span class="op">(</span><span class="va">tp</span> <span class="op">+</span> <span class="va">fn</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Fit the model</span></span>
-<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/stEM.html">StEM</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">prep_data</span><span class="op">)</span></span>
+<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/StEM.html">StEM</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">prep_data</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Linked pairs: row of A (i), row of B (j), linkage score (x).</span></span>
 <span><span class="co">#    A score above 0.5 guarantees one-to-one assignment.</span></span>
 <span><span class="va">linked</span> <span class="op">&lt;-</span> <span class="va">fit</span><span class="op">$</span><span class="va">Delta</span><span class="op">[</span><span class="va">fit</span><span class="op">$</span><span class="va">Delta</span><span class="op">$</span><span class="va">x</span> <span class="op">&gt;</span> <span class="fl">0.5</span>, <span class="op">]</span></span>
 <span></span>
 <span><span class="co"># Assess linked data quality</span></span>
-<span><span class="va">diag</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/rl_diagnostics.html">RL_diagnostics</a></span><span class="op">(</span><span class="va">fit</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedA</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span>, <span class="va">PIVs</span>,</span>
+<span><span class="va">diag</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/RL_diagnostics.html">RL_diagnostics</a></span><span class="op">(</span><span class="va">fit</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedA</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span>, <span class="va">PIVs</span>,</span>
 <span>                       <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>ANASCI <span class="op">=</span> <span class="cn">TRUE</span>, SESSO <span class="op">=</span> <span class="cn">FALSE</span>, STACIV <span class="op">=</span> <span class="cn">FALSE</span>, STUDIO <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>,</span>
 <span>                       true_pairs <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">true_pairs</span>, FDP_estimation <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                       RL_method <span class="op">=</span> <span class="st">"FlexRL"</span>, data <span class="op">=</span> <span class="va">prep_data</span>,</span>
@@ -268,7 +268,7 @@
 <li>
 <strong>Vignettes</strong>: step-by-step examples on simulated and real data.</li>
 <li>
-<strong>Documentation in R</strong>: <code><a href="reference/simulate_data.html">?simulate_data</a></code>, <code><a href="reference/prepare_data.html">?prepare_data</a></code>, <code><a href="reference/naive_linkage.html">?naive_linkage</a></code>, <code><a href="reference/stEM.html">?StEM</a></code>, <code><a href="reference/rl_diagnostics.html">?RL_diagnostics</a></code>.</li>
+<strong>Documentation in R</strong>: <code><a href="reference/simulate_data.html">?simulate_data</a></code>, <code><a href="reference/prepare_data.html">?prepare_data</a></code>, <code><a href="reference/naive_linkage.html">?naive_linkage</a></code>, <code><a href="reference/StEM.html">?StEM</a></code>, <code><a href="reference/RL_diagnostics.html">?RL_diagnostics</a></code>.</li>
 <li>
 <strong>Software article</strong>: <!-- TODO: link when on arXiv --> (Robach et al., soon on arXiv).</li>
 </ul>

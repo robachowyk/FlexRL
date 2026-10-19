@@ -10,7 +10,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/robachowyk/FlexRL/blob/master/inst/CITATION)
+[`inst/CITATION`](https://github.com/robachowyk/FlexRL/blob/HEAD/inst/CITATION)
 
 Robach K, van der Pas SL, van de Wiel MA, Hof MH (2025). “A flexible
 model for record linkage.” *Journal of the Royal Statistical Society

@@ -31,5 +31,5 @@ counts.
 h1 <- graphics::hist(rnorm(200), plot = FALSE)
 h2 <- graphics::hist(rnorm(200) + 1, plot = FALSE)
 support_iou(h1, h2)
-#> [1] 0.6923077
+#> [1] 0.7142857
 ```

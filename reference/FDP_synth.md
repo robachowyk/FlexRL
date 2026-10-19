@@ -85,11 +85,10 @@ new_data <- synthesise("arf", prep_data$encodedA[, c(PIVs,"local_id","source",
                       prep_data$encodedB[, c(PIVs,"local_id","source","date",
                       prep_data$PIVs_config$V4$cond_hazard_cov$covB)], PIVs, 
                       n_synth, TRUE)
-#> Iteration: 0, Accuracy: 51.52%
-#> Iteration: 1, Accuracy: 42.28%
+#> Iteration: 0, Accuracy: 47.99%
 #> Warning: executing %dopar% sequentially: no parallel backend registered
-#> Warning: PIV 'V1': synthetic records out of the common support were removed.
 #> Warning: PIV 'V3': synthetic records out of the common support were removed.
+#> Warning: PIV 'V4': synthetic records out of the common support were removed.
 new_data$dataA[PIVs][is.na(new_data$dataA[PIVs])] <- 0
 new_data$dataB[PIVs][is.na(new_data$dataB[PIVs])] <- 0
 # cannot model dynamics for synthetic data, set dates to 0
@@ -103,12 +102,12 @@ FDP_synth(fit_flexrl$idxA, fit_flexrl$idxB, fit_flexrl$LinkScore, 0.5,
           nrow(prep_data$encodedA), nrow(prep_data$encodedB), 
           n_synth)
 #> $FDP_synth
-#> [1] 0.3529412
+#> [1] 0.3333333
 #> 
 #> $n_linked_real
-#> [1] 85
+#> [1] 90
 #> 
 #> $n_linked_all
-#> [1] 88
+#> [1] 93
 #> 
 ```

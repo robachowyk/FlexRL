@@ -26,5 +26,5 @@ Numeric, the (biased) MMD estimate.
 x <- matrix(rnorm(50), ncol = 5)
 y <- matrix(rnorm(30) + 0.5, ncol = 5)
 mmd(x, y)
-#> [1] 0.3193211
+#> [1] 0.3547623
 ```

@@ -14,13 +14,13 @@ CRAN release: 2026-10-07
   the change over time of a structured PIV can be modelled with an
   exponential (default), Weibull, Gompertz, piecewise-constant or
   user-defined survival function, passed to
-  [`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md)
+  [`StEM()`](https://robachowyk.github.io/FlexRL/reference/StEM.md)
   through the `survival_model` argument. `alpha` chains are named after
   the model parameters. `SurvivalUnstable()` and `loglikSurvival()` are
   obsolete. `cond_hazard_params` are now given on the parameter scale of
   the model (log-hazards for the exponential model).
 - New
-  [`RL_diagnostics()`](https://robachowyk.github.io/FlexRL/reference/rl_diagnostics.md):
+  [`RL_diagnostics()`](https://robachowyk.github.io/FlexRL/reference/RL_diagnostics.md):
   provides record linkage diagnostics over linkage decision rules
   (thresholds from 0.50 to 0.99); internally computes FDP_measures and
   discrepancy_measures useful for downstream inference;
@@ -30,7 +30,7 @@ CRAN release: 2026-10-07
   packages: multilink, fastLink, BRL, reclin2, diyar, fedmatch, FlexRL.
   They return a named list (`idxA`, `idxB`, `LinkScore`) that can be
   passed directly to
-  [`RL_diagnostics()`](https://robachowyk.github.io/FlexRL/reference/rl_diagnostics.md).
+  [`RL_diagnostics()`](https://robachowyk.github.io/FlexRL/reference/RL_diagnostics.md).
 - Useless dependencies dropped; R \>= 4.1.0.
 - Bugs corrected, warnings added.
 

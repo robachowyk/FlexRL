@@ -14,8 +14,14 @@
   [`FlexRL`](https://robachowyk.github.io/FlexRL/reference/FlexRL.md) :
   FlexRL: A Flexible Model for Record Linkage
 
-- [`smd()`](https://robachowyk.github.io/FlexRL/reference/SMD.md) :
-  Standardised mean difference between a selected set and a baseline
+- [`RL_agreement()`](https://robachowyk.github.io/FlexRL/reference/RL_agreement.md)
+  : Agreement rate of pairs on shared variables
+
+- [`RL_diagnostics()`](https://robachowyk.github.io/FlexRL/reference/RL_diagnostics.md)
+  : Post-linkage diagnostics
+
+- [`StEM()`](https://robachowyk.github.io/FlexRL/reference/StEM.md) :
+  Stochastic Expectation-Maximisation for record linkage
 
 - [`compute_RL_FDP_score()`](https://robachowyk.github.io/FlexRL/reference/compute_RL_FDP_score.md)
   : Estimate the false discovery proportion of a record-linkage method
@@ -64,11 +70,14 @@
 - [`plot(`*`<FDP_curves>`*`)`](https://robachowyk.github.io/FlexRL/reference/plot.FDP_curves.md)
   : Plot FDP estimates against the linkage decision threshold
 
+- [`plot(`*`<RL_diagnostics>`*`)`](https://robachowyk.github.io/FlexRL/reference/plot.RL_diagnostics.md)
+  : Plot post-linkage diagnostics
+
 - [`plot(`*`<discrepancy_curves>`*`)`](https://robachowyk.github.io/FlexRL/reference/plot.discrepancy_curves.md)
   : Plot post-linkage diagnostics over thresholds
 
-- [`plot(`*`<RL_diagnostics>`*`)`](https://robachowyk.github.io/FlexRL/reference/plot.rl_diagnostics.md)
-  : Plot post-linkage diagnostics
+- [`plot_StEM_convergence()`](https://robachowyk.github.io/FlexRL/reference/plot_StEM_convergence.md)
+  : Monte Carlo convergence (trace) plots for a fitted StEM model
 
 - [`plot_distributions()`](https://robachowyk.github.io/FlexRL/reference/plot_distributions.md)
   : Compare distributions of shared variables across data sets
@@ -77,26 +86,17 @@
 - [`plot_linkage_scores()`](https://robachowyk.github.io/FlexRL/reference/plot_linkage_scores.md)
   : Plot the distribution of linkage scores
 
-- [`plot_StEM_convergence()`](https://robachowyk.github.io/FlexRL/reference/plot_stem_convergence.md)
-  : Monte Carlo convergence (trace) plots for a fitted StEM model
-
 - [`prepare_data()`](https://robachowyk.github.io/FlexRL/reference/prepare_data.md)
   :
 
   Prepare two data sources for
-  [`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md)
+  [`StEM()`](https://robachowyk.github.io/FlexRL/reference/StEM.md)
 
-- [`print(`*`<RL_diagnostics>`*`)`](https://robachowyk.github.io/FlexRL/reference/print.rl_diagnostics.md)
+- [`print(`*`<RL_diagnostics>`*`)`](https://robachowyk.github.io/FlexRL/reference/print.RL_diagnostics.md)
   : Print post-linkage diagnostics
 
 - [`prop_level()`](https://robachowyk.github.io/FlexRL/reference/prop_level.md)
   : Proportion of a data set with a given variable at a given level
-
-- [`RL_agreement()`](https://robachowyk.github.io/FlexRL/reference/rl_agreement.md)
-  : Agreement rate of pairs on shared variables
-
-- [`RL_diagnostics()`](https://robachowyk.github.io/FlexRL/reference/rl_diagnostics.md)
-  : Post-linkage diagnostics
 
 - [`simulateD()`](https://robachowyk.github.io/FlexRL/reference/simulateD.md)
   : Simulate the linkage matrix D
@@ -107,8 +107,8 @@
 - [`simulate_data()`](https://robachowyk.github.io/FlexRL/reference/simulate_data.md)
   : Simulate two linked data sources for record linkage benchmarking
 
-- [`StEM()`](https://robachowyk.github.io/FlexRL/reference/stEM.md) :
-  Stochastic Expectation-Maximisation for record linkage
+- [`smd()`](https://robachowyk.github.io/FlexRL/reference/smd.md) :
+  Standardised mean difference between a selected set and a baseline
 
 - [`support_iou()`](https://robachowyk.github.io/FlexRL/reference/support_iou.md)
   : Intersection-over-union of two histogram supports

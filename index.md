@@ -84,7 +84,7 @@ FlexRL adapts to your data:
 Record linkage is rarely the end of the analysis. A stricter decision
 rule produces fewer falsely linked pairs, but it also select fewer and
 more atypical records, and both can bias what you estimate.
-[`RL_diagnostics()`](https://robachowyk.github.io/FlexRL/reference/rl_diagnostics.md)
+[`RL_diagnostics()`](https://robachowyk.github.io/FlexRL/reference/RL_diagnostics.md)
 gathers the tools that make this trade-off visible, as a function of the
 decision rule:
 
@@ -231,8 +231,8 @@ plot(diag_brl, "distributions", threshold = 0.75)
   [`?simulate_data`](https://robachowyk.github.io/FlexRL/reference/simulate_data.md),
   [`?prepare_data`](https://robachowyk.github.io/FlexRL/reference/prepare_data.md),
   [`?naive_linkage`](https://robachowyk.github.io/FlexRL/reference/naive_linkage.md),
-  [`?StEM`](https://robachowyk.github.io/FlexRL/reference/stEM.md),
-  [`?RL_diagnostics`](https://robachowyk.github.io/FlexRL/reference/rl_diagnostics.md).
+  [`?StEM`](https://robachowyk.github.io/FlexRL/reference/StEM.md),
+  [`?RL_diagnostics`](https://robachowyk.github.io/FlexRL/reference/RL_diagnostics.md).
 - **Software article**: (Robach et al., soon on arXiv).
 
 ## 🤝 Contributing

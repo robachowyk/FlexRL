@@ -42,7 +42,7 @@ link_with_multilink(dataA, dataB, arguments, ...)
 - ...:
 
   Ignored; kept for compatibility with
-  [`RL_diagnostics()`](https://robachowyk.github.io/FlexRL/reference/rl_diagnostics.md).
+  [`RL_diagnostics()`](https://robachowyk.github.io/FlexRL/reference/RL_diagnostics.md).
 
 ## Value
 
