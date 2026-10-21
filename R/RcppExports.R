@@ -25,8 +25,8 @@ sampleD <- function(S, LLA, LLB, LLL, gamma, loglik, nlinkrec, sumRowD, sumColD)
     .Call(`_FlexRL_sampleD`, S, LLA, LLB, LLL, gamma, loglik, nlinkrec, sumRowD, sumColD)
 }
 
-sampleNL <- function(G, eta, phi) {
-    .Call(`_FlexRL_sampleNL`, G, eta, phi)
+sampleNL <- function(G, eta, phi, unif) {
+    .Call(`_FlexRL_sampleNL`, G, eta, phi, unif)
 }
 
 sampleL <- function(GA, GB, survivalpSameH, choice_set, choice_equal, nval, phikA, phikB, eta) {

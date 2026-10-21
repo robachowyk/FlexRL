@@ -24,6 +24,26 @@ using namespace Rcpp;
    return randomnumber;
  }
 
+ // Inverse-CDF categorical draw: index in [0, n) of the first cumulative
+ // weight exceeding `u * total`, with `u` a pre-drawn Uniform(0,1). Zero-weight
+ // entries are never selected (unless every weight is zero, in which case the
+ // last index is returned as a numerical fallback). Consuming pre-drawn
+ // uniforms instead of calling R's sampler keeps the kernels thread-safe and
+ // `set.seed()`-deterministic.
+ static int sampleCdf(const double *w, int n, double u)
+ {
+   double total = 0.0;
+   for (int i = 0; i < n; i++) total += w[i];
+   double threshold = u * total;
+   double acc = 0.0;
+   for (int i = 0; i < n; i++)
+   {
+     acc += w[i];
+     if (threshold < acc) return i;
+   }
+   return n - 1;
+ }
+
  // Draws a single value from `choiceset`, with sampling probabilities given
  // by `probavec`. Separated to control from R.
  double drawSample(IntegerVector choiceset, NumericVector probavec) {
@@ -295,42 +315,36 @@ using namespace Rcpp;
  //' @param G IntegerVector of registered values for a certain Partially Identifying Variable (PIV) for non linked records
  //' @param eta NumericVector parameter for the distribution of the PIV concerned
  //' @param phi NumericVector parameter for the registration errors for the PIV concerned
+ //' @param unif NumericVector of one Uniform(0,1) deviate per record, pre-drawn from R's RNG
  //'
  //' @return IntegerVector: of latent true values underlying G
  //' @export
  // [[Rcpp::export]]
- IntegerVector sampleNL(IntegerVector G, NumericVector eta, NumericVector phi)
+ IntegerVector sampleNL(IntegerVector G, NumericVector eta, NumericVector phi, NumericVector unif)
  {
    IntegerVector H(G.length());
    // Number of possible values
    int nval = eta.length();
-   // Create the possible values to sample from
-   IntegerVector choice_set = seq_len(nval);
    // Possible registration errors
    double pMissing = phi[1];
    double pTypo = (1-pMissing) * (1-phi[0]) / (eta.length()-1);
    double pAgree = (1-pMissing) * phi[0];
+   // Reusable weight buffer: for each record, P(True=h) for h = 1..nval
+   std::vector<double> w(nval);
    // Iterate over all elements
    for(int i = 0; i < G.length(); i++)
    {
-     // Create a vector indicating P(Registered=X|True)
-     // First value is for the missings
-     // What happens if missing:
      if(G(i) == 0)
      {
-       // Registered value is missing
-       // Mistakes equally likely
-       // Sample from the PIV distribution
-       H(i) = drawSample(choice_set, eta);
+       // Registered value is missing: sample from the PIV distribution
+       for (int h = 0; h < nval; h++) w[h] = eta[h];
      }else
      {
-       // Registered value is observed
-       NumericVector help1(nval, pTypo);
-       help1(G(i)-1) = pAgree;
-       // Check the joint probability of having the registered and true value
-       NumericVector prob = eta * help1;
-       H(i) = drawSample(choice_set, prob);
+       // Registered value is observed: P(True=h) proportional to eta[h] * P(G=h|True=h)
+       for (int h = 0; h < nval; h++) w[h] = eta[h] * pTypo;
+       w[G(i)-1] = eta[G(i)-1] * pAgree;
      }
+     H(i) = sampleCdf(w.data(), nval, unif[i]) + 1;
    }
    return H;
  }
@@ -482,6 +496,15 @@ using namespace Rcpp;
    IntegerMatrix truepivsA(nA[0],nA[1]);
    IntegerMatrix truepivsB(nB[0],nB[1]);
    int nphi = 2;
+   // Pre-draw all Uniform(0,1) deviates for this sweep from R's RNG (set.seed()
+   // controlled, sequential). The sampling kernels consume their own slots, so
+   // they never touch the RNG themselves — thread-safe by construction.
+   int nNL_A = 0, nNL_B = 0;
+   for (int i = 0; i < nonlinkedA.length(); i++) if (nonlinkedA[i]) nNL_A++;
+   for (int i = 0; i < nonlinkedB.length(); i++) if (nonlinkedB[i]) nNL_B++;
+   int nPIVs = nvalues.length();
+   NumericVector unif = Rcpp::runif(nPIVs * (nNL_A + nNL_B));
+   int off = 0;
    for (int k = 0; k < nvalues.length(); k++) {
      IntegerVector truepivsA_k = truepivsA(_,k);
      IntegerVector truepivsB_k = truepivsB(_,k);
@@ -502,8 +525,12 @@ using namespace Rcpp;
      IntegerVector pivsA_k_NL = pivsA_k[nonlinkedA];
      IntegerVector pivsB_k_NL = pivsB_k[nonlinkedB];
      // MArginally sample true values for non-linked pairs
-     IntegerVector truepivsA_k_NL = sampleNL(pivsA_k_NL, eta_k, phi_k_A);
-     IntegerVector truepivsB_k_NL = sampleNL(pivsB_k_NL, eta_k, phi_k_B);
+     IntegerVector truepivsA_k_NL = sampleNL(pivsA_k_NL, eta_k, phi_k_A,
+                                             nNL_A > 0 ? unif[Range(off, off + nNL_A - 1)] : NumericVector(0));
+     off += nNL_A;
+     IntegerVector truepivsB_k_NL = sampleNL(pivsB_k_NL, eta_k, phi_k_B,
+                                             nNL_B > 0 ? unif[Range(off, off + nNL_B - 1)] : NumericVector(0));
+     off += nNL_B;
      truepivsA_k[nonlinkedA] = truepivsA_k_NL;
      truepivsB_k[nonlinkedB] = truepivsB_k_NL;
      IntegerMatrix choice_set;

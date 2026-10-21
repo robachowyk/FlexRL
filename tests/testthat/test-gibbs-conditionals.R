@@ -75,13 +75,14 @@ test_that("sampleNL: true value of a non-linked record follows eta * P(G|H)", {
   p <- tiny_pars()
   nval <- p$n_values
   phiA <- c(p$phi["agreeA"], p$phi["missA"])
+  n_draws <- 40000
   set.seed(103)
   # G = 0 (missing): H must follow eta exactly
-  draws0 <- replicate(40000, FlexRL:::sampleNL(0L, p$eta, phiA))
+  draws0 <- FlexRL:::sampleNL(rep(0L, n_draws), p$eta, phiA, runif(n_draws))
   expect_lt(abs(mean(draws0 == 1) - p$eta[1]), 0.02)
   # G = 1: P(h=1) proportional to eta[1] * P(G=1|h=1)
   p1 <- p$eta[1] * (1 - p$phi["missA"]) * p$phi["agreeA"]
   p2 <- p$eta[2] * (1 - p$phi["missA"]) * (1 - p$phi["agreeA"]) / (nval - 1)
-  draws1 <- replicate(40000, FlexRL:::sampleNL(1L, p$eta, phiA))
+  draws1 <- FlexRL:::sampleNL(rep(1L, n_draws), p$eta, phiA, runif(n_draws))
   expect_lt(abs(mean(draws1 == 1) - p1 / (p1 + p2)), 0.02)
 })

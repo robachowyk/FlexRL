@@ -85,15 +85,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // sampleNL
-IntegerVector sampleNL(IntegerVector G, NumericVector eta, NumericVector phi);
-RcppExport SEXP _FlexRL_sampleNL(SEXP GSEXP, SEXP etaSEXP, SEXP phiSEXP) {
+IntegerVector sampleNL(IntegerVector G, NumericVector eta, NumericVector phi, NumericVector unif);
+RcppExport SEXP _FlexRL_sampleNL(SEXP GSEXP, SEXP etaSEXP, SEXP phiSEXP, SEXP unifSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< IntegerVector >::type G(GSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type eta(etaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type phi(phiSEXP);
-    rcpp_result_gen = Rcpp::wrap(sampleNL(G, eta, phi));
+    Rcpp::traits::input_parameter< NumericVector >::type unif(unifSEXP);
+    rcpp_result_gen = Rcpp::wrap(sampleNL(G, eta, phi, unif));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -169,7 +170,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_FlexRL_initDeltaMap", (DL_FUNC) &_FlexRL_initDeltaMap, 0},
     {"_FlexRL_Deltafind", (DL_FUNC) &_FlexRL_Deltafind, 0},
     {"_FlexRL_sampleD", (DL_FUNC) &_FlexRL_sampleD, 9},
-    {"_FlexRL_sampleNL", (DL_FUNC) &_FlexRL_sampleNL, 3},
+    {"_FlexRL_sampleNL", (DL_FUNC) &_FlexRL_sampleNL, 4},
     {"_FlexRL_sampleL", (DL_FUNC) &_FlexRL_sampleL, 9},
     {"_FlexRL_ExpandGrid", (DL_FUNC) &_FlexRL_ExpandGrid, 2},
     {"_FlexRL_generateSequence", (DL_FUNC) &_FlexRL_generateSequence, 1},
