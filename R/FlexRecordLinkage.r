@@ -1291,7 +1291,13 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
     survivalpSameH <- step$survivalpSameH
 
     if (nrow(linksR) > 0) {
-      for (l in seq_len(nrow(linksR))) Delta[linksR[l, 1], linksR[l, 2]] <- Delta[linksR[l, 1], linksR[l, 2]] + 1
+      # One sparse build + add per post-sample draw instead of nrow(linksR)
+      # single-cell dgCMatrix sub-assignments (~1.4 ms each: PERF-PLAN §1).
+      # Duplicate (i, j) pairs are summed by sparseMatrix, though the one-to-one
+      # constraint means a single draw never has any.
+      Delta <- Delta + Matrix::sparseMatrix(i = linksR[, 1], j = linksR[, 2],
+                                            x = rep(1, nrow(linksR)),
+                                            dims = c(nrow(encodedA), nrow(encodedB)))
     }
     cli::cli_progress_update(id = pbfinal_id)
   }
