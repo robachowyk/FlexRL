@@ -75,21 +75,23 @@ test_that("likelihood values on the fixed states reproduce the baseline (<= 1e-1
     # differently by design (see helper-golden.R)
     ko <- paste(lk$LLL_pairs$iA, lk$LLL_pairs$iB, sep = "_")
     kn <- paste(art$LLL_pairs$iA, art$LLL_pairs$iB, sep = "_")
-    expect_setequal(ko, kn, info = id)
+    expect_true(setequal(ko, kn),
+                info = sprintf("%s: candidate-pair sets differ (%d baseline vs %d current)",
+                               id, length(ko), length(kn)))
     dLLL <- max(abs(lk$LLL_pairs$LLL - art$LLL_pairs$LLL[match(ko, kn)]))
     dLLA <- max(abs(lk$LLA - art$LLA))
     dLLB <- max(abs(lk$LLB - art$LLB))
-    expect_lte(dLLL, 1e-10,
+    expect_true(dLLL <= 1e-10,
                info = sprintf("%s: max|dLLL| = %.3g (baseline vs current, aligned by pair)", id, dLLL))
-    expect_lte(dLLA, 1e-10, info = sprintf("%s: max|dLLA| = %.3g", id, dLLA))
-    expect_lte(dLLB, 1e-10, info = sprintf("%s: max|dLLB| = %.3g", id, dLLB))
+    expect_true(dLLA <= 1e-10, info = sprintf("%s: max|dLLA| = %.3g", id, dLLA))
+    expect_true(dLLB <= 1e-10, info = sprintf("%s: max|dLLB| = %.3g", id, dLLB))
     # state log-likelihood: baseline internal value, baseline log_lik() and the
     # current implementation's log_lik() must agree
     d0 <- abs(lk$ll0_sparse - art$ll0_sparse)
-    expect_lte(d0, 1e-10, info = sprintf("%s: |d log_lik| = %.3g", id, d0))
+    expect_true(d0 <= 1e-10, info = sprintf("%s: |d log_lik| = %.3g", id, d0))
     if (!is.null(lk$ll0_internal)) {
       d0i <- abs(lk$ll0_internal - art$ll0_sparse)
-      expect_lte(d0i, 1e-10, info = sprintf("%s: |d log_lik internal| = %.3g", id, d0i))
+      expect_true(d0i <= 1e-10, info = sprintf("%s: |d log_lik internal| = %.3g", id, d0i))
     }
   }
 })
@@ -105,8 +107,8 @@ test_that("StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard)
     zs <- golden_zstats(golden_cloud_params(gc$cloud), golden_cloud_params(cn))
     zmax <- max(zs$new_vs_old)
     worst <- names(which.max(zs$new_vs_old))
-    expect_lte(
-      zmax, 5,
+    expect_true(
+      zmax <= 5,
       info = sprintf(
         "%s: max|z| new-vs-baseline-cloud = %.2f (component %s); per-component: %s",
         pid, zmax, worst,
@@ -121,8 +123,8 @@ test_that("StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard)
     }
     jn <- c()
     for (a in gc$cloud) for (b in cn) jn <- c(jn, golden_jaccard(a$links, b$links))
-    expect_lte(
-      abs(mean(jn) - mean(jo)), 0.05,
+    expect_true(
+      abs(mean(jn) - mean(jo)) <= 0.05,
       info = sprintf(
         "%s: Delta Jaccard old-vs-old mean %.3f (sd %.3f, min %.3f) vs old-vs-new mean %.3f (sd %.3f, min %.3f)",
         pid, mean(jo), stats::sd(jo), min(jo), mean(jn), stats::sd(jn), min(jn)
@@ -136,8 +138,8 @@ test_that("tiny-problem frequencies match the baseline goldens and the exact pos
   freq <- tiny_gibbs_frequencies(n_sweeps = 30000, thin = 3L)
   gold_freq <- readRDS(file.path(gold, "tiny_frequencies.rds"))
   tv_gn <- golden_tv(freq, gold_freq)
-  expect_lte(
-    tv_gn, 0.05,
+  expect_true(
+    tv_gn <= 0.05,
     info = sprintf(
       "TV(new, baseline-golden) = %.4f (parity study observed 0.0186; both are 10k-draw MC estimates)",
       tv_gn
@@ -146,7 +148,7 @@ test_that("tiny-problem frequencies match the baseline goldens and the exact pos
   exact <- tiny_exact_posterior()
   emp <- golden_tiny_empirical(freq)
   tv_e <- 0.5 * sum(abs(emp - exact))
-  expect_lte(max(abs(emp - exact)), 0.025,
-             info = sprintf("max per-configuration deviation vs exact posterior = %.4f", max(abs(emp - exact))))
-  expect_lte(tv_e, 0.05, info = sprintf("TV vs exact posterior = %.4f", tv_e))
+  expect_true(max(abs(emp - exact)) <= 0.025,
+              info = sprintf("max per-configuration deviation vs exact posterior = %.4f", max(abs(emp - exact))))
+  expect_true(tv_e <= 0.05, info = sprintf("TV vs exact posterior = %.4f", tv_e))
 })
