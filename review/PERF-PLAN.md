@@ -52,3 +52,40 @@ Known per-kernel costs that matter at scale:
 Note: `Rprof.out` at the repo root profiles `link_with_BRL` (a competitor-package
 comparison run), **not** FlexRL's own sampler — it is not evidence about our hot
 path.
+
+## 2. Does the update order matter? (hypothesis, checked)
+
+**H-sampling: order is irrelevant — exactly.** In `sampleNL` each record's draw
+conditions only on `(G(i), eta, phi)`; in `sampleL` each linked pair's draw
+conditions only on `(GA(i), GB(i), survivalpSameH(i), eta, phi)`. No draw reads
+another's output → embarrassingly parallel, and parallel execution is
+statistically *identical* (given per-draw independent uniforms).
+
+**D-sampling: order matters, but only through two narrow channels.** The
+acceptance odds in `sampleD` simplify. With
+`sumlogdensity = log(exp(loglik) + exp(loglikNew))`:
+
+    pswitch = exp(loglikNew - sumlogdensity)
+            = exp(Δ)/(1 + exp(Δ)),   Δ = loglikNew − loglik
+
+so **`loglik` cancels entirely** in the acceptance probability. The per-pair
+delta is
+
+    Δ_add(q) = −LLB(j) − LLA(i) + LLL(q) + log γ − log(1−γ) − log(nB − nlinkrec)
+    Δ_rem(q) = +LLB(j) + LLA(i) − LLL(q) − log γ + log(1−γ) + log(nB − nlinkrec + 1)
+
+which contains only quantities **fixed for the whole sweep** (`LLL`, `LLA`,
+`LLB`, `γ` — `gamma` arrives as `pLink = rep(gamma, nA)`) plus the running link
+count. Therefore pair *q*'s decision depends on earlier pairs only via:
+
+1. **feasibility** — `rowD(i)` / `colD(j)`, i.e. the one-to-one constraint, and
+2. **`nlinkrec`** — the bipartite-matching normalizer term.
+
+Everything else (the expensive-looking log-likelihood bookkeeping) is
+pair-local and can be hoisted/precomputed. This is what makes both the cheap
+optimizations (§3 option C) and the parallel schemes (§3 options A/B) possible.
+
+Corollary used later: `sampleD` does not actually need `loglik` as an *input* —
+it only accumulates it for output. The final value is reproducible from scratch
+as (matching + unlinked-record terms) + Σ LLL over finally-linked pairs + Σ
+deltas of accepted flips.
