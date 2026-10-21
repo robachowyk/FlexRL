@@ -248,6 +248,10 @@ Baseline (branch `glm-parallel`, pre-change, R 4.6.1, bench scale 1):
 - [ ] Phase 1.2 — factorized `sampleL` (joint (H^A, H^B) return)
 - [ ] Phase 1.3 — per-pair `LLLq`, named-column access, `sampleD` loglik
       reconstruction + `linksQ` (kills the `make.unique` bottleneck)
+      → **mid-phase bench: 238.7 s → 20.2 s end-to-end (11.8×); profiled run
+      132.4 s → 10.2 s. Remaining: Delta drawing `[<-` 37% (Phase 1.5),
+      `simulateD` 45% total — of which the string candidate pipeline and
+      `cbind` covariate assembly (Phase 1.4), `sampleD` scan 3%.**
 - [ ] Phase 1.4 — `buildCandidatePairs()` replaces the string pipeline
 - [ ] Phase 1.5 — Delta accumulation via triplets (kills "Drawing Delta")
 - [ ] Phase 2 — bench pre/post numbers recorded here
