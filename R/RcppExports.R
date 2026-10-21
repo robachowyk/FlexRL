@@ -21,8 +21,8 @@ pairLogLik <- function(select, truepivsA, truepivsB, encodedA, encodedB, PIVs, P
     .Call(`_FlexRL_pairLogLik`, select, truepivsA, truepivsB, encodedA, encodedB, PIVs, PIVs_stable, n_values, eta, phi, alpha, covA_names, covB_names, S, threads)
 }
 
-sampleD <- function(S, LLA, LLB, LLL, gamma, nlinkrec, links) {
-    .Call(`_FlexRL_sampleD`, S, LLA, LLB, LLL, gamma, nlinkrec, links)
+sampleD <- function(S, LLA, LLB, LLL, gamma, nlinkrec, links, threads = 1L) {
+    .Call(`_FlexRL_sampleD`, S, LLA, LLB, LLL, gamma, nlinkrec, links, threads)
 }
 
 sampleNL <- function(G, eta, phi, unif) {

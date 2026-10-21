@@ -23,12 +23,6 @@ using namespace Rcpp;
    return res;
  }
 
- // Draws a single random number from Uniform(0,1). Separated to control from R.
- double drawUniform01() {
-   double randomnumber = R::runif(0,1);
-   return randomnumber;
- }
-
  // Inverse-CDF categorical draw: index in [0, n) of the first cumulative
  // weight exceeding `u * total`, with `u` a pre-drawn Uniform(0,1). Zero-weight
  // entries are never selected (unless every weight is zero, in which case the
@@ -452,7 +446,8 @@ using namespace Rcpp;
  //' @param LLA NumericVector gives the likelihood contribution of each non linked record from A
  //' @param LLB NumericVector gives the likelihood contribution of each non linked record from B
  //' @param LLL NumericVector gives the likelihood contribution of each potential linked records (from select)
- //' @param gamma NumericVector repeats the value of the parameter gamma (proportion of linked records) number of potential linked records (nrow of S) times
+ //' @param gamma Numeric, the parameter gamma (proportion of linked records)
+ //'   — a single scalar, as everywhere else in the model
  //' @param nlinkrec integer for the current number of linked records
  //' @param links IntegerMatrix (0-based, k x 2) of the currently linked (A, B)
  //'   record pairs — exactly the `links` element sampleD returned at the
@@ -460,6 +455,9 @@ using namespace Rcpp;
  //'   former global C++ link map: the one-to-one link state now lives in flat
  //'   partner arrays local to this call, so there is no cross-call global
  //'   state to reset.
+ //' @param threads Number of OpenMP threads for the per-pair delta precompute
+ //'   pass (default 1 = sequential; ignored if built without OpenMP; results
+ //'   are identical for any value).
  //' @return
  //' List:
  //' - new set of links (0-based, ordered by ascending A index)
@@ -476,12 +474,17 @@ using namespace Rcpp;
               const NumericVector & LLA,
               const NumericVector & LLB,
               const NumericVector & LLL,
-              const NumericVector & gamma,
+              double gamma,
               int nlinkrec,
-              const IntegerMatrix & links)
+              const IntegerMatrix & links,
+              int threads = 1)
  {
    int nB = LLB.length();
    int nA = LLA.length();
+   if (threads < 1) threads = 1;
+#ifndef _OPENMP
+   (void)threads;  // built without OpenMP: silently sequential
+#endif
    // Flat one-to-one link state: linkOfA[i] = 0-based B partner of A-record i
    // (or -1), and symmetrically linkOfB[j]. Replaces the former global
    // std::map<int, std::set<int>> _DeltaMap: the scan's linked test becomes a
@@ -507,8 +510,16 @@ using namespace Rcpp;
    // + sum of LLL over finally-linked pairs (accumulated during the scan)
    // + sum of the deltas of accepted flips.
    double loglik = 0.0;
+   // gamma is a single scalar (the model's proportion of linked records); its
+   // two logs are loop-invariant, so they are computed once — the same doubles
+   // the per-pair log() calls used to produce.
+   double logg = std::log(gamma), log1mg = std::log(1 - gamma);
+   // log(nB - nlinkrec) (and its +1 variant for the removal branch) only
+   // change when a flip is accepted, so they are maintained as scalars too.
+   double logRem = std::log(nB - nlinkrec);
+   double logRemP = std::log(nB - nlinkrec + 1);
    for (int i = 0; i < nA; i++)
-     loglik += linkOfA[i] >= 0 ? log(gamma(i)) : log(1-gamma(i));
+     loglik += linkOfA[i] >= 0 ? logg : log1mg;
    for (int r = 0; r < nlinkrec; r++)
      loglik -= log(nB - r);
    // Sum the unlinked-record contributions over the overlap of the record and
@@ -521,11 +532,36 @@ using namespace Rcpp;
    double llLinked = 0.0;
    double llDelta = 0.0;
    std::vector<int> linkedQ;
+   int nPairs = S.nrow();
+   // Per-pair delta precompute (the plan's Option C): the non-LLL part of the
+   // log-likelihood change of linking pair q,
+   //   deltaBase[q] = -LLB(j) - LLA(i) - log(1-gamma) + log(gamma),
+   // is a pure gather that couples pairs in no way, so it runs as a parallel
+   // pass; the sequential scan below then only reads it back, adds the
+   // bipartite-matching count term and evaluates the acceptance ratio. The
+   // arithmetic per pair is unchanged (same operations, same order), so the
+   // deltas — and thus the sampler — are exactly as before.
+   NumericVector deltaBase(nPairs);
+   double *db = deltaBase.begin();
+   const int *sel = S.begin();  // column-major: sel[q] = A index, sel[nPairs + q] = B index
+   const double *llap = LLA.begin(), *llbp = LLB.begin();
+#ifdef _OPENMP
+#pragma omp parallel for num_threads(threads) schedule(static)
+#endif
+   for (int q = 0; q < nPairs; q++)
+     db[q] = - llbp[sel[nPairs + q] - 1] - llap[sel[q] - 1] - log1mg + logg;
+   // One pre-drawn Uniform(0,1) deviate per candidate pair, consumed by pair
+   // index (actionable pairs only — exactly the pairs that used to draw).
+   // House style since Phase 1: kernels draw from pre-drawn uniform blocks.
+   // NOTE: the block consumes the RNG stream by pair position, so realisations
+   // differ from the previous per-call draws; distributions are unchanged.
+   NumericVector unif = Rcpp::runif(nPairs);
+   const double *up = unif.begin();
    // Iterate over every candidate pair
-   for (int q = 0; q < S.nrow(); q++)
+   for (int q = 0; q < nPairs; q++)
    {
-     int i = S(q,0)-1;
-     int j = S(q,1)-1;
+     int i = sel[q] - 1;
+     int j = sel[nPairs + q] - 1;
      // If non-linked -> possibly becomes linked
      if((linkOfA[i] < 0) && (linkOfB[j] < 0))
      {
@@ -533,14 +569,11 @@ using namespace Rcpp;
        // The full delta (used for the acceptance ratio) also carries + LLL(q);
        // llLinked accounts for LLL separately, so the accumulated delta must
        // not include it (it would double-count the linked contribution).
-       double delta = - LLB(j) - LLA(i)
-       // Bipartite matching
-       - log(1-gamma(i)) + log(gamma(i))
-       - log(nB - nlinkrec);
+       double delta = db[q] - logRem;
        double pswitch = 1.0 / (1.0 + exp(-(delta + LLL(q))));
        // Random number smaller than pswitch -> generates binomial value
        // Accept the new link with probability pswitch
-       bool link = drawUniform01()  < pswitch;
+       bool link = up[q]  < pswitch;
        if(link)
        {
          linkOfA[i] = j;
@@ -549,25 +582,26 @@ using namespace Rcpp;
          llDelta += delta;
          llLinked += LLL(q);
          linkedQ.push_back(q + 1);
+         logRem = std::log(nB - nlinkrec);
+         logRemP = std::log(nB - nlinkrec + 1);
        }
      }else if(linkOfA[i] == j)
      {
        // If linked -> possibly becomes non-linked (analog). The full delta
        // carries - LLL(q); the pair's LLL was never added to llLinked, so the
        // accumulated delta excludes it.
-       double delta = LLB(j) + LLA(i)
-       // Bipartite matching
-       + log(1-gamma(i)) - log(gamma(i))
-       + log(nB - nlinkrec+1);
+       double delta = LLB(j) + LLA(i) + log1mg - logg + logRemP;
        double pswitch = 1.0 / (1.0 + exp(-(delta - LLL(q))));
        // Accept breaking the link with probability pswitch
-       bool nolink = drawUniform01()  < pswitch;
+       bool nolink = up[q]  < pswitch;
        if(nolink)
        {
          linkOfA[i] = -1;
          linkOfB[j] = -1;
          nlinkrec = nlinkrec - 1;
          llDelta += delta;
+         logRem = std::log(nB - nlinkrec);
+         logRemP = std::log(nB - nlinkrec + 1);
        }else
        {
          // Pair stays linked: its LLL contribution remains in the likelihood

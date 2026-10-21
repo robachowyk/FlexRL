@@ -540,15 +540,11 @@ simulateD <- function(data, linksR, truepivsA, truepivsB, gamma, eta, alpha, phi
   PIVs <- names(data$PIVs_config)
   PIVs_stable <- sapply(data$PIVs_config, function(x) x$dynamics != "structured")
 
-  nA <- nrow(truepivsA)
-  nB <- nrow(truepivsB)
-
   # Restrict to pairs that are compatible on the stable PIVs (candidate links):
   # one C++ call over integer pattern tuples (replaces the string pipeline
   # pasteIntoPattern -> unique -> factor -> indexPatterns -> pairPatterns)
   select <- buildCandidatePairs(as.matrix(truepivsA[, PIVs_stable, drop = FALSE]),
                                 as.matrix(truepivsB[, PIVs_stable, drop = FALSE]))
-  pLink <- rep(gamma, nA)
 
   # Complete-data log-likelihood pieces in one C++ pass over the records and
   # candidate pairs (was: three R vector passes per PIV with ~10 full-size
@@ -571,13 +567,13 @@ simulateD <- function(data, linksR, truepivsA, truepivsB, gamma, eta, alpha, phi
   # Current link state in 0-based form for sampleD (linksR is 1-based and may
   # be a 0x2 double matrix when nothing is linked yet).
   links0 <- matrix(as.integer(linksR) - 1L, ncol = 2)
-  Dsample <- sampleD(select, LLA, LLB, LLLq, pLink, as.integer(nrow(linksR)), links0)
+  Dsample <- sampleD(select, LLA, LLB, LLLq, gamma, as.integer(nrow(linksR)), links0, threads)
   linksR <- Dsample$links + 1
 
   # Sanity check: recomputed log-likelihood should match the sampler's own value.
   # sampleD reconstructs its loglik internally (the level cancels in every
   # acceptance ratio); this recomputes it independently in R.
-  ll_check <- log_lik_pairs(LLLq, LLA, LLB, Dsample$linksQ, nrow(linksR), Dsample$sumRowD, Dsample$sumColD, pLink)
+  ll_check <- log_lik_pairs(LLLq, LLA, LLB, Dsample$linksQ, nrow(linksR), Dsample$sumRowD, Dsample$sumColD, gamma)
   if (round(Dsample$loglik, 3) != round(ll_check, 3)) {
     stop(
       "Log-likelihood sanity check failed (sampler: ", round(Dsample$loglik, 3),

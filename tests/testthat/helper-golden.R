@@ -299,9 +299,9 @@ golden_capture_artifacts <- function(state) {
   # Variant-specific signature: simulateD() passes every argument positionally,
   # so only a shim whose formals match the caller's signature binds them.
   #   baseline : sampleD(S, LLA, LLB, LLL, gamma, loglik, nlinkrec, sumRowD, sumColD)
-  #   optimised: sampleD(S, LLA, LLB, LLL, gamma, nlinkrec, links)
+  #   optimised: sampleD(S, LLA, LLB, LLL, gamma, nlinkrec, links, threads)
   shim <- if (golden_is_new()) {
-    function(S, LLA, LLB, LLL, gamma, nlinkrec, links) {
+    function(S, LLA, LLB, LLL, gamma, nlinkrec, links, threads) {
       captured$S <- S
       captured$LLA <- LLA
       captured$LLB <- LLB
