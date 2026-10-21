@@ -1,4 +1,11 @@
-# Parity report — `glm-parallel` vs baseline (`glm-notes` @ 4b09088), and vs upstream `master` (@ fe9551c)
+# Parity report — `glm-parallel` vs baseline (`glm-notes` @ 4b09088)
+
+> Post-Phase-3a note: the likelihood accumulation now lives in the C++ kernel
+> `pairLogLik()` (commit 0035346). Its output order matches the old R
+> arithmetic, and the golden-parity suite (`test-golden-parity.R`, tolerance
+> 1e-10) re-certified sections B's checks against the same baseline fixtures —
+> the numbers below refer to the Phase-1 implementation; the golden suite is
+> the living guarantee., and vs upstream `master` (@ fe9551c)
 
 Verification of the performance-optimised implementation against the
 pre-optimisation baseline, and against the repository's upstream `master`

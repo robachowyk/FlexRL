@@ -353,15 +353,26 @@ Baseline (branch `glm-parallel`, pre-change, R 4.6.1, bench scale 1):
       feasible problem size (61 GB machine RAM).
 - [ ] Phase 3 — **revised order** (replaces §4 Phase 3; per §3 the batch
       scheme is not the first lever):
-      1. **3a — move the `simulateD` per-PIV likelihood accumulation to C++**
-         (stable PIVs fully in C++; unstable PIVs assemble covariates/times in
-         C++ and call `model_dynamics$S` once per PIV so custom survival
-         models keep working). Targets ~85% of sweep; 3–5× expected
-         single-threaded.
-      2. **3b — OpenMP** over pairs/records for the moved loops +
+      1. [x] **3a — move the `simulateD` per-PIV likelihood accumulation to
+         C++** — done in commit 0035346 (`pairLogLik()`): one call per sweep
+         computes LLA/LLB/LLLq for all PIVs; unstable PIVs assemble
+         covariates/times in C++ and call `model_dynamics$S` once per PIV
+         (custom survival models keep working). Operation order matches the
+         old R arithmetic left-to-right ⇒ bitwise-identical values
+         (golden-parity suite passes). Measured:
+         end-to-end 8.29 → 2.60 s (scale 1), ≈114 → 36.7 s (scale 5),
+         ≈438 → 136.4 s (scale 10) — 3.1–3.2× at every scale.
+         Profile at scale 10 now: `sampleD` **44.6%**, `pairLogLik` 28.2%,
+         survival-S R-internal work (`as.vector`+`%*%`) ~22%,
+         `buildCandidatePairs` 2.9%, `sampleH` 0.6%.
+         Optional 3a+: compute S in C++ for the built-in models (saves the
+         ~22% S-internal cost; custom user models keep the R callback).
+      2. [ ] **3b — OpenMP** over pairs/records for `pairLogLik` +
          `sampleNL`/`sampleL` (order-independent, pre-drawn uniform slots);
          `src/Makevars`, `threads` argument (default 1), CRAN guards.
-      3. **3c — re-run the Option A decision rule after 3a/3b**: as the rest
-         shrinks, `sampleD`'s share grows to ~40–60%; before the exact batch
-         scheme, try the cheaper `_DeltaMap` restructure (§7: std::map → flat
-         arrays / hash) — likely 2–3× on the scan, possibly obviating A.
+         Targets the 28% `pairLogLik` + 0.6% `sampleH`; memory-bound, so
+         expect ~3–6× on those parts, not 32×.
+      3. [ ] **3c — `_DeltaMap` restructure first, then re-run the Option A
+         decision rule**: the scan is now the top item (44.6%); std::map →
+         flat arrays / hash is likely 2–3× on it; only then does the exact
+         batch scheme become worth its complexity.
