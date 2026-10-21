@@ -14,6 +14,13 @@
   (it reconstructs the value, which cancels in every acceptance ratio) and
   returns `linksQ`. Random streams are not comparable to <= 1.0.0 seeds:
   results for a given `set.seed()` differ, distributions do not.
+- Parity verified against the pre-optimisation implementation and pinned by
+  permanent regression tests: `tests/testthat/test-golden-parity.R` compares
+  the current kernels to golden fixtures generated from the pre-optimisation
+  build (`review/generate-goldens.R`, baseline `glm-notes` @ 4b09088) —
+  likelihoods and candidate-pair sets exactly, StEM seed clouds and the tiny
+  problem's stationary frequencies at Monte-Carlo level. See
+  `review/PARITY-REPORT.md`.
 
 # FlexRL 1.0.0 (release candidate)
 
