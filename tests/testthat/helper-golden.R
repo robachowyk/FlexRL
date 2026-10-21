@@ -422,19 +422,35 @@ golden_cloud_params <- function(cloud) {
 }
 
 #' Max |z| of one cloud's seeds against the other cloud's per-component
-#' mean/sd, and vice versa. Components whose sd is ~0 (bound-locked phi, etc.)
-#' use a 1e-7 absolute floor: any real drift then shows up as a huge z.
+#' mean/sd, and vice versa.
+#'
+#' The scale for each column is the LARGER of the two clouds' sds. The old
+#' cloud alone is not a valid scale for near-degenerate columns: e.g. a
+#' zero-frequency eta category can be exactly 0 in every seed of one cloud and
+#' occasionally 1/(draws) in a seed of the other — pure MC noise on a rare
+#' category, which a 0-sd reference would report as |z| ~ 1e5. With the larger
+#' sd as scale such columns stay at MC level, while a genuine level shift
+#' between two constant clouds (both sds ~ 0) still yields a huge z through the
+#' 1e-7 absolute floor.
 golden_zstats <- function(old_params, new_params) {
   stopifnot(identical(names(old_params), names(new_params)))
+  zscore <- function(target, reference, scale) {
+    # per-COLUMN standardisation: sweep() both steps (plain `/` on a matrix
+    # would recycle the sd vector column-major, i.e. mismatched)
+    d <- sweep(target, 2, colMeans(reference), "-")
+    sweep(d, 2, pmax(scale, 1e-7), "/")
+  }
   z_n_o <- vapply(names(old_params), function(nm) {
     o <- old_params[[nm]]
     n <- new_params[[nm]]
-    max(abs(sweep(n, 2, colMeans(o), "-")) / pmax(apply(o, 2, sd), 1e-7))
+    s <- pmax(apply(o, 2, sd), apply(n, 2, sd))
+    max(abs(zscore(n, o, s)))
   }, numeric(1))
   z_o_n <- vapply(names(old_params), function(nm) {
     o <- old_params[[nm]]
     n <- new_params[[nm]]
-    max(abs(sweep(o, 2, colMeans(n), "-")) / pmax(apply(n, 2, sd), 1e-7))
+    s <- pmax(apply(o, 2, sd), apply(n, 2, sd))
+    max(abs(zscore(o, n, s)))
   }, numeric(1))
   list(new_vs_old = z_n_o, old_vs_new = z_o_n)
 }
