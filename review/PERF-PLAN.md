@@ -311,5 +311,31 @@ Baseline (branch `glm-parallel`, pre-change, R 4.6.1, bench scale 1):
       `tests/testthat/test-golden-parity.R` validates the current package
       against the stored baseline outputs (exact kernels, cloud z/Jaccard,
       tiny TV). Suite after adding it: **550 PASS / 0 FAIL** (~31 s).
+- [x] Comparison vs upstream `master` (@ fe9551c; harness label mode +
+      `review/verify-eta-bias.R`), results in `review/PARITY-REPORT.md`
+      "vs upstream master" section. Topology: master = `77daff8` (code) =
+      glm-notes minus the review fixes, so master-vs-parallel = fixes + perf.
+      - A: exact. B: 5/6 states bitwise identical vs new AND vs notes;
+        `tiny_links` fails vs both — master's unguarded `pasteIntoPattern`
+        reads out of bounds with zero stable PIVs and returns a 2-pair
+        candidate set ({(1,1),(2,2)} instead of the 2x3 product), dropping the
+        state's (2,3) link (log-lik −8.233 vs −13.936; Δ = the missing
+        LLL[2,3] = 5.7026).
+      - C tiny (30k sweeps, seed 2024): TV(master, exact) = 0.6371 vs
+        TV(new, exact) = 0.0294 (notes 0.0318) — master visited only 4/13
+        configurations (candidate-set defect), not a clean #A measurement.
+      - #A isolated (`verify-eta-bias.R`, sampleL vs exact conditional,
+        200k draws): master's shipped eta[h^B] indexing TV = 0.177/0.179;
+        corrected eta[h^A] arm (identical under master and notes builds) and
+        the optimised kernel both at MC noise (TV 0.001–0.003). Bias is a
+        no-op for stable/flexible PIVs (S = 1 ⇒ diagonal-only support where
+        eta[h^B] == eta[h^A]) — hence master ≡ notes BITWISE on the three
+        real-data problems, and on std the effect stays below seed noise
+        (max |z| ≤ 3.52 vs new and vs notes).
+      - Bench master: **241.24 s** end-to-end (baseline 238.7 s, current
+        8.29 s), profile `make.unique` 63.8% — the Phase-1.4 target intact
+        upstream.
+      - #I-a did not trigger anywhere (needs nA = 1 or nB = 1; all problems
+        have ≥ 2 records per file); no master run crashed or hung.
 - [ ] Phase 3 — OpenMP (not triggered by the decision rule; see above for the
       revised lever)

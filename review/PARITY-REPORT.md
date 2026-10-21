@@ -1,15 +1,20 @@
-# Parity report — `glm-parallel` vs baseline (`glm-notes` @ 4b09088)
+# Parity report — `glm-parallel` vs baseline (`glm-notes` @ 4b09088), and vs upstream `master` (@ fe9551c)
 
 Verification of the performance-optimised implementation against the
-pre-optimisation baseline. Harness: `review/verify-parity.R` (modes `old`,
-`new`, `compare`); the two implementations run in separate R processes
-(`R_LIBS` selects the build, both named `FlexRL`), a third process compares
-the dumps without loading FlexRL. Shared state/problem code:
-`tests/testthat/helper-golden.R` + `review/parity-problems.R`. Raw dumps and
-logs: `/mnt/halveGig/kaya/Broncode/FlexRL-bench/parity/` (outside the repo).
+pre-optimisation baseline, and against the repository's upstream `master`
+branch. Harness: `review/verify-parity.R` (modes `old`, `new`, `compare`; an
+optional label argument lets any build stand in for either side, e.g.
+`Rscript review/verify-parity.R old <outdir> master`). The implementations run
+in separate R processes (`R_LIBS` selects the build, all named `FlexRL`), a
+third process compares the dumps without loading FlexRL. Shared state/problem
+code: `tests/testthat/helper-golden.R` + `review/parity-problems.R`. Raw dumps
+and logs: `/mnt/halveGig/kaya/Broncode/FlexRL-bench/parity/` (outside the
+repo).
 
 * old = baseline build of branch `glm-notes` @ 4b09088 (`FlexRL-bench/rlib-old`)
 * new = current build of branch `glm-parallel` (`FlexRL-bench/rlib-new`)
+* master = upstream build of `origin/master` @ fe9551c
+  (`FlexRL-bench/rlib-master`, worktree `/mnt/halveGig/kaya/Broncode/FlexRL-master`)
 * R 4.6.1 (2026-06-24), same machine, sequential runs.
 
 Because the optimisation changed how uniforms are consumed (pre-drawn blocks,
@@ -136,4 +141,225 @@ baseline build).
   comparisons are deliberately far apart: observed deterministic differences
   were exactly 0, so the deterministic tolerance has an order of magnitude of
   headroom for FP-summation-order effects on other platforms.
+
+---
+
+# vs upstream master (fe9551c)
+
+## Topology — what master-vs-parallel actually compares
+
+`origin/master` @ fe9551c is `77daff8` + 7 commits that touch only
+`vignettes/`, `.gitignore`, `.Rbuildignore`, pkgdown files and DESCRIPTION
+(the DESCRIPTION diff is packaging metadata only: `VignetteBuilder: knitr,
+quarto` + Suggests reorder; R/, src/, NAMESPACE, tests are untouched). So
+**master's code is identical to `77daff8`**, i.e. `glm-notes` @ 4b09088 minus
+the local review commit. That commit added two behavioural fixes (plus
+defensive guards):
+
+* **#A — eta-indexing bias in the linked-pair H-sampler** (`simulateH`,
+  src/FlexRLfunctions.cpp): master expands `eta_choice =
+  eta_k[choice_set(_,1) - 1]` — eta indexed by the **B** grid value — while
+  the model (paper Eq. 4, and `simulateD()`'s own likelihood, which uses
+  `eta[h^A]`) indexes eta by **A**. The fix indexes by A.
+* **#I-a — interned-constant corruption in `sampleD`** (src/): master writes
+  through the `LogicalVector& sumRowD/sumColD` arguments; when a caller passes
+  a length-1 logical (R interns it as the global TRUE/FALSE constant), the
+  write corrupts R's global constant session-wide. The fix clones the
+  arguments. Trigger in master's R code: `sampleD(..., sumRowD > 0, sumColD >
+  0)` with `nA == 1` or `nB == 1`.
+* **0-column guard in `pasteIntoPattern`** (src/): with **no stable PIVs** the
+  pattern matrix has 0 columns and master reads `A(i,0)` out of bounds; the
+  fix returns all-equal patterns (blocking degenerates to the full Cartesian
+  product). Master's R-side `simulate_data()` also has an `x`-vs-`k`
+  column-index bug in the structured-PIV instability loop (stale loop variable
+  from earlier loops) — latent whenever the only structured PIV is the last
+  PIV, as in every problem used here.
+
+Consequently master-vs-parallel = **review bug fixes + performance changes
+combined**. The clean attribution control is master-vs-`glm-notes` (isolates
+the fixes); the notes-vs-parallel comparison (sections A–D above) already
+established that the optimisation alone is seed-noise-only.
+
+Master was built in its own worktree/library (`FlexRL-bench/rlib-master`),
+confirmed to load with the pre-`unif` kernel signatures (`"unif" %in%
+names(formals(sampleNL))` = FALSE, `sampleD` has the `loglik` formal, no
+`buildCandidatePairs`). The parity dump ran as `old` mode labelled `master`
+(one process, sections A–D; no crash, no hang, no erratic behaviour — see
+#I-a note below). Comparisons: `compare` mode with labels `master`/`new` and
+`master`/`old`; logs `parity-compare-master-vs-{new,old}.log` in the parity
+directory.
+
+## A. Harness sanity — exact
+
+All 8 dumped `simulate_data()`/`prepare_data()` objects `identical()` between
+master and new (and between master and old — same variant). The latent
+`simulate_data` x-vs-k bug above does not manifest: for a single structured
+PIV that is also the last PIV, the stale `x` equals `k`, so the executed
+statements are identical.
+
+## B. Deterministic kernel parity — exact except the zero-stable-PIV degenerate state
+
+Five of the six fixed states are **bitwise identical master-vs-new and
+master-vs-notes** (max |dLLL| = max |dLLA| = max |dLLB| = 0, log_lik spread 0,
+candidate-pair SETs equal; master-vs-notes also shares the row order, since
+both use the string pipeline).
+
+`tiny_links` **FAILS against both** — this is a genuine master defect, not
+noise:
+
+* The tiny state has **no stable PIVs** (its single PIV is structured), so
+  blocking runs `pasteIntoPattern` on a 0-column matrix. Master reads out of
+  bounds and returns garbage patterns: its candidate set is the 2 diagonal
+  pairs `{(1,1), (2,2)}` instead of the correct full Cartesian product of
+  2 × 3 = 6 pairs (what glm-notes' guard and the optimised
+  `buildCandidatePairs()` both produce).
+* The state's links are (1,1) and (2,3). Pair (2,3) is **not in master's
+  corrupted candidate set**, so master's LLL matrix has no entry there and the
+  state's log-likelihood loses exactly that contribution: master −8.233064 vs
+  glm-notes/parallel −13.935662; difference 5.702598 = the missing
+  LLL[2,3]. (LLL/LLA/LLB values at the pairs master does contain are bitwise
+  identical to the other builds'.)
+
+## C. Tiny-problem stationary distribution — master far off, dominated by the candidate-set defect
+
+`tiny_gibbs_frequencies(n_sweeps = 30000, thin = 3)`, seed 2024, 10000 thinned
+draws per version:
+
+| quantity | value |
+|---|---|
+| TV(master, exact posterior) | **0.6371** (max cell 0.2677) |
+| TV(glm-notes, exact posterior) | 0.0318 (previous run) |
+| TV(new, exact posterior) | 0.0294 |
+| TV(master, glm-notes) | 0.6372 |
+| TV(master, new) | 0.6388 |
+
+Mechanism: the tiny problem has no stable PIVs, so **every** Gibbs sweep in
+master recomputes its candidate set through the unguarded `pasteIntoPattern`.
+Master's chain visited only **4 distinct configurations out of 13** (the
+diagonal-only ones reachable from the corrupted {(1,1),(2,2)} candidate set),
+while glm-notes visits all 13 — 9 configurations are unreachable, which alone
+accounts for a TV of this magnitude. This number is therefore **not** a clean
+measurement of the #A eta bias (which is also active here); it documents the
+candidate-set defect.
+
+## #A in isolation — kernel-level measurement (`review/verify-eta-bias.R`)
+
+To separate the eta bias from the candidate-set defect, `sampleL` (the
+linked-pair H-sampler kernel) was called directly — no candidate pipeline
+involved — for the two canonical tiny-problem cases (S = 0.6, eta = c(0.7,
+0.3), phi as `tiny_pars()`), 200 000 draws per arm, against the exact
+conditional P(a, b | G, Δ=1) ∝ eta[a] · [S·1{a=b} + (1−S)/(n−1)·1{a≠b}] ·
+P(G^A|a) · P(G^B|b):
+
+| arm | TV(empirical, oracle), case GA=0/GB=1 | case GA=1/GB=0 |
+|---|---|---|
+| baseline kernel, `eta[h^B]` (master's shipped `simulateH`) | **0.1773** | **0.1792** |
+| baseline kernel, `eta[h^A]` (corrected; glm-notes' shipped `simulateH`) | 0.0012 | 0.0019 |
+| optimised kernel (factorised, eta[h^A] internal) | 0.0026 | 0.0027 |
+
+* Master's shipped indexing deviates from the exact conditional by TV ≈ 0.18
+  (e.g. P(a=2,b=1) = 0.371 vs oracle 0.193 — mass tilted toward the
+  eta-heavy B value). The one-line indexing change removes it.
+* The corrected arm produces **identical numbers under the master and
+  glm-notes builds** (same kernel, same seed) — confirming the only
+  behavioural difference between the two builds' H-sampler is the indexing
+  line.
+* The optimised kernel matches the oracle at MC-noise level (its RNG stream
+  differs by design).
+
+Why the bias is invisible on most problems: `survivalpSameH` is 1 for stable
+and flexible PIVs (only structured PIVs get a survival model), and with S = 1
+only the diagonal (h, h) grid cells carry weight — where `eta[h^B] ==
+eta[h^A]`. The bias is a **no-op unless the problem has a structured PIV**
+with S < 1. That is why the master-vs-glm-notes seed clouds below are bitwise
+identical on the three real-data problems.
+
+## D. StEM seed-cloud parity — master vs new, with the master-vs-glm-notes control
+
+12 seeds (11 … 1111) per problem, same settings as §D above.
+
+| problem | max&#124;z&#124; new vs master cloud | max&#124;z&#124; master vs new cloud | max&#124;z&#124; notes vs master cloud | max&#124;z&#124; master vs notes cloud | clouds master vs notes bitwise identical? |
+|---|---|---|---|---|---|
+| std | 2.75 | 3.09 | 2.99 | 3.52 | no (structured V4 → #A active) |
+| shiwreg | 3.52 | 3.54 | 3.14 | 3.14 | **yes** |
+| nltcs | 3.46 | 3.04 | 2.74 | 2.74 | **yes** |
+| shiwfull | 2.89 | 3.19 | 2.62 | 2.62 | **yes** |
+
+Delta (x > 0.5) Jaccard, mean (sd, min):
+
+| problem | within-master (reference) | master-vs-new | master-vs-notes |
+|---|---|---|---|
+| std | 0.623 (0.050, 0.526) | 0.597 (0.058, 0.450) | 0.596 (0.058, 0.447) |
+| shiwreg | 0.690 (0.119, 0.429) | 0.669 (0.117, 0.350) | 0.715 (0.142, 0.429) |
+| nltcs | 0.549 (0.032, 0.457) | 0.541 (0.034, 0.452) | 0.586 (0.129, 0.457) |
+| shiwfull | 0.496 (0.021, 0.454) | 0.498 (0.021, 0.453) | 0.538 (0.141, 0.454) |
+
+(For the three bitwise-identical problems the master-vs-notes "cross" numbers
+are self-comparison artifacts — identical clouds; the cross Jaccard is the
+within-cloud distribution plus the 12 same-seed diagonal pairs at Jaccard 1,
+e.g. shiwreg (66·0.690 + 12·1)/144 = 0.716 ✓.)
+
+The full 12-seed × 4-problem master cloud completed without reduction (no
+crash, no hang). Number of links (Delta x > 0.5), master range vs new range:
+std 64–78 vs 67–83; shiwreg 24–27 vs 24–29; nltcs 274–303 vs 285–305;
+shiwfull 1159–1220 vs 1133–1202 — overlapping ranges throughout.
+
+Attribution:
+
+* **Real-data problems (no structured PIV): master ≡ glm-notes bitwise.** The
+  master-vs-new differences there are *purely* the optimisation and are
+  seed-noise-level, matching the notes-vs-new reference (the numbers are
+  literally the same comparison, since the master and notes clouds coincide).
+* **std (structured V4): #A is active, but its effect on the final StEM
+  parameters at these settings stays within the seed-noise band**
+  (max |z| ≤ 3.52 < 4 in both master-vs-new and master-vs-notes; cross
+  Jaccards statistically indistinguishable from the within-cloud reference).
+  The kernel-level bias is real and large (TV ≈ 0.18 per linked-pair draw,
+  above), but it averages out over 10 StEM iterations × 50 posterior samples
+  at this problem size.
+* **tiny (structured V1, S = 0.6, and additionally zero stable PIVs): both
+  defects active; the candidate-set defect dominates** (§C).
+
+## Benchmark
+
+`R_LIBS=rlib-master Rscript review/bench-stem.R` (scale 1: nA=10000,
+nB=15000, n_links=7500, 22 sweeps), main repo dir:
+
+| build | StEM end-to-end | per sweep | profiled run top self-time |
+|---|---|---|---|
+| master @ fe9551c | **241.24 s** | 10.965 s | `make.unique` 63.8% (`simulateD` 94.4% total) |
+| glm-notes @ 4b09088 (baseline) | 238.7 s | 10.85 s | `make.unique` 63.9% (`simulateD` 94.3% total) |
+| glm-parallel (current) | 8.29–8.39 s | 0.38 s | `simulateD` 72% |
+
+Master ≈ glm-notes as expected (the review commit was correctness-only; ~1%
+is run noise). The `make.unique` string-pipeline bottleneck that Phase 1.4
+removed is intact in master.
+
+## Verdict (vs master)
+
+* Deterministic kernels: **bitwise exact everywhere except the
+  zero-stable-PIV degenerate state**, where master's unguarded
+  `pasteIntoPattern` corrupts the candidate set (fixed by the review commit's
+  0-column guard). All observed likelihood values agree bitwise on every pair
+  master does compute.
+* Stochastic differences between master and glm-parallel are **fully
+  attributable to the review-phase bug fixes**: on problems without a
+  structured PIV master is bitwise identical to glm-notes, so the entire
+  master-vs-parallel difference there is the (seed-noise-level) optimisation
+  effect; on the structured-PIV problems the additional #A effect is
+  kernel-proven (TV ≈ 0.18 on the linked-pair conditional) but stays below
+  seed noise at the parameter level for std, and is swamped by the
+  candidate-set defect on tiny. glm-notes/glm-parallel remain **closer to the
+  exact posterior** everywhere both could be measured (TV 0.032/0.029 vs
+  0.637 on tiny).
+* #I-a did **not** trigger in any of these runs: it needs a length-1
+  `sumRowD`/`sumColD` (i.e. a single-record file), and every problem here has
+  ≥ 2 records per file (`sumRowD > 0` is then length ≥ 2, not an interned
+  constant). No master process crashed, hung, or behaved erratically; all
+  runs completed in single passes. The bug remains real (demonstrated by the
+  review-phase session-corruption repro) but is outside the envelope of these
+  workloads.
+* The goldens must **not** be regenerated from master: master carries the #A
+  bias and the unguarded `pasteIntoPattern`; the fixtures correctly encode the
+  fixed baseline.
 
