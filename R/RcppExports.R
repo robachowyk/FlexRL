@@ -45,3 +45,7 @@ sampleH <- function(nA, nB, links, survivalpSameH, pivs_stable, pivsA, pivsB, nv
     .Call(`_FlexRL_sampleH`, nA, nB, links, survivalpSameH, pivs_stable, pivsA, pivsB, nvalues, nonlinkedA, nonlinkedB, eta, phi)
 }
 
+survivalS_cpp <- function(cov, alpha, times, type, cuts, threads = 1L) {
+    .Call(`_FlexRL_survivalS_cpp`, cov, alpha, times, type, cuts, threads)
+}
+

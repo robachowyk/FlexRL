@@ -873,3 +873,157 @@ using namespace Rcpp;
    ret["truepivsB"] = truepivsB;
    return ret;
  }
+
+ //' survivalS_cpp
+ //'
+ //' Fast C++ evaluation of the survival function S(t | X, alpha) for the
+ //' built-in survival models: the exact formulas of the R closures built by
+ //' [survival_model()] (see its documentation), computed in one fused pass
+ //' over the rows (dot product, then the family's exp/pow terms), with the
+ //' row loop parallelisable over OpenMP threads. Reached through the
+ //' internal R dispatcher `survival_S()`, which custom ("custom"-type)
+ //' models bypass entirely — they keep calling the user's R function.
+ //'
+ //' Differences from the R closures are at BLAS-rounding level (~1e-16:
+ //' R's `%*%` is dgemv with its own summation order; R's `sum()` accumulates
+ //' in extended precision), far inside every tolerance the package uses.
+ //' Results are bitwise identical for any `threads` value (each row is
+ //' computed by exactly one thread).
+ //'
+ //' @param cov NumericMatrix (n x (1 + n_cov)): intercept column first, then
+ //'   the covariates — the same X the R S functions receive. The piecewise
+ //'   family ignores the intercept column, exactly like its R closure.
+ //' @param alpha NumericVector of the model's parameters (layout per family,
+ //'   as documented in [survival_model()])
+ //' @param times NumericVector of the time gaps (one per row)
+ //' @param type One of "exponential", "weibull", "gompertz", "piecewise"
+ //' @param cuts NumericVector of the piecewise cut points (empty for the
+ //'   other families)
+ //' @param threads Number of OpenMP threads (default 1 = sequential; ignored
+ //'   if the package was built without OpenMP)
+ //' @return NumericVector of survival probabilities, one per row
+ //' @export
+ // [[Rcpp::export]]
+ NumericVector survivalS_cpp(const NumericMatrix & cov,
+                             const NumericVector & alpha,
+                             const NumericVector & times,
+                             const std::string & type,
+                             const NumericVector & cuts,
+                             int threads = 1)
+ {
+   int n = times.length();
+   if (cov.nrow() != n)
+     Rcpp::stop("survivalS_cpp: cov has %d rows but there are %d times.", cov.nrow(), n);
+   int nCov = cov.ncol();
+   int na = alpha.length();
+   if (threads < 1) threads = 1;
+#ifndef _OPENMP
+   (void)threads;  // built without OpenMP: silently sequential
+#endif
+   // Column-major (like R): cov(i, c) = cp[(size_t)c * n + i]. Each thread
+   // streams a contiguous chunk of each column, so every element is read
+   // exactly once regardless of the thread count.
+   const double *cp = cov.begin();
+   const double *tp = times.begin();
+   const double *a = alpha.begin();
+   NumericVector S(n);
+   double *sp = S.begin();
+
+   if (type == "exponential")
+   {
+     // R: exp(-ph(X, alpha) * times), ph = exp(X %*% alpha)
+     if (na != nCov)
+       Rcpp::stop("survivalS_cpp: exponential expects %d alphas (one per cov column), got %d.", nCov, na);
+#ifdef _OPENMP
+#pragma omp parallel for num_threads(threads) schedule(static)
+#endif
+     for (int i = 0; i < n; i++)
+     {
+       double d = 0.0;
+       for (int c = 0; c < nCov; c++) d += cp[(size_t)c * n + i] * a[c];
+       sp[i] = std::exp(-std::exp(d) * tp[i]);
+     }
+   }else if (type == "weibull")
+   {
+     // R: exp(-(ph(X, alpha[-1]) * times)^exp(alpha[1]))
+     if (na != nCov + 1)
+       Rcpp::stop("survivalS_cpp: weibull expects %d alphas (log-shape + one per cov column), got %d.", nCov + 1, na);
+     double k = std::exp(a[0]);
+#ifdef _OPENMP
+#pragma omp parallel for num_threads(threads) schedule(static)
+#endif
+     for (int i = 0; i < n; i++)
+     {
+       double d = 0.0;
+       for (int c = 0; c < nCov; c++) d += cp[(size_t)c * n + i] * a[c + 1];
+       sp[i] = std::exp(-std::pow(std::exp(d) * tp[i], k));
+     }
+   }else if (type == "gompertz")
+   {
+     // R: g <- alpha[1]; if (abs(g) < 1e-8) exp(-ph(X, alpha[-1]) * times)
+     //    else exp(-ph(X, alpha[-1]) * (exp(g * times) - 1) / g)
+     if (na != nCov + 1)
+       Rcpp::stop("survivalS_cpp: gompertz expects %d alphas (g + one per cov column), got %d.", nCov + 1, na);
+     double g = a[0];
+     bool small_g = std::abs(g) < 1e-8;
+#ifdef _OPENMP
+#pragma omp parallel for num_threads(threads) schedule(static)
+#endif
+     for (int i = 0; i < n; i++)
+     {
+       double d = 0.0;
+       for (int c = 0; c < nCov; c++) d += cp[(size_t)c * n + i] * a[c + 1];
+       double lam = std::exp(d);
+       // Same expression shape as the R closure: (exp(g t) - 1) / g, not
+       // expm1, so the values stay at rounding-level distance from R even
+       // for small g.
+       sp[i] = small_g ? std::exp(-lam * tp[i])
+                       : std::exp(-lam * (std::exp(g * tp[i]) - 1.0) / g);
+     }
+   }else if (type == "piecewise")
+   {
+     // R: h <- exp(alpha[seq_len(n_int)])
+     //    H0 <- sum(h * pmax(0, pmin(t, edges[-1]) - edges[-length(edges)]))
+     //    lam <- if (length(beta)) ph(X[, -1], beta) else 1
+     //    exp(-lam * H0), edges = c(0, cuts, Inf)
+     int n_int = cuts.length() + 1;
+     if (na != n_int + (nCov - 1))
+       Rcpp::stop("survivalS_cpp: piecewise expects %d alphas (%d interval log-hazards + %d covariate coefficients), got %d.",
+                  n_int + nCov - 1, n_int, nCov - 1, na);
+     for (int k = 1; k < cuts.length(); k++)
+       if (cuts[k] <= cuts[k - 1])
+         Rcpp::stop("survivalS_cpp: piecewise `cuts` must be increasing.");
+     std::vector<double> edges(n_int + 1);
+     edges[0] = 0.0;
+     edges[n_int] = INFINITY;
+     for (int k = 1; k < n_int; k++) edges[k] = cuts[k - 1];
+     std::vector<double> h(n_int);
+     for (int k = 0; k < n_int; k++) h[k] = std::exp(a[k]);
+     const double *beta = a + n_int;  // coefficients for cov columns 1..nCov-1
+#ifdef _OPENMP
+#pragma omp parallel for num_threads(threads) schedule(static)
+#endif
+     for (int i = 0; i < n; i++)
+     {
+       double t = tp[i];
+       double H0 = 0.0;
+       for (int k = 0; k < n_int; k++)
+       {
+         double spent = std::min(t, edges[k + 1]) - edges[k];
+         if (spent > 0.0) H0 += h[k] * spent;
+       }
+       double lam = 1.0;
+       if (nCov > 1)
+       {
+         double d = 0.0;
+         for (int c = 1; c < nCov; c++) d += cp[(size_t)c * n + i] * beta[c - 1];
+         lam = std::exp(d);
+       }
+       sp[i] = std::exp(-lam * H0);
+     }
+   }else
+   {
+     Rcpp::stop("survivalS_cpp: unknown type '%s' (built-in families only; custom models keep their R function).", type.c_str());
+   }
+   return S;
+ }

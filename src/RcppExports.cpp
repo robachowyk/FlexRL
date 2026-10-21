@@ -178,6 +178,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// survivalS_cpp
+NumericVector survivalS_cpp(const NumericMatrix& cov, const NumericVector& alpha, const NumericVector& times, const std::string& type, const NumericVector& cuts, int threads);
+RcppExport SEXP _FlexRL_survivalS_cpp(SEXP covSEXP, SEXP alphaSEXP, SEXP timesSEXP, SEXP typeSEXP, SEXP cutsSEXP, SEXP threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type cov(covSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type times(timesSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type type(typeSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type cuts(cutsSEXP);
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(survivalS_cpp(cov, alpha, times, type, cuts, threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_FlexRL_indexPatterns", (DL_FUNC) &_FlexRL_indexPatterns, 2},
@@ -191,6 +207,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_FlexRL_ExpandGrid", (DL_FUNC) &_FlexRL_ExpandGrid, 2},
     {"_FlexRL_generateSequence", (DL_FUNC) &_FlexRL_generateSequence, 1},
     {"_FlexRL_sampleH", (DL_FUNC) &_FlexRL_sampleH, 12},
+    {"_FlexRL_survivalS_cpp", (DL_FUNC) &_FlexRL_survivalS_cpp, 6},
     {NULL, NULL, 0}
 };
 
