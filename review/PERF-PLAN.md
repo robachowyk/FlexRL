@@ -169,3 +169,63 @@ Notes:
 - `sampleD` exact batching (Option A) if the decision rule triggered.
 - Uniforms still pre-drawn sequentially per sweep; thread↔slot assignment is
   static → bit-reproducible run-to-run.
+
+## 5. RNG strategy (decided)
+
+- All randomness keeps flowing from R's RNG: `Rcpp::runif()` blocks are drawn
+  sequentially per sweep inside the C++ kernels, then consumed deterministically
+  (record/pair `q` uses its own slot; factorized `sampleL` consumes 2 slots per
+  pair). No thread touches the RNG in Phase 3 either — the block is drawn before
+  each parallel section.
+- `set.seed()` semantics preserved; two runs at the same seed remain
+  bit-identical (static thread↔slot assignment keeps parallel runs
+  deterministic).
+- **Streams are not comparable to FlexRL ≤ 1.0.1**: inverse-CDF consumes
+  uniforms differently than `Rcpp::sample()`, and factorized `sampleL` uses two
+  uniforms per pair instead of one. Distributions are identical; tolerance-based
+  tests are unaffected; reproducibility tests compare two runs of the *same*
+  code. → record in `NEWS.md`.
+
+## 6. Validation strategy
+
+- Existing suite, unchanged tolerances:
+  - `test-exact-posterior.R` — stationary distribution vs the exact posterior
+    on the tiny problem. **The arbiter for any kernel change.**
+  - `test-gibbs-invariants.R` — one-to-one constraint at all times;
+    bit-reproducibility of two same-seed runs.
+  - `test-gibbs-conditionals.R` — kernel-level oracles for `sampleL` /
+    `sampleNL` (updated to the new signatures in Phase 1).
+  - `test-stem-tiny.R` — interned-constant regression canary (`1 > 2`).
+- New checks:
+  - `linksQ` ↔ `links` consistency: every returned link's q must map back to
+    the same (i, j) pair; `length(linksQ) == nrow(links)`.
+  - Benchmark numbers recorded in §8 (no hard thresholds; watch for regressions
+    between phases).
+- Manual: `Rprof()` before/after each phase on the bench problem.
+
+## 7. Risks / notes
+
+- `sampleL` factorization changes RNG consumption (2 per pair instead of 1) —
+  distribution-preserving, but the conditional-level test must be re-checked
+  against the same oracle.
+- `sampleD`'s loglik reconstruction changes the FP summation order (~1e-12
+  drift); the R-side sanity check rounds to 3 decimals, as before.
+- Zero-weight edge cases (e.g. all-zero `eta` after a degenerate M-step):
+  inverse-CDF falls back to the last index instead of R's `sample()` error.
+  The package already warns about zero-frequency categories; documented, not
+  guarded further.
+- `_DeltaMap` remains a global static — thread-hostile; restructure in Phase 3
+  if Option A triggers (batch flips touch disjoint keys, so a per-batch
+  sequential apply or per-row locking both work).
+- `pasteIntoPattern` / `indexPatterns` / `pairPatterns` / `ExpandGrid` /
+  `generateSequence` stay exported: `naive_linkage()` and the tests use them.
+- `Rprof.out` at the repo root is untracked and unrelated — leave alone.
+
+## 8. Worklog
+
+- [ ] Phase 1.1 — inverse-CDF sampler + `sampleNL` on pre-drawn uniforms
+- [ ] Phase 1.2 — factorized `sampleL` (joint (H^A, H^B) return)
+- [ ] Phase 1.3 — per-pair `LLLq`, `sampleD` loglik reconstruction + `linksQ`
+- [ ] Phase 1.4 — `buildCandidatePairs()` replaces the string pipeline
+- [ ] Phase 2 — bench pre/post numbers recorded here
+- [ ] Phase 3 — decision per §3 rule
