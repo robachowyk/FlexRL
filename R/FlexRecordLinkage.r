@@ -546,15 +546,11 @@ simulateD <- function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamm
   nA <- nrow(truepivsA)
   nB <- nrow(truepivsB)
 
-  # Restrict to pairs that are compatible on the stable PIVs (candidate links)
-  UA <- pasteIntoPattern(as.matrix(truepivsA[, PIVs_stable]))
-  UB <- pasteIntoPattern(as.matrix(truepivsB[, PIVs_stable]))
-  valuesU <- unique(c(UA, UB))
-  UA <- as.numeric(factor(UA, levels = valuesU))
-  UB <- as.numeric(factor(UB, levels = valuesU))
-  tmpA <- indexPatterns(UA, length(valuesU))
-  tmpB <- indexPatterns(UB, length(valuesU))
-  select <- pairPatterns(tmpA, tmpB, length(tmpA))
+  # Restrict to pairs that are compatible on the stable PIVs (candidate links):
+  # one C++ call over integer pattern tuples (replaces the string pipeline
+  # pasteIntoPattern -> unique -> factor -> indexPatterns -> pairPatterns)
+  select <- buildCandidatePairs(as.matrix(truepivsA[, PIVs_stable, drop = FALSE]),
+                                as.matrix(truepivsB[, PIVs_stable, drop = FALSE]))
   iA <- as.integer(select[, 1])
   iB <- as.integer(select[, 2])
   nPairs <- nrow(select)

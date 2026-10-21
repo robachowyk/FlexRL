@@ -9,6 +9,10 @@ pairPatterns <- function(A, B, nvals) {
     .Call(`_FlexRL_pairPatterns`, A, B, nvals)
 }
 
+buildCandidatePairs <- function(patsA, patsB) {
+    .Call(`_FlexRL_buildCandidatePairs`, patsA, patsB)
+}
+
 pasteIntoPattern <- function(A) {
     .Call(`_FlexRL_pasteIntoPattern`, A)
 }

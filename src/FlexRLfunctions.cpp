@@ -112,6 +112,120 @@ using namespace Rcpp;
    return tmpC;
  }
 
+ //' buildCandidatePairs
+ //'
+ //' Compute the candidate-pair matrix: all pairs of records from A and B whose
+ //' stable-PIV true-value patterns are identical, i.e. the cartesian product of
+ //' the A-records and B-records within every pattern group. This is a
+ //' single-call, allocation-light replacement for the R-side string pipeline
+ //' `pasteIntoPattern -> unique -> factor -> indexPatterns -> pairPatterns`
+ //' (per-record ostringstream building plus factor() over millions of strings
+ //' per Gibbs sweep). Patterns are compared as integer tuples via a
+ //' lexicographic sort, so no hashing collisions or string churn.
+ //'
+ //' @param patsA IntegerMatrix (nA x m) of true stable-PIV values for file A (m may be 0: every record then shares the single empty pattern)
+ //' @param patsB IntegerMatrix (nB x m) of true stable-PIV values for file B
+ //'
+ //' @return IntegerMatrix: 2 columns with 1-based indices into A and B; groups
+ //' ordered lexicographically by pattern, records in ascending index order
+ //' within a group (deterministic output order).
+ //' @export
+ // [[Rcpp::export]]
+ IntegerMatrix buildCandidatePairs(IntegerMatrix patsA, IntegerMatrix patsB)
+ {
+   int nA = patsA.nrow(), nB = patsB.nrow(), m = patsA.ncol();
+   if (patsB.ncol() != m)
+     Rcpp::stop("`patsA` and `patsB` must have the same number of columns.");
+   // Row-major copies for cache-friendly lexicographic comparison
+   std::vector<int> flatA((size_t)nA * m), flatB((size_t)nB * m);
+   for (int i = 0; i < nA; i++)
+     for (int c = 0; c < m; c++)
+       flatA[(size_t)i * m + c] = patsA(i, c);
+   for (int j = 0; j < nB; j++)
+     for (int c = 0; c < m; c++)
+       flatB[(size_t)j * m + c] = patsB(j, c);
+   // Sort record indices by (pattern tuple, original index): the index
+   // tie-break keeps the output deterministic across std::sort implementations.
+   std::vector<int> ordA(nA), ordB(nB);
+   for (int i = 0; i < nA; i++) ordA[i] = i;
+   for (int j = 0; j < nB; j++) ordB[j] = j;
+   auto cmpA = [&](int a, int b) {
+     for (int c = 0; c < m; c++)
+     {
+       int va = flatA[(size_t)a * m + c], vb = flatA[(size_t)b * m + c];
+       if (va != vb) return va < vb;
+     }
+     return a < b;
+   };
+   auto cmpB = [&](int a, int b) {
+     for (int c = 0; c < m; c++)
+     {
+       int va = flatB[(size_t)a * m + c], vb = flatB[(size_t)b * m + c];
+       if (va != vb) return va < vb;
+     }
+     return a < b;
+   };
+   std::sort(ordA.begin(), ordA.end(), cmpA);
+   std::sort(ordB.begin(), ordB.end(), cmpB);
+   auto rowEqA = [&](int a, int b) {
+     for (int c = 0; c < m; c++)
+       if (flatA[(size_t)a * m + c] != flatA[(size_t)b * m + c]) return false;
+     return true;
+   };
+   auto rowEqB = [&](int a, int b) {
+     for (int c = 0; c < m; c++)
+       if (flatB[(size_t)a * m + c] != flatB[(size_t)b * m + c]) return false;
+     return true;
+   };
+   auto rowABcmp = [&](int a, int b) -> int {  // A row `a` vs B row `b`
+     for (int c = 0; c < m; c++)
+     {
+       int va = flatA[(size_t)a * m + c], vb = flatB[(size_t)b * m + c];
+       if (va != vb) return va < vb ? -1 : 1;
+     }
+     return 0;
+   };
+   // First pass: walk both sorted orders jointly, count the pairs per group
+   long long ntotal = 0;
+   int pa = 0, pb = 0;
+   while (pa < nA && pb < nB)
+   {
+     int c = rowABcmp(ordA[pa], ordB[pb]);
+     if (c < 0) { pa++; continue; }
+     if (c > 0) { pb++; continue; }
+     int ea = pa + 1, eb = pb + 1;
+     while (ea < nA && rowEqA(ordA[pa], ordA[ea])) ea++;
+     while (eb < nB && rowEqB(ordB[pb], ordB[eb])) eb++;
+     ntotal += (long long)(ea - pa) * (long long)(eb - pb);
+     pa = ea; pb = eb;
+   }
+   if (ntotal > 2147483647LL)
+     Rcpp::stop("Too many candidate pairs (", ntotal,
+                "): the stable-PIV patterns leave one giant group; more discriminative PIVs are needed.");
+   // Second pass: emit the cartesian product of each group (A-major)
+   IntegerMatrix out((int)ntotal, 2);
+   int w = 0;
+   pa = 0; pb = 0;
+   while (pa < nA && pb < nB)
+   {
+     int c = rowABcmp(ordA[pa], ordB[pb]);
+     if (c < 0) { pa++; continue; }
+     if (c > 0) { pb++; continue; }
+     int ea = pa + 1, eb = pb + 1;
+     while (ea < nA && rowEqA(ordA[pa], ordA[ea])) ea++;
+     while (eb < nB && rowEqB(ordB[pb], ordB[eb])) eb++;
+     for (int ii = pa; ii < ea; ii++)
+       for (int jj = pb; jj < eb; jj++)
+       {
+         out(w, 0) = ordA[ii] + 1;
+         out(w, 1) = ordB[jj] + 1;
+         w++;
+       }
+     pa = ea; pb = eb;
+   }
+   return out;
+ }
+
  //' pasteIntoPattern
  //'
  //' @param A IntegerMatrix with values to form patterns

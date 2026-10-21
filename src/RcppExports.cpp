@@ -35,6 +35,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// buildCandidatePairs
+IntegerMatrix buildCandidatePairs(IntegerMatrix patsA, IntegerMatrix patsB);
+RcppExport SEXP _FlexRL_buildCandidatePairs(SEXP patsASEXP, SEXP patsBSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type patsA(patsASEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type patsB(patsBSEXP);
+    rcpp_result_gen = Rcpp::wrap(buildCandidatePairs(patsA, patsB));
+    return rcpp_result_gen;
+END_RCPP
+}
 // pasteIntoPattern
 CharacterVector pasteIntoPattern(IntegerMatrix A);
 RcppExport SEXP _FlexRL_pasteIntoPattern(SEXP ASEXP) {
@@ -164,6 +176,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_FlexRL_indexPatterns", (DL_FUNC) &_FlexRL_indexPatterns, 2},
     {"_FlexRL_pairPatterns", (DL_FUNC) &_FlexRL_pairPatterns, 3},
+    {"_FlexRL_buildCandidatePairs", (DL_FUNC) &_FlexRL_buildCandidatePairs, 2},
     {"_FlexRL_pasteIntoPattern", (DL_FUNC) &_FlexRL_pasteIntoPattern, 1},
     {"_FlexRL_initDeltaMap", (DL_FUNC) &_FlexRL_initDeltaMap, 0},
     {"_FlexRL_Deltafind", (DL_FUNC) &_FlexRL_Deltafind, 0},
