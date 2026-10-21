@@ -78,8 +78,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // pairLogLik
-List pairLogLik(const IntegerMatrix& select, const IntegerMatrix& truepivsA, const IntegerMatrix& truepivsB, List encodedA, List encodedB, CharacterVector PIVs, LogicalVector PIVs_stable, IntegerVector n_values, List eta, List phi, List alpha, List covA_names, List covB_names, Function S);
-RcppExport SEXP _FlexRL_pairLogLik(SEXP selectSEXP, SEXP truepivsASEXP, SEXP truepivsBSEXP, SEXP encodedASEXP, SEXP encodedBSEXP, SEXP PIVsSEXP, SEXP PIVs_stableSEXP, SEXP n_valuesSEXP, SEXP etaSEXP, SEXP phiSEXP, SEXP alphaSEXP, SEXP covA_namesSEXP, SEXP covB_namesSEXP, SEXP SSEXP) {
+List pairLogLik(const IntegerMatrix& select, const IntegerMatrix& truepivsA, const IntegerMatrix& truepivsB, List encodedA, List encodedB, CharacterVector PIVs, LogicalVector PIVs_stable, IntegerVector n_values, List eta, List phi, List alpha, List covA_names, List covB_names, Function S, int threads);
+RcppExport SEXP _FlexRL_pairLogLik(SEXP selectSEXP, SEXP truepivsASEXP, SEXP truepivsBSEXP, SEXP encodedASEXP, SEXP encodedBSEXP, SEXP PIVsSEXP, SEXP PIVs_stableSEXP, SEXP n_valuesSEXP, SEXP etaSEXP, SEXP phiSEXP, SEXP alphaSEXP, SEXP covA_namesSEXP, SEXP covB_namesSEXP, SEXP SSEXP, SEXP threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -97,7 +97,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< List >::type covA_names(covA_namesSEXP);
     Rcpp::traits::input_parameter< List >::type covB_names(covB_namesSEXP);
     Rcpp::traits::input_parameter< Function >::type S(SSEXP);
-    rcpp_result_gen = Rcpp::wrap(pairLogLik(select, truepivsA, truepivsB, encodedA, encodedB, PIVs, PIVs_stable, n_values, eta, phi, alpha, covA_names, covB_names, S));
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(pairLogLik(select, truepivsA, truepivsB, encodedA, encodedB, PIVs, PIVs_stable, n_values, eta, phi, alpha, covA_names, covB_names, S, threads));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -204,7 +205,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_FlexRL_pasteIntoPattern", (DL_FUNC) &_FlexRL_pasteIntoPattern, 1},
     {"_FlexRL_initDeltaMap", (DL_FUNC) &_FlexRL_initDeltaMap, 0},
     {"_FlexRL_Deltafind", (DL_FUNC) &_FlexRL_Deltafind, 0},
-    {"_FlexRL_pairLogLik", (DL_FUNC) &_FlexRL_pairLogLik, 14},
+    {"_FlexRL_pairLogLik", (DL_FUNC) &_FlexRL_pairLogLik, 15},
     {"_FlexRL_sampleD", (DL_FUNC) &_FlexRL_sampleD, 8},
     {"_FlexRL_sampleNL", (DL_FUNC) &_FlexRL_sampleNL, 4},
     {"_FlexRL_sampleL", (DL_FUNC) &_FlexRL_sampleL, 8},

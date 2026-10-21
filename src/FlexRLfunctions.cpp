@@ -3,6 +3,11 @@
 
 #include <Rcpp.h>
 
+// OpenMP parallel regions (guarded: builds single-threaded without OpenMP).
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 using namespace Rcpp;
 
  // Use R random number generator to control seeds
@@ -330,7 +335,10 @@ using namespace Rcpp;
  //' @param eta,phi,alpha Lists of per-PIV numeric vectors (phi = [agreeA, agreeB, missA, missB])
  //' @param covA_names,covB_names Lists of per-PIV CharacterVectors with hazard-covariate column names (may be empty)
  //' @param S R function model_dynamics$S(cov, alpha, times), called once per unstable PIV
- //'
+ //' @param threads Number of OpenMP threads for the per-pair loops (default 1 =
+ //'   sequential). Ignored — the code runs sequentially — if the package was
+ //'   built without OpenMP. Results are identical for any thread count: every
+ //'   pair writes its own slot, no reduction crosses threads.
  //' @return List with elements LLA (nA), LLB (nB) and LLLq (nPairs)
  //' @export
  // [[Rcpp::export]]
@@ -347,11 +355,16 @@ using namespace Rcpp;
                  List alpha,
                  List covA_names,
                  List covB_names,
-                 Function S)
+                 Function S,
+                 int threads = 1)
  {
    int nA = truepivsA.nrow(), nB = truepivsB.nrow();
    int nPairs = select.nrow();
    int nPIVs = n_values.length();
+   if (threads < 1) threads = 1;
+#ifndef _OPENMP
+   (void)threads;  // built without OpenMP: silently sequential
+#endif
    NumericVector LLA(nA, 0.0);
    NumericVector LLB(nB, 0.0);
    NumericVector LLLq(nPairs, 0.0);
@@ -396,6 +409,9 @@ using namespace Rcpp;
      // ---- Candidate-pair contributions (LLLq) ----
      if (PIVs_stable[k])
      {
+#ifdef _OPENMP
+#pragma omp parallel for num_threads(threads) schedule(static)
+#endif
        for (int q = 0; q < nPairs; q++)
        {
          int ia = sel[q] - 1, ib = sel[nPairs + q] - 1;
@@ -418,6 +434,9 @@ using namespace Rcpp;
        {
          NumericVector col = Rcpp::as<NumericVector>(encodedA[std::string(cnA[c])]);
          const double *cp = col.begin();
+#ifdef _OPENMP
+#pragma omp parallel for num_threads(threads) schedule(static)
+#endif
          for (int q = 0; q < nPairs; q++)
            covp[(size_t)(1 + c) * nPairs + q] = cp[sel[q] - 1];
        }
@@ -425,6 +444,9 @@ using namespace Rcpp;
        {
          NumericVector col = Rcpp::as<NumericVector>(encodedB[std::string(cnB[c])]);
          const double *cp = col.begin();
+#ifdef _OPENMP
+#pragma omp parallel for num_threads(threads) schedule(static)
+#endif
          for (int q = 0; q < nPairs; q++)
            covp[(size_t)(1 + nca + c) * nPairs + q] = cp[sel[nPairs + q] - 1];
        }
@@ -433,10 +455,16 @@ using namespace Rcpp;
        const double *dA = dateA.begin(), *dB = dateB.begin();
        NumericVector times(nPairs);
        double *tsp = times.begin();
+#ifdef _OPENMP
+#pragma omp parallel for num_threads(threads) schedule(static)
+#endif
        for (int q = 0; q < nPairs; q++)
          tsp[q] = std::abs(dB[sel[nPairs + q] - 1] - dA[sel[q] - 1]);
        NumericVector pSameH = S(cov, alpha[k], times);
        const double *ps = pSameH.begin();
+#ifdef _OPENMP
+#pragma omp parallel for num_threads(threads) schedule(static)
+#endif
        for (int q = 0; q < nPairs; q++)
        {
          int ia = sel[q] - 1, ib = sel[nPairs + q] - 1;

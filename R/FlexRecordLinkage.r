@@ -473,6 +473,9 @@ simulateH <- function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi) {
 #' @param phi List (one per PIV) of registration-error parameters.
 #' @param model_dynamics Object from [survival_model()] giving the survival
 #'   function of the structured PIVs.
+#' @param threads Integer, number of OpenMP threads for the C++ per-pair
+#'   likelihood loops (default 1 = sequential; identical results for any
+#'   value; ignored if the package was built without OpenMP).
 #'
 #' @return A list (`Dsample`, Rcpp `sampleD()` output) with: `links` updated set
 #'   of links, `sumRowD` updated sumRowD, `sumColD` updated sumColD, `loglik`
@@ -539,7 +542,7 @@ simulateH <- function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi) {
 #' linksCpp = Dsample$links
 #' linksR = linksCpp + 1
 simulateD <- function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamma, eta, alpha, phi,
-                      model_dynamics = survival_model("exponential")) {
+                      model_dynamics = survival_model("exponential"), threads = 1) {
   PIVs <- names(data$PIVs_config)
   PIVs_stable <- sapply(data$PIVs_config, function(x) x$dynamics != "structured")
 
@@ -562,7 +565,7 @@ simulateD <- function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamm
   covB_names <- lapply(data$PIVs_config, function(x) if (is.null(x$cond_hazard_cov$covB)) character(0) else x$cond_hazard_cov$covB)
   lik <- pairLogLik(select, truepivsA, truepivsB, data$encodedA, data$encodedB,
                     PIVs, PIVs_stable, data$n_values, eta, phi, alpha,
-                    covA_names, covB_names, model_dynamics$S)
+                    covA_names, covB_names, model_dynamics$S, threads)
   LLA <- lik$LLA
   LLB <- lik$LLB
   LLLq <- lik$LLLq
@@ -779,6 +782,10 @@ survival_model <- function(type = c("exponential", "weibull", "gompertz", "piece
 #'   not lowering it.
 #' @param model_dynamics Object from [survival_model()]: the survival model
 #'   for the change over time of the structured PIVs (default exponential).
+#' @param threads Integer, number of OpenMP threads used by the C++ Gibbs
+#'   kernels for their per-pair loops (default 1 = sequential). Results are
+#'   identical for any value. Ignored — the code runs sequentially — if the
+#'   package was built without OpenMP support.
 #'
 #' @return A list with: `Delta` sparse-matrix summary (`i`, `j`, `x`) of
 #'   posterior linkage probabilities; a pair is a valid link candidate once
@@ -864,7 +871,7 @@ survival_model <- function(type = c("exponential", "weibull", "gompertz", "piece
 StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_burnin = 10,
                  music_on = FALSE, new_directory = NULL, save_info_iter = FALSE,
                  gamma0 = NULL, phiA0 = NULL, phiB0 = NULL, n_post_sample = 1000,
-                 model_dynamics = survival_model("exponential")) {
+                 model_dynamics = survival_model("exponential"), threads = 1) {
 
   message("FlexRL")
 
@@ -876,6 +883,10 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
   nGibbsIter <- gibbs_iter - gibbs_burnin
   if (StEM_iter - StEM_burnin <= 0) stop("`StEM_iter` must be greater than `StEM_burnin`.", call. = FALSE)
   if (nGibbsIter <= 0) stop("`gibbs_iter` must be greater than `gibbs_burnin`.", call. = FALSE)
+  if (!is.numeric(threads) || length(threads) != 1 || is.na(threads) || threads < 1) {
+    stop("`threads` must be a single number >= 1.", call. = FALSE)
+  }
+  threads <- as.integer(threads)
 
   encodedA <- data$encodedA
   encodedB <- data$encodedB
@@ -991,13 +1002,13 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
   )
 
   # Runs one Gibbs iteration and refreshes `survivalpSameH` for unstable PIVs
-  gibbs_step <- function(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma, eta, alpha, phi) {
+  gibbs_step <- function(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma, eta, alpha, phi, threads = 1) {
     newTruePivs <- simulateH(data = data, links = linksCpp, survivalpSameH = survivalpSameH,
                              sumRowD = sumRowD, sumColD = sumColD, eta = eta, phi = phi)
     Dsample <- simulateD(data = data, linksR = linksR, sumRowD = sumRowD, sumColD = sumColD,
                          truepivsA = newTruePivs$truepivsA, truepivsB = newTruePivs$truepivsB,
                          gamma = gamma, eta = eta, alpha = alpha, phi = phi,
-                         model_dynamics = model_dynamics)
+                         model_dynamics = model_dynamics, threads = threads)
     linksCpp <- Dsample$links
     linksR <- linksCpp + 1
     survivalpSameH <- matrix(1, nrow(linksR), N_PIVs)
@@ -1024,7 +1035,7 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
     Burnin_total <- 0
     while (countBurnin != 0) {
       Burnin_total <- Burnin_total + 1
-      step <- gibbs_step(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma, eta, alpha, phi)
+      step <- gibbs_step(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma, eta, alpha, phi, threads)
       linksCpp <- step$linksCpp
       linksR <- step$linksR
       sumRowD <- step$sumRowD
@@ -1066,7 +1077,7 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
       nlinkrec <- burnin$nlinkrec
     } else {
       for (j in seq_len(gibbs_burnin)) {
-        step <- gibbs_step(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma, eta, alpha, phi)
+        step <- gibbs_step(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma, eta, alpha, phi, threads)
         linksCpp <- step$linksCpp
         linksR <- step$linksR
         sumRowD <- step$sumRowD
@@ -1082,7 +1093,7 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
     Vphi <- lapply(data$n_values, function(x) c())
 
     for (j in seq_len(nGibbsIter)) {
-      step <- gibbs_step(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma, eta, alpha, phi)
+      step <- gibbs_step(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma, eta, alpha, phi, threads)
       linksCpp <- step$linksCpp
       linksR <- step$linksR
       sumRowD <- step$sumRowD
@@ -1223,7 +1234,7 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
     total = n_post_sample, clear = FALSE
   )
   for (m in seq_len(n_post_sample)) {
-    step <- gibbs_step(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma_avg, eta_avg, alpha_avg, phi_avg)
+    step <- gibbs_step(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma_avg, eta_avg, alpha_avg, phi_avg, threads)
     # Note: eta/alpha/phi are frozen at their posterior mean for these draws
     linksCpp <- step$linksCpp
     linksR <- step$linksR

@@ -14,6 +14,10 @@
   (it reconstructs the value, which cancels in every acceptance ratio) and
   returns `linksQ`. Random streams are not comparable to <= 1.0.0 seeds:
   results for a given `set.seed()` differ, distributions do not.
+- OpenMP: the per-pair likelihood loops in the Gibbs kernels are parallelised;
+  new `threads` argument on `StEM()` (default 1 = sequential). Results are
+  bitwise identical for any thread count. The package still builds — and runs
+  sequentially — on platforms without OpenMP.
 - Parity verified against the pre-optimisation implementation and pinned by
   permanent regression tests: `tests/testthat/test-golden-parity.R` compares
   the current kernels to golden fixtures generated from the pre-optimisation

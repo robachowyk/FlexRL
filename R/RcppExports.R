@@ -25,8 +25,8 @@ Deltafind <- function() {
     .Call(`_FlexRL_Deltafind`)
 }
 
-pairLogLik <- function(select, truepivsA, truepivsB, encodedA, encodedB, PIVs, PIVs_stable, n_values, eta, phi, alpha, covA_names, covB_names, S) {
-    .Call(`_FlexRL_pairLogLik`, select, truepivsA, truepivsB, encodedA, encodedB, PIVs, PIVs_stable, n_values, eta, phi, alpha, covA_names, covB_names, S)
+pairLogLik <- function(select, truepivsA, truepivsB, encodedA, encodedB, PIVs, PIVs_stable, n_values, eta, phi, alpha, covA_names, covB_names, S, threads = 1L) {
+    .Call(`_FlexRL_pairLogLik`, select, truepivsA, truepivsB, encodedA, encodedB, PIVs, PIVs_stable, n_values, eta, phi, alpha, covA_names, covB_names, S, threads)
 }
 
 sampleD <- function(S, LLA, LLB, LLL, gamma, nlinkrec, sumRowD, sumColD) {
