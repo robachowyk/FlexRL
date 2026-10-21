@@ -30,24 +30,30 @@ all cores (dev machine: 32). Constraint hierarchy, in order:
 | `R` `StEM()` loops | 1086–1280 | StEM iters / Gibbs sweeps / post-samples | the chain itself | **yes — inherently sequential**; parallelism can only live *inside* one sweep |
 | `R` `naive_linkage()` | 1340+ | pattern buckets | — | out of scope (deterministic, not the sampler) |
 
-Known per-kernel costs that matter at scale:
+Known per-kernel costs — **measured** on the bench problem (`review/bench-stem.R`,
+scale 1: nA=10000, nB=15000, n_links=7500, 22 sweeps):
 
-- `sampleNL` / `sampleL` call `Rcpp::sample()` **once per record / per linked
-  pair** — each call crosses into R's `sample()` machinery (SEXP allocation,
-  argument checking). At ~1–2 µs per call and (nA+nB)·n_PIVs + n_links·n_PIVs
-  calls per sweep this is plausibly the dominant cost.
-- `sampleL` allocates 3+ `NumericVector`s of size nval² *per pair* and multiplies
-  them through Rcpp sugar (temporaries + GC pressure); the sampling support is an
-  nval² grid built by `ExpandGrid` every sweep.
-- `simulateD` builds `LLL` as an nA×nB `Matrix::sparseMatrix` and does sparse
-  sub-assignment `LLL[select] <- LLL[select] + …` **per PIV**, then extracts
-  `LLL[select]` three more times (anyNA check, `log_lik`'s `sum(LLL[links])`,
-  pass to `sampleD`). `Matrix` sparse sub-assignment has heavy constants.
-- `simulateD` builds the candidate set through a string pipeline:
-  `pasteIntoPattern → unique → factor → indexPatterns → pairPatterns`
-  (per-record `ostringstream` + `factor()` over millions of strings per sweep).
-- `sampleD`'s scan itself is cheap per pair but touches ~6 transcendentals and
-  one `runif` per actionable pair, plus `std::map` insert/erase per accepted flip.
+- **Baseline: 238.7 s end-to-end (10.85 s/sweep).** Profiled run: `simulateD`
+  accounts for **94.3%** of total time. Inside it:
+  - `[.data.frame` 68.1% total, of which **`make.unique` 63.9% self** —
+    data-frame row subsetting with ~million-row index vectors
+    (`data$encodedA[select[, 1], k, drop=FALSE]` etc., done ~2× per PIV per
+    sweep); R's `[.data.frame` builds and de-duplicates the row names of the
+    extracted result (micro-repro confirmed: 94% of `[.data.frame` time in
+    `make.unique`). Fix: grab plain column vectors once per sweep and index
+    them directly — no data-frame machinery in the hot path.
+  - `[<-` 11.0% (`replCmat4`/`.TM.repl.i.mat`) — the `LLL[select] <- …`
+    sparse sub-assignment.
+  - `cbind` 10.5% — hazard-covariate assembly per PIV.
+- **"Drawing Delta" ≈ 11 s per post-sample** (the per-link
+  `Delta[i, j] <- Delta[i, j] + 1` single-cell dgCMatrix sub-assign, ~1.4 ms
+  each) ≈ **46% of end-to-end** at n_post_sample=10. Fix: accumulate triplets
+  and build/add one `sparseMatrix` per post-sample (Phase 1.5).
+- The earlier hypothesis that `Rcpp::sample()` per record/pair dominates is
+  **wrong at this scale**: `sampleH` total = 0.9% (the calls live inside its
+  `.Call`). Still worth fixing (it is the prerequisite for threading and grows
+  with file size), but it is not the bottleneck.
+- `sampleD`'s scan does not even reach the top-15 self-time list at this scale.
 
 Note: `Rprof.out` at the repo root profiles `link_with_BRL` (a competitor-package
 comparison run), **not** FlexRL's own sampler — it is not evidence about our hot
@@ -152,6 +158,10 @@ Notes:
    pipeline in `simulateD` (lexicographic tuple sort → deterministic bucket
    order; handles the 0-column degenerate case). The old pipeline stays in
    place for `naive_linkage()`.
+5. **Delta accumulation via triplets** *(discovered by the baseline profile —
+   ~46% of end-to-end)*: in the `n_post_sample` loop, replace the per-link
+   `Delta[i, j] <- Delta[i, j] + 1` single-cell sparse sub-assignment with one
+   `Matrix::sparseMatrix(i, j, x = 1, dims = …)` build + add per post-sample.
 
 ### Phase 2 — measure
 
@@ -223,9 +233,22 @@ Notes:
 
 ## 8. Worklog
 
+Baseline (branch `glm-parallel`, pre-change, R 4.6.1, bench scale 1):
+- StEM end-to-end **238.7 s** for 22 sweeps (**10.85 s/sweep**), nA=10000,
+  nB=15000, n_links=7500, 4 PIVs.
+- Profile: `simulateD` 94.3% of total; `[.data.frame` 68.1% (`make.unique`
+  63.9% self); Matrix `[<-` 11.0%; `cbind` 10.5%; "Drawing Delta" ≈ 11 s per
+  post-sample (~46% of end-to-end).
+- Consequence: Phase 1 priority order adjusted — the LLLq rewrite (1.3) and
+  the Delta-triplet fix (1.5) target ~90% of measured time; `Rcpp::sample`
+  replacement (1.1/1.2) stays for exactness-neutral speedup and threading
+  readiness.
+
 - [ ] Phase 1.1 — inverse-CDF sampler + `sampleNL` on pre-drawn uniforms
 - [ ] Phase 1.2 — factorized `sampleL` (joint (H^A, H^B) return)
-- [ ] Phase 1.3 — per-pair `LLLq`, `sampleD` loglik reconstruction + `linksQ`
+- [ ] Phase 1.3 — per-pair `LLLq`, named-column access, `sampleD` loglik
+      reconstruction + `linksQ` (kills the `make.unique` bottleneck)
 - [ ] Phase 1.4 — `buildCandidatePairs()` replaces the string pipeline
+- [ ] Phase 1.5 — Delta accumulation via triplets (kills "Drawing Delta")
 - [ ] Phase 2 — bench pre/post numbers recorded here
 - [ ] Phase 3 — decision per §3 rule
