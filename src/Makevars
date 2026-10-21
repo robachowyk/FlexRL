@@ -1,0 +1,10 @@
+# OpenMP support for the Gibbs kernels (parallel per-pair loops).
+# $(SHLIB_OPENMP_CXXFLAGS) expands to "-fopenmp" where the toolchain supports
+# OpenMP and to nothing otherwise, so the package still builds — single
+# threaded — on platforms without OpenMP. The C++ code guards its parallel
+# regions with `#ifdef _OPENMP` and every kernel accepts a `threads` argument
+# (default 1 = sequential).
+PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS)
+# -fopenmp is also needed at link time so the OpenMP runtime (libgomp) is
+# recorded as a dependency of the shared library.
+PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS)
