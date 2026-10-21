@@ -32,25 +32,21 @@ sampleL_oracle <- function(GA, GB, S, nval, agreeA, agreeB, missA, missB, eta) {
 test_that("sampleL: joint (H^A, H^B) draw follows the model conditional", {
   p <- tiny_pars()
   nval <- p$n_values
-  choice_set <- FlexRL:::ExpandGrid(FlexRL:::generateSequence(nval),
-                                    FlexRL:::generateSequence(nval))
-  choice_equal <- choice_set[, 1] == choice_set[, 2]
-  # sampleH passes eta indexed by the grid's A column (post-Findings-#A;
-  # `eta_choice = eta_k[choice_set(_,0) - 1]` in the C++): the marginal of
-  # H^A is eta (paper Eq. 4), expanded per grid row so it multiplies
-  # elementwise against probH inside sampleL. We replicate that convention:
-  eta_choice <- p$eta[choice_set[, 1]]
   phiA <- c(p$phi["agreeA"], p$phi["missA"])
   phiB <- c(p$phi["agreeB"], p$phi["missB"])
+  # Oracle grid rows (a-major): row r (1-based) has a = (r-1) %/% nval + 1,
+  # b = (r-1) %% nval + 1. The grid is only used to read marginal/joint
+  # probabilities off the oracle; sampleL itself works on values directly.
+  choice_set <- FlexRL:::ExpandGrid(FlexRL:::generateSequence(nval),
+                                    FlexRL:::generateSequence(nval))
   n_draws <- 40000
 
   ## Case A: registered value missing in A, observed (=1) in B.
   set.seed(101)
-  draws <- replicate(n_draws,
-                     FlexRL:::sampleL(0L, 1L, p$S, choice_set, choice_equal,
-                                      nval, phiA, phiB, eta_choice))
-  a <- (draws - 1L) %/% nval + 1L
-  b <- (draws - 1L) %% nval + 1L
+  draws <- FlexRL:::sampleL(rep(0L, n_draws), rep(1L, n_draws), rep(p$S, n_draws),
+                            nval, phiA, phiB, p$eta, runif(2 * n_draws))
+  a <- draws[, 1]
+  b <- draws[, 2]
   oracle <- sampleL_oracle(0L, 1L, p$S, nval, p$phi["agreeA"], p$phi["agreeB"],
                            p$phi["missA"], p$phi["missB"], p$eta)
   expect_lt(abs(mean(a == 1) - sum(oracle[choice_set[, 1] == 1])), 0.02)
@@ -60,11 +56,10 @@ test_that("sampleL: joint (H^A, H^B) draw follows the model conditional", {
 
   ## Case B: registered value observed (=1) in A, missing in B.
   set.seed(102)
-  draws2 <- replicate(n_draws,
-                      FlexRL:::sampleL(1L, 0L, p$S, choice_set, choice_equal,
-                                       nval, phiA, phiB, eta_choice))
-  a2 <- (draws2 - 1L) %/% nval + 1L
-  b2 <- (draws2 - 1L) %% nval + 1L
+  draws2 <- FlexRL:::sampleL(rep(1L, n_draws), rep(0L, n_draws), rep(p$S, n_draws),
+                             nval, phiA, phiB, p$eta, runif(2 * n_draws))
+  a2 <- draws2[, 1]
+  b2 <- draws2[, 2]
   oracle2 <- sampleL_oracle(1L, 0L, p$S, nval, p$phi["agreeA"], p$phi["agreeB"],
                             p$phi["missA"], p$phi["missB"], p$eta)
   expect_lt(abs(mean(b2 == 2) - sum(oracle2[choice_set[, 2] == 2])), 0.02)

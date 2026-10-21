@@ -29,8 +29,8 @@ sampleNL <- function(G, eta, phi, unif) {
     .Call(`_FlexRL_sampleNL`, G, eta, phi, unif)
 }
 
-sampleL <- function(GA, GB, survivalpSameH, choice_set, choice_equal, nval, phikA, phikB, eta) {
-    .Call(`_FlexRL_sampleL`, GA, GB, survivalpSameH, choice_set, choice_equal, nval, phikA, phikB, eta)
+sampleL <- function(GA, GB, survivalpSameH, nval, phikA, phikB, eta, unif) {
+    .Call(`_FlexRL_sampleL`, GA, GB, survivalpSameH, nval, phikA, phikB, eta, unif)
 }
 
 ExpandGrid <- function(vec1, vec2) {

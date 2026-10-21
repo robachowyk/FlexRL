@@ -99,21 +99,20 @@ BEGIN_RCPP
 END_RCPP
 }
 // sampleL
-IntegerVector sampleL(IntegerVector GA, IntegerVector GB, NumericVector survivalpSameH, IntegerMatrix choice_set, IntegerVector choice_equal, int nval, NumericVector phikA, NumericVector phikB, NumericVector eta);
-RcppExport SEXP _FlexRL_sampleL(SEXP GASEXP, SEXP GBSEXP, SEXP survivalpSameHSEXP, SEXP choice_setSEXP, SEXP choice_equalSEXP, SEXP nvalSEXP, SEXP phikASEXP, SEXP phikBSEXP, SEXP etaSEXP) {
+IntegerMatrix sampleL(IntegerVector GA, IntegerVector GB, NumericVector survivalpSameH, int nval, NumericVector phikA, NumericVector phikB, NumericVector eta, NumericVector unif);
+RcppExport SEXP _FlexRL_sampleL(SEXP GASEXP, SEXP GBSEXP, SEXP survivalpSameHSEXP, SEXP nvalSEXP, SEXP phikASEXP, SEXP phikBSEXP, SEXP etaSEXP, SEXP unifSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< IntegerVector >::type GA(GASEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type GB(GBSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type survivalpSameH(survivalpSameHSEXP);
-    Rcpp::traits::input_parameter< IntegerMatrix >::type choice_set(choice_setSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type choice_equal(choice_equalSEXP);
     Rcpp::traits::input_parameter< int >::type nval(nvalSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type phikA(phikASEXP);
     Rcpp::traits::input_parameter< NumericVector >::type phikB(phikBSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type eta(etaSEXP);
-    rcpp_result_gen = Rcpp::wrap(sampleL(GA, GB, survivalpSameH, choice_set, choice_equal, nval, phikA, phikB, eta));
+    Rcpp::traits::input_parameter< NumericVector >::type unif(unifSEXP);
+    rcpp_result_gen = Rcpp::wrap(sampleL(GA, GB, survivalpSameH, nval, phikA, phikB, eta, unif));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -171,7 +170,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_FlexRL_Deltafind", (DL_FUNC) &_FlexRL_Deltafind, 0},
     {"_FlexRL_sampleD", (DL_FUNC) &_FlexRL_sampleD, 9},
     {"_FlexRL_sampleNL", (DL_FUNC) &_FlexRL_sampleNL, 4},
-    {"_FlexRL_sampleL", (DL_FUNC) &_FlexRL_sampleL, 9},
+    {"_FlexRL_sampleL", (DL_FUNC) &_FlexRL_sampleL, 8},
     {"_FlexRL_ExpandGrid", (DL_FUNC) &_FlexRL_ExpandGrid, 2},
     {"_FlexRL_generateSequence", (DL_FUNC) &_FlexRL_generateSequence, 1},
     {"_FlexRL_sampleH", (DL_FUNC) &_FlexRL_sampleH, 12},
