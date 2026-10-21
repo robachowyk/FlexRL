@@ -21,8 +21,8 @@ Deltafind <- function() {
     .Call(`_FlexRL_Deltafind`)
 }
 
-sampleD <- function(S, LLA, LLB, LLL, gamma, loglik, nlinkrec, sumRowD, sumColD) {
-    .Call(`_FlexRL_sampleD`, S, LLA, LLB, LLL, gamma, loglik, nlinkrec, sumRowD, sumColD)
+sampleD <- function(S, LLA, LLB, LLL, gamma, nlinkrec, sumRowD, sumColD) {
+    .Call(`_FlexRL_sampleD`, S, LLA, LLB, LLL, gamma, nlinkrec, sumRowD, sumColD)
 }
 
 sampleNL <- function(G, eta, phi, unif) {

@@ -202,7 +202,6 @@ using namespace Rcpp;
  //' @param LLB NumericVector gives the likelihood contribution of each non linked record from B
  //' @param LLL NumericVector gives the likelihood contribution of each potential linked records (from select)
  //' @param gamma NumericVector repeats the value of the parameter gamma (proportion of linked records) number of potential linked records (nrow of S) times
- //' @param loglik double for the value of the current complete log likelihood of the model
  //' @param nlinkrec integer for the current number of linked records
  //' @param sumRowD A LogicalVector vector indicating, for each row of the linkage matrix, i.e. for each record in the smallest file A, whether the record has a link in B or not.
  //' @param sumColD A LogicalVector vector indicating, for each column of the linkage matrix, i.e. for each record in the largest file B, whether the record has a link in A or not.
@@ -210,6 +209,9 @@ using namespace Rcpp;
  //' @return
  //' List:
  //' - new set of links
+ //' - linksQ: 1-based row indices in S of the finally linked pairs (same set as
+ //'   `links`, unordered) — lets R look up their LLL contributions without a
+ //'   sparse-matrix lookup
  //' - new sumRowD
  //' - new sumColD
  //' - new value of the complete log likelihood
@@ -221,7 +223,6 @@ using namespace Rcpp;
               const NumericVector & LLB,
               const NumericVector & LLL,
               const NumericVector & gamma,
-              double loglik,
               int nlinkrec,
               LogicalVector & sumRowD,
               LogicalVector & sumColD)
@@ -233,6 +234,30 @@ using namespace Rcpp;
    // session-wide, e.g. `1 > 2` evaluating to TRUE).
    LogicalVector rowD = Rcpp::clone(sumRowD);
    LogicalVector colD = Rcpp::clone(sumColD);
+   int nB = LLB.length();
+   // The acceptance probability of every flip reduces to
+   //   pswitch = exp(delta) / (1 + exp(delta)),
+   // with delta the pair's own log-likelihood change: the running log-likelihood
+   // cancels in the ratio, so it is not needed as an input. The reported value
+   // is reconstructed from scratch as
+   //   (matching + unlinked-record terms, accumulated up front)
+   // + sum of LLL over finally-linked pairs (accumulated during the scan)
+   // + sum of the deltas of accepted flips.
+   double loglik = 0.0;
+   for (int i = 0; i < rowD.length(); i++)
+     loglik += rowD(i) ? log(gamma(i)) : log(1-gamma(i));
+   for (int r = 0; r < nlinkrec; r++)
+     loglik -= log(nB - r);
+   // Sum the unlinked-record contributions over the overlap of the record and
+   // likelihood vectors (equal lengths in the normal pipeline; the overlap
+   // guard only tolerates degenerate direct calls, e.g. scalar LLA/LLB).
+   int nAterm = LLA.length() < (int)rowD.length() ? (int)LLA.length() : (int)rowD.length();
+   for (int i = 0; i < nAterm; i++) if (!rowD(i)) loglik += LLA(i);
+   int nBterm = LLB.length() < (int)colD.length() ? (int)LLB.length() : (int)colD.length();
+   for (int j = 0; j < nBterm; j++) if (!colD(j)) loglik += LLB(j);
+   double llLinked = 0.0;
+   double llDelta = 0.0;
+   std::vector<int> linkedQ;
    // Iterate over every candidate pair
    for (int q = 0; q < S.nrow(); q++)
    {
@@ -241,59 +266,63 @@ using namespace Rcpp;
      // If non-linked -> possibly becomes linked
      if((rowD(i)==false) && (colD(j)==false))
      {
-       // Log-likelihood if this pair were linked:
-       // remove the two "unlinked" contributions, add the "linked" contribution,
-       // and adjust for the bipartite-matching
-       double loglikNew = loglik
-       // Comparisons
-       - LLB(j) - LLA(i)
-       + LLL(q)
+       // Non-LLL part of the log-likelihood change if this pair were linked.
+       // The full delta (used for the acceptance ratio) also carries + LLL(q);
+       // llLinked accounts for LLL separately, so the accumulated delta must
+       // not include it (it would double-count the linked contribution).
+       double delta = - LLB(j) - LLA(i)
        // Bipartite matching
        - log(1-gamma(i)) + log(gamma(i))
-       - log(LLB.length() - nlinkrec);
-       double sumlogdensity = log(1 + exp(loglik-loglikNew)) + loglikNew;
-       double pswitch = exp(loglikNew - sumlogdensity);
+       - log(nB - nlinkrec);
+       double pswitch = 1.0 / (1.0 + exp(-(delta + LLL(q))));
        // Random number smaller than pswitch -> generates binomial value
        // Accept the new link with probability pswitch
        bool link = drawUniform01()  < pswitch;
        if(link)
        {
-         loglik = loglikNew;
          _DeltaMap[i].insert(j);
          rowD(i) = true;
          colD(j) = true;
          nlinkrec = nlinkrec + 1;
+         llDelta += delta;
+         llLinked += LLL(q);
+         linkedQ.push_back(q + 1);
        }
      }else if(_DeltaMap.count(i) && _DeltaMap.at(i).count(j))
      {
-       // If linked -> possibly becomes non-linked (analog)
-       double loglikNew = loglik
-       // Comparisons
-       + LLB(j) + LLA(i)
-       - LLL(q)
+       // If linked -> possibly becomes non-linked (analog). The full delta
+       // carries - LLL(q); the pair's LLL was never added to llLinked, so the
+       // accumulated delta excludes it.
+       double delta = LLB(j) + LLA(i)
        // Bipartite matching
        + log(1-gamma(i)) - log(gamma(i))
-       + log(LLB.length() - nlinkrec+1);
-       double sumlogdensity = log(1 + exp(loglik-loglikNew)) + loglikNew;
-       double pswitch = exp(loglikNew - sumlogdensity);
+       + log(nB - nlinkrec+1);
+       double pswitch = 1.0 / (1.0 + exp(-(delta - LLL(q))));
        // Accept breaking the link with probability pswitch
        bool nolink = drawUniform01()  < pswitch;
        if(nolink)
        {
-         loglik = loglikNew;
          if(_DeltaMap.count(i) && _DeltaMap[i].count(j))
            _DeltaMap[i].erase(j);
          rowD(i) = false;
          colD(j) = false;
          nlinkrec = nlinkrec - 1;
+         llDelta += delta;
+       }else
+       {
+         // Pair stays linked: its LLL contribution remains in the likelihood
+         llLinked += LLL(q);
+         linkedQ.push_back(q + 1);
        }
      }
    }
+   loglik += llLinked + llDelta;
    // Convert the updated sparse linkage map into the (idxA, idxB) matrix form
    IntegerMatrix links=Deltafind();
    // Return to R
    List ret;
    ret["links"] = links;
+   ret["linksQ"] = wrap(linkedQ);
    ret["sumRowD"] = rowD;
    ret["sumColD"] = colD;
    ret["loglik"] = loglik;

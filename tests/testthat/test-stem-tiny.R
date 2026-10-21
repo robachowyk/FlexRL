@@ -44,7 +44,7 @@ test_that("sampleD does not write through scalar logical arguments", {
   # sumRowD(0) = TRUE, which pre-fix corrupted R's interned FALSE.
   d <- FlexRL:::sampleD(
     matrix(1L, 1, 2), LLA = -1, LLB = -1, LLL = 100, gamma = 0.99,
-    loglik = -10, nlinkrec = 0L, sumRowD = x > 0, sumColD = c(FALSE, FALSE, FALSE)
+    nlinkrec = 0L, sumRowD = x > 0, sumColD = c(FALSE, FALSE, FALSE)
   )
   # Functionality preserved: the accepted link is reported back.
   expect_true(isTRUE(d$sumRowD[1]))

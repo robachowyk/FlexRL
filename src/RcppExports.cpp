@@ -66,8 +66,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // sampleD
-List sampleD(const IntegerMatrix& S, const NumericVector& LLA, const NumericVector& LLB, const NumericVector& LLL, const NumericVector& gamma, double loglik, int nlinkrec, LogicalVector& sumRowD, LogicalVector& sumColD);
-RcppExport SEXP _FlexRL_sampleD(SEXP SSEXP, SEXP LLASEXP, SEXP LLBSEXP, SEXP LLLSEXP, SEXP gammaSEXP, SEXP loglikSEXP, SEXP nlinkrecSEXP, SEXP sumRowDSEXP, SEXP sumColDSEXP) {
+List sampleD(const IntegerMatrix& S, const NumericVector& LLA, const NumericVector& LLB, const NumericVector& LLL, const NumericVector& gamma, int nlinkrec, LogicalVector& sumRowD, LogicalVector& sumColD);
+RcppExport SEXP _FlexRL_sampleD(SEXP SSEXP, SEXP LLASEXP, SEXP LLBSEXP, SEXP LLLSEXP, SEXP gammaSEXP, SEXP nlinkrecSEXP, SEXP sumRowDSEXP, SEXP sumColDSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -76,11 +76,10 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const NumericVector& >::type LLB(LLBSEXP);
     Rcpp::traits::input_parameter< const NumericVector& >::type LLL(LLLSEXP);
     Rcpp::traits::input_parameter< const NumericVector& >::type gamma(gammaSEXP);
-    Rcpp::traits::input_parameter< double >::type loglik(loglikSEXP);
     Rcpp::traits::input_parameter< int >::type nlinkrec(nlinkrecSEXP);
     Rcpp::traits::input_parameter< LogicalVector& >::type sumRowD(sumRowDSEXP);
     Rcpp::traits::input_parameter< LogicalVector& >::type sumColD(sumColDSEXP);
-    rcpp_result_gen = Rcpp::wrap(sampleD(S, LLA, LLB, LLL, gamma, loglik, nlinkrec, sumRowD, sumColD));
+    rcpp_result_gen = Rcpp::wrap(sampleD(S, LLA, LLB, LLL, gamma, nlinkrec, sumRowD, sumColD));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -168,7 +167,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_FlexRL_pasteIntoPattern", (DL_FUNC) &_FlexRL_pasteIntoPattern, 1},
     {"_FlexRL_initDeltaMap", (DL_FUNC) &_FlexRL_initDeltaMap, 0},
     {"_FlexRL_Deltafind", (DL_FUNC) &_FlexRL_Deltafind, 0},
-    {"_FlexRL_sampleD", (DL_FUNC) &_FlexRL_sampleD, 9},
+    {"_FlexRL_sampleD", (DL_FUNC) &_FlexRL_sampleD, 8},
     {"_FlexRL_sampleNL", (DL_FUNC) &_FlexRL_sampleNL, 4},
     {"_FlexRL_sampleL", (DL_FUNC) &_FlexRL_sampleL, 8},
     {"_FlexRL_ExpandGrid", (DL_FUNC) &_FlexRL_ExpandGrid, 2},

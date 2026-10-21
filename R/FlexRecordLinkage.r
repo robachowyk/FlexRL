@@ -340,6 +340,24 @@ log_lik <- function(LLL, LLA, LLB, links, sumRowD, sumColD, gamma) {
   logPossD + sum(LLA[sumRowD == 0]) + sum(LLB[sumColD == 0]) + sum(LLL[links])
 }
 
+# Internal vector-based variant of log_lik(): `LLLq` holds the log-likelihood
+# of each candidate pair (aligned with the rows of `select`), `linksQ` the
+# 1-based row indices in `select` of the currently linked pairs. Numerically
+# equivalent to log_lik() on a sparse LLL, without building the nA x nB matrix.
+log_lik_pairs <- function(LLLq, LLA, LLB, linksQ, n_links, sumRowD, sumColD, gamma) {
+  nB <- length(sumColD)
+  if (nB - n_links + 1 <= 0) {
+    warning(
+      "File B has fewer records (", nB, ") than linked records (",
+      n_links, "); file A should never be larger than file B.",
+      call. = FALSE
+    )
+  }
+  logPossD <- sum(log(gamma) * sumRowD + log(1 - gamma) * (1 - sumRowD)) -
+    log_possible_config(nB, n_links)
+  logPossD + sum(LLA[sumRowD == 0]) + sum(LLB[sumColD == 0]) + sum(LLLq[linksQ])
+}
+
 #' Simulate the true PIV values underlying the registered records
 #'
 #' Draw the latent true values of each PIV given the currently registered 
@@ -525,6 +543,9 @@ simulateD <- function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamm
   PIVs <- names(data$PIVs_config)
   PIVs_stable <- sapply(data$PIVs_config, function(x) x$dynamics != "structured")
 
+  nA <- nrow(truepivsA)
+  nB <- nrow(truepivsB)
+
   # Restrict to pairs that are compatible on the stable PIVs (candidate links)
   UA <- pasteIntoPattern(as.matrix(truepivsA[, PIVs_stable]))
   UB <- pasteIntoPattern(as.matrix(truepivsB[, PIVs_stable]))
@@ -534,45 +555,49 @@ simulateD <- function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamm
   tmpA <- indexPatterns(UA, length(valuesU))
   tmpB <- indexPatterns(UB, length(valuesU))
   select <- pairPatterns(tmpA, tmpB, length(tmpA))
+  iA <- as.integer(select[, 1])
+  iB <- as.integer(select[, 2])
+  nPairs <- nrow(select)
 
-  pLink <- rep(gamma, nrow(data$encodedA[, PIVs, drop=FALSE]))
+  pLink <- rep(gamma, nA)
 
   # Contribution to the log-likelihood if a record from A is NOT linked
-  LLA <- rep(0, nrow(data$encodedA[, PIVs, drop=FALSE]))
+  # (named-column access: no data-frame row subsetting in the hot path)
+  LLA <- rep(0, nA)
   for (k in seq_along(data$n_values)) {
     logpTrue <- log(eta[[k]])[truepivsA[, k]]
     pMissingA <- phi[[k]][3]
     pTypoA <- (1 - pMissingA) * (1 - phi[[k]][1]) / (data$n_values[k] - 1)
     pAgreeA <- (1 - pMissingA) * phi[[k]][1]
-    contr <- rep(pAgreeA, nrow(data$encodedA[, PIVs, drop=FALSE]))
-    contr[data$encodedA[, PIVs, drop=FALSE][, k] != truepivsA[, k]] <- pTypoA
-    contr[data$encodedA[, PIVs, drop=FALSE][, k] == 0] <- pMissingA
+    gA <- data$encodedA[[PIVs[k]]]
+    contr <- rep(pAgreeA, nA)
+    contr[gA != truepivsA[, k]] <- pTypoA
+    contr[gA == 0] <- pMissingA
     LLA <- LLA + logpTrue + log(contr)
   }
 
   # Contribution to the log-likelihood if a record from B is NOT linked
-  LLB <- rep(0, nrow(data$encodedB[, PIVs, drop=FALSE]))
+  LLB <- rep(0, nB)
   for (k in seq_along(data$n_values)) {
     logpTrue <- log(eta[[k]])[truepivsB[, k]]
     pMissingB <- phi[[k]][4]
     pTypoB <- (1 - pMissingB) * (1 - phi[[k]][2]) / (data$n_values[k] - 1)
     pAgreeB <- (1 - pMissingB) * phi[[k]][2]
-    contr <- rep(pAgreeB, nrow(data$encodedB[, PIVs, drop=FALSE]))
-    contr[data$encodedB[, PIVs, drop=FALSE][, k] != truepivsB[, k]] <- pTypoB
-    contr[data$encodedB[, PIVs, drop=FALSE][, k] == 0] <- pMissingB
+    gB <- data$encodedB[[PIVs[k]]]
+    contr <- rep(pAgreeB, nB)
+    contr[gB != truepivsB[, k]] <- pTypoB
+    contr[gB == 0] <- pMissingB
     LLB <- LLB + logpTrue + log(contr)
   }
 
-  # Contribution to the log-likelihood if a candidate pair IS linked
-  # sparseMatrix (not Matrix(0, ..., sparse=TRUE)): for square inputs Matrix(0, ...)
-  # returns a diagonalMatrix; a diagonal LLL would silently change assignment
-  # semantics and any later general-sparse handling of it.
-  LLL <- Matrix::sparseMatrix(i = integer(0), j = integer(0), x = numeric(0),
-                              dims = c(nrow(data$encodedA[, PIVs, drop=FALSE]),
-                                       nrow(data$encodedB[, PIVs, drop=FALSE])))
+  # Contribution to the log-likelihood if a candidate pair IS linked:
+  # a plain per-pair vector aligned with the rows of `select`. The former
+  # nA x nB sparse Matrix was never read beyond the candidate pairs, and its
+  # sub-assignment dominated the profile (PERF-PLAN §1).
+  LLLq <- numeric(nPairs)
   for (k in seq_along(data$n_values)) {
-    HA <- truepivsA[select[, 1], k]
-    HB <- truepivsB[select[, 2], k]
+    HA <- truepivsA[iA, k]
+    HB <- truepivsB[iB, k]
     logpTrue <- log(eta[[k]])[HA]
     pMissingA <- phi[[k]][3]
     pTypoA <- (1 - pMissingA) * (1 - phi[[k]][1]) / (data$n_values[k] - 1)
@@ -581,43 +606,41 @@ simulateD <- function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamm
     pTypoB <- (1 - pMissingB) * (1 - phi[[k]][2]) / (data$n_values[k] - 1)
     pAgreeB <- (1 - pMissingB) * phi[[k]][2]
     # Contribution to the likelihood of linked observation from A
-    helpA <- rep(pAgreeA, length(HA))
-    helpA[data$encodedA[, PIVs, drop=FALSE][select[, 1], k, drop=FALSE] != HA] <- pTypoA
-    helpA[data$encodedA[, PIVs, drop=FALSE][select[, 1], k, drop=FALSE] == 0] <- pMissingA
+    gA <- data$encodedA[[PIVs[k]]][iA]
+    helpA <- rep(pAgreeA, nPairs)
+    helpA[gA != HA] <- pTypoA
+    helpA[gA == 0] <- pMissingA
     # Contribution to the likelihood of linked observation from B
-    helpB <- rep(pAgreeB, length(HB))
-    helpB[data$encodedB[, PIVs, drop=FALSE][select[, 2], k, drop=FALSE] != HB] <- pTypoB
-    helpB[data$encodedB[, PIVs, drop=FALSE][select[, 2], k, drop=FALSE] == 0] <- pMissingB
+    gB <- data$encodedB[[PIVs[k]]][iB]
+    helpB <- rep(pAgreeB, nPairs)
+    helpB[gB != HB] <- pTypoB
+    helpB[gB == 0] <- pMissingB
 
-    LLL[select] <- LLL[select] + logpTrue + log(helpA) + log(helpB)
+    LLLq <- LLLq + logpTrue + log(helpA) + log(helpB)
 
     # Add unstable part if unstable
     if (!PIVs_stable[k]) {
-      times <- abs(data$encodedB[select[, 2], "date"] - data$encodedA[select[, 1], "date"])
-      intercept <-  rep(1, nrow(select))
-      cov_k <- cbind(
-        intercept,
-        data$encodedA[select[, 1], data$PIVs_config[[k]]$cond_hazard_cov$covA, drop = FALSE],
-        data$encodedB[select[, 2], data$PIVs_config[[k]]$cond_hazard_cov$covB, drop = FALSE]
-      )
+      times <- abs(data$encodedB[["date"]][iB] - data$encodedA[["date"]][iA])
+      cov_k <- cbind(rep(1, nPairs))
+      for (nm in data$PIVs_config[[k]]$cond_hazard_cov$covA) cov_k <- cbind(cov_k, data$encodedA[[nm]][iA])
+      for (nm in data$PIVs_config[[k]]$cond_hazard_cov$covB) cov_k <- cbind(cov_k, data$encodedB[[nm]][iB])
       pSameH <- model_dynamics$S(cov_k, alpha[[k]], times)
       helpH <- pSameH^(HA == HB) * ((1 - pSameH) / (data$n_values[k] - 1))^(HA != HB)
-      LLL[select] <- LLL[select] + log(helpH)
+      LLLq <- LLLq + log(helpH)
     }
   }
 
-  if (anyNA(LLL[select])) {
-    warning("Some entries of the linkage log-likelihood matrix are NA.", call. = FALSE)
+  if (anyNA(LLLq)) {
+    warning("Some entries of the linkage log-likelihood vector are NA.", call. = FALSE)
   }
 
-  # Complete data likelihood
-  LL0 <- log_lik(LLL = LLL, LLA = LLA, LLB = LLB, links = linksR, sumRowD = sumRowD, sumColD = sumColD, gamma = gamma)
-
-  Dsample <- sampleD(as.matrix(select), LLA, LLB, LLL[select], pLink, LL0, as.integer(nrow(linksR)), sumRowD > 0, sumColD > 0)
+  Dsample <- sampleD(select, LLA, LLB, LLLq, pLink, as.integer(nrow(linksR)), sumRowD > 0, sumColD > 0)
   linksR <- Dsample$links + 1
 
-  # Sanity check: recomputed log-likelihood should match the sampler's own value
-  ll_check <- log_lik(LLL = LLL, LLA = LLA, LLB = LLB, links = linksR, sumRowD = Dsample$sumRowD, sumColD = Dsample$sumColD, gamma = pLink)
+  # Sanity check: recomputed log-likelihood should match the sampler's own value.
+  # sampleD reconstructs its loglik internally (the level cancels in every
+  # acceptance ratio); this recomputes it independently in R.
+  ll_check <- log_lik_pairs(LLLq, LLA, LLB, Dsample$linksQ, nrow(linksR), Dsample$sumRowD, Dsample$sumColD, pLink)
   if (round(Dsample$loglik, 3) != round(ll_check, 3)) {
     stop(
       "Log-likelihood sanity check failed (sampler: ", round(Dsample$loglik, 3),
