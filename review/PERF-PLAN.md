@@ -337,5 +337,31 @@ Baseline (branch `glm-parallel`, pre-change, R 4.6.1, bench scale 1):
         upstream.
       - #I-a did not trigger anywhere (needs nA = 1 or nB = 1; all problems
         have ≥ 2 records per file); no master run crashed or hung.
-- [ ] Phase 3 — OpenMP (not triggered by the decision rule; see above for the
-      revised lever)
+- [x] Phase 2b — big-scale profiling (`bench-stem.R 5` and `10`):
+
+| | scale 5 (50k/75k, 37.5k links, ~14M pairs) | scale 10 (100k/150k, 75k links, ~28.5M pairs) |
+|---|---|---|
+| profiled 13-sweep run | 67.5 s (5.19 s/sweep) | 258.7 s (19.9 s/sweep) |
+| end-to-end (22 sweeps) | ≈ 114 s (derived) | ≈ 438 s (derived) |
+| `simulateD` R-level accumulation | **84.6%** (self 72.5 + cbind 5.5 + as.vector 2.8 + S 2.4 + %*% 1.5) | **84.6%** (self 73.1 + cbind 5.1 + as.vector 2.4 + S 2.4 + %*% 1.6) |
+| `sampleD` scan | 12.6% | 13.2% |
+| everything else | ≤ 2% (buildCandidatePairs 0.9, sampleH 0.4, Delta/M-step ≈ 0) | ≤ 2% (idem) |
+
+      Shares are scale-stable ⇒ the optimisation targets do not change with
+      problem size. The R temporaries the C++ move would eliminate are
+      ~10 × nPairs × 8 B (~2.3 GB at scale 10) — the move also extends the
+      feasible problem size (61 GB machine RAM).
+- [ ] Phase 3 — **revised order** (replaces §4 Phase 3; per §3 the batch
+      scheme is not the first lever):
+      1. **3a — move the `simulateD` per-PIV likelihood accumulation to C++**
+         (stable PIVs fully in C++; unstable PIVs assemble covariates/times in
+         C++ and call `model_dynamics$S` once per PIV so custom survival
+         models keep working). Targets ~85% of sweep; 3–5× expected
+         single-threaded.
+      2. **3b — OpenMP** over pairs/records for the moved loops +
+         `sampleNL`/`sampleL` (order-independent, pre-drawn uniform slots);
+         `src/Makevars`, `threads` argument (default 1), CRAN guards.
+      3. **3c — re-run the Option A decision rule after 3a/3b**: as the rest
+         shrinks, `sampleD`'s share grows to ~40–60%; before the exact batch
+         scheme, try the cheaper `_DeltaMap` restructure (§7: std::map → flat
+         arrays / hash) — likely 2–3× on the scan, possibly obviating A.

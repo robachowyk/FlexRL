@@ -68,4 +68,7 @@ for (i in seq_len(show)) {
   cat(sprintf("  %-24s %7.2f s  %5.1f%%\n",
               paste(rownames(pt)[i], collapse = " > "), pt$total.time[i], 100 * pt$total.time[i] / total))
 }
+n_sweeps_p <- args_p$StEM_iter * args_p$gibbs_iter + args_p$n_post_sample
+cat(sprintf("\nSUMMARY: scale=%g end-to-end %.2f s (%d sweeps, %.3f s/sweep) | profiled %.1f s (%d sweeps, %.3f s/sweep)\n",
+            scale, t_end, n_sweeps, t_end / n_sweeps, total, n_sweeps_p, total / n_sweeps_p))
 invisible(NULL)
