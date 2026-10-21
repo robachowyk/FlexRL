@@ -21,6 +21,11 @@
   new `threads` argument on `StEM()` (default 1 = sequential). Results are
   bitwise identical for any thread count. The package still builds — and runs
   sequentially — on platforms without OpenMP.
+- The built-in survival models (exponential, Weibull, Gompertz, piecewise)
+  evaluate through a fused, parallel C++ kernel (`survivalS_cpp`) instead of
+  R-level matrix algebra; custom survival functions are unaffected and keep
+  working exactly as before. Values agree with the previous R implementation
+  to ~1e-16 (BLAS rounding); `survival_model()` objects gain a `cuts` field.
 - Parity verified against the pre-optimisation implementation and pinned by
   permanent regression tests: `tests/testthat/test-golden-parity.R` compares
   the current kernels to golden fixtures generated from the pre-optimisation

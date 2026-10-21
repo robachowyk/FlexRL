@@ -65,7 +65,6 @@ data_StEM <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
 PIVs_stable <- sapply(data_StEM$PIVs_config, function(x)
                         x$dynamics != "structured")
-FlexRL:::initDeltaMap()
 linksR = base::matrix(0,0,2)
 linksCpp = linksR
 sumRowD = rep(0, nrow(data_StEM$encodedA))

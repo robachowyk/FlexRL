@@ -409,24 +409,45 @@ Baseline (branch `glm-parallel`, pre-change, R 4.6.1, bench scale 1):
          threads=1 while the unprofiled wall-clock is 1.3× faster (SIGPROF
          lands in spin-waiting workers). Always profile OpenMP code at
          threads=1 and verify parallel gains by wall-clock only.
-      4. [ ] **Re-run the Option A decision rule with the new numbers.**
-         `sampleD`'s serial scan is now ~0.84 s/sweep (19.8%) — borderline
-         against the 15–20% trigger — but its content is now mostly
-         irreducible exp+uniform work, so batching buys at most ~0.6 s/sweep
-         at scale 10 for the full exactness machinery. Decide AFTER 3a+
-         (next), which shifts every share again.
-      5. [ ] **3a+ — compute `S` in C++ for the built-in survival models**
-         (exponential/Weibull/Gompertz/piecewise; custom models keep the R
-         callback). Now the second-biggest block (30.7%) AND the scaling
-         floor of `pairLogLik` under OpenMP: the sequential `as.vector`+
-         `%*%`+`exp` on the nPairs×(1+ncov) matrix is thread-independent, so
-         8 threads currently buy only ~1.3× end-to-end (95.1 → 73.3 s). A
-         C++ `S` (naive dot + vectorised exp, parallel) removes both: expect
-         S-internal ~1.3 → ~0.2 s/sweep and pairLogLik 1.73 → ~0.5-0.6 s/sweep
-         at 8 threads. BLAS-vs-naive-dot differences ~1e-16, inside the
-         golden tolerance.
-      6. [ ] **Optional: fuse pairLogLik's per-PIV passes** into one pass
+      4. [x] **Re-run the Option A decision rule with the new numbers.**
+         Deferred to after 3a+ — see item 6 for the second pass (the shares
+         moved again: `sampleD` 19.8% → 21.8% at threads=1, ~37% at 8).
+      5. [x] **3a+ — compute `S` in C++ for the built-in survival models** —
+         done in commits 14dc985 + 2540bfd (2026-10-22): `survivalS_cpp()`
+         evaluates the four built-in families (exponential/weibull/gompertz/
+         piecewise) as one fused pass per row (dot + exp/pow), OpenMP-
+         parallel, bitwise-identical for any thread count; `survival_model()`
+         stores `$cuts`; internal dispatcher `survival_S()` routes built-ins
+         to the kernel and custom models to the user's R function unchanged
+         (M-step `negloglik` and `simulate_data()` still call `model$S`
+         directly — cold paths). The dispatcher applies `as.matrix(X)` like
+         the old closures did inside `ph()` (callers pass cbind'd data
+         frames). Differences from the R closures are BLAS-rounding level
+         (~1e-16, dgemv vs sequential dot) — asserted < 1e-12 in
+         `test-survival-cpp.R`, invisible at the golden suite's 1e-10.
+         NOT bitwise overall — the first phase whose numeric drift is
+         deliberate.
+         Measured (scale 10, 22 sweeps): threads=1 95.1 → **88.1 s**
+         (4.32 → 4.01 s/sweep; S-internal 1.31 → ~0.86 s/sweep serial);
+         threads=8 73.3 → **50.6 s** (3.33 → 2.30 s/sweep) — the floor
+         removal lets the parallel loops actually scale; **threads=16:
+         49.8 s — no gain over 8** (DRAM-bound + serial span, as the §3b
+         micro-bench predicted; 8 is the sweet spot). Scale 1: 2.29 s
+         (flat — fixed overheads dominate). Profile at scale 10 (threads=1):
+         `pairLogLik` 45.9% (of which `survivalS_cpp` 21.8% serial),
+         `sampleD` 21.8%, `buildCandidatePairs` 4.6%.
+         Cumulative: master 241.2 s → 2.29 s at scale 1 (~105×); scale 10
+         ≈438 s (pre-optimisation, derived) → 50.6 s (~8.7×).
+      6. [ ] **Re-run the Option A decision rule (second pass).** At 8
+         threads `sampleD`'s serial scan is now the top item (~0.86 s/sweep,
+         ~37% of the sweep): the 15–20% trigger is passed. But the scan is
+         ~30 ns/pair of mostly irreducible exp+uniform+branch work, so exact
+         batching would buy ~0.6–0.7 s/sweep for the full conflict-graph +
+         stale-count machinery (plan §3 Option A). The cheaper bitwise-safe
+         alternative first: fuse pairLogLik's per-PIV passes (item 7), which
+         attacks the same DRAM wall from the traffic side.
+      7. [ ] **Optional: fuse pairLogLik's per-PIV passes** into one pass
          over pairs (stable terms first, unstable after S returns) — same
          per-q addition order ⇒ bitwise identical; cuts streamed traffic
-         ~2–3× on the DRAM-bound stable loops. Only if 3a+ leaves
-         `pairLogLik` on top.
+         ~2–3× on the DRAM-bound stable loops. Expected pairLogLik
+         0.95 → ~0.5 s/sweep serial-equivalent (~0.3 at 8 threads).
