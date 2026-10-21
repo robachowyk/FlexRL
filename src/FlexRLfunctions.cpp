@@ -303,6 +303,159 @@ using namespace Rcpp;
    return found;
  }
 
+ //' pairLogLik
+ //'
+ //' Compute the complete-data log-likelihood pieces for the D-sweep in a single
+ //' pass over the records and candidate pairs (the C++ implementation of
+ //' simulateD's likelihood block):
+ //' - LLA[i]: log-likelihood contribution of A-record i if it is NOT linked,
+ //' - LLB[j]: idem for B-record j,
+ //' - LLLq[q]: contribution of candidate pair q if it IS linked, aligned with
+ //'   the rows of `select`.
+ //'
+ //' Per PIV k each contribution is
+ //'   log(eta_k[h]) + log P(registered g | true h)
+ //' with P(g|h) = pMissing if g == 0, pAgree if g == h, pTypo otherwise, plus,
+ //' for an unstable PIV, the survival term
+ //'   log( pSameH ) if hA == hB, else log( (1 - pSameH)/(nval - 1) ),
+ //' where pSameH = S(cov_k, alpha_k, times) is evaluated once per PIV, so
+ //' user-defined survival models keep working.
+ //'
+ //' @param select IntegerMatrix (nPairs x 2, 1-based record indices) of candidate pairs
+ //' @param truepivsA,truepivsB IntegerMatrix (n x nPIVs) of latent true values
+ //' @param encodedA,encodedB List: the encoded data frames (columns looked up by name)
+ //' @param PIVs CharacterVector of PIV column names (k order)
+ //' @param PIVs_stable LogicalVector: TRUE where the PIV does not change over time
+ //' @param n_values IntegerVector of the number of unique values per PIV
+ //' @param eta,phi,alpha Lists of per-PIV numeric vectors (phi = [agreeA, agreeB, missA, missB])
+ //' @param covA_names,covB_names Lists of per-PIV CharacterVectors with hazard-covariate column names (may be empty)
+ //' @param S R function model_dynamics$S(cov, alpha, times), called once per unstable PIV
+ //'
+ //' @return List with elements LLA (nA), LLB (nB) and LLLq (nPairs)
+ //' @export
+ // [[Rcpp::export]]
+ List pairLogLik(const IntegerMatrix & select,
+                 const IntegerMatrix & truepivsA,
+                 const IntegerMatrix & truepivsB,
+                 List encodedA,
+                 List encodedB,
+                 CharacterVector PIVs,
+                 LogicalVector PIVs_stable,
+                 IntegerVector n_values,
+                 List eta,
+                 List phi,
+                 List alpha,
+                 List covA_names,
+                 List covB_names,
+                 Function S)
+ {
+   int nA = truepivsA.nrow(), nB = truepivsB.nrow();
+   int nPairs = select.nrow();
+   int nPIVs = n_values.length();
+   NumericVector LLA(nA, 0.0);
+   NumericVector LLB(nB, 0.0);
+   NumericVector LLLq(nPairs, 0.0);
+   // Raw pointers for the hot loops (Rcpp matrices are column-major, like R)
+   const int *sel = select.begin();     // sel[q] = A index, sel[nPairs + q] = B index
+   const int *tpA = truepivsA.begin();  // tpA[i + k*nA]
+   const int *tpB = truepivsB.begin();  // tpB[j + k*nB]
+   double *lla = LLA.begin(), *llb = LLB.begin(), *lllq = LLLq.begin();
+   for (int k = 0; k < nPIVs; k++)
+   {
+     NumericVector eta_k = eta[k];
+     NumericVector phi_k = phi[k];
+     int nval = n_values[k];
+     double pMissingA = phi_k[2], pMissingB = phi_k[3];
+     double pTypoA = (1-pMissingA) * (1-phi_k[0]) / (nval-1);
+     double pAgreeA = (1-pMissingA) * phi_k[0];
+     double pTypoB = (1-pMissingB) * (1-phi_k[1]) / (nval-1);
+     double pAgreeB = (1-pMissingB) * phi_k[1];
+     // log(eta) and the log error probabilities, once per PIV
+     std::vector<double> logeta(nval);
+     for (int h = 0; h < nval; h++) logeta[h] = std::log(eta_k[h]);
+     double lMissA = std::log(pMissingA), lTypoA = std::log(pTypoA), lAgreeA = std::log(pAgreeA);
+     double lMissB = std::log(pMissingB), lTypoB = std::log(pTypoB), lAgreeB = std::log(pAgreeB);
+     // Registered-value columns for this PIV
+     std::string nmA = Rcpp::as<std::string>(PIVs[k]), nmB = nmA;
+     NumericVector colA = Rcpp::as<NumericVector>(encodedA[nmA]);
+     NumericVector colB = Rcpp::as<NumericVector>(encodedB[nmB]);
+     const double *gA = colA.begin(), *gB = colB.begin();
+     // ---- Unlinked-record contributions (LLA, LLB) ----
+     for (int i = 0; i < nA; i++)
+     {
+       int gi = (int)gA[i], hi = tpA[i + (size_t)k * nA];
+       double lc = (gi == 0) ? lMissA : ((gi == hi) ? lAgreeA : lTypoA);
+       lla[i] = lla[i] + logeta[hi - 1] + lc;
+     }
+     for (int j = 0; j < nB; j++)
+     {
+       int gj = (int)gB[j], hj = tpB[j + (size_t)k * nB];
+       double lc = (gj == 0) ? lMissB : ((gj == hj) ? lAgreeB : lTypoB);
+       llb[j] = llb[j] + logeta[hj - 1] + lc;
+     }
+     // ---- Candidate-pair contributions (LLLq) ----
+     if (PIVs_stable[k])
+     {
+       for (int q = 0; q < nPairs; q++)
+       {
+         int ia = sel[q] - 1, ib = sel[nPairs + q] - 1;
+         int ha = tpA[ia + (size_t)k * nA], hb = tpB[ib + (size_t)k * nB];
+         int ga = (int)gA[ia], gb = (int)gB[ib];
+         double la = (ga == 0) ? lMissA : ((ga == ha) ? lAgreeA : lTypoA);
+         double lb = (gb == 0) ? lMissB : ((gb == hb) ? lAgreeB : lTypoB);
+         lllq[q] = lllq[q] + logeta[ha - 1] + la + lb;
+       }
+     }else
+     {
+       // Unstable PIV: assemble the covariate matrix and times, evaluate the
+       // survival function once, then fold in the extra term per pair
+       CharacterVector cnA = covA_names[k], cnB = covB_names[k];
+       int nca = cnA.length(), ncb = cnB.length();
+       NumericMatrix cov(nPairs, 1 + nca + ncb);
+       double *covp = cov.begin();
+       for (int q = 0; q < nPairs; q++) covp[q] = 1.0;  // column 0: intercept
+       for (int c = 0; c < nca; c++)
+       {
+         NumericVector col = Rcpp::as<NumericVector>(encodedA[std::string(cnA[c])]);
+         const double *cp = col.begin();
+         for (int q = 0; q < nPairs; q++)
+           covp[(size_t)(1 + c) * nPairs + q] = cp[sel[q] - 1];
+       }
+       for (int c = 0; c < ncb; c++)
+       {
+         NumericVector col = Rcpp::as<NumericVector>(encodedB[std::string(cnB[c])]);
+         const double *cp = col.begin();
+         for (int q = 0; q < nPairs; q++)
+           covp[(size_t)(1 + nca + c) * nPairs + q] = cp[sel[nPairs + q] - 1];
+       }
+       NumericVector dateA = Rcpp::as<NumericVector>(encodedA["date"]);
+       NumericVector dateB = Rcpp::as<NumericVector>(encodedB["date"]);
+       const double *dA = dateA.begin(), *dB = dateB.begin();
+       NumericVector times(nPairs);
+       double *tsp = times.begin();
+       for (int q = 0; q < nPairs; q++)
+         tsp[q] = std::abs(dB[sel[nPairs + q] - 1] - dA[sel[q] - 1]);
+       NumericVector pSameH = S(cov, alpha[k], times);
+       const double *ps = pSameH.begin();
+       for (int q = 0; q < nPairs; q++)
+       {
+         int ia = sel[q] - 1, ib = sel[nPairs + q] - 1;
+         int ha = tpA[ia + (size_t)k * nA], hb = tpB[ib + (size_t)k * nB];
+         int ga = (int)gA[ia], gb = (int)gB[ib];
+         double la = (ga == 0) ? lMissA : ((ga == ha) ? lAgreeA : lTypoA);
+         double lb = (gb == 0) ? lMissB : ((gb == hb) ? lAgreeB : lTypoB);
+         double lh = (ha == hb) ? std::log(ps[q]) : std::log((1 - ps[q]) / (nval - 1));
+         lllq[q] = lllq[q] + logeta[ha - 1] + la + lb + lh;
+       }
+     }
+   }
+   List ret;
+   ret["LLA"] = LLA;
+   ret["LLB"] = LLB;
+   ret["LLLq"] = LLLq;
+   return ret;
+ }
+
  //' sampleD
  //'
  //' Performs one Gibbs-sampling sweep over all candidate record pairs in `S`,

@@ -77,6 +77,30 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// pairLogLik
+List pairLogLik(const IntegerMatrix& select, const IntegerMatrix& truepivsA, const IntegerMatrix& truepivsB, List encodedA, List encodedB, CharacterVector PIVs, LogicalVector PIVs_stable, IntegerVector n_values, List eta, List phi, List alpha, List covA_names, List covB_names, Function S);
+RcppExport SEXP _FlexRL_pairLogLik(SEXP selectSEXP, SEXP truepivsASEXP, SEXP truepivsBSEXP, SEXP encodedASEXP, SEXP encodedBSEXP, SEXP PIVsSEXP, SEXP PIVs_stableSEXP, SEXP n_valuesSEXP, SEXP etaSEXP, SEXP phiSEXP, SEXP alphaSEXP, SEXP covA_namesSEXP, SEXP covB_namesSEXP, SEXP SSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type select(selectSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type truepivsA(truepivsASEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type truepivsB(truepivsBSEXP);
+    Rcpp::traits::input_parameter< List >::type encodedA(encodedASEXP);
+    Rcpp::traits::input_parameter< List >::type encodedB(encodedBSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type PIVs(PIVsSEXP);
+    Rcpp::traits::input_parameter< LogicalVector >::type PIVs_stable(PIVs_stableSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type n_values(n_valuesSEXP);
+    Rcpp::traits::input_parameter< List >::type eta(etaSEXP);
+    Rcpp::traits::input_parameter< List >::type phi(phiSEXP);
+    Rcpp::traits::input_parameter< List >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< List >::type covA_names(covA_namesSEXP);
+    Rcpp::traits::input_parameter< List >::type covB_names(covB_namesSEXP);
+    Rcpp::traits::input_parameter< Function >::type S(SSEXP);
+    rcpp_result_gen = Rcpp::wrap(pairLogLik(select, truepivsA, truepivsB, encodedA, encodedB, PIVs, PIVs_stable, n_values, eta, phi, alpha, covA_names, covB_names, S));
+    return rcpp_result_gen;
+END_RCPP
+}
 // sampleD
 List sampleD(const IntegerMatrix& S, const NumericVector& LLA, const NumericVector& LLB, const NumericVector& LLL, const NumericVector& gamma, int nlinkrec, LogicalVector& sumRowD, LogicalVector& sumColD);
 RcppExport SEXP _FlexRL_sampleD(SEXP SSEXP, SEXP LLASEXP, SEXP LLBSEXP, SEXP LLLSEXP, SEXP gammaSEXP, SEXP nlinkrecSEXP, SEXP sumRowDSEXP, SEXP sumColDSEXP) {
@@ -180,6 +204,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_FlexRL_pasteIntoPattern", (DL_FUNC) &_FlexRL_pasteIntoPattern, 1},
     {"_FlexRL_initDeltaMap", (DL_FUNC) &_FlexRL_initDeltaMap, 0},
     {"_FlexRL_Deltafind", (DL_FUNC) &_FlexRL_Deltafind, 0},
+    {"_FlexRL_pairLogLik", (DL_FUNC) &_FlexRL_pairLogLik, 14},
     {"_FlexRL_sampleD", (DL_FUNC) &_FlexRL_sampleD, 8},
     {"_FlexRL_sampleNL", (DL_FUNC) &_FlexRL_sampleNL, 4},
     {"_FlexRL_sampleL", (DL_FUNC) &_FlexRL_sampleL, 8},

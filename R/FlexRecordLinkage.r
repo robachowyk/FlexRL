@@ -551,80 +551,21 @@ simulateD <- function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamm
   # pasteIntoPattern -> unique -> factor -> indexPatterns -> pairPatterns)
   select <- buildCandidatePairs(as.matrix(truepivsA[, PIVs_stable, drop = FALSE]),
                                 as.matrix(truepivsB[, PIVs_stable, drop = FALSE]))
-  iA <- as.integer(select[, 1])
-  iB <- as.integer(select[, 2])
-  nPairs <- nrow(select)
-
   pLink <- rep(gamma, nA)
 
-  # Contribution to the log-likelihood if a record from A is NOT linked
-  # (named-column access: no data-frame row subsetting in the hot path)
-  LLA <- rep(0, nA)
-  for (k in seq_along(data$n_values)) {
-    logpTrue <- log(eta[[k]])[truepivsA[, k]]
-    pMissingA <- phi[[k]][3]
-    pTypoA <- (1 - pMissingA) * (1 - phi[[k]][1]) / (data$n_values[k] - 1)
-    pAgreeA <- (1 - pMissingA) * phi[[k]][1]
-    gA <- data$encodedA[[PIVs[k]]]
-    contr <- rep(pAgreeA, nA)
-    contr[gA != truepivsA[, k]] <- pTypoA
-    contr[gA == 0] <- pMissingA
-    LLA <- LLA + logpTrue + log(contr)
-  }
-
-  # Contribution to the log-likelihood if a record from B is NOT linked
-  LLB <- rep(0, nB)
-  for (k in seq_along(data$n_values)) {
-    logpTrue <- log(eta[[k]])[truepivsB[, k]]
-    pMissingB <- phi[[k]][4]
-    pTypoB <- (1 - pMissingB) * (1 - phi[[k]][2]) / (data$n_values[k] - 1)
-    pAgreeB <- (1 - pMissingB) * phi[[k]][2]
-    gB <- data$encodedB[[PIVs[k]]]
-    contr <- rep(pAgreeB, nB)
-    contr[gB != truepivsB[, k]] <- pTypoB
-    contr[gB == 0] <- pMissingB
-    LLB <- LLB + logpTrue + log(contr)
-  }
-
-  # Contribution to the log-likelihood if a candidate pair IS linked:
-  # a plain per-pair vector aligned with the rows of `select`. The former
-  # nA x nB sparse Matrix was never read beyond the candidate pairs, and its
-  # sub-assignment dominated the profile (PERF-PLAN §1).
-  LLLq <- numeric(nPairs)
-  for (k in seq_along(data$n_values)) {
-    HA <- truepivsA[iA, k]
-    HB <- truepivsB[iB, k]
-    logpTrue <- log(eta[[k]])[HA]
-    pMissingA <- phi[[k]][3]
-    pTypoA <- (1 - pMissingA) * (1 - phi[[k]][1]) / (data$n_values[k] - 1)
-    pAgreeA <- (1 - pMissingA) * phi[[k]][1]
-    pMissingB <- phi[[k]][4]
-    pTypoB <- (1 - pMissingB) * (1 - phi[[k]][2]) / (data$n_values[k] - 1)
-    pAgreeB <- (1 - pMissingB) * phi[[k]][2]
-    # Contribution to the likelihood of linked observation from A
-    gA <- data$encodedA[[PIVs[k]]][iA]
-    helpA <- rep(pAgreeA, nPairs)
-    helpA[gA != HA] <- pTypoA
-    helpA[gA == 0] <- pMissingA
-    # Contribution to the likelihood of linked observation from B
-    gB <- data$encodedB[[PIVs[k]]][iB]
-    helpB <- rep(pAgreeB, nPairs)
-    helpB[gB != HB] <- pTypoB
-    helpB[gB == 0] <- pMissingB
-
-    LLLq <- LLLq + logpTrue + log(helpA) + log(helpB)
-
-    # Add unstable part if unstable
-    if (!PIVs_stable[k]) {
-      times <- abs(data$encodedB[["date"]][iB] - data$encodedA[["date"]][iA])
-      cov_k <- cbind(rep(1, nPairs))
-      for (nm in data$PIVs_config[[k]]$cond_hazard_cov$covA) cov_k <- cbind(cov_k, data$encodedA[[nm]][iA])
-      for (nm in data$PIVs_config[[k]]$cond_hazard_cov$covB) cov_k <- cbind(cov_k, data$encodedB[[nm]][iB])
-      pSameH <- model_dynamics$S(cov_k, alpha[[k]], times)
-      helpH <- pSameH^(HA == HB) * ((1 - pSameH) / (data$n_values[k] - 1))^(HA != HB)
-      LLLq <- LLLq + log(helpH)
-    }
-  }
+  # Complete-data log-likelihood pieces in one C++ pass over the records and
+  # candidate pairs (was: three R vector passes per PIV with ~10 full-size
+  # temporaries each — the profile's dominant cost; PERF-PLAN §8, Phase 3a).
+  # Custom survival models keep working: pairLogLik assembles the covariate
+  # matrix and times in C++ and calls model_dynamics$S once per unstable PIV.
+  covA_names <- lapply(data$PIVs_config, function(x) if (is.null(x$cond_hazard_cov$covA)) character(0) else x$cond_hazard_cov$covA)
+  covB_names <- lapply(data$PIVs_config, function(x) if (is.null(x$cond_hazard_cov$covB)) character(0) else x$cond_hazard_cov$covB)
+  lik <- pairLogLik(select, truepivsA, truepivsB, data$encodedA, data$encodedB,
+                    PIVs, PIVs_stable, data$n_values, eta, phi, alpha,
+                    covA_names, covB_names, model_dynamics$S)
+  LLA <- lik$LLA
+  LLB <- lik$LLB
+  LLLq <- lik$LLLq
 
   if (anyNA(LLLq)) {
     warning("Some entries of the linkage log-likelihood vector are NA.", call. = FALSE)
