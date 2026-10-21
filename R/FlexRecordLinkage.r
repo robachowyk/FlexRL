@@ -549,13 +549,16 @@ simulateD <- function(data, linksR, truepivsA, truepivsB, gamma, eta, alpha, phi
   # Complete-data log-likelihood pieces in one C++ pass over the records and
   # candidate pairs (was: three R vector passes per PIV with ~10 full-size
   # temporaries each — the profile's dominant cost; PERF-PLAN §8, Phase 3a).
-  # Custom survival models keep working: pairLogLik assembles the covariate
-  # matrix and times in C++ and calls model_dynamics$S once per unstable PIV.
+  # S evaluation goes through survival_S(): built-in survival models use the
+  # fused, parallel C++ kernel (survivalS_cpp); custom models keep the user's
+  # R function. The dispatcher is passed as `S` so pairLogLik needs no
+  # knowledge of the model family.
+  Sfun <- function(X, alpha, times) survival_S(model_dynamics, X, alpha, times, threads)
   covA_names <- lapply(data$PIVs_config, function(x) if (is.null(x$cond_hazard_cov$covA)) character(0) else x$cond_hazard_cov$covA)
   covB_names <- lapply(data$PIVs_config, function(x) if (is.null(x$cond_hazard_cov$covB)) character(0) else x$cond_hazard_cov$covB)
   lik <- pairLogLik(select, truepivsA, truepivsB, data$encodedA, data$encodedB,
                     PIVs, PIVs_stable, data$n_values, eta, phi, alpha,
-                    covA_names, covB_names, model_dynamics$S, threads)
+                    covA_names, covB_names, Sfun, threads)
   LLA <- lik$LLA
   LLB <- lik$LLB
   LLLq <- lik$LLLq
@@ -760,6 +763,10 @@ survival_S <- function(model, X, alpha, times, threads = 1) {
   if (model$type == "custom") {
     return(model$S(X, alpha, times))
   }
+  # The R closures take X through as.matrix() inside ph(); the C++ kernel
+  # needs a real matrix. Callers build X with cbind() over data-frame
+  # columns, which yields a data frame.
+  X <- as.matrix(X)
   cuts <- if (is.null(model$cuts)) numeric(0) else as.numeric(model$cuts)
   survivalS_cpp(X, alpha, times, model$type, cuts, threads)
 }
@@ -1041,7 +1048,7 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
         cov_k <- cbind(intercept,
                        encodedA[linksR[, 1], PIVs_conditionalHazardVariables[[k]]$covA, drop = FALSE],
                        encodedB[linksR[, 2], PIVs_conditionalHazardVariables[[k]]$covB, drop = FALSE])
-        survivalpSameH[, k] <- model_dynamics$S(cov_k, alpha[[k]], times)
+        survivalpSameH[, k] <- survival_S(model_dynamics, cov_k, alpha[[k]], times, threads)
       }
     }
     list(linksCpp = linksCpp, linksR = linksR, sumRowD = Dsample$sumRowD, sumColD = Dsample$sumColD,
