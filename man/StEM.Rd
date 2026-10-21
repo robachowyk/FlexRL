@@ -17,7 +17,8 @@ StEM(
   phiA0 = NULL,
   phiB0 = NULL,
   n_post_sample = 1000,
-  model_dynamics = survival_model("exponential")
+  model_dynamics = survival_model("exponential"),
+  threads = 1
 )
 }
 \arguments{
@@ -65,6 +66,11 @@ not lowering it.}
 
 \item{model_dynamics}{Object from \code{\link[=survival_model]{survival_model()}}: the survival model
 for the change over time of the structured PIVs (default exponential).}
+
+\item{threads}{Integer, number of OpenMP threads used by the C++ Gibbs
+kernels for their per-pair loops (default 1 = sequential). Results are
+identical for any value. Ignored — the code runs sequentially — if the
+package was built without OpenMP support.}
 }
 \value{
 A list with: \code{Delta} sparse-matrix summary (\code{i}, \code{j}, \code{x}) of

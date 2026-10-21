@@ -15,7 +15,8 @@ simulateD(
   eta,
   alpha,
   phi,
-  model_dynamics = survival_model("exponential")
+  model_dynamics = survival_model("exponential"),
+  threads = 1
 )
 }
 \arguments{
@@ -48,6 +49,10 @@ smaller file.}
 
 \item{model_dynamics}{Object from \code{\link[=survival_model]{survival_model()}} giving the survival
 function of the structured PIVs.}
+
+\item{threads}{Integer, number of OpenMP threads for the C++ per-pair
+likelihood loops (default 1 = sequential; identical results for any
+value; ignored if the package was built without OpenMP).}
 }
 \value{
 A list (\code{Dsample}, Rcpp \code{sampleD()} output) with: \code{links} updated set
