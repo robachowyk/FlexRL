@@ -115,7 +115,6 @@ tiny_exact_posterior <- function(pars = tiny_pars()) {
 tiny_gibbs_frequencies <- function(n_sweeps, thin = 1L, pars = tiny_pars()) {
   data <- tiny_data(pars)
   mod  <- tiny_model()
-  FlexRL:::initDeltaMap()   # the C++ link map is global state: reset before use
   eta   <- list(pars$eta)
   phi   <- list(pars$phi)
   alpha <- list(0)
@@ -134,7 +133,7 @@ tiny_gibbs_frequencies <- function(n_sweeps, thin = 1L, pars = tiny_pars()) {
   counts <- new.env(parent = emptyenv())
   for (s in seq_len(n_sweeps)) {
     h <- simulateH(data, linksCpp, survivalpSameH, sumRowD, sumColD, eta, phi)
-    d <- simulateD(data, linksR, sumRowD, sumColD, h$truepivsA, h$truepivsB,
+    d <- simulateD(data, linksR, h$truepivsA, h$truepivsB,
                    gamma, eta, alpha, phi, mod)
     linksCpp <- d$links
     linksR   <- linksCpp + 1L

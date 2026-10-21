@@ -12,8 +12,11 @@
   `sampleL()` takes `(survivalpSameH, nval, phikA, phikB, eta, unif)` and
   returns the joint (H^A, H^B) matrix; `sampleD()` no longer takes `loglik`
   (it reconstructs the value, which cancels in every acceptance ratio) and
-  returns `linksQ`. Random streams are not comparable to <= 1.0.0 seeds:
-  results for a given `set.seed()` differ, distributions do not.
+  returns `linksQ`; `sampleD()`/`simulateD()` now take the current `links`
+  (0-based) instead of `sumRowD`/`sumColD` and derive the linked-record flags
+  themselves, so the global C++ link map — and with it `initDeltaMap()` and
+  `Deltafind()` — is gone. Random streams are not comparable to <= 1.0.0
+  seeds: results for a given `set.seed()` differ, distributions do not.
 - OpenMP: the per-pair likelihood loops in the Gibbs kernels are parallelised;
   new `threads` argument on `StEM()` (default 1 = sequential). Results are
   bitwise identical for any thread count. The package still builds — and runs

@@ -294,26 +294,32 @@ golden_build_state <- function(id, prep) {
 #'   ll0_internal (baseline only) the value simulateD computed internally
 #'   ll0_pairs   (optimised only) log_lik_pairs() on the state (vector route)
 golden_capture_artifacts <- function(state) {
-  FlexRL:::initDeltaMap()
   simD <- FlexRL:::simulateD
   captured <- new.env(parent = emptyenv())
   # Variant-specific signature: simulateD() passes every argument positionally,
   # so only a shim whose formals match the caller's signature binds them.
   #   baseline : sampleD(S, LLA, LLB, LLL, gamma, loglik, nlinkrec, sumRowD, sumColD)
-  #   optimised: sampleD(S, LLA, LLB, LLL, gamma, nlinkrec, sumRowD, sumColD)
+  #   optimised: sampleD(S, LLA, LLB, LLL, gamma, nlinkrec, links)
   shim <- if (golden_is_new()) {
-    function(S, LLA, LLB, LLL, gamma, nlinkrec, sumRowD, sumColD) {
+    function(S, LLA, LLB, LLL, gamma, nlinkrec, links) {
       captured$S <- S
       captured$LLA <- LLA
       captured$LLB <- LLB
       captured$LLL <- LLL
       captured$gamma <- gamma
       captured$ll0_internal <- NULL
-      # Self-consistent loglik for the returned empty-links state: the ll_check
-      # inside simulateD() then compares equal values and does not stop.
-      ll <- FlexRL:::log_lik_pairs(LLL, LLA, LLB, integer(0), 0L, sumRowD, sumColD, gamma)
+      # The linked-record flags the sampler would derive from `links` (the
+      # shim fakes an empty-links result, so the ll_check inside simulateD()
+      # compares equal values and does not stop).
+      rowD <- rep(FALSE, length(LLA))
+      colD <- rep(FALSE, length(LLB))
+      if (nrow(links) > 0) {
+        rowD[links[, 1] + 1L] <- TRUE
+        colD[links[, 2] + 1L] <- TRUE
+      }
+      ll <- FlexRL:::log_lik_pairs(LLL, LLA, LLB, integer(0), 0L, rowD, colD, gamma)
       list(links = matrix(0L, 0L, 2L), linksQ = integer(0),
-           sumRowD = sumRowD, sumColD = sumColD, loglik = ll, nlinkrec = 0L)
+           sumRowD = rowD, sumColD = colD, loglik = ll, nlinkrec = 0L)
     }
   } else {
     function(S, LLA, LLB, LLL, gamma, loglik, nlinkrec, sumRowD, sumColD) {
@@ -332,8 +338,8 @@ golden_capture_artifacts <- function(state) {
   assign("sampleD", shim, envir = myenv)
   environment(simD) <- myenv
   Dsample <- simD(
-    data = state$data, linksR = state$linksR, sumRowD = state$sumRowD,
-    sumColD = state$sumColD, truepivsA = state$truepivsA, truepivsB = state$truepivsB,
+    data = state$data, linksR = state$linksR,
+    truepivsA = state$truepivsA, truepivsB = state$truepivsB,
     gamma = state$gamma, eta = state$eta, alpha = state$alpha, phi = state$phi,
     model_dynamics = golden_model(state$model_spec)
   )
@@ -379,7 +385,6 @@ golden_run_cloud <- function(problem) {
   out <- list()
   for (s in GOLDEN_SEEDS) {
     set.seed(s)
-    FlexRL:::initDeltaMap()
     fit <- FlexRL::StEM(
       data = problem$prep,
       StEM_iter = problem$StEM_iter, StEM_burnin = problem$StEM_burnin,

@@ -24,7 +24,6 @@ test_that("a Gibbs run with no stable PIVs visits several link configs", {
   source("helper-data.R", local = TRUE)
   pars <- tiny_pars()
   data <- tiny_data(pars); mod <- tiny_model()
-  FlexRL:::initDeltaMap()
   eta <- list(pars$eta); phi <- list(pars$phi); alpha <- list(0); gamma <- pars$gamma
   linksR <- matrix(integer(0), 0, 2)
   sumRowD <- rep(0L, 2L); sumColD <- rep(0L, 3L)
@@ -33,7 +32,7 @@ test_that("a Gibbs run with no stable PIVs visits several link configs", {
   linksCpp <- matrix(integer(0), 0, 2)
   for (s in 1:500) {
     h <- simulateH(data, linksCpp, survivalpSameH, sumRowD, sumColD, eta, phi)
-    d <- simulateD(data, linksR, sumRowD, sumColD, h$truepivsA, h$truepivsB,
+    d <- simulateD(data, linksR, h$truepivsA, h$truepivsB,
                    gamma, eta, alpha, phi, mod)
     linksCpp <- d$links
     linksR <- linksCpp + 1L; sumRowD <- d$sumRowD; sumColD <- d$sumColD

@@ -411,7 +411,6 @@ log_lik_pairs <- function(LLLq, LLA, LLB, linksQ, n_links, sumRowD, sumColD, gam
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
 #' PIVs_stable <- sapply(data_StEM$PIVs_config, function(x)
 #'                         x$dynamics != "structured")
-#' FlexRL:::initDeltaMap()
 #' linksR = base::matrix(0,0,2)
 #' linksCpp = linksR
 #' sumRowD = rep(0, nrow(data_StEM$encodedA))
@@ -459,10 +458,6 @@ simulateH <- function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi) {
 #'   `same_mistakes`; see [StEM()].
 #' @param linksR 2-column matrix (1-indexed) of the currently linked (A, B)
 #'   indices.
-#' @param sumRowD Logical vector, one entry per record in A: does it form a
-#'   link?
-#' @param sumColD Logical vector, one entry per record in B: does it form a
-#'   link?
 #' @param truepivsA Matrix of true PIV values, as returned by [simulateH()].
 #' @param truepivsB Matrix of true PIV values, as returned by [simulateH()].
 #' @param gamma Numeric, proportion of linked records as a fraction of the
@@ -511,7 +506,6 @@ simulateH <- function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi) {
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
 #' PIVs_stable <- sapply(data_StEM$PIVs_config, function(x)
 #'                         x$dynamics != "structured")
-#' FlexRL:::initDeltaMap()
 #' linksR = base::matrix(0,0,2)
 #' linksCpp = linksR
 #' sumRowD = rep(0, nrow(data_StEM$encodedA))
@@ -536,12 +530,12 @@ simulateH <- function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi) {
 #'                         sumRowD=sumRowD, sumColD=sumColD, eta=eta, phi=phi)
 #' truepivsA = newTruePivs$truepivsA
 #' truepivsB = newTruePivs$truepivsB
-#' Dsample = simulateD(data=data_StEM, linksR=linksR, sumRowD=sumRowD,
-#'                    sumColD=sumColD, truepivsA=truepivsA, truepivsB=truepivsB,
+#' Dsample = simulateD(data=data_StEM, linksR=linksR,
+#'                    truepivsA=truepivsA, truepivsB=truepivsB,
 #'                    gamma=gamma, eta=eta, alpha=alpha, phi=phi)
 #' linksCpp = Dsample$links
 #' linksR = linksCpp + 1
-simulateD <- function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamma, eta, alpha, phi,
+simulateD <- function(data, linksR, truepivsA, truepivsB, gamma, eta, alpha, phi,
                       model_dynamics = survival_model("exponential"), threads = 1) {
   PIVs <- names(data$PIVs_config)
   PIVs_stable <- sapply(data$PIVs_config, function(x) x$dynamics != "structured")
@@ -574,7 +568,10 @@ simulateD <- function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamm
     warning("Some entries of the linkage log-likelihood vector are NA.", call. = FALSE)
   }
 
-  Dsample <- sampleD(select, LLA, LLB, LLLq, pLink, as.integer(nrow(linksR)), sumRowD > 0, sumColD > 0)
+  # Current link state in 0-based form for sampleD (linksR is 1-based and may
+  # be a 0x2 double matrix when nothing is linked yet).
+  links0 <- matrix(as.integer(linksR) - 1L, ncol = 2)
+  Dsample <- sampleD(select, LLA, LLB, LLLq, pLink, as.integer(nrow(linksR)), links0)
   linksR <- Dsample$links + 1
 
   # Sanity check: recomputed log-likelihood should match the sampler's own value.
@@ -1005,7 +1002,7 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
   gibbs_step <- function(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma, eta, alpha, phi, threads = 1) {
     newTruePivs <- simulateH(data = data, links = linksCpp, survivalpSameH = survivalpSameH,
                              sumRowD = sumRowD, sumColD = sumColD, eta = eta, phi = phi)
-    Dsample <- simulateD(data = data, linksR = linksR, sumRowD = sumRowD, sumColD = sumColD,
+    Dsample <- simulateD(data = data, linksR = linksR,
                          truepivsA = newTruePivs$truepivsA, truepivsB = newTruePivs$truepivsB,
                          gamma = gamma, eta = eta, alpha = alpha, phi = phi,
                          model_dynamics = model_dynamics, threads = threads)
@@ -1056,9 +1053,8 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
 
   for (iter in seq_len(StEM_iter)) {
 
-    initDeltaMap()
     linksR <- matrix(0, 0, 2)
-    linksCpp <- linksR
+    linksCpp <- matrix(integer(0), 0, 2)
     sumRowD <- rep(0, nrow(encodedA))
     sumColD <- rep(0, nrow(encodedB))
     nlinkrec <- 0

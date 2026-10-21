@@ -8,8 +8,9 @@
 #    `sumRowD > 0` with a single A record), R hands over its interned
 #    TRUE/FALSE constant, so the write corrupted R's global constant:
 #    R signalled "internal FALSE value has been modified" and afterwards
-#    `1 > 2` evaluated to TRUE session-wide. Fixed by cloning the
-#    arguments inside sampleD (src/FlexRLfunctions.cpp).
+#    `1 > 2` evaluated to TRUE session-wide. Fixed in the flat-link rewrite
+#    by removing the reference parameters altogether (the link state is
+#    returned, never written through an argument).
 #
 # 2. Matrix::Matrix(0, n, n, sparse = TRUE) returns a diagonalMatrix for
 #    square inputs. Matrix::summary() of a diagonalMatrix is a diagSummary
@@ -39,18 +40,22 @@ test_that("StEM rejects hand-edited encoded data (NA in a PIV column) with a cle
 
 test_that("sampleD does not write through scalar logical arguments", {
   x <- rep(0, 1)
-  FlexRL:::initDeltaMap()
-  # One candidate pair and a near-certain link: the C++ code sets
-  # sumRowD(0) = TRUE, which pre-fix corrupted R's interned FALSE.
+  # One candidate pair and a near-certain link: the link is accepted and
+  # reported back through the returned sumRowD/sumColD.
   d <- FlexRL:::sampleD(
     matrix(1L, 1, 2), LLA = -1, LLB = -1, LLL = 100, gamma = 0.99,
-    nlinkrec = 0L, sumRowD = x > 0, sumColD = c(FALSE, FALSE, FALSE)
+    nlinkrec = 0L, links = matrix(integer(0), 0, 2)
   )
   # Functionality preserved: the accepted link is reported back.
   expect_true(isTRUE(d$sumRowD[1]))
   expect_true(isTRUE(d$sumColD[1]))
+  expect_identical(d$links, matrix(0L, 1, 2))  # 0-based: records 1 and 1 linked
   # The caller's own object is untouched and, crucially, R's global
-  # interned constants are uncorrupted.
+  # interned constants are uncorrupted. (Historically sampleD took
+  # LogicalVector& arguments and a length-1 logical input handed over R's
+  # interned FALSE, which the write corrupted session-wide; the flat-link
+  # rewrite removed the reference parameters entirely — this canary guards
+  # against any regression to that failure mode.)
   expect_identical(x > 0, FALSE)
   expect_false(1 > 2)
 })

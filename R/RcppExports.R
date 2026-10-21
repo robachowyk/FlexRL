@@ -17,20 +17,12 @@ pasteIntoPattern <- function(A) {
     .Call(`_FlexRL_pasteIntoPattern`, A)
 }
 
-initDeltaMap <- function() {
-    invisible(.Call(`_FlexRL_initDeltaMap`))
-}
-
-Deltafind <- function() {
-    .Call(`_FlexRL_Deltafind`)
-}
-
 pairLogLik <- function(select, truepivsA, truepivsB, encodedA, encodedB, PIVs, PIVs_stable, n_values, eta, phi, alpha, covA_names, covB_names, S, threads = 1L) {
     .Call(`_FlexRL_pairLogLik`, select, truepivsA, truepivsB, encodedA, encodedB, PIVs, PIVs_stable, n_values, eta, phi, alpha, covA_names, covB_names, S, threads)
 }
 
-sampleD <- function(S, LLA, LLB, LLL, gamma, nlinkrec, sumRowD, sumColD) {
-    .Call(`_FlexRL_sampleD`, S, LLA, LLB, LLL, gamma, nlinkrec, sumRowD, sumColD)
+sampleD <- function(S, LLA, LLB, LLL, gamma, nlinkrec, links) {
+    .Call(`_FlexRL_sampleD`, S, LLA, LLB, LLL, gamma, nlinkrec, links)
 }
 
 sampleNL <- function(G, eta, phi, unif) {

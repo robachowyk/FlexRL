@@ -264,50 +264,6 @@ using namespace Rcpp;
    return res;
  }
 
- std::map<int, std::set<int>> _DeltaMap;
-
- //' initDeltaMap
- //'
- //' @return void: Initialise the cpp map _DeltaMap representing the sparse linkage matrix Delta.
- //' @export
- // [[Rcpp::export]]
- void initDeltaMap()
- {
-   _DeltaMap = {};
- }
-
- //' Deltafind()
- //'
- //' @return IntegerMatrix: find the indices of the elements in the cpp map _DeltaMap representing the sparse linkage matrix Delta.
- //' @export
- // [[Rcpp::export]]
- IntegerMatrix Deltafind()
- {
-   // Count total number of links
-   int length = 0;
-   for(const auto & rowColSet: _DeltaMap)
-   {
-     length += rowColSet.second.size();
-   }
-   IntegerMatrix found(length, 2);
-   int index = 0;
-   // Flatten the map
-   for(const auto & rowColSet: _DeltaMap)
-   {
-
-     for (int c : rowColSet.second)
-     {
-       found(index,0)   = rowColSet.first;
-       found(index++,1) = c;
-     }
-   }
-   if(index != length)
-   {
-     Rcpp::stop("Something went wrong creating Δ.");
-   }
-   return found;
- }
-
  //' pairLogLik
  //'
  //' Compute the complete-data log-likelihood pieces for the D-sweep in a single
@@ -498,12 +454,15 @@ using namespace Rcpp;
  //' @param LLL NumericVector gives the likelihood contribution of each potential linked records (from select)
  //' @param gamma NumericVector repeats the value of the parameter gamma (proportion of linked records) number of potential linked records (nrow of S) times
  //' @param nlinkrec integer for the current number of linked records
- //' @param sumRowD A LogicalVector vector indicating, for each row of the linkage matrix, i.e. for each record in the smallest file A, whether the record has a link in B or not.
- //' @param sumColD A LogicalVector vector indicating, for each column of the linkage matrix, i.e. for each record in the largest file B, whether the record has a link in A or not.
- //'
+ //' @param links IntegerMatrix (0-based, k x 2) of the currently linked (A, B)
+ //'   record pairs — exactly the `links` element sampleD returned at the
+ //'   previous sweep (or a 0x2 matrix when nothing is linked yet). Replaces the
+ //'   former global C++ link map: the one-to-one link state now lives in flat
+ //'   partner arrays local to this call, so there is no cross-call global
+ //'   state to reset.
  //' @return
  //' List:
- //' - new set of links
+ //' - new set of links (0-based, ordered by ascending A index)
  //' - linksQ: 1-based row indices in S of the finally linked pairs (same set as
  //'   `links`, unordered) — lets R look up their LLL contributions without a
  //'   sparse-matrix lookup
@@ -519,17 +478,26 @@ using namespace Rcpp;
               const NumericVector & LLL,
               const NumericVector & gamma,
               int nlinkrec,
-              LogicalVector & sumRowD,
-              LogicalVector & sumColD)
+              const IntegerMatrix & links)
  {
-   // Work on copies: when a caller passes a length-1 logical (e.g. the result
-   // of a scalar comparison), R hands us its interned TRUE/FALSE constant and
-   // writing through the reference corrupts R's global constant (seen as
-   // "internal FALSE value has been modified" and flipped comparison results
-   // session-wide, e.g. `1 > 2` evaluating to TRUE).
-   LogicalVector rowD = Rcpp::clone(sumRowD);
-   LogicalVector colD = Rcpp::clone(sumColD);
    int nB = LLB.length();
+   int nA = LLA.length();
+   // Flat one-to-one link state: linkOfA[i] = 0-based B partner of A-record i
+   // (or -1), and symmetrically linkOfB[j]. Replaces the former global
+   // std::map<int, std::set<int>> _DeltaMap: the scan's linked test becomes a
+   // single array read, insert/erase are O(1) stores with no node allocation,
+   // and the map's global state (which needed initDeltaMap() resets and made
+   // the sampler thread-hostile) is gone. Initialised from the `links`
+   // argument — the same matrix sampleD returned at the previous sweep.
+   std::vector<int> linkOfA(nA, -1), linkOfB(nB, -1);
+   for (int r = 0; r < links.nrow(); r++)
+   {
+     int ia = links(r, 0), ib = links(r, 1);
+     if (ia < 0 || ia >= nA || ib < 0 || ib >= nB)
+       Rcpp::stop("sampleD: `links` references record indices outside 0..n-1.");
+     linkOfA[ia] = ib;
+     linkOfB[ib] = ia;
+   }
    // The acceptance probability of every flip reduces to
    //   pswitch = exp(delta) / (1 + exp(delta)),
    // with delta the pair's own log-likelihood change: the running log-likelihood
@@ -539,17 +507,17 @@ using namespace Rcpp;
    // + sum of LLL over finally-linked pairs (accumulated during the scan)
    // + sum of the deltas of accepted flips.
    double loglik = 0.0;
-   for (int i = 0; i < rowD.length(); i++)
-     loglik += rowD(i) ? log(gamma(i)) : log(1-gamma(i));
+   for (int i = 0; i < nA; i++)
+     loglik += linkOfA[i] >= 0 ? log(gamma(i)) : log(1-gamma(i));
    for (int r = 0; r < nlinkrec; r++)
      loglik -= log(nB - r);
    // Sum the unlinked-record contributions over the overlap of the record and
    // likelihood vectors (equal lengths in the normal pipeline; the overlap
    // guard only tolerates degenerate direct calls, e.g. scalar LLA/LLB).
-   int nAterm = LLA.length() < (int)rowD.length() ? (int)LLA.length() : (int)rowD.length();
-   for (int i = 0; i < nAterm; i++) if (!rowD(i)) loglik += LLA(i);
-   int nBterm = LLB.length() < (int)colD.length() ? (int)LLB.length() : (int)colD.length();
-   for (int j = 0; j < nBterm; j++) if (!colD(j)) loglik += LLB(j);
+   int nAterm = LLA.length() < nA ? LLA.length() : nA;
+   for (int i = 0; i < nAterm; i++) if (linkOfA[i] < 0) loglik += LLA(i);
+   int nBterm = LLB.length() < nB ? LLB.length() : nB;
+   for (int j = 0; j < nBterm; j++) if (linkOfB[j] < 0) loglik += LLB(j);
    double llLinked = 0.0;
    double llDelta = 0.0;
    std::vector<int> linkedQ;
@@ -559,7 +527,7 @@ using namespace Rcpp;
      int i = S(q,0)-1;
      int j = S(q,1)-1;
      // If non-linked -> possibly becomes linked
-     if((rowD(i)==false) && (colD(j)==false))
+     if((linkOfA[i] < 0) && (linkOfB[j] < 0))
      {
        // Non-LLL part of the log-likelihood change if this pair were linked.
        // The full delta (used for the acceptance ratio) also carries + LLL(q);
@@ -575,15 +543,14 @@ using namespace Rcpp;
        bool link = drawUniform01()  < pswitch;
        if(link)
        {
-         _DeltaMap[i].insert(j);
-         rowD(i) = true;
-         colD(j) = true;
+         linkOfA[i] = j;
+         linkOfB[j] = i;
          nlinkrec = nlinkrec + 1;
          llDelta += delta;
          llLinked += LLL(q);
          linkedQ.push_back(q + 1);
        }
-     }else if(_DeltaMap.count(i) && _DeltaMap.at(i).count(j))
+     }else if(linkOfA[i] == j)
      {
        // If linked -> possibly becomes non-linked (analog). The full delta
        // carries - LLL(q); the pair's LLL was never added to llLinked, so the
@@ -597,10 +564,8 @@ using namespace Rcpp;
        bool nolink = drawUniform01()  < pswitch;
        if(nolink)
        {
-         if(_DeltaMap.count(i) && _DeltaMap[i].count(j))
-           _DeltaMap[i].erase(j);
-         rowD(i) = false;
-         colD(j) = false;
+         linkOfA[i] = -1;
+         linkOfB[j] = -1;
          nlinkrec = nlinkrec - 1;
          llDelta += delta;
        }else
@@ -612,11 +577,29 @@ using namespace Rcpp;
      }
    }
    loglik += llLinked + llDelta;
-   // Convert the updated sparse linkage map into the (idxA, idxB) matrix form
-   IntegerMatrix links=Deltafind();
+   // Materialise the updated links: a linear pass over linkOfA, ascending in
+   // i — the same ordering Deltafind()'s in-order map iteration produced.
+   int nlinks = 0;
+   for (int i = 0; i < nA; i++) if (linkOfA[i] >= 0) nlinks++;
+   IntegerMatrix linksOut(nlinks, 2);
+   int w = 0;
+   for (int i = 0; i < nA; i++)
+   {
+     if (linkOfA[i] >= 0)
+     {
+       linksOut(w, 0) = i;
+       linksOut(w++, 1) = linkOfA[i];
+     }
+   }
+   // Linked-record flags rebuilt from the flat state (logical vectors, one
+   // entry per record in A / B).
+   LogicalVector rowD(nA);
+   for (int i = 0; i < nA; i++) rowD(i) = linkOfA[i] >= 0;
+   LogicalVector colD(nB);
+   for (int j = 0; j < nB; j++) colD(j) = linkOfB[j] >= 0;
    // Return to R
    List ret;
-   ret["links"] = links;
+   ret["links"] = linksOut;
    ret["linksQ"] = wrap(linkedQ);
    ret["sumRowD"] = rowD;
    ret["sumColD"] = colD;

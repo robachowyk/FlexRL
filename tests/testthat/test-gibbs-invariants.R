@@ -16,11 +16,10 @@ test_that("Gibbs sweeps keep the linkage one-to-one at all times", {
   sumColD  <- rep(0L, nrow(data$encodedB))
   survivalpSameH <- matrix(1, 0, length(PIVs))
   mod <- survival_model("exponential")
-  FlexRL:::initDeltaMap()   # the C++ link map is global state: reset before use
   set.seed(31)
   for (s in 1:50) {
     h <- simulateH(data, linksCpp, survivalpSameH, sumRowD, sumColD, eta, phi)
-    d <- simulateD(data, linksR, sumRowD, sumColD, h$truepivsA, h$truepivsB,
+    d <- simulateD(data, linksR, h$truepivsA, h$truepivsB,
                    gamma, eta, alpha, phi, mod)
     linksCpp <- d$links
     linksR   <- linksCpp + 1L
@@ -58,7 +57,7 @@ test_that("StEM Delta output is a valid posterior summary", {
   hi <- d[d$x > 0.5, ]
   expect_false(any(duplicated(hi$i)))
   expect_false(any(duplicated(hi$j)))
-  # reproducibility under a fixed seed (also exercises initDeltaMap() reset)
+  # reproducibility under a fixed seed
   expect_identical(fit1$Delta, fit2$Delta)
 
   # posterior mass per A-record must not exceed 1
