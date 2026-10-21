@@ -8,13 +8,20 @@
 # loading FlexRL at all.
 #
 # Usage:
-#   R_LIBS=<baseline lib> Rscript review/verify-parity.R old  [outdir]
-#   R_LIBS=<current lib>  Rscript review/verify-parity.R new  [outdir]
-#   Rscript review/verify-parity.R compare [outdir]           (no FlexRL load)
+#   R_LIBS=<baseline lib> Rscript review/verify-parity.R old  [outdir] [label]
+#   R_LIBS=<current lib>  Rscript review/verify-parity.R new  [outdir] [label]
+#   Rscript review/verify-parity.R compare [outdir] [oldlabel] [newlabel]
+#                                                                     (no FlexRL load)
 #
 # The variant is detected at runtime ("unif" %in% names(formals(sampleNL))) and
 # must match the requested mode. Default outdir: ../FlexRL-bench/parity next to
 # the repo.
+#
+# The optional label names the build behind a dump: run modes write
+# dump-<label>.rds (default label = the mode name, i.e. today's behaviour);
+# compare mode reads dump-<oldlabel>.rds vs dump-<newlabel>.rds (default
+# old/new). This lets e.g. the upstream master build stand in for the baseline
+# (`old` mode, label "master") without touching the default invocations.
 #
 # Sections (see review/PERF-PLAN.md §6):
 #   A. harness sanity      — simulate_data()/prepare_data() outputs, pure R-RNG
@@ -38,7 +45,7 @@
 # ----------------------------------------------------------------------------
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) < 1) stop("usage: verify-parity.R old|new|compare [outdir]")
+if (length(args) < 1) stop("usage: verify-parity.R old|new|compare [outdir] [label | newlabel oldlabel]")
 mode <- args[1]
 stopifnot(mode %in% c("old", "new", "compare"))
 a <- commandArgs(trailingOnly = FALSE)
@@ -46,6 +53,12 @@ f <- grep("^--file=", a, value = TRUE)
 repo <- if (length(f)) normalizePath(file.path(dirname(sub("^--file=", "", f[1])), "..")) else normalizePath(".")
 outdir <- if (length(args) >= 2) args[2] else file.path(repo, "..", "FlexRL-bench", "parity")
 dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
+# Output label: names the build behind a dump (run modes write dump-<label>.rds,
+# default = the mode name; compare reads dump-<oldlabel>.rds vs
+# dump-<newlabel>.rds, default old/new). See the usage header above.
+label <- if (mode != "compare" && length(args) >= 3) args[3] else mode
+oldlabel <- if (mode == "compare" && length(args) >= 3) args[3] else "old"
+newlabel <- if (mode == "compare" && length(args) >= 4) args[4] else "new"
 
 # helper-data.R / helper-golden.R are pure definitions: sourceable without
 # FlexRL (the compare step uses their state/cloud helpers and the exact
@@ -79,7 +92,8 @@ parity_align_lll <- function(old_df, new_df) {
 ## ------------------------------------------------------------------- main
 
 if (mode != "compare") {
-  dump <- list(mode = mode, variant = if (golden_is_new()) "new" else "old",
+  dump <- list(mode = mode, label = label,
+               variant = if (golden_is_new()) "new" else "old",
                r_version = R.version.string,
                seeds = GOLDEN_SEEDS)
 
@@ -132,14 +146,14 @@ if (mode != "compare") {
   ## ---- D. StEM seed clouds -------------------------------------------------
   dump$clouds <- lapply(problems, golden_run_cloud)
 
-  saveRDS(dump, file.path(outdir, sprintf("dump-%s.rds", mode)))
-  cat(sprintf("verify-parity: mode=%s variant=%s -> %s\n", mode, dump$variant,
-              file.path(outdir, sprintf("dump-%s.rds", mode))))
+  saveRDS(dump, file.path(outdir, sprintf("dump-%s.rds", label)))
+  cat(sprintf("verify-parity: mode=%s label=%s variant=%s -> %s\n", mode, label, dump$variant,
+              file.path(outdir, sprintf("dump-%s.rds", label))))
 
 } else {
   ## ---------------------------------------------------------------- compare
-  old <- readRDS(file.path(outdir, "dump-old.rds"))
-  new <- readRDS(file.path(outdir, "dump-new.rds"))
+  old <- readRDS(file.path(outdir, sprintf("dump-%s.rds", oldlabel)))
+  new <- readRDS(file.path(outdir, sprintf("dump-%s.rds", newlabel)))
   report <- character(0)
   say <- function(...) {
     line <- sprintf(...)
@@ -147,8 +161,8 @@ if (mode != "compare") {
     cat(line, "\n")
   }
 
-  say("FlexRL parity report — old=%s (%s), new=%s (%s)",
-      old$variant, old$r_version, new$variant, new$r_version)
+  say("FlexRL parity report — A=%s [variant %s] vs B=%s [variant %s]",
+      oldlabel, old$variant, newlabel, new$variant)
   say("")
 
   ## A. sanity
@@ -220,10 +234,10 @@ if (mode != "compare") {
   tv_o <- 0.5 * sum(abs(eo - exact))
   tv_n <- 0.5 * sum(abs(en - exact))
   tv_on <- parity_tv(freqo, freqn)
-  say("   TV(old, exact)   = %.4f  (max cell %.4f)", tv_o, max(abs(eo - exact)))
-  say("   TV(new, exact)   = %.4f  (max cell %.4f)", tv_n, max(abs(en - exact)))
-  say("   TV(old, new)     = %.4f  (MC noise level: both are 10k-draw estimates)", tv_on)
-  say("   test tolerances: max cell 0.025, TV 0.05 vs exact; old-vs-new same order as MC error")
+  say("   TV(%s, exact)   = %.4f  (max cell %.4f)", oldlabel, tv_o, max(abs(eo - exact)))
+  say("   TV(%s, exact)   = %.4f  (max cell %.4f)", newlabel, tv_n, max(abs(en - exact)))
+  say("   TV(%s, %s)     = %.4f  (MC noise level: both are 10k-draw estimates)", oldlabel, newlabel, tv_on)
+  say("   test tolerances: max cell 0.025, TV 0.05 vs exact; same-implementation pairs differ by MC error only")
   c_ok <- tv_o < 0.05 && tv_n < 0.05 && max(abs(eo - exact)) < 0.025 &&
     max(abs(en - exact)) < 0.025 && tv_on < 0.05
   say("   -> stationary distribution: %s", if (c_ok) "PASS" else "FLAG (inspect)")
@@ -252,17 +266,20 @@ if (mode != "compare") {
     ok <- zmax_no <= 4 && zmax_on <= 4
     d_ok <- d_ok && ok
     say("   [%s] %s", if (ok) "PASS" else "FLAG", p)
-    say("      n links (Delta x>0.5): old %d-%d, new %d-%d",
-        min(nlo), max(nlo), min(nln), max(nln))
-    say("      max|z| new-vs-old-cloud = %.2f (%s) | old-vs-new-cloud = %.2f (%s)",
-        zmax_no, worst_no, zmax_on, worst_on)
-    say("      Delta Jaccard old-vs-old: mean %.3f sd %.3f min %.3f | old-vs-new: mean %.3f sd %.3f min %.3f",
-        mean(jo), stats::sd(jo), min(jo), mean(jn), stats::sd(jn), min(jn))
+    say("      n links (Delta x>0.5): %s %d-%d, %s %d-%d",
+        oldlabel, min(nlo), max(nlo), newlabel, min(nln), max(nln))
+    say("      max|z| %s-vs-%s-cloud = %.2f (%s) | %s-vs-%s-cloud = %.2f (%s)",
+        newlabel, oldlabel, zmax_no, worst_no, oldlabel, newlabel, zmax_on, worst_on)
+    say("      Delta Jaccard %s-vs-%s: mean %.3f sd %.3f min %.3f | %s-vs-%s: mean %.3f sd %.3f min %.3f",
+        oldlabel, oldlabel, mean(jo), stats::sd(jo), min(jo),
+        oldlabel, newlabel, mean(jn), stats::sd(jn), min(jn))
   }
   say("   -> seed clouds: %s", if (d_ok) "PASS" else "FLAG (inspect)")
   say("")
 
   overall <- sanity_ok && b_ok && c_ok && d_ok
   say("OVERALL: %s", if (overall) "PASS" else "ATTENTION NEEDED")
-  writeLines(report, file.path(outdir, "parity-compare.log"))
+  logfile <- if (oldlabel == "old" && newlabel == "new") "parity-compare.log" else
+    sprintf("parity-compare-%s-vs-%s.log", oldlabel, newlabel)
+  writeLines(report, file.path(outdir, logfile))
 }
