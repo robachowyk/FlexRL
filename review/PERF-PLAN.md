@@ -89,3 +89,83 @@ Corollary used later: `sampleD` does not actually need `loglik` as an *input* �
 it only accumulates it for output. The final value is reproducible from scratch
 as (matching + unlinked-record terms) + Σ LLL over finally-linked pairs + Σ
 deltas of accepted flips.
+
+## 3. Options for `sampleD`
+
+| Option | Per-pair scan cost | Sequential span | Exact? | Effort |
+|---|---|---|---|---|
+| today | ~6 transcendentals + 1 `runif` | O(n_pairs) | yes | — |
+| **C: precompute deltas, keep the serial scan** | 1 exp + 1 `runif` + flops (count term maintained incrementally) | O(n_pairs) — unchanged | yes — same kernel | hours |
+| **A: exact conflict-free batching** | proposal uniform + parallel reduction per batch; 1 acceptance uniform / batch | O(#batches) + O(n_pairs / cores) | yes — valid π-invariant block Metropolis | days |
+| B: stale-count parallel draws | as A | fully parallel | **no** — bias through the matching-count term | days |
+
+Notes:
+
+- **Option A details.** Color the pair-conflict graph (two candidate pairs
+  conflict when they share an A- or a B-record). Per pattern bucket the
+  candidate pairs form the edge set of K_{p,q}; edge-coloring gives batches by
+  `(rank_A + rank_B) mod max(|A|,|B|)`. Within a batch pairs are disjoint, so
+  flips cannot collide through feasibility; the only remaining coupling is
+  `nlinkrec`, whose joint contribution to a batch flip depends only on
+  `(k_add, k_rem, nlinkrec)`:
+      ΔLL(batch) = Σ_{q added} Δ_add(q) + Σ_{q removed} Δ_rem(q)
+                   − [logCfg(nlinkrec + k_add − k_rem) − logCfg(nlinkrec)]
+  with `logCfg(n) = Σ_{r<n} log(nB − r)`. Proposal: flip each actionable pair
+  w.p. ½ (symmetric — the actionable set is invariant within a conflict-free
+  batch); accept the whole batch with `min(1, exp(ΔLL))`. Per-pair deltas are
+  precomputed once per sweep in parallel.
+- **Option A risk:** #batches ≈ largest pattern-bucket size; heavily skewed
+  buckets (many records sharing one true stable pattern) erode the gain.
+- **Option B is rejected** for now: freezing `nlinkrec` per batch biases the
+  kernel, visibly on small `nB` (the tiny validation problem has nB = 3, where
+  the count term is huge). The package's selling point is exactness and
+  `test-exact-posterior.R` would flag it.
+- **Decision rule** (applied after Phases 1–2): implement A only if the
+  `sampleD` scan is still > 15–20% of total sweep time once the quick wins have
+  landed; otherwise the complexity is not worth single-digit-percent gains.
+
+## 4. Phased roadmap
+
+### Phase 1 — quick wins (single-threaded; distributions identical; RNG streams change)
+
+1. **Inverse-CDF categorical sampler fed by pre-drawn uniforms**, replacing
+   `Rcpp::sample()` per record/pair in `sampleNL` / `sampleL`. Uniforms are
+   drawn per sweep from R's RNG (sequential, `set.seed`-controlled) and passed
+   down into the kernels — also the prerequisite for threading (R's RNG is not
+   thread-safe).
+2. **Factorize `sampleL`.** Sample `H^A` from its O(nval) marginal
+      P(a) ∝ eta[a] · pGA(a|GA) · [S·pGB(a|GB) + (1−S)/(nval−1)·(1−pGB(a|GB))]
+   then `H^B | H^A` ∝ pjoint(a,b) · pGB(b|GB) — an exact factorization of the
+   same joint conditional (test-gibbs-conditionals' oracle still applies).
+   Per pair O(nval²) → O(nval); per-pair `NumericVector` allocations and the
+   `ExpandGrid` support grid disappear; `sampleL` returns the joint (H^A, H^B)
+   matrix directly.
+3. **Kill the nA×nB sparse `LLL`.** `simulateD` accumulates a plain per-pair
+   vector `LLLq` (one pass, no `Matrix` sub-assignment, single `anyNA`).
+   `sampleD` drops its `loglik` input and reconstructs the value from scratch
+   (§2 corollary), returning `linksQ` (q-indices of the final links) so the
+   R-side sanity check can recompute the likelihood without touching a sparse
+   matrix. The exported `log_lik()` keeps its signature (public API);
+   `simulateD` switches to an internal `log_lik_pairs()`.
+4. **`buildCandidatePairs()`.** One C++ call replacing the
+   `pasteIntoPattern → unique → factor → indexPatterns → pairPatterns` string
+   pipeline in `simulateD` (lexicographic tuple sort → deterministic bucket
+   order; handles the 0-column degenerate case). The old pipeline stays in
+   place for `naive_linkage()`.
+
+### Phase 2 — measure
+
+- `review/bench-stem.R`: fixed synthetic problem, end-to-end `StEM()` time plus
+  a per-kernel Rprof breakdown. Run before/after each phase; numbers recorded
+  in §8.
+- Apply the §3 decision rule for Option A.
+
+### Phase 3 — OpenMP (conditional on Phase 2)
+
+- `src/Makevars` with `$(SHLIB_OPENMP_CXXFLAGS)`; `threads` argument to
+  `StEM()` (default 1).
+- Parallel over records/pairs — exactly order-independent: `sampleNL`,
+  `sampleL`, `LLLq` construction, `buildCandidatePairs` bucket fill.
+- `sampleD` exact batching (Option A) if the decision rule triggered.
+- Uniforms still pre-drawn sequentially per sweep; thread↔slot assignment is
+  static → bit-reproducible run-to-run.
