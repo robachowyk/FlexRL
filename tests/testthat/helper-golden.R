@@ -140,6 +140,33 @@ golden_sort_pairs <- function(select) {
 
 golden_pair_key <- function(select) paste(select[, 1], select[, 2], sep = "_")
 
+## ------------------------------------------------------- tiny frequencies
+
+#' Total variation distance between two named frequency vectors (unobserved
+#' categories count as 0)
+golden_tv <- function(a, b) {
+  nms <- union(names(a), names(b))
+  a <- a[nms]
+  b <- b[nms]
+  a[is.na(a)] <- 0
+  b[is.na(b)] <- 0
+  0.5 * sum(abs(a - b))
+}
+
+#' Align an empirical tiny-problem frequency vector (keys as produced by
+#' tiny_gibbs_frequencies) with the 13 enumerated configurations; missing
+#' keys count as 0.
+golden_tiny_empirical <- function(freq) {
+  cfgs <- tiny_configs()
+  keys <- vapply(cfgs, function(cfg) {
+    if (length(cfg[[1]]) == 0) return("0")
+    paste(apply(cbind(cfg[[1]], cfg[[2]]), 1, paste, collapse = ">"), collapse = ";")
+  }, character(1))
+  v <- freq[match(keys, names(freq))]
+  v[is.na(v)] <- 0
+  v
+}
+
 ## ------------------------------------------------------------ fixed states
 
 #' Build a deterministic fixed state (data + latent true values + links +

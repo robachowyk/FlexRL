@@ -62,13 +62,7 @@ if (mode != "compare") {
 
 ## ---------------------------------------------------------------- helpers
 
-parity_tv <- function(a, b) {
-  nms <- union(names(a), names(b))
-  a <- a[nms]; b <- b[nms]
-  a[is.na(a)] <- 0
-  b[is.na(b)] <- 0
-  0.5 * sum(abs(a - b))
-}
+parity_tv <- golden_tv
 
 parity_align_lll <- function(old_df, new_df) {
   # align by (iA, iB) pair; report max |diff| and whether the pair sets match
