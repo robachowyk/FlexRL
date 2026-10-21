@@ -367,12 +367,66 @@ Baseline (branch `glm-parallel`, pre-change, R 4.6.1, bench scale 1):
          `buildCandidatePairs` 2.9%, `sampleH` 0.6%.
          Optional 3a+: compute S in C++ for the built-in models (saves the
          ~22% S-internal cost; custom user models keep the R callback).
-      2. [ ] **3b — OpenMP** over pairs/records for `pairLogLik` +
-         `sampleNL`/`sampleL` (order-independent, pre-drawn uniform slots);
-         `src/Makevars`, `threads` argument (default 1), CRAN guards.
-         Targets the 28% `pairLogLik` + 0.6% `sampleH`; memory-bound, so
-         expect ~3–6× on those parts, not 32×.
-      3. [ ] **3c — `_DeltaMap` restructure first, then re-run the Option A
-         decision rule**: the scan is now the top item (44.6%); std::map →
-         flat arrays / hash is likely 2–3× on it; only then does the exact
-         batch scheme become worth its complexity.
+      2. [x] **3b — OpenMP** — done in commits 2e59a0c + 5d3e924 (2026-10-21):
+         `src/Makevars`/`Makevars.win` pick up `$(SHLIB_OPENMP_CXXFLAGS)`
+         (empty where unsupported ⇒ still builds single-threaded); pragmas
+         guarded `#ifdef _OPENMP`; `threads` argument (default 1) on
+         `StEM()`/`simulateD()`/`pairLogLik()`, threaded through `gibbs_step`
+         and the post-sample Delta loop. Every pair writes its own slot, no
+         reductions ⇒ output bitwise identical for ANY thread count
+         (`test-threads.R`: threads=1 vs 2 StEM-identical). The R survival
+         callback stays outside the parallel regions. **Honest corrections
+         vs the plan text:** `sampleNL`/`sampleL` were NOT threaded (0.6% of
+         a sweep — pointless); measured scaling is DRAM-bandwidth-bound, not
+         3–6×: micro-bench on a fixed 97M-pair state gives stable-PIV pass
+         0.181 s (1 thread) → 0.096 s (32 threads) ≈ 50 GB/s — the machine's
+         memory wall; `pairLogLik` end-to-end ≈ 2.5–3× at 8 threads, capped
+         by the *sequential* `S()` R call (the scaling floor). End-to-end
+         (pre-3c state): 138.7 → 116.1 s (scale 10, 22 sweeps).
+      3. [x] **3c — `sampleD` restructure** — done in commits bc4e598 +
+         ba61ce8 (2026-10-21): the global `std::map<int, std::set<int>>
+         _DeltaMap` (+ `initDeltaMap()`/`Deltafind()`) is replaced by flat
+         0-based partner arrays (`linkOfA[i]`/`linkOfB[j]`) initialised from
+         a new `links` argument — O(1) linked-test/insert/erase, no global
+         state, identical link ordering; the map itself turned out to be
+         <1% of the scan (branch-2 pairs are only nlinks per sweep), the
+         real cost was per-pair transdendentals. So part 2 hoists the
+         loop-invariant logs (gamma is a scalar: `log γ`, `log(1-γ)` once;
+         `log(nB - nlinkrec)` maintained across flips) and moves the
+         per-pair non-LLL delta to a **parallel precompute pass** (the plan's
+         Option C), leaving the serial scan ≈ 1 exp + 1 uniform + branch.
+         Delta expressions keep the original association order ⇒ every
+         delta/pswitch/loglik value bitwise identical; only the RNG stream
+         position changes (uniform block per pair index; distributions
+         unchanged — goldens pass unchanged). Measured (scale 10, 22 sweeps,
+         threads=1): 136.4 → **95.1 s** (6.20 → 4.32 s/sweep, 1.43×);
+         scale 1: 2.60 → **2.27 s**. Profile (13-sweep canonical, threads=1):
+         `pairLogLik` **40.7%**, `sampleD` **19.8%** (was 44.6% — 3.1× on
+         the scan), S-internal (`as.vector`+`<Anonymous>`+`%*%`) **30.7%**,
+         `buildCandidatePairs` 4.2%, `sampleH` 0.9%.
+         **Profiling caveat discovered:** Rprof + OpenMP over-attributes
+         wall time — at threads=8 Rprof showed the run 1.6× SLOWER than
+         threads=1 while the unprofiled wall-clock is 1.3× faster (SIGPROF
+         lands in spin-waiting workers). Always profile OpenMP code at
+         threads=1 and verify parallel gains by wall-clock only.
+      4. [ ] **Re-run the Option A decision rule with the new numbers.**
+         `sampleD`'s serial scan is now ~0.84 s/sweep (19.8%) — borderline
+         against the 15–20% trigger — but its content is now mostly
+         irreducible exp+uniform work, so batching buys at most ~0.6 s/sweep
+         at scale 10 for the full exactness machinery. Decide AFTER 3a+
+         (next), which shifts every share again.
+      5. [ ] **3a+ — compute `S` in C++ for the built-in survival models**
+         (exponential/Weibull/Gompertz/piecewise; custom models keep the R
+         callback). Now the second-biggest block (30.7%) AND the scaling
+         floor of `pairLogLik` under OpenMP: the sequential `as.vector`+
+         `%*%`+`exp` on the nPairs×(1+ncov) matrix is thread-independent, so
+         8 threads currently buy only ~1.3× end-to-end (95.1 → 73.3 s). A
+         C++ `S` (naive dot + vectorised exp, parallel) removes both: expect
+         S-internal ~1.3 → ~0.2 s/sweep and pairLogLik 1.73 → ~0.5-0.6 s/sweep
+         at 8 threads. BLAS-vs-naive-dot differences ~1e-16, inside the
+         golden tolerance.
+      6. [ ] **Optional: fuse pairLogLik's per-PIV passes** into one pass
+         over pairs (stable terms first, unstable after S returns) — same
+         per-q addition order ⇒ bitwise identical; cuts streamed traffic
+         ~2–3× on the DRAM-bound stable loops. Only if 3a+ leaves
+         `pairLogLik` on top.
