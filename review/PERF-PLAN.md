@@ -244,15 +244,31 @@ Baseline (branch `glm-parallel`, pre-change, R 4.6.1, bench scale 1):
   replacement (1.1/1.2) stays for exactness-neutral speedup and threading
   readiness.
 
-- [ ] Phase 1.1 — inverse-CDF sampler + `sampleNL` on pre-drawn uniforms
-- [ ] Phase 1.2 — factorized `sampleL` (joint (H^A, H^B) return)
-- [ ] Phase 1.3 — per-pair `LLLq`, named-column access, `sampleD` loglik
+- [x] Phase 1.1 — inverse-CDF sampler + `sampleNL` on pre-drawn uniforms
+- [x] Phase 1.2 — factorized `sampleL` (joint (H^A, H^B) return)
+- [x] Phase 1.3 — per-pair `LLLq`, named-column access, `sampleD` loglik
       reconstruction + `linksQ` (kills the `make.unique` bottleneck)
       → **mid-phase bench: 238.7 s → 20.2 s end-to-end (11.8×); profiled run
       132.4 s → 10.2 s. Remaining: Delta drawing `[<-` 37% (Phase 1.5),
       `simulateD` 45% total — of which the string candidate pipeline and
       `cbind` covariate assembly (Phase 1.4), `sampleD` scan 3%.**
-- [ ] Phase 1.4 — `buildCandidatePairs()` replaces the string pipeline
-- [ ] Phase 1.5 — Delta accumulation via triplets (kills "Drawing Delta")
-- [ ] Phase 2 — bench pre/post numbers recorded here
-- [ ] Phase 3 — decision per §3 rule
+- [x] Phase 1.4 — `buildCandidatePairs()` replaces the string pipeline
+- [x] Phase 1.5 — Delta accumulation via triplets (kills "Drawing Delta")
+- [x] Phase 2 — bench numbers:
+
+| Measurement | Baseline | After Phase 1 |
+|---|---|---|
+| StEM end-to-end (22 sweeps) | 238.7 s | **8.29 s (28.8×)** |
+| per sweep | 10.85 s | 0.377 s |
+| profiled run (2 iters, 5 draws) | 132.4 s | 4.8 s |
+| dominant self-time | `make.unique` 64% (data-frame row subsetting) | `simulateD` 72% (R-level per-PIV passes) |
+| `sampleD` scan share | < 3% | 7.1% |
+
+      **Decision rule outcome (§3): `sampleD` at 7.1% < 15–20% ⇒ Option A
+      (exact batching) NOT triggered.** The remaining time is `simulateD`'s
+      vectorized per-PIV passes over the candidate pairs (LLLq accumulation,
+      survival-model `cbind`/`ph`), i.e. memory-bandwidth-bound R arithmetic —
+      the natural Phase 3 lever if wanted is moving that loop to C++ (and then
+      OpenMP over pairs), not the batch sampler.
+- [ ] Phase 3 — OpenMP (not triggered by the decision rule; see above for the
+      revised lever)
