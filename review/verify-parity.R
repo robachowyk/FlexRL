@@ -200,7 +200,7 @@ if (mode != "compare") {
              old_sparse = o$artifacts$ll0_sparse,
              new_sparse = n$artifacts$ll0_sparse,
              new_pairs = if (is.null(n$artifacts$ll0_pairs)) NA_real_ else n$artifacts$ll0_pairs)
-    dll0 <- max(abs(lls - mean(lls)), na.rm = TRUE)
+    dll0 <- max(abs(lls - mean(lls, na.rm = TRUE)), na.rm = TRUE)
     ok <- state_eq && pairs_eq && ali$same_pairs && ali$max_diff <= 1e-10 &&
       dLLA <= 1e-10 && dLLB <= 1e-10 && dll0 <= 1e-10
     b_ok <- b_ok && ok
