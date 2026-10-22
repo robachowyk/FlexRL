@@ -98,7 +98,7 @@ Record linkage packages on `CRAN` compared with *FlexRL*. The *FlexRL* package d
 
 To our knowledge, no `R` package implements Paradigm 2 for the linkage of two sources under the one-to-one assignment constraint or models the dynamics of PIVs over time. While the *postlink* package [@postlink26] develops statistical tools for post-linkage data analysis, no record linkage package provides tools to assess the quality of the linked data and their suitability for inference.
 
-The *FlexRL* package is available from the Comprehensive R Archive Network (`CRAN`) or from the package `GitHub` repository alongside documentation and vignettes describing its functionality. *FlexRL* is also available as a module in `JASP 1.0` [@JASP2026]. The implementation of *FlexRL* relies on `Rcpp` for the backend samplers, *Matrix* for the sparse likelihood and linkage matrix, and other standard `R` packages. The diagnostic tools apply to any record linkage output in the required format, with built-in wrappers for *BRL*, *diyar*, *fastLink*, *fedmatch*, *multilink* and *reclin2*. @fig-workflow shows the workflow, which follows the structure of @sec-model and @sec-inference: the data are prepared, linked with `StEM()` and the linked data quality is assessed with `RL_diagnostics()`. We elaborate on each component along the article.
+The *FlexRL* package is available from the Comprehensive R Archive Network (`CRAN`) or from the package `GitHub` repository alongside documentation and vignettes describing its functionality. *FlexRL* is also available as a module in `JASP 1.0` [@JASP2026]. The implementation of *FlexRL* relies on `Rcpp` (potentially parallelised with `OpenMP`) for the backend samplers, *Matrix* for the sparse linkage matrix, and other standard `R` packages. The diagnostic tools apply to any record linkage output in the required format, with built-in wrappers for *BRL*, *diyar*, *fastLink*, *fedmatch*, *multilink* and *reclin2*. @fig-workflow shows the workflow, which follows the structure of @sec-model and @sec-inference: the data are prepared, linked with `StEM()` and the linked data quality is assessed with `RL_diagnostics()`. We elaborate on each component along the article.
 
 ::: {#fig-workflow}
 ```{mermaid}
@@ -121,8 +121,7 @@ Workflow of *FlexRL*.
 #### Simulation study
 
 ```{r simulation-example-1, include = FALSE, warning = FALSE, message = FALSE}
-install.packages("remotes")
-remotes::install_github("robachowyk/FlexRL")
+pak::pak("robachowyk/FlexRL")
 library(FlexRL)
 # set a seed 
 set.seed(100)
@@ -248,7 +247,7 @@ wrapper_args <- function(method, prep_data, ...) {
          fastLink  = c(list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, return.all = TRUE, n.cores = 4),
                        args[intersect(names(args), names(formals(fastLink::fastLink)))]),
          multilink = c(list(types = rep("bi", length(PIVs)), breaks = stats::setNames(as.list(rep(NA, length(PIVs))), PIVs),
-                            duplicates = c(0, 0), n_iter = 100, max_cc_size = 50),
+                            duplicates = c(0, 0), n_iter = 1000, max_cc_size = 50),
                        args[intersect(names(args), c(names(formals(multilink::create_comparison_data)),
                                                      names(formals(multilink::reduce_comparison_data)),
                                                      names(formals(multilink::specify_prior)),
@@ -328,10 +327,10 @@ results_rows <- c("TP               ", "FP               ", "FN               ",
                   "min support IoU  ", "max MMD          ", "time (secs)      ", 
                   "memory (Mb)      ")
 
-methods <- c("BRL", "FlexRL") # c("BRL", "multilink", "fastLink", "reclin2", "diyar", "fedmatch", "FlexRL")
+methods <- c("BRL", "multilink", "fastLink", "reclin2", "diyar", "fedmatch", "FlexRL")
 
 run_all_wrappers <- function(prep_data, variables_type, methods, FDP_estimation = TRUE,
-                             maxIter4CV = 1, n_repeats = 1, ...) {
+                             maxIter4CV = 2, n_repeats = 3, ...) {
   args <- list(...)
   op <- options()
   on.exit(options(op))
@@ -732,6 +731,7 @@ Note that probabilistic record linkage methods estimate $\boldsymbol{\Delta}$ in
 
 - `data`: a list, typically the output of `prepare_data()`, with the encoded sources `encodedA` and `encodedB`, the number of distinct values of each PIV `n_values` (excluding missing values), a logical indicating whether both sources share the registration error parameters `same_mistakes`, and the PIVs configuration `PIVs_config`.
 - `StEM_iter`, `StEM_burnin`, `gibbs_iter`, `gibbs_burnin`: the numbers of iterations of the outer StEM algorithm and of the inner Gibbs sampler, and their burn-in periods. `gibbs_burnin = 0` sets the burn-in automatically: the sampler runs until the number of links changes by fewer than 10 for 10 consecutive iterations, with a maximum of 500 iterations.
+- `threads`: the number of `OpenMP` threads used by the `Rcpp` samplers, default is 4. The argument is ignored on systems where the package is built without `OpenMP`.
 - `model_dynamics`: the survival model for structured PIVs, by default the exponential model of @eq-survival. It is only used if a PIV is declared structured in `PIVs_config`.
 - `n_post_sample`: the number of posterior draws used to compute the linkage scores.
 - Starting values for $\gamma$ and for the agreement probabilities $1-\boldsymbol\phi$ can be supplied.
@@ -742,14 +742,16 @@ The function returns `Delta`, a data frame with columns `i` (indices in $\mathca
 We run the *FlexRL* `StEM` algorithm for record linkage as follows:
 
 ```{r illustration-12, warning = FALSE, message = FALSE, results = "hide"}
-fit <- StEM(data = prep_data, threads = 4)
+fit <- StEM(data = prep_data)
 ```
 
 ### Computational aspects {#sec-computation}
 
-The two latent variable samplers are implemented with `Rcpp`. To draw the true values, `sampleH()` goes through the $N_k^2$ joint values once per PIV $k$ for linked pairs and through the $N_k$ values once per PIV $k$ for non-linked records. `sampleD()` performs the sequential sweep over candidate pairs and stores the linkage as a hash map, so that the cost of a sweep is nearly linear in the number of candidate pairs and the memory is linear in the number of links built rather than in $N_{\mathcal A} \times N_{\mathcal B}.$
+The two latent variable samplers are implemented with `Rcpp`. To draw the true values, `sampleH()` goes through the $N_k^2$ joint values once per PIV $k$ for linked pairs and through the $N_k$ values once per PIV $k$ for non-linked records. `sampleD()` performs the sequential sweep over candidate pairs, maintaining the current linkage as two vectors of indices of linked pairs, so that querying and updating the linkage is linear in the number of candidate pairs and the memory is linear in the number of records $N_{\mathcal A} + N_{\mathcal B}$ rather than in $N_{\mathcal A} \times N_{\mathcal B}.$
 
-Candidate pairs are found by hashing the pattern of sampled true values on the PIVs that are not structured, an operation linear in $N_{\mathcal A} + N_{\mathcal B}$, and their likelihood contributions are stored in a sparse matrix. Memory therefore grows with the number of records and of candidate pairs, not with $N_{\mathcal A} \times N_{\mathcal B}.$ Running time grows with the number of records; the number of candidate pairs, larger when PIVs have few levels; the number of PIVs and their numbers of levels; the number of structured PIVs, whose survival model is estimated at each iteration; the number of iterations. All random draws use the random number generator of `R`, so that `set.seed()` makes a run reproducible.
+Candidate pairs are found by hashing the pattern of sampled true values on the non-structured PIVs, an operation linear in $N_{\mathcal A} + N_{\mathcal B}.$ Their likelihood contributions are computed in a single pass over the records and the candidate pairs, implemented in `Rcpp`. Built-in survival models are evaluated in `Rcpp`; custom survival functions keep their `R` implementation. The loops are parallelised over `OpenMP` threads (`threads` argument, default is 4). Without `OpenMP` the code run sequentially. Memory therefore grows with the number of records and of candidate pairs, not with $N_{\mathcal A} \times N_{\mathcal B}.$
+
+Running time grows with the number of records; the number of candidate pairs, larger when PIVs have few levels; the number of PIVs and their numbers of levels; the number of structured PIVs, whose survival model is estimated at each iteration; the number of iterations; and decreases with the number of threads. All random draws use the random number generator of `R`, so that `set.seed()` makes a run reproducible.
 
 ## Inference on linked data {#sec-inference}
 
@@ -1193,7 +1195,7 @@ for (method in methods) {
   MeM <- peakRAMNew(fit <- run_wrapper(method, prep_data_full, wrapper_args(method, prep_data_full, args)))
   df_results_full[1:5, method] <- evaluate_linkage(fit, true_pairs_full)
   df_results_full[6, method] <- if (is.null(fit)) NA else round(as.numeric(Sys.time() - t0, units = "mins"))
-  df_results_full[7, method] <- MeM$Peak_RAM_Used_MiB
+  df_results_full[7, method] <- if (is.null(fit)) NA else MeM$Peak_RAM_Used_MiB
 }
 ```
 
@@ -1254,6 +1256,6 @@ This article presented *FlexRL*: an `R` package for probabilistic record linkage
 
 To draw attention to the implications of linkage quality for statistical analysis, *FlexRL* provides two complementary tools as functions of the linkage threshold. First, the estimated False Discovery Proportion (FDP), which quantifies contamination among the linked pairs. Second, the divergence of the linked sample from the source populations, which captures potential sampling bias. Examining these quantities jointly makes the trade-off between contamination and sampling bias explicit and provides users with information to select a linkage decision rule in light of its potential consequences for subsequent inference.
 
-Several directions follow naturally from this work. On the computational side, the memory footprint is nearly linear in the number of links but the running time could be further improved, as it scales with the number of records, candidate pairs, PIVs, their levels and configurations. On the modelling side, the linkage model currently assumes independence of PIVs given the latent true values, no duplicates within a source, categorical PIVs; extensions would broaden the range of applications. Finally, the diagnostic estimators and the proposed quality measures, whose validity rests on the assumptions underlying their estimation, would benefit from further theoretical and empirical investigation.
+Several directions follow naturally from this work. On the computational side, the memory footprint is nearly linear in the number of links and the running time scales with the number of records, candidate pairs, PIVs, their levels and configurations. Memory and running time are very satisfying on all operating systems. On the modelling side though, the linkage model currently assumes independence of PIVs given the latent true values, no duplicates within a source, categorical PIVs; extensions would broaden the range of applications. Moreover, the diagnostic estimators and the proposed quality measures, whose validity rests on the assumptions underlying their estimation, would benefit from further theoretical and empirical investigation.
 
 Notwithstanding these considerations, *FlexRL* provides a framework that connects record linkage to linked data quality assessment. It provides a scalable and reliable solution to record linkage in terms of memory usage and performance on a variety of scenarios. It enables record linkage to reach practice, helping researchers and practitioners not only to link data, but also to quantify and communicate the extent to which linkage decisions may affect downstream inference.
