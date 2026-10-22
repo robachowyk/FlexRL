@@ -16,6 +16,14 @@
 #   the full-SHIW state. 1e-9 leaves an order of magnitude above that observed
 #   cross-platform variation while still catching any real kernel change (a
 #   wrong index or weight shows up at O(1)).
+# * Rebuilt fixed states (golden_build_state): integer/logical artifacts
+#   (truepivs, links, linked-record flags) involve no floating-point
+#   arithmetic and are compared by identity. The closed-form chains eta and
+#   phi are averages of counts — bitwise on the golden-generation machine,
+#   last-ulp (~1e-16 relative) across other BLAS/compiler combinations — and
+#   are compared with tolerance 1e-12. alpha comes from the nlminb
+#   optimiser, whose iterate reproduces only up to cross-platform rounding
+#   of its path, and is compared with tolerance 1e-6.
 # * StEM seed clouds: the RNG streams differ between implementations BY DESIGN
 #   (PERF-PLAN §5: pre-drawn uniforms, inverse-CDF, factorised sampleL), so
 #   equality is impossible; the unit of comparison is the cloud. Each new seed
@@ -42,18 +50,25 @@ test_that("golden fixtures are present and provenance is the baseline build", {
   expect_identical(meta$baseline_ref, "glm-notes @ 4b09088")
 })
 
-test_that("golden fixed states rebuild bit-identically under the current implementation", {
+test_that("golden fixed states rebuild under the current implementation", {
   for (id in GOLDEN_STATE_IDS) {
     st <- readRDS(file.path(gold, sprintf("state_%s.rds", id)))
     rebuilt <- golden_build_state(id, st$data)
+    # integer/logical artifacts involve no floating-point arithmetic:
+    # bitwise identity is meaningful and required
     expect_identical(rebuilt$truepivsA, st$truepivsA, info = id)
     expect_identical(rebuilt$truepivsB, st$truepivsB, info = id)
     expect_identical(rebuilt$linksR, st$linksR, info = id)
     expect_identical(rebuilt$sumRowD, st$sumRowD, info = id)
     expect_identical(rebuilt$sumColD, st$sumColD, info = id)
-    expect_identical(rebuilt$eta, st$eta, info = id)
-    expect_identical(rebuilt$phi, st$phi, info = id)
-    expect_identical(rebuilt$alpha, st$alpha, info = id)
+    # closed-form chains (eta, phi) are averages of counts: bitwise on the
+    # golden-generation machine, last-ulp (~1e-16 relative) across other
+    # BLAS/compiler combinations
+    expect_equal(rebuilt$eta, st$eta, tolerance = 1e-12, info = id)
+    expect_equal(rebuilt$phi, st$phi, tolerance = 1e-12, info = id)
+    # alpha comes from nlminb: the optimiser's iterate reproduces only up to
+    # cross-platform rounding of its path, hence the looser tolerance
+    expect_equal(rebuilt$alpha, st$alpha, tolerance = 1e-6, info = id)
   }
 })
 

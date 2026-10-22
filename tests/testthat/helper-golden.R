@@ -15,6 +15,8 @@
 # chains BY DESIGN. What must hold is:
 #   * deterministic kernels (likelihood values, candidate-pair SETS) agree
 #     exactly (up to floating-point, <= 1e-9);
+#   * the rebuilt closed-form chains (eta, phi) agree to <= 1e-12 and the
+#     nlminb-optimised alpha to <= 1e-6 across platforms;
 #   * stochastic outputs agree in distribution: the seed-cloud statistics of
 #     one implementation must look like just another seed of the other.
 
