@@ -10,9 +10,12 @@
 # * Deterministic artifacts (candidate-pair sets, LLL/LLA/LLB, log_lik): the
 #   two implementations compute identical formulas and the parity study
 #   (review/PARITY-REPORT.md §B) measured max |diff| = 0 (bitwise) on every
-#   state. 1e-10 leaves an order of magnitude of headroom for floating-point
-#   summation-order effects across BLAS/R builds while still catching any real
-#   kernel change (a wrong index or weight shows up at O(1)).
+#   state on the golden-generation machine. Across machines (different BLAS,
+#   compiler and optimisation), the aggregate log_lik — a sum over up to ~10^8
+#   contributions — accumulates rounding differences: 1.9e-10 was observed on
+#   the full-SHIW state. 1e-9 leaves an order of magnitude above that observed
+#   cross-platform variation while still catching any real kernel change (a
+#   wrong index or weight shows up at O(1)).
 # * StEM seed clouds: the RNG streams differ between implementations BY DESIGN
 #   (PERF-PLAN §5: pre-drawn uniforms, inverse-CDF, factorised sampleL), so
 #   equality is impossible; the unit of comparison is the cloud. Each new seed
@@ -66,7 +69,7 @@ test_that("candidate-pair sets match the baseline string pipeline", {
   }
 })
 
-test_that("likelihood values on the fixed states reproduce the baseline (<= 1e-10)", {
+test_that("likelihood values on the fixed states reproduce the baseline (<= 1e-9)", {
   for (id in GOLDEN_STATE_IDS) {
     st <- readRDS(file.path(gold, sprintf("state_%s.rds", id)))
     lk <- readRDS(file.path(gold, sprintf("likelihood_%s.rds", id)))
@@ -81,17 +84,17 @@ test_that("likelihood values on the fixed states reproduce the baseline (<= 1e-1
     dLLL <- max(abs(lk$LLL_pairs$LLL - art$LLL_pairs$LLL[match(ko, kn)]))
     dLLA <- max(abs(lk$LLA - art$LLA))
     dLLB <- max(abs(lk$LLB - art$LLB))
-    expect_true(dLLL <= 1e-10,
+    expect_true(dLLL <= 1e-9,
                info = sprintf("%s: max|dLLL| = %.3g (baseline vs current, aligned by pair)", id, dLLL))
-    expect_true(dLLA <= 1e-10, info = sprintf("%s: max|dLLA| = %.3g", id, dLLA))
-    expect_true(dLLB <= 1e-10, info = sprintf("%s: max|dLLB| = %.3g", id, dLLB))
+    expect_true(dLLA <= 1e-9, info = sprintf("%s: max|dLLA| = %.3g", id, dLLA))
+    expect_true(dLLB <= 1e-9, info = sprintf("%s: max|dLLB| = %.3g", id, dLLB))
     # state log-likelihood: baseline internal value, baseline log_lik() and the
     # current implementation's log_lik() must agree
     d0 <- abs(lk$ll0_sparse - art$ll0_sparse)
-    expect_true(d0 <= 1e-10, info = sprintf("%s: |d log_lik| = %.3g", id, d0))
+    expect_true(d0 <= 1e-9, info = sprintf("%s: |d log_lik| = %.3g", id, d0))
     if (!is.null(lk$ll0_internal)) {
       d0i <- abs(lk$ll0_internal - art$ll0_sparse)
-      expect_true(d0i <= 1e-10, info = sprintf("%s: |d log_lik internal| = %.3g", id, d0i))
+      expect_true(d0i <= 1e-9, info = sprintf("%s: |d log_lik internal| = %.3g", id, d0i))
     }
   }
 })
