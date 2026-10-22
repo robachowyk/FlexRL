@@ -121,8 +121,8 @@ Workflow of *FlexRL*.
 #### Simulation study
 
 ```{r simulation-example-1, include = FALSE, warning = FALSE, message = FALSE}
-# install package
-# install.packages("FlexRL", repos = "https://cloud.r-project.org")
+install.packages("remotes")
+remotes::install_github("robachowyk/FlexRL")
 library(FlexRL)
 # set a seed 
 set.seed(100)
