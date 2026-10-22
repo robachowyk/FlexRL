@@ -21,3 +21,4 @@
 ^vignettes/Article-FlexRL\.qmd$
 ^vignettes/Article-references\.bib$
 ^\.quarto$
+^vignettes/.quarto$
