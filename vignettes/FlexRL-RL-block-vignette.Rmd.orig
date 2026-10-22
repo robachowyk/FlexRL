@@ -19,7 +19,6 @@ knitr::opts_chunk$set(
 pak::pak("robachowyk/FlexRL")
 options(digits = 2, scipen = 999)
 options(timeout = 5000)
-set.seed(0)
 ```
 
 ```{r setup-3}
@@ -90,12 +89,12 @@ peakRAMNew <- function(...){
 wrapper_args <- function(method, prep_data, ...) {
   PIVs <- names(prep_data$PIVs_config)
   args <- c(...)
-    switch(method,
-         FlexRL    = c(list(data = prep_data),
+  switch(method,
+         FlexRL    = c(list(data = prep_data, threads = 4),
                        args[intersect(names(args), names(formals(FlexRL::StEM)))]),
          BRL       = c(list(flds = PIVs, types = rep("bi", length(PIVs)), nIter = 1000),
                        args[intersect(names(args), c(names(formals(BRL::compareRecords)), names(formals(BRL::bipartiteGibbs))))]),
-         fastLink  = c(list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, return.all = TRUE, n.cores = 1),
+         fastLink  = c(list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, return.all = TRUE, n.cores = 4),
                        args[intersect(names(args), names(formals(fastLink::fastLink)))]),
          multilink = c(list(types = rep("bi", length(PIVs)), breaks = stats::setNames(as.list(rep(NA, length(PIVs))), PIVs),
                             duplicates = c(0, 0), n_iter = 1000, max_cc_size = 50),
@@ -116,7 +115,8 @@ wrapper_args <- function(method, prep_data, ...) {
                        args[intersect(names(args), c(names(formals(diyar::prob_score_range)),
                                                      names(formals(diyar::links_wf_probabilistic))))]),
          fedmatch  = c(list(by = PIVs, match_type = "multivar", unique_key_1 = "unique_key_A",
-                            unique_key_2 = "unique_key_B", multivar_settings = fedmatch::build_multivar_settings(
+                            unique_key_2 = "unique_key_B", nthread = 4, 
+                            multivar_settings = fedmatch::build_multivar_settings(
                               compare_type = rep("indicator", length(PIVs)),
                               wgts = rep(1 / length(PIVs), length(PIVs)))),
                        args[intersect(names(args), names(formals(fedmatch::merge_plus)))])
@@ -132,10 +132,19 @@ run_wrapper <- function(method, prep_data, arguments) {
     prep_data$encodedA <- prep_data$encodedA[, c(PIVs, "local_id", "source")]
     prep_data$encodedB <- prep_data$encodedB[, c(PIVs, "local_id", "source")]
   }
-  tryCatch(callr::r(function(link_with, A, B, arguments) {link_with(A, B, arguments)},
+  if (Sys.info()["sysname"] == "Darwin") {
+    tryCatch(link_with(prep_data$encodedA, prep_data$encodedB, arguments),
+           error = function(e) {
+             if (grepl("cannot allocate|memory|bad_alloc|too large|long vectors", conditionMessage(e), ignore.case = TRUE)) {
+               message(method, ": memory error (", conditionMessage(e), "), results reported as NA")
+               return(NULL)
+             }
+             stop(e)
+           })
+  } else if (Sys.info()["sysname"] %in% c("Linux","Windows")) {
+      tryCatch(callr::r(function(link_with, A, B, arguments) {link_with(A, B, arguments)},
                       args = list(link_with = link_with, A = prep_data$encodedA,
-                                  B = prep_data$encodedB, arguments = arguments),
-                      show = FALSE),
+                                  B = prep_data$encodedB, arguments = arguments)),
            error = function(e) {
              if (grepl("cannot allocate|memory|bad_alloc|too large|long vectors|crashed or was killed|signal 9|SIGKILL",
                conditionMessage(e), ignore.case = TRUE)) {
@@ -144,6 +153,9 @@ run_wrapper <- function(method, prep_data, arguments) {
              }
              stop(e)
            })
+  } else {
+    print("Unknown Operating System.")
+  }
 }
 
 evaluate_linkage <- function(fit, true_pairs, threshold = 0.5) {
@@ -165,8 +177,10 @@ results_rows <- c("TP               ", "FP               ", "FN               ",
                   "min support IoU  ", "max MMD          ", "time (secs)      ", 
                   "memory (Mb)      ")
 
-run_all_wrappers <- function(prep_data, PIVs_type, methods, FDP_estimation = TRUE,
-                             maxIter4CV = 1, n_repeats = 2, ...) {
+methods <- c("BRL", "multilink", "fastLink", "reclin2", "diyar", "fedmatch", "FlexRL")
+
+run_all_wrappers <- function(prep_data, variables_type, methods, FDP_estimation = TRUE,
+                             maxIter4CV = 2, n_repeats = 3, ...) {
   args <- list(...)
   op <- options()
   on.exit(options(op))
@@ -198,7 +212,7 @@ run_all_wrappers <- function(prep_data, PIVs_type, methods, FDP_estimation = TRU
       encodedB <- encodedB[, c(PIVs, "local_id", "source")]
     }
     
-    diag <- do.call(RL_diagnostics, c(list(fit, encodedA, encodedB, PIVs, PIVs_type, PIVs,
+    diag <- do.call(RL_diagnostics, c(list(fit, encodedA, encodedB, PIVs, variables_type, PIVs,
                                            true_pairs = prep_data$true_pairs, FDP_estimation = FDP_estimation,
                                            RL_method = method, data = prep_data, maxIter4CV = maxIter4CV, n_repeats = n_repeats),
                                       arguments))
@@ -216,8 +230,6 @@ run_all_wrappers <- function(prep_data, PIVs_type, methods, FDP_estimation = TRU
   }
   df_results
 }
-
-methods <- c("BRL", "multilink", "fastLink", "reclin2", "diyar", "fedmatch", "FlexRL")
 ```
 
 We will fill a table of results throughout the vignette, gathering for each record linkage method: linkage performance, data quality diagnostics: FDP estimation, measures of divergence of linked data from sources.
@@ -382,20 +394,16 @@ true_pairs_full <- do.call(paste, c(prep_data_full$true_pairs, list(sep = "_")))
 ```
 
 ```{r shiw-results, warning=FALSE, message=FALSE, results="hide"}
-df_results_full <- data.frame(matrix(NA, nrow = 6, ncol = 0))
-rownames(df_results_full) <- c("TP", "FP", "FN", "sensitivity", "FDP", "minutes")
+df_results_full <- data.frame(matrix(NA, nrow = 7, ncol = 0))
+rownames(df_results_full) <- c("TP", "FP", "FN", "sensitivity", "FDP", "time (mins)", "memory (Mb)")
 for (method in methods) {
-  t0 <- Sys.time()       
-  args <- list(StEM_iter = 10, StEM_burnin = 5, gibbs_iter = 10, gibbs_burnin = 5, 
-               n_post_sample = 10, n_iter = 100, max_cc_size = 50, n.cores = 4)
-  fit <- run_wrapper(method, prep_data_full, wrapper_args(method, prep_data_full, args))
+  t0 <- Sys.time()           
+  args <- list(n_iter = 100)
+  MeM <- peakRAMNew(fit <- run_wrapper(method, prep_data_full, wrapper_args(method, prep_data_full, args)))
   df_results_full[1:5, method] <- evaluate_linkage(fit, true_pairs_full)
   df_results_full[6, method] <- if (is.null(fit)) NA else round(as.numeric(Sys.time() - t0, units = "mins"))
+  df_results_full[7, method] <- if (is.null(fit)) NA else MeM$Peak_RAM_Used_MiB
 }
-
-# on Apple M1 Max ARM chip, 8-core CPU, 32 GB of memory
-
-# we reduce the number of iterations of FlexRL to gain in computational time
 ```
 
 ```{r, include = FALSE}
@@ -423,12 +431,13 @@ for (r in regions) {
   true_pairs_r <- do.call(paste, c(prep_data_r$true_pairs, list(sep = "_")))
   for (method in methods) {
     t0 <- Sys.time()
-    fit <- run_wrapper(method, prep_data_r, wrapper_args(method, prep_data_r))
+    MeM <- peakRAMNew(fit <- run_wrapper(method, prep_data_r, wrapper_args(method, prep_data_r)))
     results_IREG[[length(results_IREG) + 1]] <- data.frame(
       IREG = r, n_A = nrow(prep_data_r$encodedA),
       n_B = nrow(prep_data_r$encodedB), n_links = length(true_pairs_r),
       method = method, round(t(evaluate_linkage(fit, true_pairs_r)),2),
-      seconds = round(as.numeric(Sys.time() - t0, units = "secs")))
+      seconds = round(as.numeric(Sys.time() - t0, units = "secs")),
+      memory = MeM$Peak_RAM_Used_MiB)
   }
 }
 
@@ -451,7 +460,8 @@ summary_IREG <- do.call(rbind, lapply(split(results_IREG, results_IREG$method), 
   data.frame(TP = mean(d$TP, na.rm=TRUE), FP = mean(d$FP, na.rm=TRUE), 
              FN = mean(d$FN, na.rm=TRUE), sensitivity = mean(d$sensitivity, na.rm=TRUE),
              FDP = mean(d$FDP, na.rm=TRUE), method = d$method[1],
-             minutes = sum(d$seconds) / 60)
+             minutes = sum(d$seconds) / 60,
+             memory = mean(d$memory))
 }))
 rownames(summary_IREG) <- summary_IREG$method
 ```

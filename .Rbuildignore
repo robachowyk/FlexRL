@@ -11,10 +11,13 @@
 ^docs$
 ^pkgdown$
 ^\.github$
+^review$
 ^vignettes/.*\.orig$
 ^vignettes/.*\.html$
-^review$
 ^vignettes/.*_cache$
 ^vignettes/.*_files$
 ^vignettes/figure$
 ^vignettes/cache$
+^vignettes/Article-FlexRL\.qmd$
+^vignettes/Article-references\.bib$
+^\.quarto$
