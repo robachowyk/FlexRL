@@ -2310,6 +2310,10 @@ synthesise <- function(method, encodedA, encodedB, PIVs, n_synth, restrict_suppo
   }
 
   if (method == "arf") {
+    # fastLink() or fedmatch::multivar_match() can leave a stopped PSOCK
+    # cluster registered with foreach; reset to sequential execution so that
+    # adversarial_rf()'s %dopar% does not reuse dead worker connections.
+    if (foreach::getDoParRegistered()) foreach::registerDoSEQ()
     arf_model <- arf::adversarial_rf(encodedB[, PIVs, drop=FALSE])
     psi <- arf::forde(arf_model, encodedB[, PIVs, drop=FALSE])
     syntheticNewB <- arf::forge(psi, n_synth)
