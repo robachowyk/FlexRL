@@ -541,14 +541,16 @@ simulateD <- function(data, linksR, truepivsA, truepivsB, gamma, eta, alpha, phi
   PIVs_stable <- sapply(data$PIVs_config, function(x) x$dynamics != "structured")
 
   # Restrict to pairs that are compatible on the stable PIVs (candidate links):
-  # one C++ call over integer pattern tuples (replaces the string pipeline
-  # pasteIntoPattern -> unique -> factor -> indexPatterns -> pairPatterns)
+  # Candidate pairs are built by one C++ call over the integer pattern tuples
+  # of the stable PIVs: every (A, B) record pair whose stable patterns agree
+  # becomes a row of `select`, the candidate list the D-sweep scans.
   select <- buildCandidatePairs(as.matrix(truepivsA[, PIVs_stable, drop = FALSE]),
                                 as.matrix(truepivsB[, PIVs_stable, drop = FALSE]))
 
-  # Complete-data log-likelihood pieces in one C++ pass over the records and
-  # candidate pairs (was: three R vector passes per PIV with ~10 full-size
-  # temporaries each — the profile's dominant cost; PERF-PLAN §8, Phase 3a).
+  # Complete-data log-likelihood pieces (LLA/LLB/LLLq) in one C++ pass over
+  # the records and candidate pairs: each record's contribution is gathered
+  # once and each candidate pair's contribution is assembled from those
+  # gathers, instead of being recomputed per PIV.
   # S evaluation goes through survival_S(): built-in survival models use the
   # fused, parallel C++ kernel (survivalS_cpp); custom models keep the user's
   # R function. The dispatcher is passed as `S` so pairLogLik needs no
@@ -1271,8 +1273,9 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
     survivalpSameH <- step$survivalpSameH
 
     if (nrow(linksR) > 0) {
-      # One sparse build + add per post-sample draw instead of nrow(linksR)
-      # single-cell dgCMatrix sub-assignments (~1.4 ms each: PERF-PLAN §1).
+      # One sparse build + add per post-sample draw; adding one cell at a
+      # time to a dgCMatrix re-copies the matrix per assignment and is
+      # orders of magnitude slower.
       # Duplicate (i, j) pairs are summed by sparseMatrix, though the one-to-one
       # constraint means a single draw never has any.
       Delta <- Delta + Matrix::sparseMatrix(i = linksR[, 1], j = linksR[, 2],

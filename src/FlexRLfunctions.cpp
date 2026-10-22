@@ -446,15 +446,14 @@ using namespace Rcpp;
  //' @param LLA NumericVector gives the likelihood contribution of each non linked record from A
  //' @param LLB NumericVector gives the likelihood contribution of each non linked record from B
  //' @param LLL NumericVector gives the likelihood contribution of each potential linked records (from select)
+ //'   — the vector `pairLogLik()` returns as `LLLq`
  //' @param gamma Numeric, the parameter gamma (proportion of linked records)
  //'   — a single scalar, as everywhere else in the model
  //' @param nlinkrec integer for the current number of linked records
  //' @param links IntegerMatrix (0-based, k x 2) of the currently linked (A, B)
- //'   record pairs — exactly the `links` element sampleD returned at the
- //'   previous sweep (or a 0x2 matrix when nothing is linked yet). Replaces the
- //'   former global C++ link map: the one-to-one link state now lives in flat
- //'   partner arrays local to this call, so there is no cross-call global
- //'   state to reset.
+ //'   record pairs: pass the `links` element returned by the previous sweep,
+ //'   or a 0x2 matrix when nothing is linked yet. A sweep carries no state
+ //'   between calls — everything it needs is in the arguments.
  //' @param threads Number of OpenMP threads for the per-pair delta precompute
  //'   pass (default 1 = sequential; ignored if built without OpenMP; results
  //'   are identical for any value).
@@ -467,7 +466,7 @@ using namespace Rcpp;
  //' - new sumRowD
  //' - new sumColD
  //' - new value of the complete log likelihood
- //' - new number fo linked records
+ //' - new number of linked records
  //' @export
  // [[Rcpp::export]]
  List sampleD(const IntegerMatrix & S,
@@ -485,13 +484,11 @@ using namespace Rcpp;
 #ifndef _OPENMP
    (void)threads;  // built without OpenMP: silently sequential
 #endif
-   // Flat one-to-one link state: linkOfA[i] = 0-based B partner of A-record i
-   // (or -1), and symmetrically linkOfB[j]. Replaces the former global
-   // std::map<int, std::set<int>> _DeltaMap: the scan's linked test becomes a
-   // single array read, insert/erase are O(1) stores with no node allocation,
-   // and the map's global state (which needed initDeltaMap() resets and made
-   // the sampler thread-hostile) is gone. Initialised from the `links`
-   // argument — the same matrix sampleD returned at the previous sweep.
+   // One-to-one link state as flat partner arrays: linkOfA[i] is the 0-based
+   // B partner of A-record i, or -1 when unlinked; linkOfB[j] symmetrically.
+   // Array reads keep the scan's linked/unlinked tests branch-cheap and
+   // updates are O(1) stores. Built from the `links` argument (the previous
+   // sweep's output) and handed back to R at the end.
    std::vector<int> linkOfA(nA, -1), linkOfB(nB, -1);
    for (int r = 0; r < links.nrow(); r++)
    {
@@ -510,9 +507,8 @@ using namespace Rcpp;
    // + sum of LLL over finally-linked pairs (accumulated during the scan)
    // + sum of the deltas of accepted flips.
    double loglik = 0.0;
-   // gamma is a single scalar (the model's proportion of linked records); its
-   // two logs are loop-invariant, so they are computed once — the same doubles
-   // the per-pair log() calls used to produce.
+   // gamma is the model's scalar proportion of linked records; its two logs
+   // are loop-invariant over the scan, so they are computed once.
    double logg = std::log(gamma), log1mg = std::log(1 - gamma);
    // log(nB - nlinkrec) (and its +1 variant for the removal branch) only
    // change when a flip is accepted, so they are maintained as scalars too.
@@ -533,14 +529,13 @@ using namespace Rcpp;
    double llDelta = 0.0;
    std::vector<int> linkedQ;
    int nPairs = S.nrow();
-   // Per-pair delta precompute (the plan's Option C): the non-LLL part of the
-   // log-likelihood change of linking pair q,
+   // Two-pass design: pass 1 (parallel) computes, for every candidate pair q,
+   // the pair-specific part of the log-likelihood change of linking it,
    //   deltaBase[q] = -LLB(j) - LLA(i) - log(1-gamma) + log(gamma),
-   // is a pure gather that couples pairs in no way, so it runs as a parallel
-   // pass; the sequential scan below then only reads it back, adds the
-   // bipartite-matching count term and evaluates the acceptance ratio. The
-   // arithmetic per pair is unchanged (same operations, same order), so the
-   // deltas — and thus the sampler — are exactly as before.
+   // a pure gather with no coupling between pairs. Pass 2 (the sequential
+   // scan below) reads it back, adds the bipartite-matching count term and
+   // evaluates the acceptance ratio, so the per-pair work left on the
+   // critical path is one add, one exp, one division and one comparison.
    NumericVector deltaBase(nPairs);
    double *db = deltaBase.begin();
    const int *sel = S.begin();  // column-major: sel[q] = A index, sel[nPairs + q] = B index
@@ -550,11 +545,10 @@ using namespace Rcpp;
 #endif
    for (int q = 0; q < nPairs; q++)
      db[q] = - llbp[sel[nPairs + q] - 1] - llap[sel[q] - 1] - log1mg + logg;
-   // One pre-drawn Uniform(0,1) deviate per candidate pair, consumed by pair
-   // index (actionable pairs only — exactly the pairs that used to draw).
-   // House style since Phase 1: kernels draw from pre-drawn uniform blocks.
-   // NOTE: the block consumes the RNG stream by pair position, so realisations
-   // differ from the previous per-call draws; distributions are unchanged.
+   // One Uniform(0,1) deviate per candidate pair, pre-drawn from R's RNG in a
+   // single block and consumed by pair index (actionable pairs only). All
+   // sampling kernels draw from such pre-drawn blocks: draws stay
+   // set.seed()-controlled while the kernels themselves never call the RNG.
    NumericVector unif = Rcpp::runif(nPairs);
    const double *up = unif.begin();
    // Iterate over every candidate pair
@@ -611,8 +605,8 @@ using namespace Rcpp;
      }
    }
    loglik += llLinked + llDelta;
-   // Materialise the updated links: a linear pass over linkOfA, ascending in
-   // i — the same ordering Deltafind()'s in-order map iteration produced.
+   // Materialise the updated links: one linear pass over linkOfA, ordered by
+   // ascending A index.
    int nlinks = 0;
    for (int i = 0; i < nA; i++) if (linkOfA[i] >= 0) nlinks++;
    IntegerMatrix linksOut(nlinks, 2);

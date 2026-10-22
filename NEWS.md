@@ -1,22 +1,39 @@
 # FlexRL 1.0.1 (release candidate)
 
 - Bugs fixed.
-- Performance: the Gibbs machinery is ~29x faster end-to-end on the benchmark
+- Performance: the Gibbs machinery is ~100x faster end-to-end on the benchmark
   problem (`review/bench-stem.R`, nA=10000, nB=15000, n_links=7500, 22 sweeps:
-  238.7 s -> 8.3 s). The candidate-pair log-likelihood is now a plain per-pair
-  vector (the nA x nB sparse matrix and data-frame row subsetting are gone),
-  candidate pairs are built by a single C++ call (`buildCandidatePairs()`),
-  `sampleL` samples the joint (H^A, H^B) through an exact O(nval) factorization,
-  and all kernels draw from pre-drawn uniform blocks.
-- **Breaking (internal kernels):** `sampleNL()` takes a `unif` argument;
-  `sampleL()` takes `(survivalpSameH, nval, phikA, phikB, eta, unif)` and
-  returns the joint (H^A, H^B) matrix; `sampleD()` no longer takes `loglik`
-  (it reconstructs the value, which cancels in every acceptance ratio) and
-  returns `linksQ`; `sampleD()`/`simulateD()` now take the current `links`
-  (0-based) instead of `sumRowD`/`sumColD` and derive the linked-record flags
-  themselves, so the global C++ link map — and with it `initDeltaMap()` and
-  `Deltafind()` — is gone. Random streams are not comparable to <= 1.0.0
-  seeds: results for a given `set.seed()` differ, distributions do not.
+  238.7 s -> 2.29 s); on a 100k/150k-record problem (75k links, 22 sweeps) a
+  serial run takes 88 s and `threads = 8` brings it to ~51 s. The
+  candidate-pair log-likelihood is now a plain per-pair vector (the nA x nB
+  sparse matrix and data-frame row subsetting are gone), candidate pairs are
+  built by a single C++ call (`buildCandidatePairs()`), the per-sweep
+  likelihood pieces are computed by one fused C++ pass (`pairLogLik()`),
+  `sampleL` samples the joint (H^A, H^B) through an exact O(nval)
+  factorization, and all kernels draw from pre-drawn uniform blocks.
+- **Breaking (internal kernels):** code calling the samplers directly must be
+  adjusted:
+  - `sampleD()` signature is now
+    `(S, LLA, LLB, LLL, gamma, nlinkrec, links, threads)`. `gamma` is a single
+    scalar; the linkage state is passed as `links`, a 0-based k x 2 matrix of
+    (A, B) record pairs (0x2 when nothing is linked), replacing the
+    `sumRowD`/`sumColD` arguments — the flags are derived from `links` and
+    still returned. The return list gains `links` (the updated 0-based pairs)
+    next to `linksQ` (1-based rows of `S`); `loglik` was dropped from the
+    inputs (the value cancels in every acceptance ratio and is reconstructed
+    internally).
+  - `simulateD()` likewise takes the current `linksR` and no
+    `sumRowD`/`sumColD`; it gains `threads` and `model_dynamics`.
+  - The global C++ link map — and with it `initDeltaMap()` and `Deltafind()`
+    — is gone: a sweep carries no state between calls, everything it needs
+    lives in its arguments.
+  - `sampleNL()` takes a `unif` argument; `sampleL()` takes
+    `(survivalpSameH, nval, phikA, phikB, eta, unif)` and returns the joint
+    (H^A, H^B) matrix.
+  - Kernels draw their Uniform(0,1) deviates from pre-drawn blocks consumed
+    by pair position rather than calling the RNG per draw: for a given
+    `set.seed()` the realised draws differ from <= 1.0.0 (distributions do
+    not).
 - OpenMP: the per-pair likelihood loops in the Gibbs kernels are parallelised;
   new `threads` argument on `StEM()` (default 1 = sequential). Results are
   bitwise identical for any thread count. The package still builds — and runs
