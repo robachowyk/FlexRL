@@ -14,7 +14,7 @@
 # sampleL), so two implementations given the same seed produce different
 # chains BY DESIGN. What must hold is:
 #   * deterministic kernels (likelihood values, candidate-pair SETS) agree
-#     exactly (up to floating-point, <= 1e-10);
+#     exactly (up to floating-point, <= 1e-9);
 #   * stochastic outputs agree in distribution: the seed-cloud statistics of
 #     one implementation must look like just another seed of the other.
 
