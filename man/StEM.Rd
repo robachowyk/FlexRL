@@ -68,7 +68,7 @@ not lowering it.}
 for the change over time of the structured PIVs (default exponential).}
 
 \item{threads}{Integer, number of OpenMP threads used by the C++ Gibbs
-kernels for their per-pair loops (default 1 = sequential). Results are
+kernels for their per-pair loops (default 4). Results are
 identical for any value. Ignored — the code runs sequentially — if the
 package was built without OpenMP support.}
 }

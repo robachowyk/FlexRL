@@ -4,7 +4,7 @@
 \alias{survival_S}
 \title{Evaluate a survival model's S, C++ fast path for the built-in families}
 \usage{
-survival_S(model, X, alpha, times, threads = 1)
+survival_S(model, X, alpha, times, threads = 4)
 }
 \arguments{
 \item{model}{Object built by \code{\link[=survival_model]{survival_model()}}.}
@@ -17,7 +17,7 @@ survival_S(model, X, alpha, times, threads = 1)
 \item{times}{Numeric vector of time gaps.}
 
 \item{threads}{Integer, number of OpenMP threads for the C++ kernel
-(default 1 = sequential; ignored without OpenMP; identical results for
+(default 4; ignored without OpenMP; identical results for
 any value).}
 }
 \value{

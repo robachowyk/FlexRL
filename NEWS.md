@@ -35,7 +35,8 @@
     `set.seed()` the realised draws differ from <= 1.0.0 (distributions do
     not).
 - OpenMP: the per-pair likelihood loops in the Gibbs kernels are parallelised;
-  new `threads` argument on `StEM()` (default 1 = sequential). Results are
+  new `threads` argument on `StEM()` (default 4; on a build without OpenMP
+  the code runs sequentially regardless). Results are
   bitwise identical for any thread count. The package still builds — and runs
   sequentially — on platforms without OpenMP.
 - The built-in survival models (exponential, Weibull, Gompertz, piecewise)

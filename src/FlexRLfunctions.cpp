@@ -285,8 +285,8 @@ using namespace Rcpp;
  //' @param eta,phi,alpha Lists of per-PIV numeric vectors (phi = [agreeA, agreeB, missA, missB])
  //' @param covA_names,covB_names Lists of per-PIV CharacterVectors with hazard-covariate column names (may be empty)
  //' @param S R function model_dynamics$S(cov, alpha, times), called once per unstable PIV
- //' @param threads Number of OpenMP threads for the per-pair loops (default 1 =
- //'   sequential). Ignored — the code runs sequentially — if the package was
+ //' @param threads Number of OpenMP threads for the per-pair loops (default 4).
+ //'   Ignored — the code runs sequentially — if the package was
  //'   built without OpenMP. Results are identical for any thread count: every
  //'   pair writes its own slot, no reduction crosses threads.
  //' @return List with elements LLA (nA), LLB (nB) and LLLq (nPairs)
@@ -306,7 +306,7 @@ using namespace Rcpp;
                  List covA_names,
                  List covB_names,
                  Function S,
-                 int threads = 1)
+                 int threads = 4)
  {
    int nA = truepivsA.nrow(), nB = truepivsB.nrow();
    int nPairs = select.nrow();
@@ -455,7 +455,7 @@ using namespace Rcpp;
  //'   or a 0x2 matrix when nothing is linked yet. A sweep carries no state
  //'   between calls — everything it needs is in the arguments.
  //' @param threads Number of OpenMP threads for the per-pair delta precompute
- //'   pass (default 1 = sequential; ignored if built without OpenMP; results
+ //'   pass (default 4; ignored if built without OpenMP; results
  //'   are identical for any value).
  //' @return
  //' List:
@@ -476,7 +476,7 @@ using namespace Rcpp;
               double gamma,
               int nlinkrec,
               const IntegerMatrix & links,
-              int threads = 1)
+              int threads = 4)
  {
    int nB = LLB.length();
    int nA = LLA.length();
@@ -893,7 +893,7 @@ using namespace Rcpp;
  //' @param type One of "exponential", "weibull", "gompertz", "piecewise"
  //' @param cuts NumericVector of the piecewise cut points (empty for the
  //'   other families)
- //' @param threads Number of OpenMP threads (default 1 = sequential; ignored
+ //' @param threads Number of OpenMP threads (default 4; ignored
  //'   if the package was built without OpenMP)
  //' @return NumericVector of survival probabilities, one per row
  //' @export
@@ -903,7 +903,7 @@ using namespace Rcpp;
                              const NumericVector & times,
                              const std::string & type,
                              const NumericVector & cuts,
-                             int threads = 1)
+                             int threads = 4)
  {
    int n = times.length();
    if (cov.nrow() != n)

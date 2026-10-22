@@ -469,7 +469,7 @@ simulateH <- function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi) {
 #' @param model_dynamics Object from [survival_model()] giving the survival
 #'   function of the structured PIVs.
 #' @param threads Integer, number of OpenMP threads for the C++ per-pair
-#'   likelihood loops (default 1 = sequential; identical results for any
+#'   likelihood loops (default 4; identical results for any
 #'   value; ignored if the package was built without OpenMP).
 #'
 #' @return A list (`Dsample`, Rcpp `sampleD()` output) with: `links` updated set
@@ -536,7 +536,7 @@ simulateH <- function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi) {
 #' linksCpp = Dsample$links
 #' linksR = linksCpp + 1
 simulateD <- function(data, linksR, truepivsA, truepivsB, gamma, eta, alpha, phi,
-                      model_dynamics = survival_model("exponential"), threads = 1) {
+                      model_dynamics = survival_model("exponential"), threads = 4) {
   PIVs <- names(data$PIVs_config)
   PIVs_stable <- sapply(data$PIVs_config, function(x) x$dynamics != "structured")
 
@@ -754,11 +754,11 @@ survival_model <- function(type = c("exponential", "weibull", "gompertz", "piece
 #' @param alpha Parameter vector (layout per family, see [survival_model()]).
 #' @param times Numeric vector of time gaps.
 #' @param threads Integer, number of OpenMP threads for the C++ kernel
-#'   (default 1 = sequential; ignored without OpenMP; identical results for
+#'   (default 4; ignored without OpenMP; identical results for
 #'   any value).
 #'
 #' @return Numeric vector of survival probabilities, one per row of `X`.
-survival_S <- function(model, X, alpha, times, threads = 1) {
+survival_S <- function(model, X, alpha, times, threads = 4) {
   if (!inherits(model, "survival_model")) {
     stop("`model` must be built with `survival_model()`.", call. = FALSE)
   }
@@ -814,7 +814,7 @@ survival_S <- function(model, X, alpha, times, threads = 1) {
 #' @param model_dynamics Object from [survival_model()]: the survival model
 #'   for the change over time of the structured PIVs (default exponential).
 #' @param threads Integer, number of OpenMP threads used by the C++ Gibbs
-#'   kernels for their per-pair loops (default 1 = sequential). Results are
+#'   kernels for their per-pair loops (default 4). Results are
 #'   identical for any value. Ignored — the code runs sequentially — if the
 #'   package was built without OpenMP support.
 #'
@@ -1033,7 +1033,7 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
   )
 
   # Runs one Gibbs iteration and refreshes `survivalpSameH` for unstable PIVs
-  gibbs_step <- function(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma, eta, alpha, phi, threads = 1) {
+  gibbs_step <- function(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma, eta, alpha, phi, threads = 4) {
     newTruePivs <- simulateH(data = data, links = linksCpp, survivalpSameH = survivalpSameH,
                              sumRowD = sumRowD, sumColD = sumColD, eta = eta, phi = phi)
     Dsample <- simulateD(data = data, linksR = linksR,

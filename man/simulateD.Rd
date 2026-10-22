@@ -14,7 +14,7 @@ simulateD(
   alpha,
   phi,
   model_dynamics = survival_model("exponential"),
-  threads = 1
+  threads = 4
 )
 }
 \arguments{
@@ -43,7 +43,7 @@ smaller file.}
 function of the structured PIVs.}
 
 \item{threads}{Integer, number of OpenMP threads for the C++ per-pair
-likelihood loops (default 1 = sequential; identical results for any
+likelihood loops (default 4; identical results for any
 value; ignored if the package was built without OpenMP).}
 }
 \value{

@@ -17,11 +17,11 @@ pasteIntoPattern <- function(A) {
     .Call(`_FlexRL_pasteIntoPattern`, A)
 }
 
-pairLogLik <- function(select, truepivsA, truepivsB, encodedA, encodedB, PIVs, PIVs_stable, n_values, eta, phi, alpha, covA_names, covB_names, S, threads = 1L) {
+pairLogLik <- function(select, truepivsA, truepivsB, encodedA, encodedB, PIVs, PIVs_stable, n_values, eta, phi, alpha, covA_names, covB_names, S, threads = 4L) {
     .Call(`_FlexRL_pairLogLik`, select, truepivsA, truepivsB, encodedA, encodedB, PIVs, PIVs_stable, n_values, eta, phi, alpha, covA_names, covB_names, S, threads)
 }
 
-sampleD <- function(S, LLA, LLB, LLL, gamma, nlinkrec, links, threads = 1L) {
+sampleD <- function(S, LLA, LLB, LLL, gamma, nlinkrec, links, threads = 4L) {
     .Call(`_FlexRL_sampleD`, S, LLA, LLB, LLL, gamma, nlinkrec, links, threads)
 }
 
@@ -45,7 +45,7 @@ sampleH <- function(nA, nB, links, survivalpSameH, pivs_stable, pivsA, pivsB, nv
     .Call(`_FlexRL_sampleH`, nA, nB, links, survivalpSameH, pivs_stable, pivsA, pivsB, nvalues, nonlinkedA, nonlinkedB, eta, phi)
 }
 
-survivalS_cpp <- function(cov, alpha, times, type, cuts, threads = 1L) {
+survivalS_cpp <- function(cov, alpha, times, type, cuts, threads = 4L) {
     .Call(`_FlexRL_survivalS_cpp`, cov, alpha, times, type, cuts, threads)
 }
 
