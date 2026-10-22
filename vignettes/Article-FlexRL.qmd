@@ -17,7 +17,7 @@ author:
   - name: Mark A. van de Wiel
   - name: Michel H. Hof
 abstract: |
-  *FlexRL* is an `R` package for probabilistic record linkage and inference on linked data. It provides a method to link observations from the same entities across two data sources that lack a unique identifier but share partially identifying variables. This method fits a hierarchical latent variable model of the data generation process, rather than classifying pairs of records from the comparison of their values, and accommodates registration errors and variables changing over time. Since linkage may affect subsequent analyses, the package also provides tools to assess the linked data quality as functions of the linkage decision rule. Two false discovery proportion estimators are implemented: a probabilistic approach contingent on the record linkage model and an augmented approach relying on an auxiliary estimation using synthetic data. Several measures of the divergence of the linked sample from the source population are provided. These tools are agnostic to the underlying record linkage model and can be applied to any method. Together, they connect the output of the linkage to the validity of the subsequent analyses. The implementation combines standard `R` functions and S3 methods with `Rcpp` computations, resulting in fast execution times and a low memory footprint.
+  *FlexRL* is an `R` package for probabilistic record linkage and inference on linked data. It provides a method to link observations from the same entities across two data sources that lack a unique identifier but share partially identifying variables. This method fits a hierarchical latent variable model of the data generation process, rather than classifying pairs of records from the comparison of their values, and accommodates registration errors and variables changing over time. Since linkage may affect subsequent analyses, the package also provides tools to assess the linked data quality as functions of the linkage decision rule. Two false discovery proportion estimators are implemented: a probabilistic approach contingent on the record linkage model and an augmented approach relying on an auxiliary estimation using synthetic data. Several measures of divergence of the linked sample from the source population are provided. These tools are agnostic to the underlying record linkage model and can be applied to any method. Together, they connect the output of the linkage to the validity of the subsequent analyses. The implementation combines standard `R` functions and S3 methods with `Rcpp` computations, resulting in fast execution times and a low memory footprint.
 keywords:
   - Record Linkage
   - Inference
@@ -83,15 +83,15 @@ The second family models how the data were generated [@tancredi_bay_RL_2011; @st
 In `Python`, *recordlinkage* [@PYRL_de_bruin_j_2019], *Splink* [@splink_2022] and *NameMatch* [@PYRL_namematch] implement Paradigm 1. We list the main `R` packages for the task considered here in @tbl-packages. Paradigm 2 is only available in `R` through methods for entity resolution [@smered16software; @dblink_2021; @marchantsteorts2023]. These methods cluster records from a single file, possibly containing duplicates, into entities.
 
 ::: {#tbl-packages}
-| Package | Paradigm | Estimation | Linkage structure | PIVs dynamics | Quality tools |
+| Package | Paradigm | Estimation | Linkage structure | Record deduplication | PIVs dynamics | Quality tools |
 |------------|------------|------------|------------|------------|------------|
-| *fedmatch* [@fedmatchmanual; @fedmatch_article] | comparison vectors | push relabel maximum flow | many-to-many | no | no |
-| *diyar* [@diyarmanual] | comparison vectors | multistage weights comparisons, fixed score level parameters | clusters | no | no |
-| *reclin2* [@reclin2manual] | comparison vectors, supervised | EM, machine learning | one-to-one post hoc | no | no |
-| *fastLink* [@fastLink_paper_2019; @fastLinkmanual] | comparison vectors | EM | one-to-one post hoc | no | no |
-| *BRL* [@brlmanual; @sadinle_bay_bipartite_RL_2017] | comparison vectors | Bayesian, bipartite prior, Gibbs sampler | one-to-one in model | no | no |
-| *multilink* [@multilinkmanual; @multifilepartitioningrecordlinkage] | comparison vectors | Bayesian, partition prior, Gibbs sampler | clusters, one-to-one in model | no | no |
-| *FlexRL* [@flexrlmanual] | hierarchical | stochastic EM | one-to-one in model | yes | yes |
+| *fedmatch* [@fedmatchmanual; @fedmatch_article] | comparison vectors | push relabel maximum flow | many-to-many | no | no | no |
+| *diyar* [@diyarmanual] | comparison vectors | multistage weights comparisons, fixed score level parameters | clusters | yes | no | no |
+| *reclin2* [@reclin2manual] | comparison vectors, supervised | EM, machine learning | one-to-one post hoc | no | no | no |
+| *fastLink* [@fastLink_paper_2019; @fastLinkmanual] | comparison vectors | EM | one-to-one post hoc | no | no | no |
+| *BRL* [@brlmanual; @sadinle_bay_bipartite_RL_2017] | comparison vectors | Bayesian, bipartite prior, Gibbs sampler | one-to-one in model | no | no | no |
+| *multilink* [@multilinkmanual; @multifilepartitioningrecordlinkage] | comparison vectors | Bayesian, partition prior, Gibbs sampler | clusters, one-to-one in model | yes | no | no |
+| *FlexRL* [@flexrlmanual] | hierarchical | stochastic EM | one-to-one in model | no | yes | yes |
 
 Record linkage packages on `CRAN` compared with *FlexRL*. The *FlexRL* package diagnostic tools apply to all these packages.
 :::
@@ -524,6 +524,8 @@ rownames(df2012) <- 1:nrow(df2012)
 rownames(df2014) <- 1:nrow(df2014)
 ```
 
+The results presented in this article were tested on different operating systems (MacOS, Linux, Windows). We measure the memory usage using the `R` garbage collector. External allocations are therefore likely underestimated. All methods compared in this article rely on `Rcpp` or `C`, except for `diyar` which is fully implemented in `R`). Time and memory usage may vary depending on the operating system, hardware, and system configuration.
+
 ## The hierarchical architecture {#sec-model}
 
 ### Data preparation and PIVs configuration {#sec-prepare}
@@ -881,14 +883,14 @@ plot(diag, 'FDP')
 ```
 
 ```{r illustration-17, include = FALSE}
-x <- print(diag, 0.88)
+x <- print(diag, 0.82)
 ```
 
 ```{r illustration-18, echo = FALSE}
 #| fig-width: 10
 #| fig-height: 6
 plot(diag, 'FDP')
-abline(v = 0.88, lwd=0.3)
+abline(v = 0.82, lwd=0.3)
 ```
 
 ```{r illustration-19, fig.show='hide'}
@@ -905,10 +907,10 @@ two_files <- function(a, b, ylab, main, ylim = NULL, where = "topleft") {
   if (is.null(ylim)) ylim <- range(c(a, b), na.rm = TRUE)
   graphics::plot(xi, a, type = "l", xlab = "decision rule threshold", ylab = ylab, main = main, ylim = ylim)
   graphics::lines(xi, b, lty = 2)
-  graphics::legend(where, c("linked A vs. A", "linked B vs. B"), lty = c(1, 2), bty = "n", cex = 0.8)
+  graphics::legend(where, c("linked A vs. A", "linked B vs. B"), lty = c(1, 2), bty = "n", cex = 0.82)
 }
 two_files(x$mmdA, x$mmdB, "MMD", "Multivariate discrepancy")
-abline(v = 0.88, lwd=0.3)
+abline(v = 0.82, lwd=0.3)
 ```
 
 ```{r illustration-21, echo = FALSE}
@@ -959,35 +961,35 @@ graphics::par(mfrow = c(1, 2))
 allsmd <- c(as.matrix(cols("smdA")), as.matrix(cols("smdB")))
 ylim <- if (any(is.finite(allsmd))) range(allsmd[is.finite(allsmd)]) else NULL
 lines_by_col(cols("smdA"), "SMD", "linked A vs. A", ylim, "topleft")
-abline(v = 0.88, lwd=0.3)
+abline(v = 0.82, lwd=0.3)
 lines_by_col(cols("smdB"), "SMD", "linked B vs. B", ylim, "topleft")
-abline(v = 0.88, lwd=0.3)
+abline(v = 0.82, lwd=0.3)
 ```
 
 Estimated FDP and discrepancy measures against the linkage decision rule threshold obtained with *FlexRL* `RL_diagnostics()` on the SHIW in Emilia-Romagna.
 :::
 
-The graphics from @fig-tradeoff show how each linkage decision rule affects linked data quality. They illustrate the trade-off of @sec-linkage-error: as the threshold $\xi$ increases, the estimated FDP diminishes while the divergence of the linked sample from the sources grows. Ideally, we choose an appropriate threshold for inference at the 'elbow' of the divergence curves, provided that the estimated FDP at that level is reasonable. For our example, we choose $\xi = 0.88$ accordingly as indicated by the vertical line in @fig-tradeoff.
+The graphics from @fig-tradeoff show how each linkage decision rule affects linked data quality. They illustrate the trade-off of @sec-linkage-error: as the threshold $\xi$ increases, the estimated FDP diminishes while the divergence of the linked sample from the sources grows. Ideally, we choose an appropriate threshold for inference at the 'elbow' of the divergence curves, provided that the estimated FDP at that level is reasonable. For our example, we choose $\xi = 0.82$ accordingly as indicated by the vertical line in @fig-tradeoff.
 
-With the `'distributions'` plots, we could compare the distribution of the linked data and of the data sources at the selected threshold—for example $\xi = 0.88.$
+With the `'distributions'` plots, we could compare the distribution of the linked data and of the data sources at the selected threshold—for example $\xi = 0.82.$
 
 ```{r illustration-22, fig.show='hide'}
-plot(diag, 'distributions', threshold = 0.88)
+plot(diag, 'distributions', threshold = 0.82)
 ```
 
 The `print()` method for an S3 object of class `RL_diagnostics` reports the linked sample size, the FDP estimates, the true FDP and sensitivity when available, and the discrepancy measures.
 
 ::: {#fig-print-output}
 ```{r illustration-23, include = FALSE}
-x <- print(diag, threshold = 0.88)
+x <- print(diag, threshold = 0.82)
 ```
 
 ```{r illustration-24, fig.show='hide', message = FALSE, results = 'hide'}
-print(diag, threshold = 0.88)
+print(diag, threshold = 0.82)
 ```
 
 ```{r  illustration-25, echo = FALSE}
-threshold <- 0.88
+threshold <- 0.82
 dm <- x$discrepancy_measures
 if (min(abs(dm$xi - threshold)) > 1e-8) {
   cat(sprintf("  No pair linked at threshold %s.\n", threshold))
@@ -1047,19 +1049,19 @@ show_block("smdA", "SMD", "(linked A vs. A)")
 show_block("smdB", "SMD", "(linked B vs. B)")
 ```
 
-Example of output from the `print()` method on *FlexRL* `RL_diagnostics` class, at threshold 0.88, on the SHIW in Emilia-Romagna.
+Example of output from the `print()` method on *FlexRL* `RL_diagnostics` class, at threshold 0.82, on the SHIW in Emilia-Romagna.
 :::
 
 Throughout the diagnostics, the record linkage is run by wrappers with a common form, `link_with_<pkg>(dataA, dataB, ...)`, returning the indices of linked pairs and their linkage score. Wrappers exist for *FlexRL*, *fastLink*, *BRL*, *reclin2*, *multilink*, *diyar* and *fedmatch*. That way, the diagnostic tools apply to any of these methods in a similar fashion.
 
-On the illustrative example developed along this article, we regress the expected age of retirement in 2014 on the expected age of retirement in 2012. The tools presented so far help identify a suitable linkage threshold by assessing the trade-off between contamination and sampling bias. In @fig-example, a low threshold $\xi=0.55$ yields a linked data estimate in $\color{#FF7256}{\text{orange}}$ affected by contamination bias (due to noisy falsely linked data, estimate in dashed $\color{#FFC125}{\text{yellow}}$; see @eq-beta-contamination). Conversely, a high threshold $\xi=0.99$ yields a linked data estimate in $\color{#FF7256}{\text{orange}}$ affected by sampling bias (due to atypical truly linked data, estimate in $\color{#FFC125}{\text{yellow}}$; see @eq-beta-sampling). Using the diagnostic tools we choose $\xi = 0.88$ yielding a linked data estimate in $\color{#FF7256}{\text{orange}}$ closer to the truth represented in $\color{#B22222}{\text{red}}.$
+On the illustrative example developed along this article, we regress the expected age of retirement in 2014 on the expected age of retirement in 2012. The tools presented so far help identify a suitable linkage threshold by assessing the trade-off between contamination and sampling bias. In @fig-example, a low threshold $\xi=0.55$ yields a linked data estimate in $\color{#FF7256}{\text{orange}}$ affected by contamination bias (due to noisy falsely linked data, estimate in dashed $\color{#FFC125}{\text{yellow}}$; see @eq-beta-contamination). Conversely, a high threshold $\xi=0.99$ yields a linked data estimate in $\color{#FF7256}{\text{orange}}$ affected by sampling bias (due to atypical truly linked data, estimate in $\color{#FFC125}{\text{yellow}}$; see @eq-beta-sampling). Using the diagnostic tools we choose $\xi = 0.82$ yielding a linked data estimate in $\color{#FF7256}{\text{orange}}$ closer to the truth represented in $\color{#B22222}{\text{red}}.$
 
 ::: {#fig-example}
 ```{r illustration-26, echo = FALSE, warning = FALSE, message = FALSE}
 #| fig-width: 7
 #| fig-height: 21
 
-XIs <- c(0.5, 0.88, 0.99)
+XIs <- c(0.5, 0.82, 0.95)
 
 jitter_y_model <- jitter(truelinksdata$ExpectedAgeRetirement.y)
 jitter_x_model <- jitter(truelinksdata$ExpectedAgeRetirement.x)

@@ -271,16 +271,16 @@ knitr::kable(df_results_NLTCS[1:5, ], digits = 2, align=rep('c', ncol(df_results
 ```
 
 ```{r}
-cat("\nFDP estimation\n")
+cat("FDP estimation\n")
 knitr::kable(df_results_NLTCS[6:8, ], digits = 2, align=rep('c', ncol(df_results_NLTCS)))
 ```
 ```{r}
-cat("\nLinked divergence\n")
+cat("Linked divergence\n")
 knitr::kable(df_results_NLTCS[9:11, ], digits = 2, align=rep('c', ncol(df_results_NLTCS)))
 ```
 
 ```{r}
-cat("\nComputational time and memory\n")
+cat("Computational time and memory\n")
 knitr::kable(df_results_NLTCS[12:13, ], digits = 2, align=rep('c', ncol(df_results_NLTCS)))
 ```
 
@@ -471,7 +471,7 @@ options(digits = 2, scipen = 999)
 ```
 
 ```{r}
-newdf <- as.data.frame(apply(t(summary_IREG)[c("TP","FP","FN","sensitivity","FDP","minutes"),methods], 2, function(x)  sprintf("%.2f",as.numeric(as.character(x)))))
+newdf <- as.data.frame(apply(t(summary_IREG)[c("TP","FP","FN","sensitivity","FDP","minutes","memory"),methods], 2, function(x)  sprintf("%.2f",as.numeric(as.character(x)))))
 names(newdf) <- names(df_results_full)
 rownames(newdf) <- rownames(df_results_full)
 knitr::kable(newdf, align=rep('c', ncol(newdf)))
