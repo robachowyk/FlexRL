@@ -35,6 +35,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// buildCandidatePairs
+IntegerMatrix buildCandidatePairs(IntegerMatrix patsA, IntegerMatrix patsB);
+RcppExport SEXP _FlexRL_buildCandidatePairs(SEXP patsASEXP, SEXP patsBSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type patsA(patsASEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type patsB(patsBSEXP);
+    rcpp_result_gen = Rcpp::wrap(buildCandidatePairs(patsA, patsB));
+    return rcpp_result_gen;
+END_RCPP
+}
 // pasteIntoPattern
 CharacterVector pasteIntoPattern(IntegerMatrix A);
 RcppExport SEXP _FlexRL_pasteIntoPattern(SEXP ASEXP) {
@@ -46,28 +58,34 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// initDeltaMap
-void initDeltaMap();
-RcppExport SEXP _FlexRL_initDeltaMap() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    initDeltaMap();
-    return R_NilValue;
-END_RCPP
-}
-// Deltafind
-IntegerMatrix Deltafind();
-RcppExport SEXP _FlexRL_Deltafind() {
+// pairLogLik
+List pairLogLik(const IntegerMatrix& select, const IntegerMatrix& truepivsA, const IntegerMatrix& truepivsB, List encodedA, List encodedB, CharacterVector PIVs, LogicalVector PIVs_stable, IntegerVector n_values, List eta, List phi, List alpha, List covA_names, List covB_names, Function S, int threads);
+RcppExport SEXP _FlexRL_pairLogLik(SEXP selectSEXP, SEXP truepivsASEXP, SEXP truepivsBSEXP, SEXP encodedASEXP, SEXP encodedBSEXP, SEXP PIVsSEXP, SEXP PIVs_stableSEXP, SEXP n_valuesSEXP, SEXP etaSEXP, SEXP phiSEXP, SEXP alphaSEXP, SEXP covA_namesSEXP, SEXP covB_namesSEXP, SEXP SSEXP, SEXP threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(Deltafind());
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type select(selectSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type truepivsA(truepivsASEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type truepivsB(truepivsBSEXP);
+    Rcpp::traits::input_parameter< List >::type encodedA(encodedASEXP);
+    Rcpp::traits::input_parameter< List >::type encodedB(encodedBSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type PIVs(PIVsSEXP);
+    Rcpp::traits::input_parameter< LogicalVector >::type PIVs_stable(PIVs_stableSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type n_values(n_valuesSEXP);
+    Rcpp::traits::input_parameter< List >::type eta(etaSEXP);
+    Rcpp::traits::input_parameter< List >::type phi(phiSEXP);
+    Rcpp::traits::input_parameter< List >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< List >::type covA_names(covA_namesSEXP);
+    Rcpp::traits::input_parameter< List >::type covB_names(covB_namesSEXP);
+    Rcpp::traits::input_parameter< Function >::type S(SSEXP);
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(pairLogLik(select, truepivsA, truepivsB, encodedA, encodedB, PIVs, PIVs_stable, n_values, eta, phi, alpha, covA_names, covB_names, S, threads));
     return rcpp_result_gen;
 END_RCPP
 }
 // sampleD
-List sampleD(const IntegerMatrix& S, const NumericVector& LLA, const NumericVector& LLB, const NumericVector& LLL, const NumericVector& gamma, double loglik, int nlinkrec, LogicalVector& sumRowD, LogicalVector& sumColD);
-RcppExport SEXP _FlexRL_sampleD(SEXP SSEXP, SEXP LLASEXP, SEXP LLBSEXP, SEXP LLLSEXP, SEXP gammaSEXP, SEXP loglikSEXP, SEXP nlinkrecSEXP, SEXP sumRowDSEXP, SEXP sumColDSEXP) {
+List sampleD(const IntegerMatrix& S, const NumericVector& LLA, const NumericVector& LLB, const NumericVector& LLL, double gamma, int nlinkrec, const IntegerMatrix& links, int threads);
+RcppExport SEXP _FlexRL_sampleD(SEXP SSEXP, SEXP LLASEXP, SEXP LLBSEXP, SEXP LLLSEXP, SEXP gammaSEXP, SEXP nlinkrecSEXP, SEXP linksSEXP, SEXP threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -75,44 +93,43 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const NumericVector& >::type LLA(LLASEXP);
     Rcpp::traits::input_parameter< const NumericVector& >::type LLB(LLBSEXP);
     Rcpp::traits::input_parameter< const NumericVector& >::type LLL(LLLSEXP);
-    Rcpp::traits::input_parameter< const NumericVector& >::type gamma(gammaSEXP);
-    Rcpp::traits::input_parameter< double >::type loglik(loglikSEXP);
+    Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
     Rcpp::traits::input_parameter< int >::type nlinkrec(nlinkrecSEXP);
-    Rcpp::traits::input_parameter< LogicalVector& >::type sumRowD(sumRowDSEXP);
-    Rcpp::traits::input_parameter< LogicalVector& >::type sumColD(sumColDSEXP);
-    rcpp_result_gen = Rcpp::wrap(sampleD(S, LLA, LLB, LLL, gamma, loglik, nlinkrec, sumRowD, sumColD));
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type links(linksSEXP);
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(sampleD(S, LLA, LLB, LLL, gamma, nlinkrec, links, threads));
     return rcpp_result_gen;
 END_RCPP
 }
 // sampleNL
-IntegerVector sampleNL(IntegerVector G, NumericVector eta, NumericVector phi);
-RcppExport SEXP _FlexRL_sampleNL(SEXP GSEXP, SEXP etaSEXP, SEXP phiSEXP) {
+IntegerVector sampleNL(IntegerVector G, NumericVector eta, NumericVector phi, NumericVector unif);
+RcppExport SEXP _FlexRL_sampleNL(SEXP GSEXP, SEXP etaSEXP, SEXP phiSEXP, SEXP unifSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< IntegerVector >::type G(GSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type eta(etaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type phi(phiSEXP);
-    rcpp_result_gen = Rcpp::wrap(sampleNL(G, eta, phi));
+    Rcpp::traits::input_parameter< NumericVector >::type unif(unifSEXP);
+    rcpp_result_gen = Rcpp::wrap(sampleNL(G, eta, phi, unif));
     return rcpp_result_gen;
 END_RCPP
 }
 // sampleL
-IntegerVector sampleL(IntegerVector GA, IntegerVector GB, NumericVector survivalpSameH, IntegerMatrix choice_set, IntegerVector choice_equal, int nval, NumericVector phikA, NumericVector phikB, NumericVector eta);
-RcppExport SEXP _FlexRL_sampleL(SEXP GASEXP, SEXP GBSEXP, SEXP survivalpSameHSEXP, SEXP choice_setSEXP, SEXP choice_equalSEXP, SEXP nvalSEXP, SEXP phikASEXP, SEXP phikBSEXP, SEXP etaSEXP) {
+IntegerMatrix sampleL(IntegerVector GA, IntegerVector GB, NumericVector survivalpSameH, int nval, NumericVector phikA, NumericVector phikB, NumericVector eta, NumericVector unif);
+RcppExport SEXP _FlexRL_sampleL(SEXP GASEXP, SEXP GBSEXP, SEXP survivalpSameHSEXP, SEXP nvalSEXP, SEXP phikASEXP, SEXP phikBSEXP, SEXP etaSEXP, SEXP unifSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< IntegerVector >::type GA(GASEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type GB(GBSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type survivalpSameH(survivalpSameHSEXP);
-    Rcpp::traits::input_parameter< IntegerMatrix >::type choice_set(choice_setSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type choice_equal(choice_equalSEXP);
     Rcpp::traits::input_parameter< int >::type nval(nvalSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type phikA(phikASEXP);
     Rcpp::traits::input_parameter< NumericVector >::type phikB(phikBSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type eta(etaSEXP);
-    rcpp_result_gen = Rcpp::wrap(sampleL(GA, GB, survivalpSameH, choice_set, choice_equal, nval, phikA, phikB, eta));
+    Rcpp::traits::input_parameter< NumericVector >::type unif(unifSEXP);
+    rcpp_result_gen = Rcpp::wrap(sampleL(GA, GB, survivalpSameH, nval, phikA, phikB, eta, unif));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -161,19 +178,36 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// survivalS_cpp
+NumericVector survivalS_cpp(const NumericMatrix& cov, const NumericVector& alpha, const NumericVector& times, const std::string& type, const NumericVector& cuts, int threads);
+RcppExport SEXP _FlexRL_survivalS_cpp(SEXP covSEXP, SEXP alphaSEXP, SEXP timesSEXP, SEXP typeSEXP, SEXP cutsSEXP, SEXP threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type cov(covSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type times(timesSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type type(typeSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type cuts(cutsSEXP);
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(survivalS_cpp(cov, alpha, times, type, cuts, threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_FlexRL_indexPatterns", (DL_FUNC) &_FlexRL_indexPatterns, 2},
     {"_FlexRL_pairPatterns", (DL_FUNC) &_FlexRL_pairPatterns, 3},
+    {"_FlexRL_buildCandidatePairs", (DL_FUNC) &_FlexRL_buildCandidatePairs, 2},
     {"_FlexRL_pasteIntoPattern", (DL_FUNC) &_FlexRL_pasteIntoPattern, 1},
-    {"_FlexRL_initDeltaMap", (DL_FUNC) &_FlexRL_initDeltaMap, 0},
-    {"_FlexRL_Deltafind", (DL_FUNC) &_FlexRL_Deltafind, 0},
-    {"_FlexRL_sampleD", (DL_FUNC) &_FlexRL_sampleD, 9},
-    {"_FlexRL_sampleNL", (DL_FUNC) &_FlexRL_sampleNL, 3},
-    {"_FlexRL_sampleL", (DL_FUNC) &_FlexRL_sampleL, 9},
+    {"_FlexRL_pairLogLik", (DL_FUNC) &_FlexRL_pairLogLik, 15},
+    {"_FlexRL_sampleD", (DL_FUNC) &_FlexRL_sampleD, 8},
+    {"_FlexRL_sampleNL", (DL_FUNC) &_FlexRL_sampleNL, 4},
+    {"_FlexRL_sampleL", (DL_FUNC) &_FlexRL_sampleL, 8},
     {"_FlexRL_ExpandGrid", (DL_FUNC) &_FlexRL_ExpandGrid, 2},
     {"_FlexRL_generateSequence", (DL_FUNC) &_FlexRL_generateSequence, 1},
     {"_FlexRL_sampleH", (DL_FUNC) &_FlexRL_sampleH, 12},
+    {"_FlexRL_survivalS_cpp", (DL_FUNC) &_FlexRL_survivalS_cpp, 6},
     {NULL, NULL, 0}
 };
 

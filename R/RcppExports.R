@@ -9,28 +9,28 @@ pairPatterns <- function(A, B, nvals) {
     .Call(`_FlexRL_pairPatterns`, A, B, nvals)
 }
 
+buildCandidatePairs <- function(patsA, patsB) {
+    .Call(`_FlexRL_buildCandidatePairs`, patsA, patsB)
+}
+
 pasteIntoPattern <- function(A) {
     .Call(`_FlexRL_pasteIntoPattern`, A)
 }
 
-initDeltaMap <- function() {
-    invisible(.Call(`_FlexRL_initDeltaMap`))
+pairLogLik <- function(select, truepivsA, truepivsB, encodedA, encodedB, PIVs, PIVs_stable, n_values, eta, phi, alpha, covA_names, covB_names, S, threads = 4L) {
+    .Call(`_FlexRL_pairLogLik`, select, truepivsA, truepivsB, encodedA, encodedB, PIVs, PIVs_stable, n_values, eta, phi, alpha, covA_names, covB_names, S, threads)
 }
 
-Deltafind <- function() {
-    .Call(`_FlexRL_Deltafind`)
+sampleD <- function(S, LLA, LLB, LLL, gamma, nlinkrec, links, threads = 4L) {
+    .Call(`_FlexRL_sampleD`, S, LLA, LLB, LLL, gamma, nlinkrec, links, threads)
 }
 
-sampleD <- function(S, LLA, LLB, LLL, gamma, loglik, nlinkrec, sumRowD, sumColD) {
-    .Call(`_FlexRL_sampleD`, S, LLA, LLB, LLL, gamma, loglik, nlinkrec, sumRowD, sumColD)
+sampleNL <- function(G, eta, phi, unif) {
+    .Call(`_FlexRL_sampleNL`, G, eta, phi, unif)
 }
 
-sampleNL <- function(G, eta, phi) {
-    .Call(`_FlexRL_sampleNL`, G, eta, phi)
-}
-
-sampleL <- function(GA, GB, survivalpSameH, choice_set, choice_equal, nval, phikA, phikB, eta) {
-    .Call(`_FlexRL_sampleL`, GA, GB, survivalpSameH, choice_set, choice_equal, nval, phikA, phikB, eta)
+sampleL <- function(GA, GB, survivalpSameH, nval, phikA, phikB, eta, unif) {
+    .Call(`_FlexRL_sampleL`, GA, GB, survivalpSameH, nval, phikA, phikB, eta, unif)
 }
 
 ExpandGrid <- function(vec1, vec2) {
@@ -43,5 +43,9 @@ generateSequence <- function(n) {
 
 sampleH <- function(nA, nB, links, survivalpSameH, pivs_stable, pivsA, pivsB, nvalues, nonlinkedA, nonlinkedB, eta, phi) {
     .Call(`_FlexRL_sampleH`, nA, nB, links, survivalpSameH, pivs_stable, pivsA, pivsB, nvalues, nonlinkedA, nonlinkedB, eta, phi)
+}
+
+survivalS_cpp <- function(cov, alpha, times, type, cuts, threads = 4L) {
+    .Call(`_FlexRL_survivalS_cpp`, cov, alpha, times, type, cuts, threads)
 }
 
