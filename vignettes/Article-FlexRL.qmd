@@ -307,7 +307,14 @@ run_wrapper <- function(method, prep_data, arguments) {
              stop(e)
            })
   } else if (Sys.info()["sysname"] == "Windows") {
-    print("Windows command to be setup.")
+    tryCatch(link_with(prep_data$encodedA, prep_data$encodedB, arguments),
+           error = function(e) {
+             if (grepl("cannot allocate|memory|bad_alloc|too large|long vectors", conditionMessage(e), ignore.case = TRUE)) {
+               message(method, ": memory error (", conditionMessage(e), "), results reported as NA")
+               return(NULL)
+             }
+             stop(e)
+           })
   } else {
     print("Unknown Operating System.")
   }
