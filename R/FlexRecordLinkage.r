@@ -85,6 +85,9 @@ simulate_data <- function(PIVs_config, n_values, n_records, n_links, p_mistake, 
   if (n_links > min(n_records)) {
     stop("`n_links` cannot exceed the size of the smallest file.", call. = FALSE)
   }
+  if (any(n_values < 2)) {
+    stop("`n_values` entries must all be at least 2 (a PIV with a single value cannot be linked on).", call. = FALSE)
+  }
 
   PIVs <- names(PIVs_config)
   PIVs_stable <- sapply(PIVs_config, function(x) x$dynamics != "structured")
@@ -191,8 +194,8 @@ simulate_data <- function(PIVs_config, n_values, n_records, n_links, p_mistake, 
       # registrations
       for (i in seq_len(n_links)) {
         is_not_changing <- stats::rbinom(1, 1, proba_same_H[i, k])
-        if (!is_not_changing && !is.na(data1[i, x])) {
-          data2[i, x] <- sample((1:n_values[x])[-c(data1[i, x])], 1)
+        if (!is_not_changing && !is.na(data1[i, k])) {
+          data2[i, k] <- sample((1:n_values[k])[-c(data1[i, k])], 1)
           data2[i, "change"] <- TRUE
         }
       }
@@ -337,6 +340,24 @@ log_lik <- function(LLL, LLA, LLB, links, sumRowD, sumColD, gamma) {
   logPossD + sum(LLA[sumRowD == 0]) + sum(LLB[sumColD == 0]) + sum(LLL[links])
 }
 
+# Internal vector-based variant of log_lik(): `LLLq` holds the log-likelihood
+# of each candidate pair (aligned with the rows of `select`), `linksQ` the
+# 1-based row indices in `select` of the currently linked pairs. Numerically
+# equivalent to log_lik() on a sparse LLL, without building the nA x nB matrix.
+log_lik_pairs <- function(LLLq, LLA, LLB, linksQ, n_links, sumRowD, sumColD, gamma) {
+  nB <- length(sumColD)
+  if (nB - n_links + 1 <= 0) {
+    warning(
+      "File B has fewer records (", nB, ") than linked records (",
+      n_links, "); file A should never be larger than file B.",
+      call. = FALSE
+    )
+  }
+  logPossD <- sum(log(gamma) * sumRowD + log(1 - gamma) * (1 - sumRowD)) -
+    log_possible_config(nB, n_links)
+  logPossD + sum(LLA[sumRowD == 0]) + sum(LLB[sumColD == 0]) + sum(LLLq[linksQ])
+}
+
 #' Simulate the true PIV values underlying the registered records
 #'
 #' Draw the latent true values of each PIV given the currently registered 
@@ -390,7 +411,6 @@ log_lik <- function(LLL, LLA, LLB, links, sumRowD, sumColD, gamma) {
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
 #' PIVs_stable <- sapply(data_StEM$PIVs_config, function(x)
 #'                         x$dynamics != "structured")
-#' FlexRL:::initDeltaMap()
 #' linksR = base::matrix(0,0,2)
 #' linksCpp = linksR
 #' sumRowD = rep(0, nrow(data_StEM$encodedA))
@@ -438,10 +458,6 @@ simulateH <- function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi) {
 #'   `same_mistakes`; see [StEM()].
 #' @param linksR 2-column matrix (1-indexed) of the currently linked (A, B)
 #'   indices.
-#' @param sumRowD Logical vector, one entry per record in A: does it form a
-#'   link?
-#' @param sumColD Logical vector, one entry per record in B: does it form a
-#'   link?
 #' @param truepivsA Matrix of true PIV values, as returned by [simulateH()].
 #' @param truepivsB Matrix of true PIV values, as returned by [simulateH()].
 #' @param gamma Numeric, proportion of linked records as a fraction of the
@@ -452,6 +468,9 @@ simulateH <- function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi) {
 #' @param phi List (one per PIV) of registration-error parameters.
 #' @param model_dynamics Object from [survival_model()] giving the survival
 #'   function of the structured PIVs.
+#' @param threads Integer, number of OpenMP threads for the C++ per-pair
+#'   likelihood loops (default 4; identical results for any
+#'   value; ignored if the package was built without OpenMP).
 #'
 #' @return A list (`Dsample`, Rcpp `sampleD()` output) with: `links` updated set
 #'   of links, `sumRowD` updated sumRowD, `sumColD` updated sumColD, `loglik`
@@ -487,7 +506,6 @@ simulateH <- function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi) {
 #'                            PIVs_config, TRUE, "entity_id", TRUE )
 #' PIVs_stable <- sapply(data_StEM$PIVs_config, function(x)
 #'                         x$dynamics != "structured")
-#' FlexRL:::initDeltaMap()
 #' linksR = base::matrix(0,0,2)
 #' linksCpp = linksR
 #' sumRowD = rep(0, nrow(data_StEM$encodedA))
@@ -512,104 +530,55 @@ simulateH <- function(data, links, survivalpSameH, sumRowD, sumColD, eta, phi) {
 #'                         sumRowD=sumRowD, sumColD=sumColD, eta=eta, phi=phi)
 #' truepivsA = newTruePivs$truepivsA
 #' truepivsB = newTruePivs$truepivsB
-#' Dsample = simulateD(data=data_StEM, linksR=linksR, sumRowD=sumRowD,
-#'                    sumColD=sumColD, truepivsA=truepivsA, truepivsB=truepivsB,
+#' Dsample = simulateD(data=data_StEM, linksR=linksR,
+#'                    truepivsA=truepivsA, truepivsB=truepivsB,
 #'                    gamma=gamma, eta=eta, alpha=alpha, phi=phi)
 #' linksCpp = Dsample$links
 #' linksR = linksCpp + 1
-simulateD <- function(data, linksR, sumRowD, sumColD, truepivsA, truepivsB, gamma, eta, alpha, phi,
-                      model_dynamics = survival_model("exponential")) {
+simulateD <- function(data, linksR, truepivsA, truepivsB, gamma, eta, alpha, phi,
+                      model_dynamics = survival_model("exponential"), threads = 4) {
   PIVs <- names(data$PIVs_config)
   PIVs_stable <- sapply(data$PIVs_config, function(x) x$dynamics != "structured")
 
-  # Restrict to pairs that are compatible on the stable PIVs (candidate links)
-  UA <- pasteIntoPattern(as.matrix(truepivsA[, PIVs_stable]))
-  UB <- pasteIntoPattern(as.matrix(truepivsB[, PIVs_stable]))
-  valuesU <- unique(c(UA, UB))
-  UA <- as.numeric(factor(UA, levels = valuesU))
-  UB <- as.numeric(factor(UB, levels = valuesU))
-  tmpA <- indexPatterns(UA, length(valuesU))
-  tmpB <- indexPatterns(UB, length(valuesU))
-  select <- pairPatterns(tmpA, tmpB, length(tmpA))
+  # Restrict to pairs that are compatible on the stable PIVs (candidate links):
+  # Candidate pairs are built by one C++ call over the integer pattern tuples
+  # of the stable PIVs: every (A, B) record pair whose stable patterns agree
+  # becomes a row of `select`, the candidate list the D-sweep scans.
+  select <- buildCandidatePairs(as.matrix(truepivsA[, PIVs_stable, drop = FALSE]),
+                                as.matrix(truepivsB[, PIVs_stable, drop = FALSE]))
 
-  pLink <- rep(gamma, nrow(data$encodedA[, PIVs, drop=FALSE]))
+  # Complete-data log-likelihood pieces (LLA/LLB/LLLq) in one C++ pass over
+  # the records and candidate pairs: each record's contribution is gathered
+  # once and each candidate pair's contribution is assembled from those
+  # gathers, instead of being recomputed per PIV.
+  # S evaluation goes through survival_S(): built-in survival models use the
+  # fused, parallel C++ kernel (survivalS_cpp); custom models keep the user's
+  # R function. The dispatcher is passed as `S` so pairLogLik needs no
+  # knowledge of the model family.
+  Sfun <- function(X, alpha, times) survival_S(model_dynamics, X, alpha, times, threads)
+  covA_names <- lapply(data$PIVs_config, function(x) if (is.null(x$cond_hazard_cov$covA)) character(0) else x$cond_hazard_cov$covA)
+  covB_names <- lapply(data$PIVs_config, function(x) if (is.null(x$cond_hazard_cov$covB)) character(0) else x$cond_hazard_cov$covB)
+  lik <- pairLogLik(select, truepivsA, truepivsB, data$encodedA, data$encodedB,
+                    PIVs, PIVs_stable, data$n_values, eta, phi, alpha,
+                    covA_names, covB_names, Sfun, threads)
+  LLA <- lik$LLA
+  LLB <- lik$LLB
+  LLLq <- lik$LLLq
 
-  # Contribution to the log-likelihood if a record from A is NOT linked
-  LLA <- rep(0, nrow(data$encodedA[, PIVs, drop=FALSE]))
-  for (k in seq_along(data$n_values)) {
-    logpTrue <- log(eta[[k]])[truepivsA[, k]]
-    pMissingA <- phi[[k]][3]
-    pTypoA <- (1 - pMissingA) * (1 - phi[[k]][1]) / (data$n_values[k] - 1)
-    pAgreeA <- (1 - pMissingA) * phi[[k]][1]
-    contr <- rep(pAgreeA, nrow(data$encodedA[, PIVs, drop=FALSE]))
-    contr[data$encodedA[, PIVs, drop=FALSE][, k] != truepivsA[, k]] <- pTypoA
-    contr[data$encodedA[, PIVs, drop=FALSE][, k] == 0] <- pMissingA
-    LLA <- LLA + logpTrue + log(contr)
+  if (anyNA(LLLq)) {
+    warning("Some entries of the linkage log-likelihood vector are NA.", call. = FALSE)
   }
 
-  # Contribution to the log-likelihood if a record from B is NOT linked
-  LLB <- rep(0, nrow(data$encodedB[, PIVs, drop=FALSE]))
-  for (k in seq_along(data$n_values)) {
-    logpTrue <- log(eta[[k]])[truepivsB[, k]]
-    pMissingB <- phi[[k]][4]
-    pTypoB <- (1 - pMissingB) * (1 - phi[[k]][2]) / (data$n_values[k] - 1)
-    pAgreeB <- (1 - pMissingB) * phi[[k]][2]
-    contr <- rep(pAgreeB, nrow(data$encodedB[, PIVs, drop=FALSE]))
-    contr[data$encodedB[, PIVs, drop=FALSE][, k] != truepivsB[, k]] <- pTypoB
-    contr[data$encodedB[, PIVs, drop=FALSE][, k] == 0] <- pMissingB
-    LLB <- LLB + logpTrue + log(contr)
-  }
-
-  # Contribution to the log-likelihood if a candidate pair IS linked
-  LLL <- Matrix::Matrix(0, nrow = nrow(data$encodedA[, PIVs, drop=FALSE]), ncol = nrow(data$encodedB[, PIVs, drop=FALSE]), sparse = TRUE)
-  for (k in seq_along(data$n_values)) {
-    HA <- truepivsA[select[, 1], k]
-    HB <- truepivsB[select[, 2], k]
-    logpTrue <- log(eta[[k]])[HA]
-    pMissingA <- phi[[k]][3]
-    pTypoA <- (1 - pMissingA) * (1 - phi[[k]][1]) / (data$n_values[k] - 1)
-    pAgreeA <- (1 - pMissingA) * phi[[k]][1]
-    pMissingB <- phi[[k]][4]
-    pTypoB <- (1 - pMissingB) * (1 - phi[[k]][2]) / (data$n_values[k] - 1)
-    pAgreeB <- (1 - pMissingB) * phi[[k]][2]
-    # Contribution to the likelihood of linked observation from A
-    helpA <- rep(pAgreeA, length(HA))
-    helpA[data$encodedA[, PIVs, drop=FALSE][select[, 1], k, drop=FALSE] != HA] <- pTypoA
-    helpA[data$encodedA[, PIVs, drop=FALSE][select[, 1], k, drop=FALSE] == 0] <- pMissingA
-    # Contribution to the likelihood of linked observation from B
-    helpB <- rep(pAgreeB, length(HB))
-    helpB[data$encodedB[, PIVs, drop=FALSE][select[, 2], k, drop=FALSE] != HB] <- pTypoB
-    helpB[data$encodedB[, PIVs, drop=FALSE][select[, 2], k, drop=FALSE] == 0] <- pMissingB
-
-    LLL[select] <- LLL[select] + logpTrue + log(helpA) + log(helpB)
-
-    # Add unstable part if unstable
-    if (!PIVs_stable[k]) {
-      times <- abs(data$encodedB[select[, 2], "date"] - data$encodedA[select[, 1], "date"])
-      intercept <-  rep(1, nrow(select))
-      cov_k <- cbind(
-        intercept,
-        data$encodedA[select[, 1], data$PIVs_config[[k]]$cond_hazard_cov$covA, drop = FALSE],
-        data$encodedB[select[, 2], data$PIVs_config[[k]]$cond_hazard_cov$covB, drop = FALSE]
-      )
-      pSameH <- model_dynamics$S(cov_k, alpha[[k]], times)
-      helpH <- pSameH^(HA == HB) * ((1 - pSameH) / (data$n_values[k] - 1))^(HA != HB)
-      LLL[select] <- LLL[select] + log(helpH)
-    }
-  }
-
-  if (anyNA(LLL[select])) {
-    warning("Some entries of the linkage log-likelihood matrix are NA.", call. = FALSE)
-  }
-
-  # Complete data likelihood
-  LL0 <- log_lik(LLL = LLL, LLA = LLA, LLB = LLB, links = linksR, sumRowD = sumRowD, sumColD = sumColD, gamma = gamma)
-
-  Dsample <- sampleD(as.matrix(select), LLA, LLB, LLL[select], pLink, LL0, as.integer(nrow(linksR)), sumRowD > 0, sumColD > 0)
+  # Current link state in 0-based form for sampleD (linksR is 1-based and may
+  # be a 0x2 double matrix when nothing is linked yet).
+  links0 <- matrix(as.integer(linksR) - 1L, ncol = 2)
+  Dsample <- sampleD(select, LLA, LLB, LLLq, gamma, as.integer(nrow(linksR)), links0, threads)
   linksR <- Dsample$links + 1
 
-  # Sanity check: recomputed log-likelihood should match the sampler's own value
-  ll_check <- log_lik(LLL = LLL, LLA = LLA, LLB = LLB, links = linksR, sumRowD = Dsample$sumRowD, sumColD = Dsample$sumColD, gamma = pLink)
+  # Sanity check: recomputed log-likelihood should match the sampler's own value.
+  # sampleD reconstructs its loglik internally (the level cancels in every
+  # acceptance ratio); this recomputes it independently in R.
+  ll_check <- log_lik_pairs(LLLq, LLA, LLB, Dsample$linksQ, nrow(linksR), Dsample$sumRowD, Dsample$sumColD, gamma)
   if (round(Dsample$loglik, 3) != round(ll_check, 3)) {
     stop(
       "Log-likelihood sanity check failed (sampler: ", round(Dsample$loglik, 3),
@@ -764,11 +733,44 @@ survival_model <- function(type = c("exponential", "weibull", "gompertz", "piece
                   }
   )
   model$type <- type
+  model$cuts <- cuts
   model$negloglik <- function(alpha, X, times, Hequal) {
     s <- pmin(pmax(model$S(X, alpha, times), 1e-12), 1 - 1e-12)
     -sum(Hequal * log(s) + (!Hequal) * log(1 - s))
   }
   structure(model, class = "survival_model")
+}
+
+#' Evaluate a survival model's S, C++ fast path for the built-in families
+#'
+#' Internal dispatcher used by the Gibbs hot path ([StEM()] through
+#' [simulateD()] and the per-sweep `survivalpSameH` refresh): built-in models
+#' evaluate through the fused, OpenMP-parallel `survivalS_cpp()` kernel;
+#' `type = "custom"` models keep calling the user's R function, unchanged.
+#'
+#' @param model Object built by [survival_model()].
+#' @param X Covariate matrix, intercept column first (same contract as
+#'   `model$S`).
+#' @param alpha Parameter vector (layout per family, see [survival_model()]).
+#' @param times Numeric vector of time gaps.
+#' @param threads Integer, number of OpenMP threads for the C++ kernel
+#'   (default 4; ignored without OpenMP; identical results for
+#'   any value).
+#'
+#' @return Numeric vector of survival probabilities, one per row of `X`.
+survival_S <- function(model, X, alpha, times, threads = 4) {
+  if (!inherits(model, "survival_model")) {
+    stop("`model` must be built with `survival_model()`.", call. = FALSE)
+  }
+  if (model$type == "custom") {
+    return(model$S(X, alpha, times))
+  }
+  # The R closures take X through as.matrix() inside ph(); the C++ kernel
+  # needs a real matrix. Callers build X with cbind() over data-frame
+  # columns, which yields a data frame.
+  X <- as.matrix(X)
+  cuts <- if (is.null(model$cuts)) numeric(0) else as.numeric(model$cuts)
+  survivalS_cpp(X, alpha, times, model$type, cuts, threads)
 }
 
 #' Stochastic Expectation-Maximisation for record linkage
@@ -811,6 +813,10 @@ survival_model <- function(type = c("exponential", "weibull", "gompertz", "piece
 #'   not lowering it.
 #' @param model_dynamics Object from [survival_model()]: the survival model
 #'   for the change over time of the structured PIVs (default exponential).
+#' @param threads Integer, number of OpenMP threads used by the C++ Gibbs
+#'   kernels for their per-pair loops (default 4). Results are
+#'   identical for any value. Ignored — the code runs sequentially — if the
+#'   package was built without OpenMP support.
 #'
 #' @return A list with: `Delta` sparse-matrix summary (`i`, `j`, `x`) of
 #'   posterior linkage probabilities; a pair is a valid link candidate once
@@ -896,7 +902,7 @@ survival_model <- function(type = c("exponential", "weibull", "gompertz", "piece
 StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_burnin = 10,
                  music_on = FALSE, new_directory = NULL, save_info_iter = FALSE,
                  gamma0 = NULL, phiA0 = NULL, phiB0 = NULL, n_post_sample = 1000,
-                 model_dynamics = survival_model("exponential")) {
+                 model_dynamics = survival_model("exponential"), threads = 1) {
 
   message("FlexRL")
 
@@ -908,11 +914,35 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
   nGibbsIter <- gibbs_iter - gibbs_burnin
   if (StEM_iter - StEM_burnin <= 0) stop("`StEM_iter` must be greater than `StEM_burnin`.", call. = FALSE)
   if (nGibbsIter <= 0) stop("`gibbs_iter` must be greater than `gibbs_burnin`.", call. = FALSE)
+  if (!is.numeric(threads) || length(threads) != 1 || is.na(threads) || threads < 1) {
+    stop("`threads` must be a single number >= 1.", call. = FALSE)
+  }
+  threads <- as.integer(threads)
 
   encodedA <- data$encodedA
   encodedB <- data$encodedB
 
   PIVs <- names(data$PIVs_config)
+
+  # Encoded PIV columns must hold integers in 0..n_values with 0 = missing
+  # (the contract of prepare_data()). An NA would flow into the C++ Gibbs
+  # kernels as NA_INTEGER and overflow integer arithmetic there (crash:
+  # "Index out of bounds: index=2147483647"), so reject it up front.
+  for (k in seq_along(PIVs)) {
+    x <- PIVs[k]
+    for (nm in c("encodedA", "encodedB")) {
+      v <- data[[nm]][[x]]
+      nv <- data$n_values[k]
+      if (is.null(v) || !is.numeric(v) || anyNA(v) || is.na(nv) ||
+          any(v < 0 | v > nv | v != floor(v))) {
+        stop(sprintf(
+          "`data$%s$%s` must contain only integers in 0..%d (0 = missing). Re-run prepare_data() if the encoded data was edited by hand.",
+          nm, x, nv
+        ), call. = FALSE)
+      }
+    }
+  }
+
   PIVs_stable <- sapply(data$PIVs_config, function(x) x$dynamics != "structured")
   PIVs_boundMistakes <- sapply(data$PIVs_config, function(x) x$bound_mistakes)
   PIVs_fixMistakes <- sapply(data$PIVs_config, function(x) x$fix_mistakes)
@@ -1003,13 +1033,13 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
   )
 
   # Runs one Gibbs iteration and refreshes `survivalpSameH` for unstable PIVs
-  gibbs_step <- function(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma, eta, alpha, phi) {
+  gibbs_step <- function(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma, eta, alpha, phi, threads = 4) {
     newTruePivs <- simulateH(data = data, links = linksCpp, survivalpSameH = survivalpSameH,
                              sumRowD = sumRowD, sumColD = sumColD, eta = eta, phi = phi)
-    Dsample <- simulateD(data = data, linksR = linksR, sumRowD = sumRowD, sumColD = sumColD,
+    Dsample <- simulateD(data = data, linksR = linksR,
                          truepivsA = newTruePivs$truepivsA, truepivsB = newTruePivs$truepivsB,
                          gamma = gamma, eta = eta, alpha = alpha, phi = phi,
-                         model_dynamics = model_dynamics)
+                         model_dynamics = model_dynamics, threads = threads)
     linksCpp <- Dsample$links
     linksR <- linksCpp + 1
     survivalpSameH <- matrix(1, nrow(linksR), N_PIVs)
@@ -1020,7 +1050,7 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
         cov_k <- cbind(intercept,
                        encodedA[linksR[, 1], PIVs_conditionalHazardVariables[[k]]$covA, drop = FALSE],
                        encodedB[linksR[, 2], PIVs_conditionalHazardVariables[[k]]$covB, drop = FALSE])
-        survivalpSameH[, k] <- model_dynamics$S(cov_k, alpha[[k]], times)
+        survivalpSameH[, k] <- survival_S(model_dynamics, cov_k, alpha[[k]], times, threads)
       }
     }
     list(linksCpp = linksCpp, linksR = linksR, sumRowD = Dsample$sumRowD, sumColD = Dsample$sumColD,
@@ -1036,7 +1066,7 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
     Burnin_total <- 0
     while (countBurnin != 0) {
       Burnin_total <- Burnin_total + 1
-      step <- gibbs_step(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma, eta, alpha, phi)
+      step <- gibbs_step(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma, eta, alpha, phi, threads)
       linksCpp <- step$linksCpp
       linksR <- step$linksR
       sumRowD <- step$sumRowD
@@ -1057,9 +1087,8 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
 
   for (iter in seq_len(StEM_iter)) {
 
-    initDeltaMap()
     linksR <- matrix(0, 0, 2)
-    linksCpp <- linksR
+    linksCpp <- matrix(integer(0), 0, 2)
     sumRowD <- rep(0, nrow(encodedA))
     sumColD <- rep(0, nrow(encodedB))
     nlinkrec <- 0
@@ -1078,7 +1107,7 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
       nlinkrec <- burnin$nlinkrec
     } else {
       for (j in seq_len(gibbs_burnin)) {
-        step <- gibbs_step(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma, eta, alpha, phi)
+        step <- gibbs_step(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma, eta, alpha, phi, threads)
         linksCpp <- step$linksCpp
         linksR <- step$linksR
         sumRowD <- step$sumRowD
@@ -1094,7 +1123,7 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
     Vphi <- lapply(data$n_values, function(x) c())
 
     for (j in seq_len(nGibbsIter)) {
-      step <- gibbs_step(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma, eta, alpha, phi)
+      step <- gibbs_step(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma, eta, alpha, phi, threads)
       linksCpp <- step$linksCpp
       linksR <- step$linksR
       sumRowD <- step$sumRowD
@@ -1223,13 +1252,19 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
   alpha_avg <- lapply(alpha.iter,   function(x) apply(x[StEM_burnin:StEM_iter, , drop = FALSE], 2, mean))
   phi_avg   <- lapply(phi.iter,     function(x) apply(x[StEM_burnin:StEM_iter, , drop = FALSE], 2, mean))
 
-  Delta <- Matrix::Matrix(0, nrow = nrow(encodedA), ncol = nrow(encodedB), sparse = TRUE)
+  # sparseMatrix (not Matrix(0, ..., sparse=TRUE)): for square inputs Matrix(0, ...)
+  # returns a diagonalMatrix, and Matrix::summary() of a diagonalMatrix is a
+  # diagSummary (not the i/j/x triplets), which as.data.frame() below cannot
+  # convert ('dimnames' applied to non-array) whenever nA == nB and every
+  # posterior link fell on the diagonal (or Delta stayed empty).
+  Delta <- Matrix::sparseMatrix(i = integer(0), j = integer(0), x = numeric(0),
+                                dims = c(nrow(encodedA), nrow(encodedB)))
   pbfinal_id <- cli::cli_progress_bar(
     format = "Drawing Delta          {cli::pb_bar} {cli::pb_percent} [{cli::pb_elapsed}]",
     total = n_post_sample, clear = FALSE
   )
   for (m in seq_len(n_post_sample)) {
-    step <- gibbs_step(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma_avg, eta_avg, alpha_avg, phi_avg)
+    step <- gibbs_step(linksCpp, linksR, sumRowD, sumColD, survivalpSameH, gamma_avg, eta_avg, alpha_avg, phi_avg, threads)
     # Note: eta/alpha/phi are frozen at their posterior mean for these draws
     linksCpp <- step$linksCpp
     linksR <- step$linksR
@@ -1238,7 +1273,14 @@ StEM <- function(data, StEM_iter = 30, StEM_burnin = 15, gibbs_iter = 20, gibbs_
     survivalpSameH <- step$survivalpSameH
 
     if (nrow(linksR) > 0) {
-      for (l in seq_len(nrow(linksR))) Delta[linksR[l, 1], linksR[l, 2]] <- Delta[linksR[l, 1], linksR[l, 2]] + 1
+      # One sparse build + add per post-sample draw; adding one cell at a
+      # time to a dgCMatrix re-copies the matrix per assignment and is
+      # orders of magnitude slower.
+      # Duplicate (i, j) pairs are summed by sparseMatrix, though the one-to-one
+      # constraint means a single draw never has any.
+      Delta <- Delta + Matrix::sparseMatrix(i = linksR[, 1], j = linksR[, 2],
+                                            x = rep(1, nrow(linksR)),
+                                            dims = c(nrow(encodedA), nrow(encodedB)))
     }
     cli::cli_progress_update(id = pbfinal_id)
   }
@@ -1439,12 +1481,16 @@ link_with_FlexRL <- function(dataA, dataB, arguments, ...) {
 #' @export
 #'
 link_with_fedmatch <- function(dataA, dataB, arguments, ...) {
-  dataA[, arguments$unique_key_1] <- rownames(dataA)
-  dataB[, arguments$unique_key_2] <- rownames(dataB)
+  # Key the records by their row POSITION: `rownames()` are character and are
+  # not guaranteed to equal the row positions once rows have been filtered
+  # (e.g. by the support restriction), which would silently return wrong
+  # indices — and character "indices" break every downstream numeric use.
+  dataA[, arguments$unique_key_1] <- seq_len(nrow(dataA))
+  dataB[, arguments$unique_key_2] <- seq_len(nrow(dataB))
   arguments$data1 <- dataA
   arguments$data2 <- dataB
   results <- do.call(fedmatch::merge_plus, arguments[intersect(names(arguments), names(formals(fedmatch::merge_plus)))])
-  list(idxA = results$matches$unique_key_A, idxB = results$matches$unique_key_B,
+  list(idxA = as.integer(results$matches$unique_key_A), idxB = as.integer(results$matches$unique_key_B),
        LinkScore = results$matches$multivar_score)
 }
 
@@ -1929,7 +1975,10 @@ prepare_data <- function(data1, data2, label1, label2, PIVs_config,
     stop("`dynamics` must be one of 'stable', 'flexible', 'structured'; problem for: ",
          paste(PIVs[bad_dynamics], collapse = ", "), ".", call. = FALSE)
   }
-  is_numeric_or_na <- function(v) is.vector(v) && length(v) == 2 && all(is.na(v) | grepl("^-?[0-9.]+$", v))
+  # Only true numerics (or NAs) are accepted: string numerics like "0.02" pass
+  # this check but crash later inside StEM ("non-numeric argument to binary
+  # operator" in `1 - PIVs_fixMistakes[, k]`).
+  is_numeric_or_na <- function(v) is.vector(v) && length(v) == 2 && (is.numeric(v) || all(is.na(v)))
   bad_fix <- !vapply(PIVs_config, function(x) is_numeric_or_na(x$fix_mistakes), logical(1))
   if (any(bad_fix)) stop("`fix_mistakes` must be a length-2 numeric/NA vector; problem for: ", paste(PIVs[bad_fix], collapse = ", "), ".", call. = FALSE)
   bad_bound <- !vapply(PIVs_config, function(x) is_numeric_or_na(x$bound_mistakes), logical(1))
@@ -2309,7 +2358,12 @@ synthesise <- function(method, encodedA, encodedB, PIVs, n_synth, restrict_suppo
   rownames(encodedA) <- seq_len(nrow(encodedA))
   rownames(encodedNewB) <- seq_len(nrow(encodedNewB))
 
-  list(dataA = encodedA, dataB = encodedNewB)
+  # Number of synthetic records actually present after the support restriction;
+  # needed by compute_augmRL_FDP_synth to scale the FDP estimator correctly
+  # (paper Eq. 2 uses N_synth = the number of synthetic records in B~).
+  n_synth_actual <- sum(encodedNewB$source == "synthetic")
+
+  list(dataA = encodedA, dataB = encodedNewB, n_synth_actual = n_synth_actual)
 }
 
 #' Standardised mean difference between a selected set and a baseline
@@ -2777,6 +2831,17 @@ compute_augmRL_FDP_synth <- function(synth_method, encodedA, encodedB, PIVs, n_s
                             restrict_support_intersection)
     }
 
+    # The estimator's scaling (paper Eq. 2) must use the number of synthetic
+    # records actually present in the augmented file, not the requested count:
+    # synthesise() drops synthetic records that fall outside the common support.
+    n_synth_actual <- if (!is.null(new_data$n_synth_actual)) new_data$n_synth_actual else n_synth
+    n_real_kept <- nrow(new_data$dataB) - n_synth_actual
+    if (n_real_kept != n_records_B) {
+      warning(sprintf(
+        "%s real records were dropped from file B during synthesis; the real/synthetic index split used by the FDP_synth estimator is invalid for data that was not support-restricted by prepare_data().",
+        n_records_B - n_real_kept), call. = FALSE)
+    }
+
     any_valid_estimate <- FALSE
     n_tries <- 0
 
@@ -2789,7 +2854,7 @@ compute_augmRL_FDP_synth <- function(synth_method, encodedA, encodedB, PIVs, n_s
       if (is.null(res_LinkScore)) {
         n_linked <- length(res_idxA)
         if (n_linked > 0) {
-          est <- FDP_synth(res_idxA, res_idxB, res_LinkScore, NULL, n_records_A, n_records_B, n_synth)
+          est <- FDP_synth(res_idxA, res_idxB, res_LinkScore, NULL, n_records_A, n_records_B, n_synth_actual)
           FDP_synth_res[i, 1] <- est$FDP_synth
           n_linked_synth_res[i, 1] <- est$n_linked_real
         } else {
@@ -2801,7 +2866,7 @@ compute_augmRL_FDP_synth <- function(synth_method, encodedA, encodedB, PIVs, n_s
         for (j in seq_along(thresholds)) {
           n_linked <- sum(res_LinkScore > thresholds[j], na.rm = TRUE)
           if (n_linked > 0) {
-            est_synth <- FDP_synth(res_idxA, res_idxB, res_LinkScore, thresholds[j], n_records_A, n_records_B, n_synth)
+            est_synth <- FDP_synth(res_idxA, res_idxB, res_LinkScore, thresholds[j], n_records_A, n_records_B, n_synth_actual)
             est_score <- FDP_score(res_LinkScore, thresholds[j])
             FDP_synth_res[i, j] <- est_synth$FDP_synth
             FDP_score_res[i, j] <- est_score$FDP_score
