@@ -28,7 +28,7 @@ Those tools work on the output of **any** record linkage method, so you can repo
 - **Dynamic PIVs** that change over time (for example, a postal code between two data collections), modelled with a survival model.
 - **Registration errors**, missing values and mistakes, modelled.
 - **Linkage quality tools that work with any method**: estimated false discovery proportion, and divergence between the linked sample and the sources, as functions of the decision rule.
-- A **low memory footprint**: memory grows with the number of records and candidate pairs, not with the number of all pairs.
+- **Fast running time** and **low memory footprint**: memory grows with the number of records and candidate pairs, not with the number of all pairs; running time grows with the number of records, candidate pairs, PIVs, iterations and decreases with the number of threads.
 
 Existing record linkage methods reduces every pair of records to a vector of agreements and disagreements and classifies the pairs. FlexRL instead models the data generation process: the registered values are distorted versions of latent true values, and the linkage structure determines which records share the same true values. Parameters estimation of this hierarchical modelling is done with Stochastic Expectation Maximisation (StEM) algorithm.
 
