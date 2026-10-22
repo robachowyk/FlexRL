@@ -13,6 +13,7 @@ Imports: Matrix (>= 1.7), Rcpp (>= 1.0.13), cli, graphics, grDevices, stats, uti
 LinkingTo: Rcpp
 VignetteBuilder: knitr, quarto
 Suggests: 
+    foreach,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0),
