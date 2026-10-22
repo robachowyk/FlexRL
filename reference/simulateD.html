@@ -50,15 +50,14 @@ its conditional distribution, and returns the updated log-likelihood.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">simulateD</span><span class="op">(</span></span>
 <span>  <span class="va">data</span>,</span>
 <span>  <span class="va">linksR</span>,</span>
-<span>  <span class="va">sumRowD</span>,</span>
-<span>  <span class="va">sumColD</span>,</span>
 <span>  <span class="va">truepivsA</span>,</span>
 <span>  <span class="va">truepivsB</span>,</span>
 <span>  <span class="va">gamma</span>,</span>
 <span>  <span class="va">eta</span>,</span>
 <span>  <span class="va">alpha</span>,</span>
 <span>  <span class="va">phi</span>,</span>
-<span>  model_dynamics <span class="op">=</span> <span class="fu"><a href="survival_model.html">survival_model</a></span><span class="op">(</span><span class="st">"exponential"</span><span class="op">)</span></span>
+<span>  model_dynamics <span class="op">=</span> <span class="fu"><a href="survival_model.html">survival_model</a></span><span class="op">(</span><span class="st">"exponential"</span><span class="op">)</span>,</span>
+<span>  threads <span class="op">=</span> <span class="fl">4</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -75,16 +74,6 @@ sources, missing values as <code>0</code>), <code>n_values</code>, <code>PIVs_co
 <dt id="arg-linksr">linksR<a class="anchor" aria-label="anchor" href="#arg-linksr"></a></dt>
 <dd><p>2-column matrix (1-indexed) of the currently linked (A, B)
 indices.</p></dd>
-
-
-<dt id="arg-sumrowd">sumRowD<a class="anchor" aria-label="anchor" href="#arg-sumrowd"></a></dt>
-<dd><p>Logical vector, one entry per record in A: does it form a
-link?</p></dd>
-
-
-<dt id="arg-sumcold">sumColD<a class="anchor" aria-label="anchor" href="#arg-sumcold"></a></dt>
-<dd><p>Logical vector, one entry per record in B: does it form a
-link?</p></dd>
 
 
 <dt id="arg-truepivsa">truepivsA<a class="anchor" aria-label="anchor" href="#arg-truepivsa"></a></dt>
@@ -116,6 +105,12 @@ smaller file.</p></dd>
 <dt id="arg-model-dynamics">model_dynamics<a class="anchor" aria-label="anchor" href="#arg-model-dynamics"></a></dt>
 <dd><p>Object from <code><a href="survival_model.html">survival_model()</a></code> giving the survival
 function of the structured PIVs.</p></dd>
+
+
+<dt id="arg-threads">threads<a class="anchor" aria-label="anchor" href="#arg-threads"></a></dt>
+<dd><p>Integer, number of OpenMP threads for the C++ per-pair
+likelihood loops (default 4; identical results for any
+value; ignored if the package was built without OpenMP).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -156,7 +151,6 @@ linked records</p>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> '2' is the larger source, saved as B; '1' saved as A.</span>
 <span class="r-in"><span><span class="va">PIVs_stable</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">data_StEM</span><span class="op">$</span><span class="va">PIVs_config</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></span>
 <span class="r-in"><span>                        <span class="va">x</span><span class="op">$</span><span class="va">dynamics</span> <span class="op">!=</span> <span class="st">"structured"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">FlexRL</span><span class="fu">:::</span><span class="fu">initDeltaMap</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">linksR</span> <span class="op">=</span> <span class="fu">base</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">0</span>,<span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">linksCpp</span> <span class="op">=</span> <span class="va">linksR</span></span></span>
 <span class="r-in"><span><span class="va">sumRowD</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">data_StEM</span><span class="op">$</span><span class="va">encodedA</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -181,8 +175,8 @@ linked records</p>
 <span class="r-in"><span>                        sumRowD<span class="op">=</span><span class="va">sumRowD</span>, sumColD<span class="op">=</span><span class="va">sumColD</span>, eta<span class="op">=</span><span class="va">eta</span>, phi<span class="op">=</span><span class="va">phi</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">truepivsA</span> <span class="op">=</span> <span class="va">newTruePivs</span><span class="op">$</span><span class="va">truepivsA</span></span></span>
 <span class="r-in"><span><span class="va">truepivsB</span> <span class="op">=</span> <span class="va">newTruePivs</span><span class="op">$</span><span class="va">truepivsB</span></span></span>
-<span class="r-in"><span><span class="va">Dsample</span> <span class="op">=</span> <span class="fu">simulateD</span><span class="op">(</span>data<span class="op">=</span><span class="va">data_StEM</span>, linksR<span class="op">=</span><span class="va">linksR</span>, sumRowD<span class="op">=</span><span class="va">sumRowD</span>,</span></span>
-<span class="r-in"><span>                   sumColD<span class="op">=</span><span class="va">sumColD</span>, truepivsA<span class="op">=</span><span class="va">truepivsA</span>, truepivsB<span class="op">=</span><span class="va">truepivsB</span>,</span></span>
+<span class="r-in"><span><span class="va">Dsample</span> <span class="op">=</span> <span class="fu">simulateD</span><span class="op">(</span>data<span class="op">=</span><span class="va">data_StEM</span>, linksR<span class="op">=</span><span class="va">linksR</span>,</span></span>
+<span class="r-in"><span>                   truepivsA<span class="op">=</span><span class="va">truepivsA</span>, truepivsB<span class="op">=</span><span class="va">truepivsB</span>,</span></span>
 <span class="r-in"><span>                   gamma<span class="op">=</span><span class="va">gamma</span>, eta<span class="op">=</span><span class="va">eta</span>, alpha<span class="op">=</span><span class="va">alpha</span>, phi<span class="op">=</span><span class="va">phi</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">linksCpp</span> <span class="op">=</span> <span class="va">Dsample</span><span class="op">$</span><span class="va">links</span></span></span>
 <span class="r-in"><span><span class="va">linksR</span> <span class="op">=</span> <span class="va">linksCpp</span> <span class="op">+</span> <span class="fl">1</span></span></span>

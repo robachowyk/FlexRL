@@ -126,7 +126,7 @@ Experiments repository: <a href="https://github.com/robachowyk/FlexRL-experiment
 <span class="r-in"><span>                           <span class="cn">TRUE</span>, <span class="fu"><a href="survival_model.html">survival_model</a></span><span class="op">(</span><span class="st">"exponential"</span><span class="op">)</span> <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">prep_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="prepare_data.html">prepare_data</a></span><span class="op">(</span> <span class="va">gen_data</span><span class="op">$</span><span class="va">data1</span>, <span class="va">gen_data</span><span class="op">$</span><span class="va">data2</span>, <span class="st">"1"</span>, <span class="st">"2"</span>,</span></span>
 <span class="r-in"><span>                           <span class="va">PIVs_config</span>, <span class="cn">TRUE</span>, <span class="st">"entity_id"</span>, <span class="cn">TRUE</span> <span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIVs 'V4' and 'V3' are associated (Cramer's V = 0.31 in data1, 0.27 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIV 'V4': values out of the common support in data2 [6].</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> '2' is the larger source, saved as B; '1' saved as A.</span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="StEM.html">StEM</a></span><span class="op">(</span> data <span class="op">=</span> <span class="va">prep_data</span>, StEM_iter <span class="op">=</span> <span class="fl">5</span>, StEM_burnin <span class="op">=</span> <span class="fl">2</span>,</span></span>
 <span class="r-in"><span>             gibbs_iter <span class="op">=</span> <span class="fl">5</span>, gibbs_burnin <span class="op">=</span> <span class="fl">2</span>, n_post_sample <span class="op">=</span> <span class="fl">5</span> <span class="op">)</span></span></span>
@@ -141,7 +141,7 @@ Experiments repository: <a href="https://github.com/robachowyk/FlexRL-experiment
 <span class="r-in"><span><span class="va">fn</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="va">true_pairs</span>, <span class="va">linked_pairs</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>LinkageDecisionRule <span class="op">=</span> <span class="fl">0.5</span>, FDP <span class="op">=</span> <span class="va">fp</span> <span class="op">/</span> <span class="op">(</span><span class="va">tp</span> <span class="op">+</span> <span class="va">fp</span><span class="op">)</span>, Sensitivity <span class="op">=</span> <span class="va">tp</span> <span class="op">/</span> <span class="op">(</span><span class="va">tp</span> <span class="op">+</span> <span class="va">fn</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> LinkageDecisionRule                 FDP         Sensitivity </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           0.5000000           0.2727273           0.6400000 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           0.5000000           0.3580247           0.5306122 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># diagnostics for inference on the linked data</span></span></span>
 <span class="r-in"><span><span class="va">diag</span> <span class="op">&lt;-</span> <span class="fu"><a href="RL_diagnostics.html">RL_diagnostics</a></span><span class="op">(</span><span class="va">fit</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedA</span>, <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span>,</span></span>
@@ -154,128 +154,127 @@ Experiments repository: <a href="https://github.com/robachowyk/FlexRL-experiment
 <span class="r-in"><span>                       gibbs_iter <span class="op">=</span> <span class="fl">5</span>, gibbs_burnin <span class="op">=</span> <span class="fl">2</span>, n_post_sample <span class="op">=</span> <span class="fl">5</span>,</span></span>
 <span class="r-in"><span>                       maxIter4CV <span class="op">=</span> <span class="fl">1</span>, n_repeats <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> FDP estimation on augmented RL taskIteration: 0, Accuracy: 53.52%</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration: 1, Accuracy: 40%</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> FDP estimation on augmented RL taskIteration: 0, Accuracy: 45.22%</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIV 'V1': synthetic records out of the common support were removed.</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIV 'V2': synthetic records out of the common support were removed.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIV 'V3': synthetic records out of the common support were removed.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIV 'V4': synthetic records out of the common support were removed.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>3 real records were dropped from file B during synthesis; the real/synthetic index split used by the FDP_synth estimator is invalid for data that was not support-restricted by prepare_data().</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> FlexRL</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> FlexRL results (average over 1 iterations) (augmented RL task) `compute_augmRL_FDP_synth`</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Decision rule threshold   	0.5	0.55	0.6	0.65	0.7	0.75	0.8	0.85	0.9	0.95</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> FDP model score estimator 	0.11	0.11	0.03	0.03	0.03	0.03	0	0	0	0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> FDP synth data estimator  	0.44	0.44	0.42	0.42	0.42	0.42	0.49	0.49	0.49	0.49</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Linked pairs (augm. RL)   	90	90	71	71	71	71	61	61	61	61</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Linked pairs (RL)         	94	94	74	74	74	74	64	64	64	64</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> FDP model score estimator 	0.16	0.16	0.06	0.06	0.06	0.06	0	0	0	0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> FDP synth data estimator  	0.58	0.58	0.63	0.63	0.63	0.63	0.59	0.59	0.59	0.59</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Linked pairs (augm. RL)   	80	80	55	55	55	55	39	39	39	39</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Linked pairs (RL)         	84	84	58	58	58	58	41	41	41	41</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> FDP estimation on original RL task</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> FlexRL</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> FlexRL results (average over 1 iterations) (original RL task) `compute_RL_FDP_score`</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Decision rule threshold   	0.5	0.55	0.6	0.65	0.7	0.75	0.8	0.85	0.9	0.95</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> FDP model score estimator 	0.12	0.12	0.05	0.05	0.05	0.05	0	0	0	0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Linked pairs (RL)         	105	105	84	84	84	84	65	65	65	65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> FDP model score estimator 	0.1	0.1	0.05	0.05	0.05	0.05	0	0	0	0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Linked pairs (RL)         	95	95	81	81	81	81	61	61	61	61</span>
 <span class="r-in"><span><span class="va">diag</span> <span class="co"># print(diag)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;RL_diagnostics&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Linked pairs  (score &gt; 0.50):  88</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Linked pairs  (score &gt; 0.50):  81</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP           (true pairs):    0.273</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Sensitivity   (true pairs):    0.640</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP           (true pairs):    0.358</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Sensitivity   (true pairs):    0.531</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.116</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                threshold 0.50: FDP ~ 0.116</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.101</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                threshold 0.50: FDP ~ 0.101</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                            max threshold 0.99: FDP ~ 0.000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.106</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                threshold 0.50: FDP ~ 0.106</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.164</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                threshold 0.50: FDP ~ 0.164</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                            max threshold 0.99: FDP ~ 0.000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.444</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                threshold 0.50: FDP ~ 0.444</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                            max threshold 0.99: FDP ~ 0.492</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.576</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                threshold 0.50: FDP ~ 0.576</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                            max threshold 0.99: FDP ~ 0.591</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   The score-based estimator is valid when the linkage model is well calibrated to the data.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   The synthetic-data estimator is valid when the augmented task is equivalent to the</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   original one, which requires links and non-links to have similar distributions; similar</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   score-based FDP estimates on the original and augmented tasks support this prerequisite.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Multivariate MMD  (linked A vs. A):  0.0069</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Multivariate MMD  (linked B vs. B):  0.0081</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Multivariate MMD  (linked A vs. A):  0.0093</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Multivariate MMD  (linked B vs. B):  0.0102</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V1  (linked A vs. A):  1.0000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V2  (linked A vs. A):  1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V2  (linked A vs. A):  0.8333</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V3  (linked A vs. A):  1.0000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V4  (linked A vs. A):  0.9167</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V4  (linked A vs. A):  1.0000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V1  (linked B vs. B):  1.0000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V2  (linked B vs. B):  0.8333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V3  (linked B vs. B):  0.8571</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V4  (linked B vs. B):  1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V2  (linked B vs. B):  1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V3  (linked B vs. B):  1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V4  (linked B vs. B):  0.9091</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V1  (linked A vs. linked B):  0.9205</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V2  (linked A vs. linked B):  0.9886</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V3  (linked A vs. linked B):  1.0000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V4  (linked A vs. linked B):  0.8409</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V1  (true pairs):  0.9500</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V2  (true pairs):  0.9700</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V3  (true pairs):  0.9300</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V4  (true pairs):  0.7200</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V1  (linked A vs. linked B):  0.9259</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V2  (linked A vs. linked B):  0.9630</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V3  (linked A vs. linked B):  0.9259</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V4  (linked A vs. linked B):  0.6420</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V1  (true pairs):  0.9694</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V2  (true pairs):  0.9592</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V3  (true pairs):  0.8776</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V4  (true pairs):  0.7449</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V1 values: {3, 4, 5, ...}  (linked A vs. A):  0.0709, 0.1003, -0.1197, ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V2 values: {0, 2, 5, ...}  (linked A vs. A):  0.0575, 0.0592, -0.1132, ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V3 values: {4, 6, 7, ...}  (linked A vs. A):  -0.0731, 0.1013, -0.0242, ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V4                         (linked A vs. A):  -0.0526</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V1 values: {3, 4, 5, ...}  (linked B vs. B):  -0.0208, 0.0912, -0.0812, ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V2 values: {0, 2, 5, ...}  (linked B vs. B):  -0.1003, 0.0831, -0.1476, ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V3 values: {0, 1, 7, ...}  (linked B vs. B):  -0.0707, -0.0760, 0.1551, ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V4                         (linked B vs. B):  0.0250</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V1 values: {1, 2, 4, ...}  (linked A vs. A):  0.1483, -0.0400, -0.0844, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V2 values: {0, 2, 3, ...}  (linked A vs. A):  -0.1159, 0.1303, -0.0836, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V3 values: {2, 4, 7, ...}  (linked A vs. A):  -0.0671, 0.1298, -0.0829, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V4                         (linked A vs. A):  -0.0951</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V1 values: {1, 2, 3, ...}  (linked B vs. B):  0.0658, 0.0592, -0.0539, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V2 values: {1, 4, 5, ...}  (linked B vs. B):  0.0535, 0.0494, -0.0468, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V3 values: {1, 3, 7, ...}  (linked B vs. B):  -0.0886, 0.2224, -0.1493, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V4                         (linked B vs. B):  -0.0101</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">diag</span>, threshold <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;RL_diagnostics&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Linked pairs  (score &gt; 0.75):  74</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Linked pairs  (score &gt; 0.75):  67</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP           (true pairs):    0.243</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Sensitivity   (true pairs):    0.560</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP           (true pairs):    0.269</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Sensitivity   (true pairs):    0.500</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.116</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                threshold 0.75: FDP ~ 0.045</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.101</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                threshold 0.75: FDP ~ 0.049</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                            max threshold 0.99: FDP ~ 0.000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.106</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                threshold 0.75: FDP ~ 0.027</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.164</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                threshold 0.75: FDP ~ 0.059</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                            max threshold 0.99: FDP ~ 0.000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.444</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                threshold 0.75: FDP ~ 0.423</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                            max threshold 0.99: FDP ~ 0.492</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.576</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                threshold 0.75: FDP ~ 0.629</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                            max threshold 0.99: FDP ~ 0.591</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   The score-based estimator is valid when the linkage model is well calibrated to the data.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   The synthetic-data estimator is valid when the augmented task is equivalent to the</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   original one, which requires links and non-links to have similar distributions; similar</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   score-based FDP estimates on the original and augmented tasks support this prerequisite.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Multivariate MMD  (linked A vs. A):  0.0088</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Multivariate MMD  (linked B vs. B):  0.0084</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Multivariate MMD  (linked A vs. A):  0.0140</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Multivariate MMD  (linked B vs. B):  0.0140</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V1  (linked A vs. A):  1.0000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V2  (linked A vs. A):  1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V2  (linked A vs. A):  0.8333</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V3  (linked A vs. A):  1.0000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V4  (linked A vs. A):  0.9167</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V4  (linked A vs. A):  1.0000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V1  (linked B vs. B):  1.0000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V2  (linked B vs. B):  0.8333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V3  (linked B vs. B):  0.8571</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V4  (linked B vs. B):  1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V2  (linked B vs. B):  1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V3  (linked B vs. B):  1.0000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   IoU support V4  (linked B vs. B):  0.9091</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V1  (linked A vs. linked B):  0.9189</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V2  (linked A vs. linked B):  0.9865</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V3  (linked A vs. linked B):  1.0000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V4  (linked A vs. linked B):  0.8919</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V1  (true pairs):  0.9500</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V2  (true pairs):  0.9700</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V3  (true pairs):  0.9300</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V4  (true pairs):  0.7200</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V1  (linked A vs. linked B):  0.9403</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V2  (linked A vs. linked B):  0.9701</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V3  (linked A vs. linked B):  0.9254</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V4  (linked A vs. linked B):  0.6866</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V1  (true pairs):  0.9694</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V2  (true pairs):  0.9592</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V3  (true pairs):  0.8776</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Agreement V4  (true pairs):  0.7449</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V1 values: {0, 3, 5, ...}  (linked A vs. A):  0.0839, 0.1325, -0.1392, ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V2 values: {0, 4, 5, ...}  (linked A vs. A):  0.0839, 0.0559, -0.0813, ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V3 values: {3, 5, 6, ...}  (linked A vs. A):  0.0879, -0.1625, 0.1687, ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V4                         (linked A vs. A):  -0.0617</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V1 values: {2, 4, 5, ...}  (linked B vs. B):  -0.0365, 0.0600, -0.0709, ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V2 values: {0, 4, 5, ...}  (linked B vs. B):  -0.1003, 0.0945, -0.1167, ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V3 values: {2, 5, 7, ...}  (linked B vs. B):  -0.0990, -0.2002, 0.1915, ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V4                         (linked B vs. B):  -0.0338</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V1 values: {1, 2, 5, ...}  (linked A vs. A):  0.1129, -0.0422, -0.0482, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V2 values: {0, 3, 4, ...}  (linked A vs. A):  -0.1159, -0.0665, 0.0925, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V3 values: {4, 6, 7, ...}  (linked A vs. A):  0.1552, -0.0682, -0.1112, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V4                         (linked A vs. A):  -0.1770</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V1 values: {1, 4, 5, ...}  (linked B vs. B):  0.0765, 0.0573, -0.1142, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V2 values: {1, 4, 6, ...}  (linked B vs. B):  0.1179, 0.0791, -0.0808, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V3 values: {1, 3, 7, ...}  (linked B vs. B):  -0.0958, 0.2729, -0.1977, ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SMD V4                         (linked B vs. B):  0.0178</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"scores"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="FlexRL-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">diag</span>, <span class="st">"distributions"</span>, threshold <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span></span>

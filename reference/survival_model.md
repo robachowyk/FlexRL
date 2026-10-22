@@ -105,28 +105,28 @@ expo$S(X, alpha = log(0.3), times)
 #> [1] 0.9997000 0.9417645 0.6770569 0.6376282 0.5488116
 stats::nlminb(expo$init(ncol(X)), expo$negloglik, X = X, times = times,
               Hequal = Hequal)$par
-#> [1] -0.3719642
+#> [1] -0.3719637
 
 weib <- survival_model("weibull")
 weib$S(X, alpha = c(0.5, -1), times)
 #> [1] 0.9999978 0.9865530 0.7435143 0.6871328 0.5471930
 stats::nlminb(weib$init(ncol(X)), weib$negloglik, X = X, times = times,
               Hequal = Hequal)$par
-#> [1]  5.8031240 -0.3252972
+#> [1]  7.8456430 -0.2856518
 
 gomp <- survival_model("gompertz")
 gomp$S(X, alpha = c(0.5, -1), times)
 #> [1] 0.9996321 0.9255377 0.5098609 0.4396208 0.2824536
 stats::nlminb(gomp$init(ncol(X)), gomp$negloglik, X = X, times = times,
               Hequal = Hequal)$par
-#> [1]  119.3072 -171.0037
+#> [1]  120.9777 -169.0776
               
 pw <- survival_model("piecewise", cuts = 1)
 pw$S(X, alpha = c(-2, -1), times)
 #> [1] 0.9998647 0.9732960 0.7821575 0.7266757 0.6045840
 stats::nlminb(pw$init(ncol(X)), pw$negloglik, X = X, times = times,
               Hequal = Hequal)$par
-#> [1] -22.6158708   0.9000345
+#> [1] -22.3774177   0.9000345
 
 # a custom model: log-logistic with scale exp(X alpha[-1]) 
 # and shape exp(alpha[1])
@@ -146,5 +146,5 @@ loglogistic$S(X, alpha = c(0, -2), times)
 #> [5,] 0.7869860
 stats::nlminb(loglogistic$init(ncol(X)), loglogistic$negloglik, X = X, times = times,
               Hequal = Hequal)$par
-#> [1]  6.2346434 -0.3664586
+#> [1]  5.777693 -0.324700
 ```

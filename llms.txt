@@ -376,6 +376,10 @@ methodological paper:
 - [`support_iou()`](https://robachowyk.github.io/FlexRL/reference/support_iou.md)
   : Intersection-over-union of two histogram supports
 
+- [`survival_S()`](https://robachowyk.github.io/FlexRL/reference/survival_S.md)
+  : Evaluate a survival model's S, C++ fast path for the built-in
+  families
+
 - [`survival_model()`](https://robachowyk.github.io/FlexRL/reference/survival_model.md)
   : Survival models for the dynamics of a PIV
 

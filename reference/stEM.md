@@ -22,7 +22,8 @@ StEM(
   phiA0 = NULL,
   phiB0 = NULL,
   n_post_sample = 1000,
-  model_dynamics = survival_model("exponential")
+  model_dynamics = survival_model("exponential"),
+  threads = 1
 )
 ```
 
@@ -103,6 +104,13 @@ StEM(
   the survival model for the change over time of the structured PIVs
   (default exponential).
 
+- threads:
+
+  Integer, number of OpenMP threads used by the C++ Gibbs kernels for
+  their per-pair loops (default 4). Results are identical for any value.
+  Ignored — the code runs sequentially — if the package was built
+  without OpenMP support.
+
 ## Value
 
 A list with: `Delta` sparse-matrix summary (`i`, `j`, `x`) of posterior
@@ -139,24 +147,25 @@ gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100,
                            p_mistake, p_missing, cond_hazard_params1, TRUE )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
+#> Warning: PIVs 'V4' and 'V3' are associated (Cramer's V = 0.31 in data1, 0.23 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
 #> '2' is the larger source, saved as B; '1' saved as A.
 fit1 <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
               gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5,
               model_dynamics = survival_model("exponential") )
 #> FlexRL
 apply(fit1$alpha$V4[2:5,], 2, mean)
-#>   intercept          Xe          Xf 
-#> -1.12185181  0.01234404 -0.70639079 
+#>  intercept         Xe         Xf 
+#> -0.4609718 -0.2126561 -0.3397829 
 cond_hazard_params1$V4
 #> [1] -0.3566749 -0.5108256 -0.6931472
 head(fit1$Delta[fit1$Delta$x > 0.5, ])
-#>     i j   x
-#> 1   1 1 1.0
-#> 2   3 3 1.0
-#> 3  77 4 0.6
-#> 4 126 5 1.0
-#> 5   6 6 1.0
-#> 6   8 8 0.8
+#>     i j x
+#> 1   1 1 1
+#> 2   2 2 1
+#> 3   3 3 1
+#> 4   4 4 1
+#> 5   5 5 1
+#> 6 133 6 1
 
 cond_hazard_params2 <- list( V1 = c(), V2 = c(), 
                              V3 = c(), V4 = log(c(0.3, 0.7, 0.6, 0.5)) )
@@ -165,7 +174,7 @@ gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100,
                            model_dynamics = survival_model("weibull") )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
-#> Warning: PIVs 'V4' and 'V2' are associated (Cramer's V = 0.30 in data1, 0.18 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+#> Warning: PIVs 'V4' and 'V3' are associated (Cramer's V = 0.31 in data1, 0.24 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
 #> '2' is the larger source, saved as B; '1' saved as A.
 fit2 <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
               gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5,
@@ -173,17 +182,17 @@ fit2 <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2,
 #> FlexRL
 apply(fit2$alpha$V4[2:5,], 2, mean)
 #>  log_shape  intercept         Xe         Xf 
-#> -0.5764050 -1.4788596 -0.3116481 -0.1639223 
+#> -0.1830792 -0.4075393 -0.4018348  0.3191379 
 cond_hazard_params2$V4
 #> [1] -1.2039728 -0.3566749 -0.5108256 -0.6931472
 head(fit2$Delta[fit2$Delta$x > 0.5, ])
-#>   i j x
-#> 3 3 3 1
-#> 4 4 4 1
-#> 5 5 5 1
-#> 6 6 6 1
-#> 8 8 8 1
-#> 9 9 9 1
+#>     i  j   x
+#> 3   2  2 0.8
+#> 5   5  5 0.8
+#> 6   6  6 0.6
+#> 7   7  7 1.0
+#> 10 10 10 0.6
+#> 11 12 12 0.8
 
 cond_hazard_params3 <- list( V1 = c(), V2 = c(), 
                              V3 = c(), V4 = log(c(0.3, 0.7, 0.6, 0.5)) )
@@ -192,24 +201,25 @@ gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100,
                            model_dynamics = survival_model("gompertz") )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
+#> Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.30 in data1, 0.26 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
 #> '2' is the larger source, saved as B; '1' saved as A.
 fit3 <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
               gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5,
               model_dynamics = survival_model("gompertz"))
 #> FlexRL
 apply(fit3$alpha$V4[2:5,], 2, mean)
-#>          g  intercept         Xe         Xf 
-#>  0.2296374 -2.3546302 -0.3117080 -0.5460643 
+#>           g   intercept          Xe          Xf 
+#> -1.47838286  0.03710567 -0.09358765  0.09564330 
 cond_hazard_params3$V4
 #> [1] -1.2039728 -0.3566749 -0.5108256 -0.6931472
 head(fit3$Delta[fit3$Delta$x > 0.5, ])
-#>     i j   x
-#> 2 135 3 0.8
-#> 3   4 4 1.0
-#> 4 118 5 1.0
-#> 5   6 6 0.8
-#> 6   7 7 1.0
-#> 7   8 8 1.0
+#>   i j   x
+#> 2 2 2 0.6
+#> 4 3 3 1.0
+#> 5 4 4 1.0
+#> 6 5 5 0.6
+#> 7 6 6 1.0
+#> 8 7 7 0.6
 
 cond_hazard_params4 <- list( V1 = c(), V2 = c(), 
                              V3 = c(), V4 = log(c(0.6, 0.5, 0.4, 0.3, 0.2, 0.1)) )
@@ -223,19 +233,19 @@ fit4 <- StEM( data = prep_data, StEM_iter = 2, StEM_burnin = 1,
               gibbs_iter = 2, gibbs_burnin = 1, n_post_sample = 2,
               model_dynamics = survival_model("piecewise", cuts = c(1,2,3)))
 #> FlexRL
-#> Warning: PIV 'V2', file A hit its mistake bound on 50% of StEM iterations.
-#>   PIV 'V2', file B hit its mistake bound on 50% of StEM iterations.
+#> Warning: PIV 'V1', file A hit its mistake bound on 50% of StEM iterations.
+#>   PIV 'V1', file B hit its mistake bound on 50% of StEM iterations.
 apply(fit4$alpha$V4, 2, mean)
-#>       log_h1       log_h2       log_h3       log_h4           Xe           Xf 
-#> -29.60635711  -2.01270411 -10.41724662  -0.66821058  -0.26163515   0.02204903 
+#>      log_h1      log_h2      log_h3      log_h4          Xe          Xf 
+#>  -1.4520366 -19.4542957 -12.2055867  -0.6173824   0.5259462  -0.4168332 
 cond_hazard_params4$V4
 #> [1] -0.5108256 -0.6931472 -0.9162907 -1.2039728 -1.6094379 -2.3025851
 head(fit4$Delta[fit4$Delta$x > 0.5, ])
-#>    i  j x
-#> 1  1  1 1
-#> 2  4  4 1
-#> 3  5  5 1
-#> 5  8  8 1
-#> 6 10 10 1
-#> 7 11 11 1
+#>   i j x
+#> 1 1 1 1
+#> 2 2 2 1
+#> 5 5 5 1
+#> 6 6 6 1
+#> 8 8 8 1
+#> 9 9 9 1
 ```

@@ -72,7 +72,8 @@
     
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/robachowyk/FlexRL" class="external-link">FlexRL</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/robachowyk/FlexRL" class="external-link">FlexRL</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; If you are happy with FlexRL, please cite us! If you are unhappy, please cite us anyway (and feel free to complain as well).</span></span></code></pre></div>
 <p><code>FlexRL</code> is a package proposing flexible probabilistic
 <strong>R</strong>ecord <strong>L</strong>inkage with diagnostic tools
 for downstream inference on linked data. The record linkage algorithm
@@ -162,22 +163,22 @@ denotes the smallest source as <code>A</code> and the largest as
 <span><span class="co">#&gt; '2' is the larger source, saved as B; '1' saved as A.</span></span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">prep_data</span><span class="op">$</span><span class="va">encodedA</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   PIV1 PIV2 PIV3 PIV4 change   date     Xe    Xf local_id entity_id source</span></span>
-<span><span class="co">#&gt; 1    6    1    5    9  FALSE 0.0027  0.452  0.94        1         1      1</span></span>
-<span><span class="co">#&gt; 2    7    8    8   10  FALSE 0.0016  1.128  0.90        2         2      1</span></span>
-<span><span class="co">#&gt; 3    5    6    6    6  FALSE 0.0066  1.936  0.31        3         3      1</span></span>
-<span><span class="co">#&gt; 4    3    2    6    2  FALSE 0.0018  1.150  0.69        4         4      1</span></span>
-<span><span class="co">#&gt; 5    5    6    8    7  FALSE 0.0086 -0.625 -0.59        5         5      1</span></span>
-<span><span class="co">#&gt; 6    6    6    5    3  FALSE 0.0021  0.061 -0.39        6         6      1</span></span></code></pre></div>
+<span><span class="co">#&gt;   PIV1 PIV2 PIV3 PIV4 change    date   Xe    Xf local_id entity_id source</span></span>
+<span><span class="co">#&gt; 1    3    8    7    3  FALSE 0.00105 0.37 1.867        1         1      1</span></span>
+<span><span class="co">#&gt; 2    5    8    9    5  FALSE 0.00309 0.36 1.963        2         2      1</span></span>
+<span><span class="co">#&gt; 3    5    3    6   10  FALSE 0.00253 2.32 0.028        3         3      1</span></span>
+<span><span class="co">#&gt; 4    7    4    8    3  FALSE 0.00086 1.58 0.461        4         4      1</span></span>
+<span><span class="co">#&gt; 5    4    7    4    3  FALSE 0.00134 0.40 1.087        5         5      1</span></span>
+<span><span class="co">#&gt; 6    4    8    6    3  FALSE 0.00909 1.00 2.061        6         6      1</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   PIV1 PIV2 PIV3 PIV4 change   date local_id entity_id source</span></span>
-<span><span class="co">#&gt; 1    6    1    5    9  FALSE 0.0067        1         1      2</span></span>
-<span><span class="co">#&gt; 2    7    8    8   10  FALSE 0.0039        2         2      2</span></span>
-<span><span class="co">#&gt; 3    5    6    6    6  FALSE 0.0046        3         3      2</span></span>
-<span><span class="co">#&gt; 4    3    2    6    2  FALSE 0.0064        4         4      2</span></span>
-<span><span class="co">#&gt; 5    5    6    8    7  FALSE 0.0075        5         5      2</span></span>
-<span><span class="co">#&gt; 6    6    6    5    3  FALSE 0.0024        6         6      2</span></span></code></pre></div>
+<span><span class="co">#&gt;   PIV1 PIV2 PIV3 PIV4 change    date local_id entity_id source</span></span>
+<span><span class="co">#&gt; 1    3    8    7    2  FALSE 0.00907        1         1      2</span></span>
+<span><span class="co">#&gt; 2    5    8    9    6  FALSE 0.00850        2         2      2</span></span>
+<span><span class="co">#&gt; 3    5    8    6   10  FALSE 0.00257        3         3      2</span></span>
+<span><span class="co">#&gt; 4    7    4    8    3  FALSE 0.00555        4         4      2</span></span>
+<span><span class="co">#&gt; 5    4    7    4    3  FALSE 0.00192        5         5      2</span></span>
+<span><span class="co">#&gt; 6    4    8    6    3  FALSE 0.00085        6         6      2</span></span></code></pre></div>
 <p>For this example we know the true linkage structure.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">prep_data</span><span class="op">$</span><span class="va">true_pairs</span><span class="op">)</span></span>
@@ -232,11 +233,11 @@ information.</p>
 <span></span>
 <span><span class="va">df_results</span></span>
 <span><span class="co">#&gt;                   Naive     </span></span>
-<span><span class="co">#&gt; TP                    189.00</span></span>
-<span><span class="co">#&gt; FP                     90.00</span></span>
-<span><span class="co">#&gt; FN                    111.00</span></span>
-<span><span class="co">#&gt; sensitivity             0.63</span></span>
-<span><span class="co">#&gt; FDP                     0.32</span></span>
+<span><span class="co">#&gt; TP                    187.00</span></span>
+<span><span class="co">#&gt; FP                     78.00</span></span>
+<span><span class="co">#&gt; FN                    113.00</span></span>
+<span><span class="co">#&gt; sensitivity             0.62</span></span>
+<span><span class="co">#&gt; FDP                     0.29</span></span>
 <span><span class="co">#&gt; est. FDP score            NA</span></span>
 <span><span class="co">#&gt; est. FDP* score           NA</span></span>
 <span><span class="co">#&gt; est. FDP* synth           NA</span></span>
@@ -244,7 +245,7 @@ information.</p>
 <span><span class="co">#&gt; min support IoU           NA</span></span>
 <span><span class="co">#&gt; max MMD                   NA</span></span>
 <span><span class="co">#&gt; time (secs)             0.00</span></span>
-<span><span class="co">#&gt; memory (Mb)             1.00</span></span></code></pre></div>
+<span><span class="co">#&gt; memory (Mb)             2.00</span></span></code></pre></div>
 <p>We run record linkage with <code>FlexRL</code>. The <code>data</code>
 should contain encodedA, encodedB, n_values, PIVs_config, same_mistakes.
 <code>StEM_iter</code>, <code>StEM_burnin</code> and
@@ -286,19 +287,19 @@ dependencies among PIVs, are obstacles to the linkage.</p>
 <span></span>
 <span><span class="va">df_results</span></span>
 <span><span class="co">#&gt;                   Naive      FlexRL    </span></span>
-<span><span class="co">#&gt; TP                    189.00     199.00</span></span>
-<span><span class="co">#&gt; FP                     90.00      32.00</span></span>
-<span><span class="co">#&gt; FN                    111.00     101.00</span></span>
-<span><span class="co">#&gt; sensitivity             0.63       0.66</span></span>
-<span><span class="co">#&gt; FDP                     0.32       0.14</span></span>
+<span><span class="co">#&gt; TP                    187.00     198.00</span></span>
+<span><span class="co">#&gt; FP                     78.00      34.00</span></span>
+<span><span class="co">#&gt; FN                    113.00     102.00</span></span>
+<span><span class="co">#&gt; sensitivity             0.62       0.66</span></span>
+<span><span class="co">#&gt; FDP                     0.29       0.15</span></span>
 <span><span class="co">#&gt; est. FDP score            NA         NA</span></span>
 <span><span class="co">#&gt; est. FDP* score           NA         NA</span></span>
 <span><span class="co">#&gt; est. FDP* synth           NA         NA</span></span>
 <span><span class="co">#&gt; max SMD                   NA         NA</span></span>
 <span><span class="co">#&gt; min support IoU           NA         NA</span></span>
 <span><span class="co">#&gt; max MMD                   NA         NA</span></span>
-<span><span class="co">#&gt; time (secs)             0.00     102.00</span></span>
-<span><span class="co">#&gt; memory (Mb)             1.00     115.00</span></span></code></pre></div>
+<span><span class="co">#&gt; time (secs)             0.00       6.00</span></span>
+<span><span class="co">#&gt; memory (Mb)             2.00      51.00</span></span></code></pre></div>
 <p>Let us run record linkage diagnostics:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">diag</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RL_diagnostics.html">RL_diagnostics</a></span><span class="op">(</span>fit <span class="op">=</span> <span class="va">fit</span>, encodedA <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedA</span>, </span>
@@ -306,7 +307,7 @@ dependencies among PIVs, are obstacles to the linkage.</p>
 <span>                       vars_type_cont <span class="op">=</span> <span class="va">PIVs_type</span>, PIVs <span class="op">=</span> <span class="va">PIVs</span>, </span>
 <span>                       true_pairs <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">true_pairs</span>, FDP_estimation <span class="op">=</span> <span class="cn">TRUE</span>, </span>
 <span>                       RL_method <span class="op">=</span> <span class="st">"FlexRL"</span>, data <span class="op">=</span> <span class="va">prep_data</span>,</span>
-<span>                       maxIter4CV <span class="op">=</span> <span class="fl">1</span>, n_repeats <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<span>                       maxIter4CV <span class="op">=</span> <span class="fl">2</span>, n_repeats <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">df_results</span><span class="op">[</span><span class="fl">6</span>,<span class="st">"FlexRL    "</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">diag</span><span class="op">$</span><span class="va">FDP_measures</span><span class="op">$</span><span class="va">curve</span><span class="op">$</span><span class="va">RL_FDP_score</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
 <span><span class="va">df_results</span><span class="op">[</span><span class="fl">7</span>,<span class="st">"FlexRL    "</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">diag</span><span class="op">$</span><span class="va">FDP_measures</span><span class="op">$</span><span class="va">curve</span><span class="op">$</span><span class="va">augmRL_FDP_score</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
@@ -323,106 +324,106 @@ dependencies among PIVs, are obstacles to the linkage.</p>
 <code class="sourceCode R"><span><span class="va">diag</span> <span class="co"># default, equivalent to print(diag)</span></span>
 <span><span class="co">#&gt; &lt;RL_diagnostics&gt;</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Linked pairs  (score &gt; 0.50):  231</span></span>
+<span><span class="co">#&gt;   Linked pairs  (score &gt; 0.50):  232</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   FDP           (true pairs):    0.139</span></span>
-<span><span class="co">#&gt;   Sensitivity   (true pairs):    0.663</span></span>
+<span><span class="co">#&gt;   FDP           (true pairs):    0.147</span></span>
+<span><span class="co">#&gt;   Sensitivity   (true pairs):    0.660</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.137</span></span>
-<span><span class="co">#&gt;                                                threshold 0.50: FDP ~ 0.137</span></span>
+<span><span class="co">#&gt;   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.143</span></span>
+<span><span class="co">#&gt;                                                threshold 0.50: FDP ~ 0.143</span></span>
 <span><span class="co">#&gt;                                            max threshold 0.99: FDP ~ 0.005</span></span>
-<span><span class="co">#&gt;   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.149</span></span>
-<span><span class="co">#&gt;                                                threshold 0.50: FDP ~ 0.149</span></span>
+<span><span class="co">#&gt;   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.155</span></span>
+<span><span class="co">#&gt;                                                threshold 0.50: FDP ~ 0.155</span></span>
 <span><span class="co">#&gt;                                            max threshold 0.99: FDP ~ 0.005</span></span>
-<span><span class="co">#&gt;   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.271</span></span>
-<span><span class="co">#&gt;                                                threshold 0.50: FDP ~ 0.271</span></span>
+<span><span class="co">#&gt;   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.316</span></span>
+<span><span class="co">#&gt;                                                threshold 0.50: FDP ~ 0.316</span></span>
 <span><span class="co">#&gt;                                            max threshold 0.99: FDP ~ 0.000</span></span>
 <span><span class="co">#&gt;   The score-based estimator is valid when the linkage model is well calibrated to the data.</span></span>
 <span><span class="co">#&gt;   The synthetic-data estimator is valid when the augmented task is equivalent to the</span></span>
 <span><span class="co">#&gt;   original one, which requires links and non-links to have similar distributions; similar</span></span>
 <span><span class="co">#&gt;   score-based FDP estimates on the original and augmented tasks support this prerequisite.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Multivariate MMD  (linked A vs. A):  0.0035</span></span>
-<span><span class="co">#&gt;   Multivariate MMD  (linked B vs. B):  0.0042</span></span>
+<span><span class="co">#&gt;   Multivariate MMD  (linked A vs. A):  0.0038</span></span>
+<span><span class="co">#&gt;   Multivariate MMD  (linked B vs. B):  0.0051</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   IoU support PIV1  (linked A vs. A):  0.8571</span></span>
 <span><span class="co">#&gt;   IoU support PIV2  (linked A vs. A):  0.8750</span></span>
-<span><span class="co">#&gt;   IoU support PIV3  (linked A vs. A):  0.8889</span></span>
-<span><span class="co">#&gt;   IoU support PIV4  (linked A vs. A):  1.0000</span></span>
-<span><span class="co">#&gt;   IoU support PIV1  (linked B vs. B):  1.0000</span></span>
-<span><span class="co">#&gt;   IoU support PIV2  (linked B vs. B):  1.0000</span></span>
-<span><span class="co">#&gt;   IoU support PIV3  (linked B vs. B):  1.0000</span></span>
-<span><span class="co">#&gt;   IoU support PIV4  (linked B vs. B):  1.0000</span></span>
+<span><span class="co">#&gt;   IoU support PIV3  (linked A vs. A):  1.0000</span></span>
+<span><span class="co">#&gt;   IoU support PIV4  (linked A vs. A):  0.9000</span></span>
+<span><span class="co">#&gt;   IoU support PIV1  (linked B vs. B):  0.8571</span></span>
+<span><span class="co">#&gt;   IoU support PIV2  (linked B vs. B):  0.8750</span></span>
+<span><span class="co">#&gt;   IoU support PIV3  (linked B vs. B):  0.8889</span></span>
+<span><span class="co">#&gt;   IoU support PIV4  (linked B vs. B):  0.9000</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Agreement PIV1  (linked A vs. linked B):  0.9913</span></span>
-<span><span class="co">#&gt;   Agreement PIV2  (linked A vs. linked B):  0.9957</span></span>
+<span><span class="co">#&gt;   Agreement PIV1  (linked A vs. linked B):  1.0000</span></span>
+<span><span class="co">#&gt;   Agreement PIV2  (linked A vs. linked B):  1.0000</span></span>
 <span><span class="co">#&gt;   Agreement PIV3  (linked A vs. linked B):  0.9957</span></span>
-<span><span class="co">#&gt;   Agreement PIV4  (linked A vs. linked B):  0.7489</span></span>
-<span><span class="co">#&gt;   Agreement PIV1  (true pairs):  0.9533</span></span>
-<span><span class="co">#&gt;   Agreement PIV2  (true pairs):  0.9500</span></span>
-<span><span class="co">#&gt;   Agreement PIV3  (true pairs):  0.9400</span></span>
-<span><span class="co">#&gt;   Agreement PIV4  (true pairs):  0.7000</span></span>
+<span><span class="co">#&gt;   Agreement PIV4  (linked A vs. linked B):  0.7500</span></span>
+<span><span class="co">#&gt;   Agreement PIV1  (true pairs):  0.9633</span></span>
+<span><span class="co">#&gt;   Agreement PIV2  (true pairs):  0.9333</span></span>
+<span><span class="co">#&gt;   Agreement PIV3  (true pairs):  0.9433</span></span>
+<span><span class="co">#&gt;   Agreement PIV4  (true pairs):  0.7200</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   SMD PIV1 values: {1, 4, 7, ...}   (linked A vs. A):  0.0851, 0.0608, -0.0905, ...</span></span>
-<span><span class="co">#&gt;   SMD PIV2 values: {0, 2, 5, ...}   (linked A vs. A):  -0.0757, 0.0587, -0.0628, ...</span></span>
-<span><span class="co">#&gt;   SMD PIV3 values: {0, 4, 5, ...}   (linked A vs. A):  -0.0757, 0.0798, -0.0502, ...</span></span>
-<span><span class="co">#&gt;   SMD PIV4 values: {0, 1, 10, ...}  (linked A vs. A):  0.0390, 0.0363, -0.0462, ...</span></span>
-<span><span class="co">#&gt;   SMD PIV1 values: {1, 2, 7, ...}   (linked B vs. B):  0.0572, 0.0880, -0.0652, ...</span></span>
-<span><span class="co">#&gt;   SMD PIV2 values: {2, 5, 8, ...}   (linked B vs. B):  0.0994, -0.0836, -0.1019, ...</span></span>
-<span><span class="co">#&gt;   SMD PIV3 values: {3, 4, 5, ...}   (linked B vs. B):  0.0561, 0.1194, -0.0741, ...</span></span>
-<span><span class="co">#&gt;   SMD PIV4 values: {0, 4, 10, ...}  (linked B vs. B):  0.0734, 0.0778, -0.0628, ...</span></span></code></pre></div>
+<span><span class="co">#&gt;   SMD PIV1 values: {0, 4, 6, ...}  (linked A vs. A):  -0.0535, -0.0783, 0.0619, ...</span></span>
+<span><span class="co">#&gt;   SMD PIV2 values: {2, 5, 8, ...}  (linked A vs. A):  0.0961, 0.0590, -0.1062, ...</span></span>
+<span><span class="co">#&gt;   SMD PIV3 values: {2, 3, 9, ...}  (linked A vs. A):  0.0598, 0.0547, -0.0913, ...</span></span>
+<span><span class="co">#&gt;   SMD PIV4 values: {0, 3, 9, ...}  (linked A vs. A):  -0.0535, -0.0427, 0.0608, ...</span></span>
+<span><span class="co">#&gt;   SMD PIV1 values: {0, 6, 7, ...}   (linked B vs. B):  -0.0708, 0.0619, -0.0629, ...</span></span>
+<span><span class="co">#&gt;   SMD PIV2 values: {0, 6, 8, ...}   (linked B vs. B):  -0.0708, 0.0838, -0.0875, ...</span></span>
+<span><span class="co">#&gt;   SMD PIV3 values: {3, 5, 9, ...}   (linked B vs. B):  0.0603, 0.1124, -0.0764, ...</span></span>
+<span><span class="co">#&gt;   SMD PIV4 values: {1, 3, 10, ...}  (linked B vs. B):  0.0521, -0.0913, 0.0685, ...</span></span></code></pre></div>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">diag</span>, threshold <span class="op">=</span> <span class="fl">0.75</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;RL_diagnostics&gt;</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Linked pairs  (score &gt; 0.75):  176</span></span>
+<span><span class="co">#&gt;   Linked pairs  (score &gt; 0.75):  169</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   FDP           (true pairs):    0.062</span></span>
-<span><span class="co">#&gt;   Sensitivity   (true pairs):    0.550</span></span>
+<span><span class="co">#&gt;   FDP           (true pairs):    0.065</span></span>
+<span><span class="co">#&gt;   Sensitivity   (true pairs):    0.527</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.137</span></span>
-<span><span class="co">#&gt;                                                threshold 0.75: FDP ~ 0.064</span></span>
+<span><span class="co">#&gt;   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.143</span></span>
+<span><span class="co">#&gt;                                                threshold 0.75: FDP ~ 0.067</span></span>
 <span><span class="co">#&gt;                                            max threshold 0.99: FDP ~ 0.005</span></span>
-<span><span class="co">#&gt;   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.149</span></span>
-<span><span class="co">#&gt;                                                threshold 0.75: FDP ~ 0.065</span></span>
+<span><span class="co">#&gt;   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.155</span></span>
+<span><span class="co">#&gt;                                                threshold 0.75: FDP ~ 0.076</span></span>
 <span><span class="co">#&gt;                                            max threshold 0.99: FDP ~ 0.005</span></span>
-<span><span class="co">#&gt;   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.271</span></span>
-<span><span class="co">#&gt;                                                threshold 0.75: FDP ~ 0.153</span></span>
+<span><span class="co">#&gt;   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.316</span></span>
+<span><span class="co">#&gt;                                                threshold 0.75: FDP ~ 0.133</span></span>
 <span><span class="co">#&gt;                                            max threshold 0.99: FDP ~ 0.000</span></span>
 <span><span class="co">#&gt;   The score-based estimator is valid when the linkage model is well calibrated to the data.</span></span>
 <span><span class="co">#&gt;   The synthetic-data estimator is valid when the augmented task is equivalent to the</span></span>
 <span><span class="co">#&gt;   original one, which requires links and non-links to have similar distributions; similar</span></span>
 <span><span class="co">#&gt;   score-based FDP estimates on the original and augmented tasks support this prerequisite.</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Multivariate MMD  (linked A vs. A):  0.0105</span></span>
-<span><span class="co">#&gt;   Multivariate MMD  (linked B vs. B):  0.0104</span></span>
+<span><span class="co">#&gt;   Multivariate MMD  (linked A vs. A):  0.0116</span></span>
+<span><span class="co">#&gt;   Multivariate MMD  (linked B vs. B):  0.0118</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   IoU support PIV1  (linked A vs. A):  0.8571</span></span>
 <span><span class="co">#&gt;   IoU support PIV2  (linked A vs. A):  0.8750</span></span>
-<span><span class="co">#&gt;   IoU support PIV3  (linked A vs. A):  0.8889</span></span>
-<span><span class="co">#&gt;   IoU support PIV4  (linked A vs. A):  1.0000</span></span>
-<span><span class="co">#&gt;   IoU support PIV1  (linked B vs. B):  1.0000</span></span>
+<span><span class="co">#&gt;   IoU support PIV3  (linked A vs. A):  1.0000</span></span>
+<span><span class="co">#&gt;   IoU support PIV4  (linked A vs. A):  0.9000</span></span>
+<span><span class="co">#&gt;   IoU support PIV1  (linked B vs. B):  0.8571</span></span>
 <span><span class="co">#&gt;   IoU support PIV2  (linked B vs. B):  0.8750</span></span>
-<span><span class="co">#&gt;   IoU support PIV3  (linked B vs. B):  1.0000</span></span>
-<span><span class="co">#&gt;   IoU support PIV4  (linked B vs. B):  1.0000</span></span>
+<span><span class="co">#&gt;   IoU support PIV3  (linked B vs. B):  0.8889</span></span>
+<span><span class="co">#&gt;   IoU support PIV4  (linked B vs. B):  0.9000</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Agreement PIV1  (linked A vs. linked B):  0.9943</span></span>
+<span><span class="co">#&gt;   Agreement PIV1  (linked A vs. linked B):  1.0000</span></span>
 <span><span class="co">#&gt;   Agreement PIV2  (linked A vs. linked B):  1.0000</span></span>
-<span><span class="co">#&gt;   Agreement PIV3  (linked A vs. linked B):  0.9943</span></span>
-<span><span class="co">#&gt;   Agreement PIV4  (linked A vs. linked B):  0.8011</span></span>
-<span><span class="co">#&gt;   Agreement PIV1  (true pairs):  0.9533</span></span>
-<span><span class="co">#&gt;   Agreement PIV2  (true pairs):  0.9500</span></span>
-<span><span class="co">#&gt;   Agreement PIV3  (true pairs):  0.9400</span></span>
-<span><span class="co">#&gt;   Agreement PIV4  (true pairs):  0.7000</span></span>
+<span><span class="co">#&gt;   Agreement PIV3  (linked A vs. linked B):  0.9941</span></span>
+<span><span class="co">#&gt;   Agreement PIV4  (linked A vs. linked B):  0.8343</span></span>
+<span><span class="co">#&gt;   Agreement PIV1  (true pairs):  0.9633</span></span>
+<span><span class="co">#&gt;   Agreement PIV2  (true pairs):  0.9333</span></span>
+<span><span class="co">#&gt;   Agreement PIV3  (true pairs):  0.9433</span></span>
+<span><span class="co">#&gt;   Agreement PIV4  (true pairs):  0.7200</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   SMD PIV1 values: {1, 2, 7, ...}  (linked A vs. A):  0.1113, 0.0939, -0.1079, ...</span></span>
-<span><span class="co">#&gt;   SMD PIV2 values: {2, 4, 8, ...}  (linked A vs. A):  0.1196, 0.1366, -0.1049, ...</span></span>
-<span><span class="co">#&gt;   SMD PIV3 values: {2, 4, 8, ...}  (linked A vs. A):  0.0786, 0.1154, -0.0859, ...</span></span>
-<span><span class="co">#&gt;   SMD PIV4 values: {2, 8, 9, ...}  (linked A vs. A):  -0.1040, 0.0755, 0.0757, ...</span></span>
-<span><span class="co">#&gt;   SMD PIV1 values: {1, 2, 7, ...}  (linked B vs. B):  0.0822, 0.1447, -0.0829, ...</span></span>
-<span><span class="co">#&gt;   SMD PIV2 values: {2, 4, 8, ...}  (linked B vs. B):  0.1641, 0.1350, -0.1520, ...</span></span>
-<span><span class="co">#&gt;   SMD PIV3 values: {2, 3, 4, ...}  (linked B vs. B):  0.0938, 0.1029, 0.1573, ...</span></span>
-<span><span class="co">#&gt;   SMD PIV4 values: {4, 5, 8, ...}  (linked B vs. B):  0.1237, -0.0938, 0.0820, ...</span></span></code></pre></div>
+<span><span class="co">#&gt;   SMD PIV1 values: {0, 5, 7, ...}  (linked A vs. A):  -0.0535, 0.1235, -0.1400, ...</span></span>
+<span><span class="co">#&gt;   SMD PIV2 values: {2, 5, 8, ...}  (linked A vs. A):  0.1066, 0.1123, -0.1642, ...</span></span>
+<span><span class="co">#&gt;   SMD PIV3 values: {3, 5, 8, ...}  (linked A vs. A):  0.1317, 0.1453, -0.1135, ...</span></span>
+<span><span class="co">#&gt;   SMD PIV4 values: {3, 6, 9, ...}  (linked A vs. A):  -0.1119, 0.0672, 0.1226, ...</span></span>
+<span><span class="co">#&gt;   SMD PIV1 values: {0, 5, 7, ...}  (linked B vs. B):  -0.0708, 0.1339, -0.1514, ...</span></span>
+<span><span class="co">#&gt;   SMD PIV2 values: {3, 5, 8, ...}  (linked B vs. B):  0.0976, 0.0966, -0.1461, ...</span></span>
+<span><span class="co">#&gt;   SMD PIV3 values: {3, 5, 8, ...}  (linked B vs. B):  0.1382, 0.2466, -0.1373, ...</span></span>
+<span><span class="co">#&gt;   SMD PIV4 values: {1, 3, 6, ...}  (linked B vs. B):  -0.0727, -0.1266, 0.0734, ...</span></span></code></pre></div>
 <p>These summaries provide information on the linked data. We can also
 look at: the convergence of the StEM algorithm parameters, the linkage
 scores distribution, the data distributions between linked subset and
@@ -487,8 +488,8 @@ records with “multilink”, “fastLink”, “BRL”, “reclin2”, “diyar
 <span>                                           <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span>, <span class="va">PIVs</span>, <span class="va">PIVs_type</span>, </span>
 <span>                                           <span class="va">PIVs</span>, true_pairs <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">true_pairs</span>,</span>
 <span>                                           FDP_estimation <span class="op">=</span> <span class="cn">TRUE</span>, </span>
-<span>                                           RL_method <span class="op">=</span> <span class="st">"BRL"</span>, maxIter4CV <span class="op">=</span> <span class="fl">1</span>, </span>
-<span>                                           n_repeats <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>                                           RL_method <span class="op">=</span> <span class="st">"BRL"</span>, maxIter4CV <span class="op">=</span> <span class="fl">2</span>, </span>
+<span>                                           n_repeats <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
 <span>                           <span class="va">brl_args</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">df_results</span><span class="op">[</span><span class="fl">6</span>,<span class="st">"BRL       "</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">diag_brl</span><span class="op">$</span><span class="va">FDP_measures</span><span class="op">$</span><span class="va">curve</span><span class="op">$</span><span class="va">RL_FDP_score</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
@@ -505,7 +506,7 @@ records with “multilink”, “fastLink”, “BRL”, “reclin2”, “diyar
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">multilink_args</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"bi"</span>,<span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">PIVs</span><span class="op">)</span><span class="op">)</span>, </span>
 <span>                       breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>PIV1 <span class="op">=</span> <span class="cn">NA</span>, PIV2 <span class="op">=</span> <span class="cn">NA</span>, PIV3 <span class="op">=</span> <span class="cn">NA</span>, PIV4 <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span>,</span>
-<span>                       duplicates <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">0</span><span class="op">)</span>, n_iter <span class="op">=</span> <span class="fl">500</span>, max_cc_size <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span>
+<span>                       duplicates <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">0</span><span class="op">)</span>, n_iter <span class="op">=</span> <span class="fl">1000</span>, max_cc_size <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span>
 <span><span class="va">t0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.time</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">MeM</span> <span class="op">&lt;-</span> <span class="fu">peakRAMNew</span><span class="op">(</span><span class="va">fit_multilink</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/link_with_multilink.html">link_with_multilink</a></span><span class="op">(</span><span class="va">prep_data</span><span class="op">$</span><span class="va">encodedA</span>, </span>
 <span>                                                       <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span>, </span>
@@ -531,7 +532,7 @@ records with “multilink”, “fastLink”, “BRL”, “reclin2”, “diyar
 <span>                                                 true_pairs <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">true_pairs</span>,</span>
 <span>                                                 FDP_estimation <span class="op">=</span> <span class="cn">TRUE</span>, </span>
 <span>                                                 RL_method <span class="op">=</span> <span class="st">"multilink"</span>, </span>
-<span>                                                 maxIter4CV <span class="op">=</span> <span class="fl">1</span>, n_repeats <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>                                                 maxIter4CV <span class="op">=</span> <span class="fl">2</span>, n_repeats <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
 <span>                                <span class="va">multilink_args</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">df_results</span><span class="op">[</span><span class="fl">6</span>,<span class="st">"multilink "</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">diag_multilink</span><span class="op">$</span><span class="va">FDP_measures</span><span class="op">$</span><span class="va">curve</span><span class="op">$</span><span class="va">RL_FDP_score</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
@@ -547,7 +548,7 @@ records with “multilink”, “fastLink”, “BRL”, “reclin2”, “diyar
 <span><span class="va">df_results</span><span class="op">[</span><span class="fl">11</span>,<span class="st">"multilink "</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">diag_multilink</span><span class="op">$</span><span class="va">discrepancy_measures</span><span class="op">[</span><span class="fl">1</span>,<span class="va">mmd_idx</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fastLink_args</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>varnames <span class="op">=</span> <span class="va">PIVs</span>, tol.em <span class="op">=</span> <span class="fl">1e-06</span>, threshold.match <span class="op">=</span> <span class="fl">0.5</span>, </span>
-<span>                      return.all <span class="op">=</span> <span class="cn">TRUE</span>, n.cores <span class="op">=</span> <span class="fl">1</span> <span class="op">)</span></span>
+<span>                      return.all <span class="op">=</span> <span class="cn">TRUE</span>, n.cores <span class="op">=</span> <span class="fl">4</span> <span class="op">)</span></span>
 <span><span class="va">t0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.time</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">MeM</span> <span class="op">&lt;-</span> <span class="fu">peakRAMNew</span><span class="op">(</span><span class="va">fit_fastLink</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/link_with_fastLink.html">link_with_fastLink</a></span><span class="op">(</span><span class="va">prep_data</span><span class="op">$</span><span class="va">encodedA</span>, </span>
 <span>                                                     <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span>, </span>
@@ -573,7 +574,7 @@ records with “multilink”, “fastLink”, “BRL”, “reclin2”, “diyar
 <span>                                                <span class="va">PIVs</span>, true_pairs <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">true_pairs</span>,</span>
 <span>                                                FDP_estimation <span class="op">=</span> <span class="cn">TRUE</span>, </span>
 <span>                                                RL_method <span class="op">=</span> <span class="st">"fastLink"</span>, </span>
-<span>                                                maxIter4CV <span class="op">=</span> <span class="fl">1</span>, n_repeats <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>                                                maxIter4CV <span class="op">=</span> <span class="fl">2</span>, n_repeats <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
 <span>                                <span class="va">fastLink_args</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">df_results</span><span class="op">[</span><span class="fl">6</span>,<span class="st">"fastLink  "</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">diag_fastLink</span><span class="op">$</span><span class="va">FDP_measures</span><span class="op">$</span><span class="va">curve</span><span class="op">$</span><span class="va">RL_FDP_score</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
@@ -617,7 +618,7 @@ records with “multilink”, “fastLink”, “BRL”, “reclin2”, “diyar
 <span>                                               <span class="va">PIVs</span>, true_pairs <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">true_pairs</span>, </span>
 <span>                                               FDP_estimation <span class="op">=</span> <span class="cn">TRUE</span>, </span>
 <span>                                               RL_method <span class="op">=</span> <span class="st">"reclin2"</span>, </span>
-<span>                                               maxIter4CV <span class="op">=</span> <span class="fl">1</span>, n_repeats <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>                                               maxIter4CV <span class="op">=</span> <span class="fl">2</span>, n_repeats <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
 <span>                               <span class="va">reclin2_args</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">df_results</span><span class="op">[</span><span class="fl">6</span>,<span class="st">"reclin2   "</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">diag_reclin2</span><span class="op">$</span><span class="va">FDP_measures</span><span class="op">$</span><span class="va">curve</span><span class="op">$</span><span class="va">RL_FDP_score</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
@@ -658,7 +659,7 @@ records with “multilink”, “fastLink”, “BRL”, “reclin2”, “diyar
 <span>                             <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span><span class="op">[</span>, <span class="va">names4diag</span><span class="op">]</span>, </span>
 <span>                             <span class="va">PIVs</span>, <span class="va">PIVs_type</span>, <span class="va">PIVs</span>, true_pairs <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">true_pairs</span>, </span>
 <span>                             FDP_estimation <span class="op">=</span> <span class="cn">TRUE</span>, RL_method <span class="op">=</span> <span class="st">"diyar"</span>, </span>
-<span>                             maxIter4CV <span class="op">=</span> <span class="fl">1</span>, n_repeats <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>                             maxIter4CV <span class="op">=</span> <span class="fl">2</span>, n_repeats <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
 <span>                             <span class="va">diyar_args</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">df_results</span><span class="op">[</span><span class="fl">6</span>,<span class="st">"diyar     "</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">diag_diyar</span><span class="op">$</span><span class="va">FDP_measures</span><span class="op">$</span><span class="va">curve</span><span class="op">$</span><span class="va">RL_FDP_score</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
@@ -675,7 +676,7 @@ records with “multilink”, “fastLink”, “BRL”, “reclin2”, “diyar
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fedmatch_args</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>by <span class="op">=</span> <span class="va">PIVs</span>, match_type <span class="op">=</span> <span class="st">"multivar"</span>, </span>
 <span>                      unique_key_1 <span class="op">=</span> <span class="st">"unique_key_A"</span>, </span>
-<span>                      unique_key_2 <span class="op">=</span> <span class="st">"unique_key_B"</span>,</span>
+<span>                      unique_key_2 <span class="op">=</span> <span class="st">"unique_key_B"</span>, nthread <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>                      multivar_settings <span class="op">=</span> <span class="fu">fedmatch</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/fedmatch/man/build_multivar_settings.html" class="external-link">build_multivar_settings</a></span><span class="op">(</span></span>
 <span>                        compare_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"indicator"</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">PIVs</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                        wgts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">PIVs</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">PIVs</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
@@ -704,7 +705,7 @@ records with “multilink”, “fastLink”, “BRL”, “reclin2”, “diyar
 <span>                                                <span class="va">PIVs</span>, true_pairs <span class="op">=</span> <span class="va">prep_data</span><span class="op">$</span><span class="va">true_pairs</span>, </span>
 <span>                                                FDP_estimation <span class="op">=</span> <span class="cn">TRUE</span>, </span>
 <span>                                                RL_method <span class="op">=</span> <span class="st">"fedmatch"</span>, </span>
-<span>                                                maxIter4CV <span class="op">=</span> <span class="fl">1</span>, n_repeats <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>                                                maxIter4CV <span class="op">=</span> <span class="fl">2</span>, n_repeats <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
 <span>                               <span class="va">fedmatch_args</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">df_results</span><span class="op">[</span><span class="fl">6</span>,<span class="st">"fedmatch  "</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">diag_fedmatch</span><span class="op">$</span><span class="va">FDP_measures</span><span class="op">$</span><span class="va">curve</span><span class="op">$</span><span class="va">RL_FDP_score</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
@@ -811,63 +812,63 @@ PIVs.</p>
 <tbody>
 <tr class="odd">
 <td align="left">TP</td>
-<td align="center">189.00</td>
-<td align="center">199.00</td>
-<td align="center">180.00</td>
-<td align="center">186.00</td>
-<td align="center">160.00</td>
-<td align="center">178.00</td>
-<td align="center">97.00</td>
-<td align="center">199.00</td>
-<td align="center">164.00</td>
+<td align="center">187.00</td>
+<td align="center">198.00</td>
+<td align="center">165.00</td>
+<td align="center">174.00</td>
+<td align="center">161.00</td>
+<td align="center">181.00</td>
+<td align="center">21.00</td>
+<td align="center">196.00</td>
+<td align="center">154.00</td>
 </tr>
 <tr class="even">
 <td align="left">FP</td>
-<td align="center">90.00</td>
-<td align="center">32.00</td>
-<td align="center">30.00</td>
-<td align="center">38.00</td>
-<td align="center">46.00</td>
-<td align="center">65.00</td>
-<td align="center">2.00</td>
-<td align="center">147.00</td>
-<td align="center">20.00</td>
+<td align="center">78.00</td>
+<td align="center">34.00</td>
+<td align="center">26.00</td>
+<td align="center">40.00</td>
+<td align="center">42.00</td>
+<td align="center">67.00</td>
+<td align="center">1.00</td>
+<td align="center">148.00</td>
+<td align="center">27.00</td>
 </tr>
 <tr class="odd">
 <td align="left">FN</td>
-<td align="center">111.00</td>
-<td align="center">101.00</td>
-<td align="center">120.00</td>
-<td align="center">114.00</td>
-<td align="center">140.00</td>
-<td align="center">122.00</td>
-<td align="center">203.00</td>
-<td align="center">101.00</td>
-<td align="center">136.00</td>
+<td align="center">113.00</td>
+<td align="center">102.00</td>
+<td align="center">135.00</td>
+<td align="center">126.00</td>
+<td align="center">139.00</td>
+<td align="center">119.00</td>
+<td align="center">279.00</td>
+<td align="center">104.00</td>
+<td align="center">146.00</td>
 </tr>
 <tr class="even">
 <td align="left">sensitivity</td>
-<td align="center">0.63</td>
-<td align="center">0.66</td>
-<td align="center">0.60</td>
 <td align="center">0.62</td>
-<td align="center">0.53</td>
-<td align="center">0.59</td>
-<td align="center">0.32</td>
 <td align="center">0.66</td>
 <td align="center">0.55</td>
+<td align="center">0.58</td>
+<td align="center">0.54</td>
+<td align="center">0.60</td>
+<td align="center">0.07</td>
+<td align="center">0.65</td>
+<td align="center">0.51</td>
 </tr>
 <tr class="odd">
 <td align="left">FDP</td>
-<td align="center">0.32</td>
+<td align="center">0.29</td>
+<td align="center">0.15</td>
 <td align="center">0.14</td>
-<td align="center">0.14</td>
-<td align="center">0.17</td>
-<td align="center">0.22</td>
+<td align="center">0.19</td>
+<td align="center">0.21</td>
 <td align="center">0.27</td>
-<td align="center">0.02</td>
-<td align="center">0.42</td>
-<td align="center">0.11</td>
+<td align="center">0.05</td>
+<td align="center">0.43</td>
+<td align="center">0.15</td>
 </tr>
 </tbody>
 </table>
@@ -908,34 +909,34 @@ PIVs.</p>
 <td align="center">0.18</td>
 <td align="center">NA</td>
 <td align="center">0.26</td>
-<td align="center">0.27</td>
+<td align="center">0.34</td>
 <td align="center">NA</td>
-<td align="center">0.1</td>
-<td align="center">0.12</td>
+<td align="center">0.10</td>
+<td align="center">0.14</td>
 </tr>
 <tr class="even">
 <td align="left">est. FDP* score</td>
 <td align="center">NA</td>
 <td align="center">0.15</td>
-<td align="center">0.17</td>
+<td align="center">0.18</td>
 <td align="center">NA</td>
-<td align="center">0.28</td>
-<td align="center">0.32</td>
+<td align="center">0.27</td>
+<td align="center">0.35</td>
 <td align="center">NA</td>
-<td align="center">0.1</td>
-<td align="center">0.13</td>
+<td align="center">0.10</td>
+<td align="center">0.15</td>
 </tr>
 <tr class="odd">
 <td align="left">est. FDP* synth</td>
 <td align="center">NA</td>
-<td align="center">0.27</td>
-<td align="center">0.22</td>
-<td align="center">0.15</td>
-<td align="center">0.17</td>
-<td align="center">0.53</td>
-<td align="center">0</td>
-<td align="center">NA</td>
+<td align="center">0.32</td>
+<td align="center">0.21</td>
 <td align="center">0.25</td>
+<td align="center">0.23</td>
+<td align="center">0.46</td>
+<td align="center">0.17</td>
+<td align="center">0.03</td>
+<td align="center">0.35</td>
 </tr>
 </tbody>
 </table>
@@ -972,38 +973,38 @@ PIVs.</p>
 <tr class="odd">
 <td align="left">max SMD</td>
 <td align="center">NA</td>
-<td align="center">0.12</td>
-<td align="center">0.16</td>
+<td align="center">0.11</td>
+<td align="center">0.15</td>
 <td align="center">0.13</td>
-<td align="center">0.14</td>
+<td align="center">0.12</td>
 <td align="center">0.21</td>
-<td align="center">0.37</td>
-<td align="center">0.08</td>
-<td align="center">0.17</td>
+<td align="center">0.89</td>
+<td align="center">0.15</td>
+<td align="center">0.15</td>
 </tr>
 <tr class="even">
 <td align="left">min support IoU</td>
 <td align="center">NA</td>
 <td align="center">0.86</td>
-<td align="center">0.88</td>
-<td align="center">0.88</td>
 <td align="center">0.86</td>
 <td align="center">0.86</td>
 <td align="center">0.86</td>
-<td align="center">0.88</td>
+<td align="center">0.86</td>
+<td align="center">0.71</td>
+<td align="center">0.86</td>
 <td align="center">0.86</td>
 </tr>
 <tr class="odd">
 <td align="left">max MMD</td>
 <td align="center">NA</td>
-<td align="center">0.00</td>
-<td align="center">0.01</td>
-<td align="center">0.00</td>
 <td align="center">0.01</td>
 <td align="center">0.01</td>
-<td align="center">0.03</td>
 <td align="center">0.00</td>
+<td align="center">0.01</td>
+<td align="center">0.01</td>
+<td align="center">0.20</td>
 <td align="center">0.00</td>
+<td align="center">0.01</td>
 </tr>
 </tbody>
 </table>
@@ -1040,26 +1041,26 @@ PIVs.</p>
 <tr class="odd">
 <td align="left">time (secs)</td>
 <td align="center">0</td>
-<td align="center">102</td>
+<td align="center">6</td>
 <td align="center">1</td>
-<td align="center">17</td>
+<td align="center">31</td>
 <td align="center">1</td>
 <td align="center">0</td>
 <td align="center">2</td>
 <td align="center">2</td>
-<td align="center">79</td>
+<td align="center">4</td>
 </tr>
 <tr class="even">
 <td align="left">memory (Mb)</td>
-<td align="center">1</td>
-<td align="center">115</td>
-<td align="center">115</td>
-<td align="center">146</td>
-<td align="center">17</td>
-<td align="center">79</td>
-<td align="center">109</td>
-<td align="center">44</td>
-<td align="center">105</td>
+<td align="center">2</td>
+<td align="center">51</td>
+<td align="center">47</td>
+<td align="center">140</td>
+<td align="center">22</td>
+<td align="center">77</td>
+<td align="center">100</td>
+<td align="center">40</td>
+<td align="center">73</td>
 </tr>
 </tbody>
 </table></main>

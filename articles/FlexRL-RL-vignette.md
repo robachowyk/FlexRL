@@ -3,6 +3,7 @@
 ``` r
 
 library(FlexRL)
+#> If you are happy with FlexRL, please cite us! If you are unhappy, please cite us anyway (and feel free to complain as well).
 ```
 
 `FlexRL` is a package proposing flexible probabilistic **R**ecord
@@ -110,25 +111,25 @@ prep_data <- prepare_data(data1 = gen_data$data1, data2 = gen_data$data2,
 ``` r
 
 head(prep_data$encodedA)
-#>   PIV1 PIV2 PIV3 PIV4 change   date     Xe    Xf local_id entity_id source
-#> 1    6    1    5    9  FALSE 0.0027  0.452  0.94        1         1      1
-#> 2    7    8    8   10  FALSE 0.0016  1.128  0.90        2         2      1
-#> 3    5    6    6    6  FALSE 0.0066  1.936  0.31        3         3      1
-#> 4    3    2    6    2  FALSE 0.0018  1.150  0.69        4         4      1
-#> 5    5    6    8    7  FALSE 0.0086 -0.625 -0.59        5         5      1
-#> 6    6    6    5    3  FALSE 0.0021  0.061 -0.39        6         6      1
+#>   PIV1 PIV2 PIV3 PIV4 change    date   Xe    Xf local_id entity_id source
+#> 1    3    8    7    3  FALSE 0.00105 0.37 1.867        1         1      1
+#> 2    5    8    9    5  FALSE 0.00309 0.36 1.963        2         2      1
+#> 3    5    3    6   10  FALSE 0.00253 2.32 0.028        3         3      1
+#> 4    7    4    8    3  FALSE 0.00086 1.58 0.461        4         4      1
+#> 5    4    7    4    3  FALSE 0.00134 0.40 1.087        5         5      1
+#> 6    4    8    6    3  FALSE 0.00909 1.00 2.061        6         6      1
 ```
 
 ``` r
 
 head(prep_data$encodedB)
-#>   PIV1 PIV2 PIV3 PIV4 change   date local_id entity_id source
-#> 1    6    1    5    9  FALSE 0.0067        1         1      2
-#> 2    7    8    8   10  FALSE 0.0039        2         2      2
-#> 3    5    6    6    6  FALSE 0.0046        3         3      2
-#> 4    3    2    6    2  FALSE 0.0064        4         4      2
-#> 5    5    6    8    7  FALSE 0.0075        5         5      2
-#> 6    6    6    5    3  FALSE 0.0024        6         6      2
+#>   PIV1 PIV2 PIV3 PIV4 change    date local_id entity_id source
+#> 1    3    8    7    2  FALSE 0.00907        1         1      2
+#> 2    5    8    9    6  FALSE 0.00850        2         2      2
+#> 3    5    8    6   10  FALSE 0.00257        3         3      2
+#> 4    7    4    8    3  FALSE 0.00555        4         4      2
+#> 5    4    7    4    3  FALSE 0.00192        5         5      2
+#> 6    4    8    6    3  FALSE 0.00085        6         6      2
 ```
 
 For this example we know the true linkage structure.
@@ -195,11 +196,11 @@ df_results[12:13,"Naive     "] <- c(round(elapsed),round(MeM$Peak_RAM_Used_MiB))
 
 df_results
 #>                   Naive     
-#> TP                    189.00
-#> FP                     90.00
-#> FN                    111.00
-#> sensitivity             0.63
-#> FDP                     0.32
+#> TP                    187.00
+#> FP                     78.00
+#> FN                    113.00
+#> sensitivity             0.62
+#> FDP                     0.29
 #> est. FDP score            NA
 #> est. FDP* score           NA
 #> est. FDP* synth           NA
@@ -207,7 +208,7 @@ df_results
 #> min support IoU           NA
 #> max MMD                   NA
 #> time (secs)             0.00
-#> memory (Mb)             1.00
+#> memory (Mb)             2.00
 ```
 
 We run record linkage with `FlexRL`. The `data` should contain encodedA,
@@ -254,19 +255,19 @@ df_results[12:13,"FlexRL    "] <- c(round(elapsed),round(MeM$Peak_RAM_Used_MiB))
 
 df_results
 #>                   Naive      FlexRL    
-#> TP                    189.00     199.00
-#> FP                     90.00      32.00
-#> FN                    111.00     101.00
-#> sensitivity             0.63       0.66
-#> FDP                     0.32       0.14
+#> TP                    187.00     198.00
+#> FP                     78.00      34.00
+#> FN                    113.00     102.00
+#> sensitivity             0.62       0.66
+#> FDP                     0.29       0.15
 #> est. FDP score            NA         NA
 #> est. FDP* score           NA         NA
 #> est. FDP* synth           NA         NA
 #> max SMD                   NA         NA
 #> min support IoU           NA         NA
 #> max MMD                   NA         NA
-#> time (secs)             0.00     102.00
-#> memory (Mb)             1.00     115.00
+#> time (secs)             0.00       6.00
+#> memory (Mb)             2.00      51.00
 ```
 
 Let us run record linkage diagnostics:
@@ -278,7 +279,7 @@ diag <- RL_diagnostics(fit = fit, encodedA = prep_data$encodedA,
                        vars_type_cont = PIVs_type, PIVs = PIVs, 
                        true_pairs = prep_data$true_pairs, FDP_estimation = TRUE, 
                        RL_method = "FlexRL", data = prep_data,
-                       maxIter4CV = 1, n_repeats = 2)
+                       maxIter4CV = 2, n_repeats = 3)
 
 df_results[6,"FlexRL    "] <- diag$FDP_measures$curve$RL_FDP_score[1]
 df_results[7,"FlexRL    "] <- diag$FDP_measures$curve$augmRL_FDP_score[1]
@@ -298,54 +299,54 @@ df_results[11,"FlexRL    "] <- max(diag$discrepancy_measures[1,mmd_idx])
 diag # default, equivalent to print(diag)
 #> <RL_diagnostics>
 #> 
-#>   Linked pairs  (score > 0.50):  231
+#>   Linked pairs  (score > 0.50):  232
 #> 
-#>   FDP           (true pairs):    0.139
-#>   Sensitivity   (true pairs):    0.663
+#>   FDP           (true pairs):    0.147
+#>   Sensitivity   (true pairs):    0.660
 #> 
-#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.137
-#>                                                threshold 0.50: FDP ~ 0.137
+#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.143
+#>                                                threshold 0.50: FDP ~ 0.143
 #>                                            max threshold 0.99: FDP ~ 0.005
-#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.149
-#>                                                threshold 0.50: FDP ~ 0.149
+#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.155
+#>                                                threshold 0.50: FDP ~ 0.155
 #>                                            max threshold 0.99: FDP ~ 0.005
-#>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.271
-#>                                                threshold 0.50: FDP ~ 0.271
+#>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.316
+#>                                                threshold 0.50: FDP ~ 0.316
 #>                                            max threshold 0.99: FDP ~ 0.000
 #>   The score-based estimator is valid when the linkage model is well calibrated to the data.
 #>   The synthetic-data estimator is valid when the augmented task is equivalent to the
 #>   original one, which requires links and non-links to have similar distributions; similar
 #>   score-based FDP estimates on the original and augmented tasks support this prerequisite.
 #> 
-#>   Multivariate MMD  (linked A vs. A):  0.0035
-#>   Multivariate MMD  (linked B vs. B):  0.0042
+#>   Multivariate MMD  (linked A vs. A):  0.0038
+#>   Multivariate MMD  (linked B vs. B):  0.0051
 #> 
 #>   IoU support PIV1  (linked A vs. A):  0.8571
 #>   IoU support PIV2  (linked A vs. A):  0.8750
-#>   IoU support PIV3  (linked A vs. A):  0.8889
-#>   IoU support PIV4  (linked A vs. A):  1.0000
-#>   IoU support PIV1  (linked B vs. B):  1.0000
-#>   IoU support PIV2  (linked B vs. B):  1.0000
-#>   IoU support PIV3  (linked B vs. B):  1.0000
-#>   IoU support PIV4  (linked B vs. B):  1.0000
+#>   IoU support PIV3  (linked A vs. A):  1.0000
+#>   IoU support PIV4  (linked A vs. A):  0.9000
+#>   IoU support PIV1  (linked B vs. B):  0.8571
+#>   IoU support PIV2  (linked B vs. B):  0.8750
+#>   IoU support PIV3  (linked B vs. B):  0.8889
+#>   IoU support PIV4  (linked B vs. B):  0.9000
 #> 
-#>   Agreement PIV1  (linked A vs. linked B):  0.9913
-#>   Agreement PIV2  (linked A vs. linked B):  0.9957
+#>   Agreement PIV1  (linked A vs. linked B):  1.0000
+#>   Agreement PIV2  (linked A vs. linked B):  1.0000
 #>   Agreement PIV3  (linked A vs. linked B):  0.9957
-#>   Agreement PIV4  (linked A vs. linked B):  0.7489
-#>   Agreement PIV1  (true pairs):  0.9533
-#>   Agreement PIV2  (true pairs):  0.9500
-#>   Agreement PIV3  (true pairs):  0.9400
-#>   Agreement PIV4  (true pairs):  0.7000
+#>   Agreement PIV4  (linked A vs. linked B):  0.7500
+#>   Agreement PIV1  (true pairs):  0.9633
+#>   Agreement PIV2  (true pairs):  0.9333
+#>   Agreement PIV3  (true pairs):  0.9433
+#>   Agreement PIV4  (true pairs):  0.7200
 #> 
-#>   SMD PIV1 values: {1, 4, 7, ...}   (linked A vs. A):  0.0851, 0.0608, -0.0905, ...
-#>   SMD PIV2 values: {0, 2, 5, ...}   (linked A vs. A):  -0.0757, 0.0587, -0.0628, ...
-#>   SMD PIV3 values: {0, 4, 5, ...}   (linked A vs. A):  -0.0757, 0.0798, -0.0502, ...
-#>   SMD PIV4 values: {0, 1, 10, ...}  (linked A vs. A):  0.0390, 0.0363, -0.0462, ...
-#>   SMD PIV1 values: {1, 2, 7, ...}   (linked B vs. B):  0.0572, 0.0880, -0.0652, ...
-#>   SMD PIV2 values: {2, 5, 8, ...}   (linked B vs. B):  0.0994, -0.0836, -0.1019, ...
-#>   SMD PIV3 values: {3, 4, 5, ...}   (linked B vs. B):  0.0561, 0.1194, -0.0741, ...
-#>   SMD PIV4 values: {0, 4, 10, ...}  (linked B vs. B):  0.0734, 0.0778, -0.0628, ...
+#>   SMD PIV1 values: {0, 4, 6, ...}  (linked A vs. A):  -0.0535, -0.0783, 0.0619, ...
+#>   SMD PIV2 values: {2, 5, 8, ...}  (linked A vs. A):  0.0961, 0.0590, -0.1062, ...
+#>   SMD PIV3 values: {2, 3, 9, ...}  (linked A vs. A):  0.0598, 0.0547, -0.0913, ...
+#>   SMD PIV4 values: {0, 3, 9, ...}  (linked A vs. A):  -0.0535, -0.0427, 0.0608, ...
+#>   SMD PIV1 values: {0, 6, 7, ...}   (linked B vs. B):  -0.0708, 0.0619, -0.0629, ...
+#>   SMD PIV2 values: {0, 6, 8, ...}   (linked B vs. B):  -0.0708, 0.0838, -0.0875, ...
+#>   SMD PIV3 values: {3, 5, 9, ...}   (linked B vs. B):  0.0603, 0.1124, -0.0764, ...
+#>   SMD PIV4 values: {1, 3, 10, ...}  (linked B vs. B):  0.0521, -0.0913, 0.0685, ...
 ```
 
 ``` r
@@ -353,54 +354,54 @@ diag # default, equivalent to print(diag)
 print(diag, threshold = 0.75)
 #> <RL_diagnostics>
 #> 
-#>   Linked pairs  (score > 0.75):  176
+#>   Linked pairs  (score > 0.75):  169
 #> 
-#>   FDP           (true pairs):    0.062
-#>   Sensitivity   (true pairs):    0.550
+#>   FDP           (true pairs):    0.065
+#>   Sensitivity   (true pairs):    0.527
 #> 
-#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.137
-#>                                                threshold 0.75: FDP ~ 0.064
+#>   FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.143
+#>                                                threshold 0.75: FDP ~ 0.067
 #>                                            max threshold 0.99: FDP ~ 0.005
-#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.149
-#>                                                threshold 0.75: FDP ~ 0.065
+#>   FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.155
+#>                                                threshold 0.75: FDP ~ 0.076
 #>                                            max threshold 0.99: FDP ~ 0.005
-#>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.271
-#>                                                threshold 0.75: FDP ~ 0.153
+#>   FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.316
+#>                                                threshold 0.75: FDP ~ 0.133
 #>                                            max threshold 0.99: FDP ~ 0.000
 #>   The score-based estimator is valid when the linkage model is well calibrated to the data.
 #>   The synthetic-data estimator is valid when the augmented task is equivalent to the
 #>   original one, which requires links and non-links to have similar distributions; similar
 #>   score-based FDP estimates on the original and augmented tasks support this prerequisite.
 #> 
-#>   Multivariate MMD  (linked A vs. A):  0.0105
-#>   Multivariate MMD  (linked B vs. B):  0.0104
+#>   Multivariate MMD  (linked A vs. A):  0.0116
+#>   Multivariate MMD  (linked B vs. B):  0.0118
 #> 
 #>   IoU support PIV1  (linked A vs. A):  0.8571
 #>   IoU support PIV2  (linked A vs. A):  0.8750
-#>   IoU support PIV3  (linked A vs. A):  0.8889
-#>   IoU support PIV4  (linked A vs. A):  1.0000
-#>   IoU support PIV1  (linked B vs. B):  1.0000
+#>   IoU support PIV3  (linked A vs. A):  1.0000
+#>   IoU support PIV4  (linked A vs. A):  0.9000
+#>   IoU support PIV1  (linked B vs. B):  0.8571
 #>   IoU support PIV2  (linked B vs. B):  0.8750
-#>   IoU support PIV3  (linked B vs. B):  1.0000
-#>   IoU support PIV4  (linked B vs. B):  1.0000
+#>   IoU support PIV3  (linked B vs. B):  0.8889
+#>   IoU support PIV4  (linked B vs. B):  0.9000
 #> 
-#>   Agreement PIV1  (linked A vs. linked B):  0.9943
+#>   Agreement PIV1  (linked A vs. linked B):  1.0000
 #>   Agreement PIV2  (linked A vs. linked B):  1.0000
-#>   Agreement PIV3  (linked A vs. linked B):  0.9943
-#>   Agreement PIV4  (linked A vs. linked B):  0.8011
-#>   Agreement PIV1  (true pairs):  0.9533
-#>   Agreement PIV2  (true pairs):  0.9500
-#>   Agreement PIV3  (true pairs):  0.9400
-#>   Agreement PIV4  (true pairs):  0.7000
+#>   Agreement PIV3  (linked A vs. linked B):  0.9941
+#>   Agreement PIV4  (linked A vs. linked B):  0.8343
+#>   Agreement PIV1  (true pairs):  0.9633
+#>   Agreement PIV2  (true pairs):  0.9333
+#>   Agreement PIV3  (true pairs):  0.9433
+#>   Agreement PIV4  (true pairs):  0.7200
 #> 
-#>   SMD PIV1 values: {1, 2, 7, ...}  (linked A vs. A):  0.1113, 0.0939, -0.1079, ...
-#>   SMD PIV2 values: {2, 4, 8, ...}  (linked A vs. A):  0.1196, 0.1366, -0.1049, ...
-#>   SMD PIV3 values: {2, 4, 8, ...}  (linked A vs. A):  0.0786, 0.1154, -0.0859, ...
-#>   SMD PIV4 values: {2, 8, 9, ...}  (linked A vs. A):  -0.1040, 0.0755, 0.0757, ...
-#>   SMD PIV1 values: {1, 2, 7, ...}  (linked B vs. B):  0.0822, 0.1447, -0.0829, ...
-#>   SMD PIV2 values: {2, 4, 8, ...}  (linked B vs. B):  0.1641, 0.1350, -0.1520, ...
-#>   SMD PIV3 values: {2, 3, 4, ...}  (linked B vs. B):  0.0938, 0.1029, 0.1573, ...
-#>   SMD PIV4 values: {4, 5, 8, ...}  (linked B vs. B):  0.1237, -0.0938, 0.0820, ...
+#>   SMD PIV1 values: {0, 5, 7, ...}  (linked A vs. A):  -0.0535, 0.1235, -0.1400, ...
+#>   SMD PIV2 values: {2, 5, 8, ...}  (linked A vs. A):  0.1066, 0.1123, -0.1642, ...
+#>   SMD PIV3 values: {3, 5, 8, ...}  (linked A vs. A):  0.1317, 0.1453, -0.1135, ...
+#>   SMD PIV4 values: {3, 6, 9, ...}  (linked A vs. A):  -0.1119, 0.0672, 0.1226, ...
+#>   SMD PIV1 values: {0, 5, 7, ...}  (linked B vs. B):  -0.0708, 0.1339, -0.1514, ...
+#>   SMD PIV2 values: {3, 5, 8, ...}  (linked B vs. B):  0.0976, 0.0966, -0.1461, ...
+#>   SMD PIV3 values: {3, 5, 8, ...}  (linked B vs. B):  0.1382, 0.2466, -0.1373, ...
+#>   SMD PIV4 values: {1, 3, 6, ...}  (linked B vs. B):  -0.0727, -0.1266, 0.0734, ...
 ```
 
 These summaries provide information on the linked data. We can also look
@@ -522,8 +523,8 @@ diag_brl <- do.call(RL_diagnostics, c(list(fit_brl, prep_data$encodedA,
                                            prep_data$encodedB, PIVs, PIVs_type, 
                                            PIVs, true_pairs = prep_data$true_pairs,
                                            FDP_estimation = TRUE, 
-                                           RL_method = "BRL", maxIter4CV = 1, 
-                                           n_repeats = 2),
+                                           RL_method = "BRL", maxIter4CV = 2, 
+                                           n_repeats = 3),
                            brl_args))
 
 df_results[6,"BRL       "] <- diag_brl$FDP_measures$curve$RL_FDP_score[1]
@@ -543,7 +544,7 @@ df_results[11,"BRL       "] <- max(diag_brl$discrepancy_measures[1,mmd_idx])
 
 multilink_args <- list(types = rep("bi",length(PIVs)), 
                        breaks = list(PIV1 = NA, PIV2 = NA, PIV3 = NA, PIV4 = NA),
-                       duplicates = c(0,0), n_iter = 500, max_cc_size = 50)
+                       duplicates = c(0,0), n_iter = 1000, max_cc_size = 50)
 t0 <- Sys.time()
 MeM <- peakRAMNew(fit_multilink <- link_with_multilink(prep_data$encodedA, 
                                                        prep_data$encodedB, 
@@ -569,7 +570,7 @@ diag_multilink <- do.call(RL_diagnostics, c(list(fit_multilink, prep_data$encode
                                                  true_pairs = prep_data$true_pairs,
                                                  FDP_estimation = TRUE, 
                                                  RL_method = "multilink", 
-                                                 maxIter4CV = 1, n_repeats = 2),
+                                                 maxIter4CV = 2, n_repeats = 3),
                                 multilink_args))
 
 df_results[6,"multilink "] <- diag_multilink$FDP_measures$curve$RL_FDP_score[1]
@@ -588,7 +589,7 @@ df_results[11,"multilink "] <- max(diag_multilink$discrepancy_measures[1,mmd_idx
 ``` r
 
 fastLink_args <- list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, 
-                      return.all = TRUE, n.cores = 1 )
+                      return.all = TRUE, n.cores = 4 )
 t0 <- Sys.time()
 MeM <- peakRAMNew(fit_fastLink <- link_with_fastLink(prep_data$encodedA, 
                                                      prep_data$encodedB, 
@@ -614,7 +615,7 @@ diag_fastLink <- do.call(RL_diagnostics, c(list(fit_fastLink, prep_data$encodedA
                                                 PIVs, true_pairs = prep_data$true_pairs,
                                                 FDP_estimation = TRUE, 
                                                 RL_method = "fastLink", 
-                                                maxIter4CV = 1, n_repeats = 2),
+                                                maxIter4CV = 2, n_repeats = 3),
                                 fastLink_args))
 
 df_results[6,"fastLink  "] <- diag_fastLink$FDP_measures$curve$RL_FDP_score[1]
@@ -661,7 +662,7 @@ diag_reclin2 <- do.call(RL_diagnostics, c(list(fit_reclin2, prep_data$encodedA,
                                                PIVs, true_pairs = prep_data$true_pairs, 
                                                FDP_estimation = TRUE, 
                                                RL_method = "reclin2", 
-                                               maxIter4CV = 1, n_repeats = 2),
+                                               maxIter4CV = 2, n_repeats = 3),
                                reclin2_args))
 
 df_results[6,"reclin2   "] <- diag_reclin2$FDP_measures$curve$RL_FDP_score[1]
@@ -705,7 +706,7 @@ diag_diyar <- do.call(RL_diagnostics, c(list(fit_diyar,
                              prep_data$encodedB[, names4diag], 
                              PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs, 
                              FDP_estimation = TRUE, RL_method = "diyar", 
-                             maxIter4CV = 1, n_repeats = 2),
+                             maxIter4CV = 2, n_repeats = 3),
                              diyar_args))
 
 df_results[6,"diyar     "] <- diag_diyar$FDP_measures$curve$RL_FDP_score[1]
@@ -725,7 +726,7 @@ df_results[11,"diyar     "] <- max(diag_diyar$discrepancy_measures[1,mmd_idx])
 
 fedmatch_args <- list(by = PIVs, match_type = "multivar", 
                       unique_key_1 = "unique_key_A", 
-                      unique_key_2 = "unique_key_B",
+                      unique_key_2 = "unique_key_B", nthread = 4,
                       multivar_settings = fedmatch::build_multivar_settings(
                         compare_type = rep("indicator", length(PIVs)),
                         wgts = rep(1/length(PIVs), length(PIVs))))
@@ -754,7 +755,7 @@ diag_fedmatch <- do.call(RL_diagnostics, c(list(fit_fedmatch, prep_data$encodedA
                                                 PIVs, true_pairs = prep_data$true_pairs, 
                                                 FDP_estimation = TRUE, 
                                                 RL_method = "fedmatch", 
-                                                maxIter4CV = 1, n_repeats = 2),
+                                                maxIter4CV = 2, n_repeats = 3),
                                fedmatch_args))
 
 df_results[6,"fedmatch  "] <- diag_fedmatch$FDP_measures$curve$RL_FDP_score[1]
@@ -843,11 +844,11 @@ knitr::kable(df_results[1:5,], digits = 2, align=rep('c', ncol(df_results)))
 
 |  | Naive | FlexRL | BRL | multilink | fastLink | reclin2 | diyar | fedmatch | FlexRL (no dynamic) |
 |:---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-| TP | 189.00 | 199.00 | 180.00 | 186.00 | 160.00 | 178.00 | 97.00 | 199.00 | 164.00 |
-| FP | 90.00 | 32.00 | 30.00 | 38.00 | 46.00 | 65.00 | 2.00 | 147.00 | 20.00 |
-| FN | 111.00 | 101.00 | 120.00 | 114.00 | 140.00 | 122.00 | 203.00 | 101.00 | 136.00 |
-| sensitivity | 0.63 | 0.66 | 0.60 | 0.62 | 0.53 | 0.59 | 0.32 | 0.66 | 0.55 |
-| FDP | 0.32 | 0.14 | 0.14 | 0.17 | 0.22 | 0.27 | 0.02 | 0.42 | 0.11 |
+| TP | 187.00 | 198.00 | 165.00 | 174.00 | 161.00 | 181.00 | 21.00 | 196.00 | 154.00 |
+| FP | 78.00 | 34.00 | 26.00 | 40.00 | 42.00 | 67.00 | 1.00 | 148.00 | 27.00 |
+| FN | 113.00 | 102.00 | 135.00 | 126.00 | 139.00 | 119.00 | 279.00 | 104.00 | 146.00 |
+| sensitivity | 0.62 | 0.66 | 0.55 | 0.58 | 0.54 | 0.60 | 0.07 | 0.65 | 0.51 |
+| FDP | 0.29 | 0.15 | 0.14 | 0.19 | 0.21 | 0.27 | 0.05 | 0.43 | 0.15 |
 
 ``` r
 
@@ -858,9 +859,9 @@ knitr::kable(df_results[6:8,], digits = 2, align=rep('c', ncol(df_results)))
 
 |  | Naive | FlexRL | BRL | multilink | fastLink | reclin2 | diyar | fedmatch | FlexRL (no dynamic) |
 |:---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-| est. FDP score | NA | 0.14 | 0.18 | NA | 0.26 | 0.27 | NA | 0.1 | 0.12 |
-| est. FDP\* score | NA | 0.15 | 0.17 | NA | 0.28 | 0.32 | NA | 0.1 | 0.13 |
-| est. FDP\* synth | NA | 0.27 | 0.22 | 0.15 | 0.17 | 0.53 | 0 | NA | 0.25 |
+| est. FDP score | NA | 0.14 | 0.18 | NA | 0.26 | 0.34 | NA | 0.10 | 0.14 |
+| est. FDP\* score | NA | 0.15 | 0.18 | NA | 0.27 | 0.35 | NA | 0.10 | 0.15 |
+| est. FDP\* synth | NA | 0.32 | 0.21 | 0.25 | 0.23 | 0.46 | 0.17 | 0.03 | 0.35 |
 
 ``` r
 
@@ -871,9 +872,9 @@ knitr::kable(df_results[9:11,], digits = 2, align=rep('c', ncol(df_results)))
 
 |  | Naive | FlexRL | BRL | multilink | fastLink | reclin2 | diyar | fedmatch | FlexRL (no dynamic) |
 |:---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-| max SMD | NA | 0.12 | 0.16 | 0.13 | 0.14 | 0.21 | 0.37 | 0.08 | 0.17 |
-| min support IoU | NA | 0.86 | 0.88 | 0.88 | 0.86 | 0.86 | 0.86 | 0.88 | 0.86 |
-| max MMD | NA | 0.00 | 0.01 | 0.00 | 0.01 | 0.01 | 0.03 | 0.00 | 0.00 |
+| max SMD | NA | 0.11 | 0.15 | 0.13 | 0.12 | 0.21 | 0.89 | 0.15 | 0.15 |
+| min support IoU | NA | 0.86 | 0.86 | 0.86 | 0.86 | 0.86 | 0.71 | 0.86 | 0.86 |
+| max MMD | NA | 0.01 | 0.01 | 0.00 | 0.01 | 0.01 | 0.20 | 0.00 | 0.01 |
 
 ``` r
 
@@ -884,5 +885,5 @@ knitr::kable(df_results[12:13,], digits = 2, align=rep('c', ncol(df_results)))
 
 |  | Naive | FlexRL | BRL | multilink | fastLink | reclin2 | diyar | fedmatch | FlexRL (no dynamic) |
 |:---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-| time (secs) | 0 | 102 | 1 | 17 | 1 | 0 | 2 | 2 | 79 |
-| memory (Mb) | 1 | 115 | 115 | 146 | 17 | 79 | 109 | 44 | 105 |
+| time (secs) | 0 | 6 | 1 | 31 | 1 | 0 | 2 | 2 | 4 |
+| memory (Mb) | 2 | 51 | 47 | 140 | 22 | 77 | 100 | 40 | 73 |

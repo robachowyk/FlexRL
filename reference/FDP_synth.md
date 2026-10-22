@@ -77,6 +77,7 @@ gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100,
                            p_mistake, p_missing, cond_hazard_params, TRUE )
 prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
                            PIVs_config, TRUE, "entity_id", TRUE )
+#> Warning: PIVs 'V4' and 'V3' are associated (Cramer's V = 0.31 in data1, 0.25 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
 #> '2' is the larger source, saved as B; '1' saved as A.
 PIVs <- names(PIVs_config)
 n_synth <-as.integer(0.10 * nrow(prep_data$encodedB))
@@ -85,10 +86,11 @@ new_data <- synthesise("arf", prep_data$encodedA[, c(PIVs,"local_id","source",
                       prep_data$encodedB[, c(PIVs,"local_id","source","date",
                       prep_data$PIVs_config$V4$cond_hazard_cov$covB)], PIVs, 
                       n_synth, TRUE)
-#> Iteration: 0, Accuracy: 47.99%
+#> Iteration: 0, Accuracy: 50%
 #> Warning: executing %dopar% sequentially: no parallel backend registered
+#> Warning: PIV 'V1': synthetic records out of the common support were removed.
+#> Warning: PIV 'V2': synthetic records out of the common support were removed.
 #> Warning: PIV 'V3': synthetic records out of the common support were removed.
-#> Warning: PIV 'V4': synthetic records out of the common support were removed.
 new_data$dataA[PIVs][is.na(new_data$dataA[PIVs])] <- 0
 new_data$dataB[PIVs][is.na(new_data$dataB[PIVs])] <- 0
 # cannot model dynamics for synthetic data, set dates to 0
@@ -102,12 +104,12 @@ FDP_synth(fit_flexrl$idxA, fit_flexrl$idxB, fit_flexrl$LinkScore, 0.5,
           nrow(prep_data$encodedA), nrow(prep_data$encodedB), 
           n_synth)
 #> $FDP_synth
-#> [1] 0.3333333
+#> [1] 0.2816901
 #> 
 #> $n_linked_real
-#> [1] 90
+#> [1] 71
 #> 
 #> $n_linked_all
-#> [1] 93
+#> [1] 73
 #> 
 ```

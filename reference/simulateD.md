@@ -10,15 +10,14 @@ log-likelihood.
 simulateD(
   data,
   linksR,
-  sumRowD,
-  sumColD,
   truepivsA,
   truepivsB,
   gamma,
   eta,
   alpha,
   phi,
-  model_dynamics = survival_model("exponential")
+  model_dynamics = survival_model("exponential"),
+  threads = 4
 )
 ```
 
@@ -33,14 +32,6 @@ simulateD(
 - linksR:
 
   2-column matrix (1-indexed) of the currently linked (A, B) indices.
-
-- sumRowD:
-
-  Logical vector, one entry per record in A: does it form a link?
-
-- sumColD:
-
-  Logical vector, one entry per record in B: does it form a link?
 
 - truepivsA:
 
@@ -75,6 +66,12 @@ simulateD(
   Object from
   [`survival_model()`](https://robachowyk.github.io/FlexRL/reference/survival_model.md)
   giving the survival function of the structured PIVs.
+
+- threads:
+
+  Integer, number of OpenMP threads for the C++ per-pair likelihood
+  loops (default 4; identical results for any value; ignored if the
+  package was built without OpenMP).
 
 ## Value
 
@@ -114,7 +111,6 @@ data_StEM <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
 #> '2' is the larger source, saved as B; '1' saved as A.
 PIVs_stable <- sapply(data_StEM$PIVs_config, function(x)
                         x$dynamics != "structured")
-FlexRL:::initDeltaMap()
 linksR = base::matrix(0,0,2)
 linksCpp = linksR
 sumRowD = rep(0, nrow(data_StEM$encodedA))
@@ -139,8 +135,8 @@ newTruePivs = simulateH(data=data_StEM, links=linksCpp,
                         sumRowD=sumRowD, sumColD=sumColD, eta=eta, phi=phi)
 truepivsA = newTruePivs$truepivsA
 truepivsB = newTruePivs$truepivsB
-Dsample = simulateD(data=data_StEM, linksR=linksR, sumRowD=sumRowD,
-                   sumColD=sumColD, truepivsA=truepivsA, truepivsB=truepivsB,
+Dsample = simulateD(data=data_StEM, linksR=linksR,
+                   truepivsA=truepivsA, truepivsB=truepivsB,
                    gamma=gamma, eta=eta, alpha=alpha, phi=phi)
 linksCpp = Dsample$links
 linksR = linksCpp + 1

@@ -3,6 +3,7 @@
 ``` r
 
 library(FlexRL)
+#> If you are happy with FlexRL, please cite us! If you are unhappy, please cite us anyway (and feel free to complain as well).
 ```
 
 `FlexRL` is a package proposing flexible probabilistic **R**ecord
@@ -98,12 +99,12 @@ peakRAMNew <- function(...){
 wrapper_args <- function(method, prep_data, ...) {
   PIVs <- names(prep_data$PIVs_config)
   args <- c(...)
-    switch(method,
-         FlexRL    = c(list(data = prep_data),
+  switch(method,
+         FlexRL    = c(list(data = prep_data, threads = 4),
                        args[intersect(names(args), names(formals(FlexRL::StEM)))]),
          BRL       = c(list(flds = PIVs, types = rep("bi", length(PIVs)), nIter = 1000),
                        args[intersect(names(args), c(names(formals(BRL::compareRecords)), names(formals(BRL::bipartiteGibbs))))]),
-         fastLink  = c(list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, return.all = TRUE, n.cores = 1),
+         fastLink  = c(list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, return.all = TRUE, n.cores = 4),
                        args[intersect(names(args), names(formals(fastLink::fastLink)))]),
          multilink = c(list(types = rep("bi", length(PIVs)), breaks = stats::setNames(as.list(rep(NA, length(PIVs))), PIVs),
                             duplicates = c(0, 0), n_iter = 1000, max_cc_size = 50),
@@ -124,12 +125,15 @@ wrapper_args <- function(method, prep_data, ...) {
                        args[intersect(names(args), c(names(formals(diyar::prob_score_range)),
                                                      names(formals(diyar::links_wf_probabilistic))))]),
          fedmatch  = c(list(by = PIVs, match_type = "multivar", unique_key_1 = "unique_key_A",
-                            unique_key_2 = "unique_key_B", multivar_settings = fedmatch::build_multivar_settings(
+                            unique_key_2 = "unique_key_B", nthread = 4, 
+                            multivar_settings = fedmatch::build_multivar_settings(
                               compare_type = rep("indicator", length(PIVs)),
                               wgts = rep(1 / length(PIVs), length(PIVs)))),
                        args[intersect(names(args), names(formals(fedmatch::merge_plus)))])
   )
 }
+
+# unix::rlimit_as(20e9) # may be needed on some OS
 
 run_wrapper <- function(method, prep_data, arguments) {
   PIVs <- names(prep_data$PIVs_config)
@@ -138,7 +142,8 @@ run_wrapper <- function(method, prep_data, arguments) {
     prep_data$encodedA <- prep_data$encodedA[, c(PIVs, "local_id", "source")]
     prep_data$encodedB <- prep_data$encodedB[, c(PIVs, "local_id", "source")]
   }
-  tryCatch(link_with(prep_data$encodedA, prep_data$encodedB, arguments),
+  if (Sys.info()["sysname"] == "Darwin") {
+    tryCatch(link_with(prep_data$encodedA, prep_data$encodedB, arguments),
            error = function(e) {
              if (grepl("cannot allocate|memory|bad_alloc|too large|long vectors", conditionMessage(e), ignore.case = TRUE)) {
                message(method, ": memory error (", conditionMessage(e), "), results reported as NA")
@@ -146,6 +151,21 @@ run_wrapper <- function(method, prep_data, arguments) {
              }
              stop(e)
            })
+  } else if (Sys.info()["sysname"] %in% c("Linux","Windows")) {
+      tryCatch(callr::r(function(link_with, A, B, arguments) {link_with(A, B, arguments)},
+                      args = list(link_with = link_with, A = prep_data$encodedA,
+                                  B = prep_data$encodedB, arguments = arguments)),
+           error = function(e) {
+             if (grepl("cannot allocate|memory|bad_alloc|too large|long vectors|crashed or was killed|signal 9|SIGKILL",
+               conditionMessage(e), ignore.case = TRUE)) {
+               message(method, ": memory error (", conditionMessage(e), "), results reported as NA")
+               return(NULL)
+             }
+             stop(e)
+           })
+  } else {
+    print("Unknown Operating System.")
+  }
 }
 
 evaluate_linkage <- function(fit, true_pairs, threshold = 0.5) {
@@ -167,8 +187,10 @@ results_rows <- c("TP               ", "FP               ", "FN               ",
                   "min support IoU  ", "max MMD          ", "time (secs)      ", 
                   "memory (Mb)      ")
 
-run_all_wrappers <- function(prep_data, PIVs_type, methods, FDP_estimation = TRUE,
-                             maxIter4CV = 1, n_repeats = 2, ...) {
+methods <- c("BRL", "multilink", "fastLink", "reclin2", "diyar", "fedmatch", "FlexRL")
+
+run_all_wrappers <- function(prep_data, variables_type, methods, FDP_estimation = TRUE,
+                             maxIter4CV = 2, n_repeats = 3, ...) {
   args <- list(...)
   op <- options()
   on.exit(options(op))
@@ -200,7 +222,7 @@ run_all_wrappers <- function(prep_data, PIVs_type, methods, FDP_estimation = TRU
       encodedB <- encodedB[, c(PIVs, "local_id", "source")]
     }
     
-    diag <- do.call(RL_diagnostics, c(list(fit, encodedA, encodedB, PIVs, PIVs_type, PIVs,
+    diag <- do.call(RL_diagnostics, c(list(fit, encodedA, encodedB, PIVs, variables_type, PIVs,
                                            true_pairs = prep_data$true_pairs, FDP_estimation = FDP_estimation,
                                            RL_method = method, data = prep_data, maxIter4CV = maxIter4CV, n_repeats = n_repeats),
                                       arguments))
@@ -218,15 +240,6 @@ run_all_wrappers <- function(prep_data, PIVs_type, methods, FDP_estimation = TRU
   }
   df_results
 }
-
-show_results <- function(df_results) {
-  cat("Record Linkage\n");      print(df_results[1:5, ],  2)
-  cat("\nFDP estimation\n");    print(df_results[6:8, ],  2)
-  cat("\nLinked divergence\n"); print(df_results[9:11, ], 2)
-  cat("\nComputational time and memory\n"); print(df_results[12:13, ], 2)
-}
-
-methods <- c("BRL", "multilink", "fastLink", "reclin2", "diyar", "fedmatch", "FlexRL")
 ```
 
 We will fill a table of results throughout the vignette, gathering for
@@ -285,38 +298,56 @@ df_results_NLTCS <- run_all_wrappers(prep_data, PIVs_type, methods)
 
 ``` r
 
-show_results(df_results_NLTCS)
+cat("Record Linkage\n")
 #> Record Linkage
-#>                    Naive     BRL multilink fastLink reclin2   diyar fedmatch
-#> TP                320.00 210.000    221.00   265.00  320.00 126.000   266.00
-#> FP                163.00  18.000     26.00    78.00  163.00   5.000   223.00
-#> FN                 12.00 122.000    111.00    67.00   12.00 206.000    66.00
-#> sensitivity         0.96   0.633      0.67     0.80    0.96   0.380     0.80
-#> FDP                 0.34   0.079      0.11     0.23    0.34   0.038     0.46
-#>                   FlexRL
-#> TP                229.00
-#> FP                 27.00
-#> FN                103.00
-#> sensitivity         0.69
-#> FDP                 0.11
-#> 
-#> FDP estimation
-#>                   Naive  BRL multilink fastLink reclin2 diyar fedmatch FlexRL
-#> est. FDP score       NA 0.15       NaN     0.30    0.49   NaN    0.075   0.16
-#> est. FDP* score      NA 0.17       NaN     0.31      NA   NaN    0.073   0.18
-#> est. FDP* synth      NA 0.12      0.17     0.38      NA     0      NaN   0.21
-#> 
-#> Linked divergence
-#>                   Naive   BRL multilink fastLink reclin2 diyar fedmatch FlexRL
-#> max SMD              NA 0.146     0.133    0.141   0.177  0.43   0.1125  0.170
-#> min support IoU      NA 0.875     0.875    0.875   0.875  0.88   0.8750  0.875
-#> max MMD              NA 0.014     0.012    0.016   0.025  0.03   0.0093  0.015
-#> 
-#> Computational time and memory
-#>                   Naive   BRL multilink fastLink reclin2 diyar fedmatch FlexRL
-#> time (secs)         0.7   5.6       168        4     0.8   3.6      3.3    189
-#> memory (Mb)         2.3 414.6       825      834   239.7 834.6    157.8    834
+knitr::kable(df_results_NLTCS[1:5, ], digits = 2, align=rep('c', ncol(df_results_NLTCS)))
 ```
+
+|             | Naive  |  BRL   | multilink | fastLink | reclin2 | diyar  | fedmatch | FlexRL |
+|:------------|:------:|:------:|:---------:|:--------:|:-------:|:------:|:--------:|:------:|
+| TP          | 320.00 | 211.00 |  221.00   |  265.00  | 320.00  | 126.00 |  266.00  | 224.00 |
+| FP          | 163.00 | 15.00  |   26.00   |  78.00   | 163.00  |  5.00  |  223.00  | 28.00  |
+| FN          | 12.00  | 121.00 |  111.00   |  67.00   |  12.00  | 206.00 |  66.00   | 108.00 |
+| sensitivity |  0.96  |  0.64  |   0.67    |   0.80   |  0.96   |  0.38  |   0.80   |  0.67  |
+| FDP         |  0.34  |  0.07  |   0.11    |   0.23   |  0.34   |  0.04  |   0.46   |  0.11  |
+
+``` r
+
+cat("FDP estimation\n")
+#> FDP estimation
+knitr::kable(df_results_NLTCS[6:8, ], digits = 2, align=rep('c', ncol(df_results_NLTCS)))
+```
+
+|                  | Naive | BRL  | multilink | fastLink | reclin2 | diyar | fedmatch | FlexRL |
+|:-----------------|:-----:|:----:|:---------:|:--------:|:-------:|:-----:|:--------:|:------:|
+| est. FDP score   |  NA   | 0.15 |    NaN    |   0.30   |  0.49   |  NaN  |   0.07   |  0.16  |
+| est. FDP\* score |  NA   | 0.17 |    NaN    |   0.31   |   NA    |  NaN  |   0.07   |  0.18  |
+| est. FDP\* synth |  NA   | 0.08 |   0.22    |   0.44   |   NA    | 0.03  |   0.13   |  0.16  |
+
+``` r
+
+cat("Linked divergence\n")
+#> Linked divergence
+knitr::kable(df_results_NLTCS[9:11, ], digits = 2, align=rep('c', ncol(df_results_NLTCS)))
+```
+
+|                 | Naive | BRL  | multilink | fastLink | reclin2 | diyar | fedmatch | FlexRL |
+|:----------------|:-----:|:----:|:---------:|:--------:|:-------:|:-----:|:--------:|:------:|
+| max SMD         |  NA   | 0.15 |   0.13    |   0.14   |  0.18   | 0.43  |   0.11   |  0.18  |
+| min support IoU |  NA   | 0.88 |   0.88    |   0.88   |  0.88   | 0.88  |   0.88   |  0.88  |
+| max MMD         |  NA   | 0.01 |   0.01    |   0.02   |  0.02   | 0.03  |   0.01   |  0.02  |
+
+``` r
+
+cat("Computational time and memory\n")
+#> Computational time and memory
+knitr::kable(df_results_NLTCS[12:13, ], digits = 2, align=rep('c', ncol(df_results_NLTCS)))
+```
+
+|             | Naive | BRL  | multilink | fastLink | reclin2 | diyar | fedmatch | FlexRL |
+|:------------|:-----:|:----:|:---------:|:--------:|:-------:|:-----:|:--------:|:------:|
+| time (secs) | 0.23  | 5.8  |    165    |   4.2    |  0.36   |   3   |   2.6    |  7.3   |
+| memory (Mb) | 2.50  | 85.0 |    385    |  273.1   | 155.50  |  117  |  105.5   | 109.3  |
 
 ## Full SHIW data
 
@@ -356,20 +387,16 @@ true_pairs_full <- do.call(paste, c(prep_data_full$true_pairs, list(sep = "_")))
 
 ``` r
 
-df_results_full <- data.frame(matrix(NA, nrow = 6, ncol = 0))
-rownames(df_results_full) <- c("TP", "FP", "FN", "sensitivity", "FDP", "minutes")
+df_results_full <- data.frame(matrix(NA, nrow = 7, ncol = 0))
+rownames(df_results_full) <- c("TP", "FP", "FN", "sensitivity", "FDP", "time (mins)", "memory (Mb)")
 for (method in methods) {
-  t0 <- Sys.time()       
-  args <- list(StEM_iter = 10, StEM_burnin = 5, gibbs_iter = 10, gibbs_burnin = 5, 
-               n_post_sample = 10, n_iter = 100, max_cc_size = 50, n.cores = 4)
-  fit <- run_wrapper(method, prep_data_full, wrapper_args(method, prep_data_full, args))
+  t0 <- Sys.time()           
+  args <- list(n_iter = 100)
+  MeM <- peakRAMNew(fit <- run_wrapper(method, prep_data_full, wrapper_args(method, prep_data_full, args)))
   df_results_full[1:5, method] <- evaluate_linkage(fit, true_pairs_full)
   df_results_full[6, method] <- if (is.null(fit)) NA else round(as.numeric(Sys.time() - t0, units = "mins"))
+  df_results_full[7, method] <- if (is.null(fit)) NA else MeM$Peak_RAM_Used_MiB
 }
-
-# on Apple M1 Max ARM chip, 8-core CPU, 32 GB of memory
-
-# we reduce the number of iterations of FlexRL to gain in computational time
 ```
 
 ``` r
@@ -381,12 +408,13 @@ knitr::kable(df_results_full, digits = 2, align=rep('c', ncol(df_results_full)))
 
 |             | BRL | multilink | fastLink | reclin2 | diyar | fedmatch | FlexRL  |
 |:------------|:---:|:---------:|:--------:|:-------:|:-----:|:--------:|:-------:|
-| TP          | NA  |    NA     | 5082.00  |   NA    |  NA   | 5057.00  | 4598.00 |
-| FP          | NA  |    NA     | 11154.00 |   NA    |  NA   | 14154.00 | 8080.00 |
-| FN          | NA  |    NA     | 5486.00  |   NA    |  NA   | 5511.00  | 5970.00 |
-| sensitivity | NA  |    NA     |   0.48   |   NA    |  NA   |   0.48   |  0.44   |
-| FDP         | NA  |    NA     |   0.69   |   NA    |  NA   |   0.74   |  0.64   |
-| minutes     | NA  |    NA     |   9.00   |   NA    |  NA   |   6.00   |  52.00  |
+| TP          | NA  |    NA     | 5001.00  |   NA    |  NA   | 5057.00  | 4118.00 |
+| FP          | NA  |    NA     | 11235.00 |   NA    |  NA   | 14154.00 | 5552.00 |
+| FN          | NA  |    NA     | 5567.00  |   NA    |  NA   | 5511.00  | 6450.00 |
+| sensitivity | NA  |    NA     |   0.47   |   NA    |  NA   |   0.48   |  0.39   |
+| FDP         | NA  |    NA     |   0.69   |   NA    |  NA   |   0.74   |  0.57   |
+| time (mins) | NA  |    NA     |   8.00   |   NA    |  NA   |   5.00   |  6.00   |
+| memory (Mb) | NA  |    NA     | 25918.30 |   NA    |  NA   | 1845.40  | 4033.60 |
 
 Note that when methods do not ensure the one-to-one assignment
 constraint the number of False Positives may be high due to many-to-many
@@ -409,12 +437,13 @@ for (r in regions) {
   true_pairs_r <- do.call(paste, c(prep_data_r$true_pairs, list(sep = "_")))
   for (method in methods) {
     t0 <- Sys.time()
-    fit <- run_wrapper(method, prep_data_r, wrapper_args(method, prep_data_r))
+    MeM <- peakRAMNew(fit <- run_wrapper(method, prep_data_r, wrapper_args(method, prep_data_r)))
     results_IREG[[length(results_IREG) + 1]] <- data.frame(
       IREG = r, n_A = nrow(prep_data_r$encodedA),
       n_B = nrow(prep_data_r$encodedB), n_links = length(true_pairs_r),
-      method = method, sprintf("%.2f",t(evaluate_linkage(fit, true_pairs_r))),
-      seconds = round(as.numeric(Sys.time() - t0, units = "secs")))
+      method = method, round(t(evaluate_linkage(fit, true_pairs_r)),2),
+      seconds = round(as.numeric(Sys.time() - t0, units = "secs")),
+      memory = MeM$Peak_RAM_Used_MiB)
   }
 }
 
@@ -428,708 +457,148 @@ cat("Record Linkage on regional subsets")
 knitr::kable(results_IREG, digits = 2, align=rep('c', ncol(results_IREG)))
 ```
 
-| IREG | n_A | n_B | n_links | method | sprintf….2f…t.evaluate_linkage.fit..true_pairs_r… | seconds |
-|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-| 1 | 1360 | 1495 | 645 | BRL | 63.00 | 17 |
-| 1 | 1360 | 1495 | 645 | BRL | 24.00 | 17 |
-| 1 | 1360 | 1495 | 645 | BRL | 582.00 | 17 |
-| 1 | 1360 | 1495 | 645 | BRL | 0.10 | 17 |
-| 1 | 1360 | 1495 | 645 | BRL | 0.28 | 17 |
-| 1 | 1360 | 1495 | 645 | multilink | 153.00 | 1108 |
-| 1 | 1360 | 1495 | 645 | multilink | 399.00 | 1108 |
-| 1 | 1360 | 1495 | 645 | multilink | 492.00 | 1108 |
-| 1 | 1360 | 1495 | 645 | multilink | 0.24 | 1108 |
-| 1 | 1360 | 1495 | 645 | multilink | 0.72 | 1108 |
-| 1 | 1360 | 1495 | 645 | fastLink | 321.00 | 2 |
-| 1 | 1360 | 1495 | 645 | fastLink | 812.00 | 2 |
-| 1 | 1360 | 1495 | 645 | fastLink | 324.00 | 2 |
-| 1 | 1360 | 1495 | 645 | fastLink | 0.50 | 2 |
-| 1 | 1360 | 1495 | 645 | fastLink | 0.72 | 2 |
-| 1 | 1360 | 1495 | 645 | reclin2 | 632.00 | 0 |
-| 1 | 1360 | 1495 | 645 | reclin2 | 25520.00 | 0 |
-| 1 | 1360 | 1495 | 645 | reclin2 | 13.00 | 0 |
-| 1 | 1360 | 1495 | 645 | reclin2 | 0.98 | 0 |
-| 1 | 1360 | 1495 | 645 | reclin2 | 0.98 | 0 |
-| 1 | 1360 | 1495 | 645 | diyar | 47.00 | 10 |
-| 1 | 1360 | 1495 | 645 | diyar | 5.00 | 10 |
-| 1 | 1360 | 1495 | 645 | diyar | 598.00 | 10 |
-| 1 | 1360 | 1495 | 645 | diyar | 0.07 | 10 |
-| 1 | 1360 | 1495 | 645 | diyar | 0.10 | 10 |
-| 1 | 1360 | 1495 | 645 | fedmatch | 402.00 | 10 |
-| 1 | 1360 | 1495 | 645 | fedmatch | 958.00 | 10 |
-| 1 | 1360 | 1495 | 645 | fedmatch | 243.00 | 10 |
-| 1 | 1360 | 1495 | 645 | fedmatch | 0.62 | 10 |
-| 1 | 1360 | 1495 | 645 | fedmatch | 0.70 | 10 |
-| 1 | 1360 | 1495 | 645 | FlexRL | 197.00 | 2305 |
-| 1 | 1360 | 1495 | 645 | FlexRL | 119.00 | 2305 |
-| 1 | 1360 | 1495 | 645 | FlexRL | 448.00 | 2305 |
-| 1 | 1360 | 1495 | 645 | FlexRL | 0.31 | 2305 |
-| 1 | 1360 | 1495 | 645 | FlexRL | 0.38 | 2305 |
-| 2 | 44 | 53 | 24 | BRL | 21.00 | 0 |
-| 2 | 44 | 53 | 24 | BRL | 11.00 | 0 |
-| 2 | 44 | 53 | 24 | BRL | 3.00 | 0 |
-| 2 | 44 | 53 | 24 | BRL | 0.88 | 0 |
-| 2 | 44 | 53 | 24 | BRL | 0.34 | 0 |
-| 2 | 44 | 53 | 24 | multilink | 23.00 | 1 |
-| 2 | 44 | 53 | 24 | multilink | 10.00 | 1 |
-| 2 | 44 | 53 | 24 | multilink | 1.00 | 1 |
-| 2 | 44 | 53 | 24 | multilink | 0.96 | 1 |
-| 2 | 44 | 53 | 24 | multilink | 0.30 | 1 |
-| 2 | 44 | 53 | 24 | fastLink | 21.00 | 1 |
-| 2 | 44 | 53 | 24 | fastLink | 14.00 | 1 |
-| 2 | 44 | 53 | 24 | fastLink | 3.00 | 1 |
-| 2 | 44 | 53 | 24 | fastLink | 0.88 | 1 |
-| 2 | 44 | 53 | 24 | fastLink | 0.40 | 1 |
-| 2 | 44 | 53 | 24 | reclin2 | 23.00 | 0 |
-| 2 | 44 | 53 | 24 | reclin2 | 50.00 | 0 |
-| 2 | 44 | 53 | 24 | reclin2 | 1.00 | 0 |
-| 2 | 44 | 53 | 24 | reclin2 | 0.96 | 0 |
-| 2 | 44 | 53 | 24 | reclin2 | 0.68 | 0 |
-| 2 | 44 | 53 | 24 | diyar | 10.00 | 0 |
-| 2 | 44 | 53 | 24 | diyar | 0.00 | 0 |
-| 2 | 44 | 53 | 24 | diyar | 14.00 | 0 |
-| 2 | 44 | 53 | 24 | diyar | 0.42 | 0 |
-| 2 | 44 | 53 | 24 | diyar | 0.00 | 0 |
-| 2 | 44 | 53 | 24 | fedmatch | 22.00 | 0 |
-| 2 | 44 | 53 | 24 | fedmatch | 22.00 | 0 |
-| 2 | 44 | 53 | 24 | fedmatch | 2.00 | 0 |
-| 2 | 44 | 53 | 24 | fedmatch | 0.92 | 0 |
-| 2 | 44 | 53 | 24 | fedmatch | 0.50 | 0 |
-| 2 | 44 | 53 | 24 | FlexRL | 22.00 | 22 |
-| 2 | 44 | 53 | 24 | FlexRL | 3.00 | 22 |
-| 2 | 44 | 53 | 24 | FlexRL | 2.00 | 22 |
-| 2 | 44 | 53 | 24 | FlexRL | 0.92 | 22 |
-| 2 | 44 | 53 | 24 | FlexRL | 0.12 | 22 |
-| 3 | 2103 | 2140 | 918 | BRL | 42.00 | 35 |
-| 3 | 2103 | 2140 | 918 | BRL | 13.00 | 35 |
-| 3 | 2103 | 2140 | 918 | BRL | 876.00 | 35 |
-| 3 | 2103 | 2140 | 918 | BRL | 0.05 | 35 |
-| 3 | 2103 | 2140 | 918 | BRL | 0.24 | 35 |
-| 3 | 2103 | 2140 | 918 | multilink | 121.00 | 3069 |
-| 3 | 2103 | 2140 | 918 | multilink | 585.00 | 3069 |
-| 3 | 2103 | 2140 | 918 | multilink | 797.00 | 3069 |
-| 3 | 2103 | 2140 | 918 | multilink | 0.13 | 3069 |
-| 3 | 2103 | 2140 | 918 | multilink | 0.83 | 3069 |
-| 3 | 2103 | 2140 | 918 | fastLink | 450.00 | 4 |
-| 3 | 2103 | 2140 | 918 | fastLink | 1383.00 | 4 |
-| 3 | 2103 | 2140 | 918 | fastLink | 468.00 | 4 |
-| 3 | 2103 | 2140 | 918 | fastLink | 0.49 | 4 |
-| 3 | 2103 | 2140 | 918 | fastLink | 0.75 | 4 |
-| 3 | 2103 | 2140 | 918 | reclin2 | 911.00 | 1 |
-| 3 | 2103 | 2140 | 918 | reclin2 | 54782.00 | 1 |
-| 3 | 2103 | 2140 | 918 | reclin2 | 7.00 | 1 |
-| 3 | 2103 | 2140 | 918 | reclin2 | 0.99 | 1 |
-| 3 | 2103 | 2140 | 918 | reclin2 | 0.98 | 1 |
-| 3 | 2103 | 2140 | 918 | diyar | 54.00 | 18 |
-| 3 | 2103 | 2140 | 918 | diyar | 1.00 | 18 |
-| 3 | 2103 | 2140 | 918 | diyar | 864.00 | 18 |
-| 3 | 2103 | 2140 | 918 | diyar | 0.06 | 18 |
-| 3 | 2103 | 2140 | 918 | diyar | 0.02 | 18 |
-| 3 | 2103 | 2140 | 918 | fedmatch | 545.00 | 19 |
-| 3 | 2103 | 2140 | 918 | fedmatch | 1558.00 | 19 |
-| 3 | 2103 | 2140 | 918 | fedmatch | 373.00 | 19 |
-| 3 | 2103 | 2140 | 918 | fedmatch | 0.59 | 19 |
-| 3 | 2103 | 2140 | 918 | fedmatch | 0.74 | 19 |
-| 3 | 2103 | 2140 | 918 | FlexRL | 280.00 | 3910 |
-| 3 | 2103 | 2140 | 918 | FlexRL | 130.00 | 3910 |
-| 3 | 2103 | 2140 | 918 | FlexRL | 638.00 | 3910 |
-| 3 | 2103 | 2140 | 918 | FlexRL | 0.31 | 3910 |
-| 3 | 2103 | 2140 | 918 | FlexRL | 0.32 | 3910 |
-| 4 | 437 | 541 | 229 | BRL | 84.00 | 2 |
-| 4 | 437 | 541 | 229 | BRL | 29.00 | 2 |
-| 4 | 437 | 541 | 229 | BRL | 145.00 | 2 |
-| 4 | 437 | 541 | 229 | BRL | 0.37 | 2 |
-| 4 | 437 | 541 | 229 | BRL | 0.26 | 2 |
-| 4 | 437 | 541 | 229 | multilink | 96.00 | 74 |
-| 4 | 437 | 541 | 229 | multilink | 83.00 | 74 |
-| 4 | 437 | 541 | 229 | multilink | 133.00 | 74 |
-| 4 | 437 | 541 | 229 | multilink | 0.42 | 74 |
-| 4 | 437 | 541 | 229 | multilink | 0.46 | 74 |
-| 4 | 437 | 541 | 229 | fastLink | 141.00 | 3 |
-| 4 | 437 | 541 | 229 | fastLink | 233.00 | 3 |
-| 4 | 437 | 541 | 229 | fastLink | 88.00 | 3 |
-| 4 | 437 | 541 | 229 | fastLink | 0.62 | 3 |
-| 4 | 437 | 541 | 229 | fastLink | 0.62 | 3 |
-| 4 | 437 | 541 | 229 | reclin2 | 228.00 | 0 |
-| 4 | 437 | 541 | 229 | reclin2 | 16275.00 | 0 |
-| 4 | 437 | 541 | 229 | reclin2 | 1.00 | 0 |
-| 4 | 437 | 541 | 229 | reclin2 | 1.00 | 0 |
-| 4 | 437 | 541 | 229 | reclin2 | 0.99 | 0 |
-| 4 | 437 | 541 | 229 | diyar | 10.00 | 2 |
-| 4 | 437 | 541 | 229 | diyar | 0.00 | 2 |
-| 4 | 437 | 541 | 229 | diyar | 219.00 | 2 |
-| 4 | 437 | 541 | 229 | diyar | 0.04 | 2 |
-| 4 | 437 | 541 | 229 | diyar | 0.00 | 2 |
-| 4 | 437 | 541 | 229 | fedmatch | 157.00 | 2 |
-| 4 | 437 | 541 | 229 | fedmatch | 280.00 | 2 |
-| 4 | 437 | 541 | 229 | fedmatch | 72.00 | 2 |
-| 4 | 437 | 541 | 229 | fedmatch | 0.69 | 2 |
-| 4 | 437 | 541 | 229 | fedmatch | 0.64 | 2 |
-| 4 | 437 | 541 | 229 | FlexRL | 81.00 | 599 |
-| 4 | 437 | 541 | 229 | FlexRL | 29.00 | 599 |
-| 4 | 437 | 541 | 229 | FlexRL | 148.00 | 599 |
-| 4 | 437 | 541 | 229 | FlexRL | 0.35 | 599 |
-| 4 | 437 | 541 | 229 | FlexRL | 0.26 | 599 |
-| 5 | 1181 | 1319 | 750 | BRL | 146.00 | 13 |
-| 5 | 1181 | 1319 | 750 | BRL | 29.00 | 13 |
-| 5 | 1181 | 1319 | 750 | BRL | 604.00 | 13 |
-| 5 | 1181 | 1319 | 750 | BRL | 0.19 | 13 |
-| 5 | 1181 | 1319 | 750 | BRL | 0.17 | 13 |
-| 5 | 1181 | 1319 | 750 | multilink | 266.00 | 606 |
-| 5 | 1181 | 1319 | 750 | multilink | 410.00 | 606 |
-| 5 | 1181 | 1319 | 750 | multilink | 484.00 | 606 |
-| 5 | 1181 | 1319 | 750 | multilink | 0.35 | 606 |
-| 5 | 1181 | 1319 | 750 | multilink | 0.61 | 606 |
-| 5 | 1181 | 1319 | 750 | fastLink | 365.00 | 22 |
-| 5 | 1181 | 1319 | 750 | fastLink | 710.00 | 22 |
-| 5 | 1181 | 1319 | 750 | fastLink | 385.00 | 22 |
-| 5 | 1181 | 1319 | 750 | fastLink | 0.49 | 22 |
-| 5 | 1181 | 1319 | 750 | fastLink | 0.66 | 22 |
-| 5 | 1181 | 1319 | 750 | reclin2 | 598.00 | 1 |
-| 5 | 1181 | 1319 | 750 | reclin2 | 341135.00 | 1 |
-| 5 | 1181 | 1319 | 750 | reclin2 | 152.00 | 1 |
-| 5 | 1181 | 1319 | 750 | reclin2 | 0.80 | 1 |
-| 5 | 1181 | 1319 | 750 | reclin2 | 1.00 | 1 |
-| 5 | 1181 | 1319 | 750 | diyar | 4.00 | 9 |
-| 5 | 1181 | 1319 | 750 | diyar | 0.00 | 9 |
-| 5 | 1181 | 1319 | 750 | diyar | 746.00 | 9 |
-| 5 | 1181 | 1319 | 750 | diyar | 0.01 | 9 |
-| 5 | 1181 | 1319 | 750 | diyar | 0.00 | 9 |
-| 5 | 1181 | 1319 | 750 | fedmatch | 349.00 | 8 |
-| 5 | 1181 | 1319 | 750 | fedmatch | 832.00 | 8 |
-| 5 | 1181 | 1319 | 750 | fedmatch | 401.00 | 8 |
-| 5 | 1181 | 1319 | 750 | fedmatch | 0.47 | 8 |
-| 5 | 1181 | 1319 | 750 | fedmatch | 0.70 | 8 |
-| 5 | 1181 | 1319 | 750 | FlexRL | 199.00 | 2309 |
-| 5 | 1181 | 1319 | 750 | FlexRL | 86.00 | 2309 |
-| 5 | 1181 | 1319 | 750 | FlexRL | 551.00 | 2309 |
-| 5 | 1181 | 1319 | 750 | FlexRL | 0.27 | 2309 |
-| 5 | 1181 | 1319 | 750 | FlexRL | 0.30 | 2309 |
-| 6 | 459 | 513 | 238 | BRL | 96.00 | 2 |
-| 6 | 459 | 513 | 238 | BRL | 36.00 | 2 |
-| 6 | 459 | 513 | 238 | BRL | 142.00 | 2 |
-| 6 | 459 | 513 | 238 | BRL | 0.40 | 2 |
-| 6 | 459 | 513 | 238 | BRL | 0.27 | 2 |
-| 6 | 459 | 513 | 238 | multilink | 122.00 | 70 |
-| 6 | 459 | 513 | 238 | multilink | 84.00 | 70 |
-| 6 | 459 | 513 | 238 | multilink | 116.00 | 70 |
-| 6 | 459 | 513 | 238 | multilink | 0.51 | 70 |
-| 6 | 459 | 513 | 238 | multilink | 0.41 | 70 |
-| 6 | 459 | 513 | 238 | fastLink | 153.00 | 2 |
-| 6 | 459 | 513 | 238 | fastLink | 202.00 | 2 |
-| 6 | 459 | 513 | 238 | fastLink | 85.00 | 2 |
-| 6 | 459 | 513 | 238 | fastLink | 0.64 | 2 |
-| 6 | 459 | 513 | 238 | fastLink | 0.57 | 2 |
-| 6 | 459 | 513 | 238 | reclin2 | 236.00 | 0 |
-| 6 | 459 | 513 | 238 | reclin2 | 2752.00 | 0 |
-| 6 | 459 | 513 | 238 | reclin2 | 2.00 | 0 |
-| 6 | 459 | 513 | 238 | reclin2 | 0.99 | 0 |
-| 6 | 459 | 513 | 238 | reclin2 | 0.92 | 0 |
-| 6 | 459 | 513 | 238 | diyar | 6.00 | 2 |
-| 6 | 459 | 513 | 238 | diyar | 0.00 | 2 |
-| 6 | 459 | 513 | 238 | diyar | 232.00 | 2 |
-| 6 | 459 | 513 | 238 | diyar | 0.03 | 2 |
-| 6 | 459 | 513 | 238 | diyar | 0.00 | 2 |
-| 6 | 459 | 513 | 238 | fedmatch | 169.00 | 3 |
-| 6 | 459 | 513 | 238 | fedmatch | 289.00 | 3 |
-| 6 | 459 | 513 | 238 | fedmatch | 69.00 | 3 |
-| 6 | 459 | 513 | 238 | fedmatch | 0.71 | 3 |
-| 6 | 459 | 513 | 238 | fedmatch | 0.63 | 3 |
-| 6 | 459 | 513 | 238 | FlexRL | 93.00 | 602 |
-| 6 | 459 | 513 | 238 | FlexRL | 52.00 | 602 |
-| 6 | 459 | 513 | 238 | FlexRL | 145.00 | 602 |
-| 6 | 459 | 513 | 238 | FlexRL | 0.39 | 602 |
-| 6 | 459 | 513 | 238 | FlexRL | 0.36 | 602 |
-| 7 | 670 | 710 | 321 | BRL | 79.00 | 4 |
-| 7 | 670 | 710 | 321 | BRL | 31.00 | 4 |
-| 7 | 670 | 710 | 321 | BRL | 242.00 | 4 |
-| 7 | 670 | 710 | 321 | BRL | 0.25 | 4 |
-| 7 | 670 | 710 | 321 | BRL | 0.28 | 4 |
-| 7 | 670 | 710 | 321 | multilink | 132.00 | 175 |
-| 7 | 670 | 710 | 321 | multilink | 151.00 | 175 |
-| 7 | 670 | 710 | 321 | multilink | 189.00 | 175 |
-| 7 | 670 | 710 | 321 | multilink | 0.41 | 175 |
-| 7 | 670 | 710 | 321 | multilink | 0.53 | 175 |
-| 7 | 670 | 710 | 321 | fastLink | 210.00 | 2 |
-| 7 | 670 | 710 | 321 | fastLink | 337.00 | 2 |
-| 7 | 670 | 710 | 321 | fastLink | 111.00 | 2 |
-| 7 | 670 | 710 | 321 | fastLink | 0.65 | 2 |
-| 7 | 670 | 710 | 321 | fastLink | 0.62 | 2 |
-| 7 | 670 | 710 | 321 | reclin2 | 316.00 | 0 |
-| 7 | 670 | 710 | 321 | reclin2 | 6320.00 | 0 |
-| 7 | 670 | 710 | 321 | reclin2 | 5.00 | 0 |
-| 7 | 670 | 710 | 321 | reclin2 | 0.98 | 0 |
-| 7 | 670 | 710 | 321 | reclin2 | 0.95 | 0 |
-| 7 | 670 | 710 | 321 | diyar | 34.00 | 4 |
-| 7 | 670 | 710 | 321 | diyar | 2.00 | 4 |
-| 7 | 670 | 710 | 321 | diyar | 287.00 | 4 |
-| 7 | 670 | 710 | 321 | diyar | 0.11 | 4 |
-| 7 | 670 | 710 | 321 | diyar | 0.06 | 4 |
-| 7 | 670 | 710 | 321 | fedmatch | 227.00 | 3 |
-| 7 | 670 | 710 | 321 | fedmatch | 443.00 | 3 |
-| 7 | 670 | 710 | 321 | fedmatch | 94.00 | 3 |
-| 7 | 670 | 710 | 321 | fedmatch | 0.71 | 3 |
-| 7 | 670 | 710 | 321 | fedmatch | 0.66 | 3 |
-| 7 | 670 | 710 | 321 | FlexRL | 120.00 | 895 |
-| 7 | 670 | 710 | 321 | FlexRL | 59.00 | 895 |
-| 7 | 670 | 710 | 321 | FlexRL | 201.00 | 895 |
-| 7 | 670 | 710 | 321 | FlexRL | 0.37 | 895 |
-| 7 | 670 | 710 | 321 | FlexRL | 0.33 | 895 |
-| 8 | 1479 | 1524 | 898 | BRL | 144.00 | 17 |
-| 8 | 1479 | 1524 | 898 | BRL | 25.00 | 17 |
-| 8 | 1479 | 1524 | 898 | BRL | 754.00 | 17 |
-| 8 | 1479 | 1524 | 898 | BRL | 0.16 | 17 |
-| 8 | 1479 | 1524 | 898 | BRL | 0.15 | 17 |
-| 8 | 1479 | 1524 | 898 | multilink | 290.00 | 1127 |
-| 8 | 1479 | 1524 | 898 | multilink | 421.00 | 1127 |
-| 8 | 1479 | 1524 | 898 | multilink | 608.00 | 1127 |
-| 8 | 1479 | 1524 | 898 | multilink | 0.32 | 1127 |
-| 8 | 1479 | 1524 | 898 | multilink | 0.59 | 1127 |
-| 8 | 1479 | 1524 | 898 | fastLink | 452.00 | 34 |
-| 8 | 1479 | 1524 | 898 | fastLink | 865.00 | 34 |
-| 8 | 1479 | 1524 | 898 | fastLink | 446.00 | 34 |
-| 8 | 1479 | 1524 | 898 | fastLink | 0.50 | 34 |
-| 8 | 1479 | 1524 | 898 | fastLink | 0.66 | 34 |
-| 8 | 1479 | 1524 | 898 | reclin2 | 721.00 | 1 |
-| 8 | 1479 | 1524 | 898 | reclin2 | 339232.00 | 1 |
-| 8 | 1479 | 1524 | 898 | reclin2 | 177.00 | 1 |
-| 8 | 1479 | 1524 | 898 | reclin2 | 0.80 | 1 |
-| 8 | 1479 | 1524 | 898 | reclin2 | 1.00 | 1 |
-| 8 | 1479 | 1524 | 898 | diyar | 20.00 | 11 |
-| 8 | 1479 | 1524 | 898 | diyar | 0.00 | 11 |
-| 8 | 1479 | 1524 | 898 | diyar | 878.00 | 11 |
-| 8 | 1479 | 1524 | 898 | diyar | 0.02 | 11 |
-| 8 | 1479 | 1524 | 898 | diyar | 0.00 | 11 |
-| 8 | 1479 | 1524 | 898 | fedmatch | 510.00 | 9 |
-| 8 | 1479 | 1524 | 898 | fedmatch | 969.00 | 9 |
-| 8 | 1479 | 1524 | 898 | fedmatch | 388.00 | 9 |
-| 8 | 1479 | 1524 | 898 | fedmatch | 0.57 | 9 |
-| 8 | 1479 | 1524 | 898 | fedmatch | 0.66 | 9 |
-| 8 | 1479 | 1524 | 898 | FlexRL | 293.00 | 2778 |
-| 8 | 1479 | 1524 | 898 | FlexRL | 104.00 | 2778 |
-| 8 | 1479 | 1524 | 898 | FlexRL | 605.00 | 2778 |
-| 8 | 1479 | 1524 | 898 | FlexRL | 0.33 | 2778 |
-| 8 | 1479 | 1524 | 898 | FlexRL | 0.26 | 2778 |
-| 9 | 1363 | 1500 | 711 | BRL | 43.00 | 18 |
-| 9 | 1363 | 1500 | 711 | BRL | 13.00 | 18 |
-| 9 | 1363 | 1500 | 711 | BRL | 668.00 | 18 |
-| 9 | 1363 | 1500 | 711 | BRL | 0.06 | 18 |
-| 9 | 1363 | 1500 | 711 | BRL | 0.23 | 18 |
-| 9 | 1363 | 1500 | 711 | multilink | 107.00 | 1065 |
-| 9 | 1363 | 1500 | 711 | multilink | 371.00 | 1065 |
-| 9 | 1363 | 1500 | 711 | multilink | 604.00 | 1065 |
-| 9 | 1363 | 1500 | 711 | multilink | 0.15 | 1065 |
-| 9 | 1363 | 1500 | 711 | multilink | 0.78 | 1065 |
-| 9 | 1363 | 1500 | 711 | fastLink | 343.00 | 34 |
-| 9 | 1363 | 1500 | 711 | fastLink | 857.00 | 34 |
-| 9 | 1363 | 1500 | 711 | fastLink | 368.00 | 34 |
-| 9 | 1363 | 1500 | 711 | fastLink | 0.48 | 34 |
-| 9 | 1363 | 1500 | 711 | fastLink | 0.71 | 34 |
-| 9 | 1363 | 1500 | 711 | reclin2 | 8.00 | 1 |
-| 9 | 1363 | 1500 | 711 | reclin2 | 188790.00 | 1 |
-| 9 | 1363 | 1500 | 711 | reclin2 | 703.00 | 1 |
-| 9 | 1363 | 1500 | 711 | reclin2 | 0.01 | 1 |
-| 9 | 1363 | 1500 | 711 | reclin2 | 1.00 | 1 |
-| 9 | 1363 | 1500 | 711 | diyar | 27.00 | 12 |
-| 9 | 1363 | 1500 | 711 | diyar | 0.00 | 12 |
-| 9 | 1363 | 1500 | 711 | diyar | 684.00 | 12 |
-| 9 | 1363 | 1500 | 711 | diyar | 0.04 | 12 |
-| 9 | 1363 | 1500 | 711 | diyar | 0.00 | 12 |
-| 9 | 1363 | 1500 | 711 | fedmatch | 338.00 | 11 |
-| 9 | 1363 | 1500 | 711 | fedmatch | 1025.00 | 11 |
-| 9 | 1363 | 1500 | 711 | fedmatch | 373.00 | 11 |
-| 9 | 1363 | 1500 | 711 | fedmatch | 0.48 | 11 |
-| 9 | 1363 | 1500 | 711 | fedmatch | 0.75 | 11 |
-| 9 | 1363 | 1500 | 711 | FlexRL | 194.00 | 2578 |
-| 9 | 1363 | 1500 | 711 | FlexRL | 84.00 | 2578 |
-| 9 | 1363 | 1500 | 711 | FlexRL | 517.00 | 2578 |
-| 9 | 1363 | 1500 | 711 | FlexRL | 0.27 | 2578 |
-| 9 | 1363 | 1500 | 711 | FlexRL | 0.30 | 2578 |
-| 10 | 658 | 687 | 384 | BRL | 72.00 | 4 |
-| 10 | 658 | 687 | 384 | BRL | 11.00 | 4 |
-| 10 | 658 | 687 | 384 | BRL | 312.00 | 4 |
-| 10 | 658 | 687 | 384 | BRL | 0.19 | 4 |
-| 10 | 658 | 687 | 384 | BRL | 0.13 | 4 |
-| 10 | 658 | 687 | 384 | multilink | 119.00 | 159 |
-| 10 | 658 | 687 | 384 | multilink | 139.00 | 159 |
-| 10 | 658 | 687 | 384 | multilink | 265.00 | 159 |
-| 10 | 658 | 687 | 384 | multilink | 0.31 | 159 |
-| 10 | 658 | 687 | 384 | multilink | 0.54 | 159 |
-| 10 | 658 | 687 | 384 | fastLink | 206.00 | 6 |
-| 10 | 658 | 687 | 384 | fastLink | 359.00 | 6 |
-| 10 | 658 | 687 | 384 | fastLink | 178.00 | 6 |
-| 10 | 658 | 687 | 384 | fastLink | 0.54 | 6 |
-| 10 | 658 | 687 | 384 | fastLink | 0.64 | 6 |
-| 10 | 658 | 687 | 384 | reclin2 | 321.00 | 0 |
-| 10 | 658 | 687 | 384 | reclin2 | 102152.00 | 0 |
-| 10 | 658 | 687 | 384 | reclin2 | 63.00 | 0 |
-| 10 | 658 | 687 | 384 | reclin2 | 0.84 | 0 |
-| 10 | 658 | 687 | 384 | reclin2 | 1.00 | 0 |
-| 10 | 658 | 687 | 384 | diyar | 2.00 | 4 |
-| 10 | 658 | 687 | 384 | diyar | 0.00 | 4 |
-| 10 | 658 | 687 | 384 | diyar | 382.00 | 4 |
-| 10 | 658 | 687 | 384 | diyar | 0.01 | 4 |
-| 10 | 658 | 687 | 384 | diyar | 0.00 | 4 |
-| 10 | 658 | 687 | 384 | fedmatch | 238.00 | 4 |
-| 10 | 658 | 687 | 384 | fedmatch | 420.00 | 4 |
-| 10 | 658 | 687 | 384 | fedmatch | 146.00 | 4 |
-| 10 | 658 | 687 | 384 | fedmatch | 0.62 | 4 |
-| 10 | 658 | 687 | 384 | fedmatch | 0.64 | 4 |
-| 10 | 658 | 687 | 384 | FlexRL | 113.00 | 1004 |
-| 10 | 658 | 687 | 384 | FlexRL | 47.00 | 1004 |
-| 10 | 658 | 687 | 384 | FlexRL | 271.00 | 1004 |
-| 10 | 658 | 687 | 384 | FlexRL | 0.29 | 1004 |
-| 10 | 658 | 687 | 384 | FlexRL | 0.29 | 1004 |
-| 11 | 762 | 872 | 486 | BRL | 113.00 | 5 |
-| 11 | 762 | 872 | 486 | BRL | 33.00 | 5 |
-| 11 | 762 | 872 | 486 | BRL | 373.00 | 5 |
-| 11 | 762 | 872 | 486 | BRL | 0.23 | 5 |
-| 11 | 762 | 872 | 486 | BRL | 0.23 | 5 |
-| 11 | 762 | 872 | 486 | multilink | 182.00 | 216 |
-| 11 | 762 | 872 | 486 | multilink | 213.00 | 216 |
-| 11 | 762 | 872 | 486 | multilink | 304.00 | 216 |
-| 11 | 762 | 872 | 486 | multilink | 0.37 | 216 |
-| 11 | 762 | 872 | 486 | multilink | 0.54 | 216 |
-| 11 | 762 | 872 | 486 | fastLink | 249.00 | 8 |
-| 11 | 762 | 872 | 486 | fastLink | 422.00 | 8 |
-| 11 | 762 | 872 | 486 | fastLink | 237.00 | 8 |
-| 11 | 762 | 872 | 486 | fastLink | 0.51 | 8 |
-| 11 | 762 | 872 | 486 | fastLink | 0.63 | 8 |
-| 11 | 762 | 872 | 486 | reclin2 | 394.00 | 0 |
-| 11 | 762 | 872 | 486 | reclin2 | 135933.00 | 0 |
-| 11 | 762 | 872 | 486 | reclin2 | 92.00 | 0 |
-| 11 | 762 | 872 | 486 | reclin2 | 0.81 | 0 |
-| 11 | 762 | 872 | 486 | reclin2 | 1.00 | 0 |
-| 11 | 762 | 872 | 486 | diyar | 4.00 | 5 |
-| 11 | 762 | 872 | 486 | diyar | 0.00 | 5 |
-| 11 | 762 | 872 | 486 | diyar | 482.00 | 5 |
-| 11 | 762 | 872 | 486 | diyar | 0.01 | 5 |
-| 11 | 762 | 872 | 486 | diyar | 0.00 | 5 |
-| 11 | 762 | 872 | 486 | fedmatch | 251.00 | 5 |
-| 11 | 762 | 872 | 486 | fedmatch | 511.00 | 5 |
-| 11 | 762 | 872 | 486 | fedmatch | 235.00 | 5 |
-| 11 | 762 | 872 | 486 | fedmatch | 0.52 | 5 |
-| 11 | 762 | 872 | 486 | fedmatch | 0.67 | 5 |
-| 11 | 762 | 872 | 486 | FlexRL | 149.00 | 1330 |
-| 11 | 762 | 872 | 486 | FlexRL | 62.00 | 1330 |
-| 11 | 762 | 872 | 486 | FlexRL | 337.00 | 1330 |
-| 11 | 762 | 872 | 486 | FlexRL | 0.31 | 1330 |
-| 11 | 762 | 872 | 486 | FlexRL | 0.29 | 1330 |
-| 12 | 977 | 1142 | 455 | BRL | 39.00 | 10 |
-| 12 | 977 | 1142 | 455 | BRL | 15.00 | 10 |
-| 12 | 977 | 1142 | 455 | BRL | 416.00 | 10 |
-| 12 | 977 | 1142 | 455 | BRL | 0.09 | 10 |
-| 12 | 977 | 1142 | 455 | BRL | 0.28 | 10 |
-| 12 | 977 | 1142 | 455 | multilink | 125.00 | 510 |
-| 12 | 977 | 1142 | 455 | multilink | 235.00 | 510 |
-| 12 | 977 | 1142 | 455 | multilink | 330.00 | 510 |
-| 12 | 977 | 1142 | 455 | multilink | 0.27 | 510 |
-| 12 | 977 | 1142 | 455 | multilink | 0.65 | 510 |
-| 12 | 977 | 1142 | 455 | fastLink | 240.00 | 16 |
-| 12 | 977 | 1142 | 455 | fastLink | 567.00 | 16 |
-| 12 | 977 | 1142 | 455 | fastLink | 215.00 | 16 |
-| 12 | 977 | 1142 | 455 | fastLink | 0.53 | 16 |
-| 12 | 977 | 1142 | 455 | fastLink | 0.70 | 16 |
-| 12 | 977 | 1142 | 455 | reclin2 | 375.00 | 1 |
-| 12 | 977 | 1142 | 455 | reclin2 | 3911.00 | 1 |
-| 12 | 977 | 1142 | 455 | reclin2 | 80.00 | 1 |
-| 12 | 977 | 1142 | 455 | reclin2 | 0.82 | 1 |
-| 12 | 977 | 1142 | 455 | reclin2 | 0.91 | 1 |
-| 12 | 977 | 1142 | 455 | diyar | 6.00 | 8 |
-| 12 | 977 | 1142 | 455 | diyar | 0.00 | 8 |
-| 12 | 977 | 1142 | 455 | diyar | 449.00 | 8 |
-| 12 | 977 | 1142 | 455 | diyar | 0.01 | 8 |
-| 12 | 977 | 1142 | 455 | diyar | 0.00 | 8 |
-| 12 | 977 | 1142 | 455 | fedmatch | 254.00 | 9 |
-| 12 | 977 | 1142 | 455 | fedmatch | 722.00 | 9 |
-| 12 | 977 | 1142 | 455 | fedmatch | 201.00 | 9 |
-| 12 | 977 | 1142 | 455 | fedmatch | 0.56 | 9 |
-| 12 | 977 | 1142 | 455 | fedmatch | 0.74 | 9 |
-| 12 | 977 | 1142 | 455 | FlexRL | 148.00 | 1580 |
-| 12 | 977 | 1142 | 455 | FlexRL | 61.00 | 1580 |
-| 12 | 977 | 1142 | 455 | FlexRL | 307.00 | 1580 |
-| 12 | 977 | 1142 | 455 | FlexRL | 0.33 | 1580 |
-| 12 | 977 | 1142 | 455 | FlexRL | 0.29 | 1580 |
-| 13 | 454 | 493 | 311 | BRL | 137.00 | 2 |
-| 13 | 454 | 493 | 311 | BRL | 24.00 | 2 |
-| 13 | 454 | 493 | 311 | BRL | 174.00 | 2 |
-| 13 | 454 | 493 | 311 | BRL | 0.44 | 2 |
-| 13 | 454 | 493 | 311 | BRL | 0.15 | 2 |
-| 13 | 454 | 493 | 311 | multilink | 164.00 | 56 |
-| 13 | 454 | 493 | 311 | multilink | 95.00 | 56 |
-| 13 | 454 | 493 | 311 | multilink | 147.00 | 56 |
-| 13 | 454 | 493 | 311 | multilink | 0.53 | 56 |
-| 13 | 454 | 493 | 311 | multilink | 0.37 | 56 |
-| 13 | 454 | 493 | 311 | fastLink | 197.00 | 3 |
-| 13 | 454 | 493 | 311 | fastLink | 203.00 | 3 |
-| 13 | 454 | 493 | 311 | fastLink | 114.00 | 3 |
-| 13 | 454 | 493 | 311 | fastLink | 0.63 | 3 |
-| 13 | 454 | 493 | 311 | fastLink | 0.51 | 3 |
-| 13 | 454 | 493 | 311 | reclin2 | 310.00 | 0 |
-| 13 | 454 | 493 | 311 | reclin2 | 17730.00 | 0 |
-| 13 | 454 | 493 | 311 | reclin2 | 1.00 | 0 |
-| 13 | 454 | 493 | 311 | reclin2 | 1.00 | 0 |
-| 13 | 454 | 493 | 311 | reclin2 | 0.98 | 0 |
-| 13 | 454 | 493 | 311 | diyar | 39.00 | 2 |
-| 13 | 454 | 493 | 311 | diyar | 0.00 | 2 |
-| 13 | 454 | 493 | 311 | diyar | 272.00 | 2 |
-| 13 | 454 | 493 | 311 | diyar | 0.13 | 2 |
-| 13 | 454 | 493 | 311 | diyar | 0.00 | 2 |
-| 13 | 454 | 493 | 311 | fedmatch | 198.00 | 3 |
-| 13 | 454 | 493 | 311 | fedmatch | 255.00 | 3 |
-| 13 | 454 | 493 | 311 | fedmatch | 113.00 | 3 |
-| 13 | 454 | 493 | 311 | fedmatch | 0.64 | 3 |
-| 13 | 454 | 493 | 311 | fedmatch | 0.56 | 3 |
-| 13 | 454 | 493 | 311 | FlexRL | 146.00 | 689 |
-| 13 | 454 | 493 | 311 | FlexRL | 36.00 | 689 |
-| 13 | 454 | 493 | 311 | FlexRL | 165.00 | 689 |
-| 13 | 454 | 493 | 311 | FlexRL | 0.47 | 689 |
-| 13 | 454 | 493 | 311 | FlexRL | 0.20 | 689 |
-| 14 | 280 | 299 | 183 | BRL | 100.00 | 1 |
-| 14 | 280 | 299 | 183 | BRL | 26.00 | 1 |
-| 14 | 280 | 299 | 183 | BRL | 83.00 | 1 |
-| 14 | 280 | 299 | 183 | BRL | 0.55 | 1 |
-| 14 | 280 | 299 | 183 | BRL | 0.21 | 1 |
-| 14 | 280 | 299 | 183 | multilink | 113.00 | 18 |
-| 14 | 280 | 299 | 183 | multilink | 44.00 | 18 |
-| 14 | 280 | 299 | 183 | multilink | 70.00 | 18 |
-| 14 | 280 | 299 | 183 | multilink | 0.62 | 18 |
-| 14 | 280 | 299 | 183 | multilink | 0.28 | 18 |
-| 14 | 280 | 299 | 183 | fastLink | 131.00 | 1 |
-| 14 | 280 | 299 | 183 | fastLink | 106.00 | 1 |
-| 14 | 280 | 299 | 183 | fastLink | 52.00 | 1 |
-| 14 | 280 | 299 | 183 | fastLink | 0.72 | 1 |
-| 14 | 280 | 299 | 183 | fastLink | 0.45 | 1 |
-| 14 | 280 | 299 | 183 | reclin2 | 182.00 | 0 |
-| 14 | 280 | 299 | 183 | reclin2 | 7282.00 | 0 |
-| 14 | 280 | 299 | 183 | reclin2 | 1.00 | 0 |
-| 14 | 280 | 299 | 183 | reclin2 | 0.99 | 0 |
-| 14 | 280 | 299 | 183 | reclin2 | 0.98 | 0 |
-| 14 | 280 | 299 | 183 | diyar | 2.00 | 1 |
-| 14 | 280 | 299 | 183 | diyar | 0.00 | 1 |
-| 14 | 280 | 299 | 183 | diyar | 181.00 | 1 |
-| 14 | 280 | 299 | 183 | diyar | 0.01 | 1 |
-| 14 | 280 | 299 | 183 | diyar | 0.00 | 1 |
-| 14 | 280 | 299 | 183 | fedmatch | 137.00 | 2 |
-| 14 | 280 | 299 | 183 | fedmatch | 143.00 | 2 |
-| 14 | 280 | 299 | 183 | fedmatch | 46.00 | 2 |
-| 14 | 280 | 299 | 183 | fedmatch | 0.75 | 2 |
-| 14 | 280 | 299 | 183 | fedmatch | 0.51 | 2 |
-| 14 | 280 | 299 | 183 | FlexRL | 105.00 | 344 |
-| 14 | 280 | 299 | 183 | FlexRL | 23.00 | 344 |
-| 14 | 280 | 299 | 183 | FlexRL | 78.00 | 344 |
-| 14 | 280 | 299 | 183 | FlexRL | 0.57 | 344 |
-| 14 | 280 | 299 | 183 | FlexRL | 0.18 | 344 |
-| 15 | 1939 | 2160 | 1069 | BRL | 23.00 | 35 |
-| 15 | 1939 | 2160 | 1069 | BRL | 21.00 | 35 |
-| 15 | 1939 | 2160 | 1069 | BRL | 1046.00 | 35 |
-| 15 | 1939 | 2160 | 1069 | BRL | 0.02 | 35 |
-| 15 | 1939 | 2160 | 1069 | BRL | 0.48 | 35 |
-| 15 | 1939 | 2160 | 1069 | multilink | 69.00 | 2239 |
-| 15 | 1939 | 2160 | 1069 | multilink | 648.00 | 2239 |
-| 15 | 1939 | 2160 | 1069 | multilink | 1000.00 | 2239 |
-| 15 | 1939 | 2160 | 1069 | multilink | 0.06 | 2239 |
-| 15 | 1939 | 2160 | 1069 | multilink | 0.90 | 2239 |
-| 15 | 1939 | 2160 | 1069 | fastLink | 276.00 | 65 |
-| 15 | 1939 | 2160 | 1069 | fastLink | 1526.00 | 65 |
-| 15 | 1939 | 2160 | 1069 | fastLink | 793.00 | 65 |
-| 15 | 1939 | 2160 | 1069 | fastLink | 0.26 | 65 |
-| 15 | 1939 | 2160 | 1069 | fastLink | 0.85 | 65 |
-| 15 | 1939 | 2160 | 1069 | reclin2 | 1069.00 | 2 |
-| 15 | 1939 | 2160 | 1069 | reclin2 | 1572964.00 | 2 |
-| 15 | 1939 | 2160 | 1069 | reclin2 | 0.00 | 2 |
-| 15 | 1939 | 2160 | 1069 | reclin2 | 1.00 | 2 |
-| 15 | 1939 | 2160 | 1069 | reclin2 | 1.00 | 2 |
-| 15 | 1939 | 2160 | 1069 | diyar | 1.00 | 19 |
-| 15 | 1939 | 2160 | 1069 | diyar | 0.00 | 19 |
-| 15 | 1939 | 2160 | 1069 | diyar | 1068.00 | 19 |
-| 15 | 1939 | 2160 | 1069 | diyar | 0.00 | 19 |
-| 15 | 1939 | 2160 | 1069 | diyar | 0.00 | 19 |
-| 15 | 1939 | 2160 | 1069 | fedmatch | 280.00 | 20 |
-| 15 | 1939 | 2160 | 1069 | fedmatch | 1659.00 | 20 |
-| 15 | 1939 | 2160 | 1069 | fedmatch | 789.00 | 20 |
-| 15 | 1939 | 2160 | 1069 | fedmatch | 0.26 | 20 |
-| 15 | 1939 | 2160 | 1069 | fedmatch | 0.86 | 20 |
-| 15 | 1939 | 2160 | 1069 | FlexRL | 113.00 | 4093 |
-| 15 | 1939 | 2160 | 1069 | FlexRL | 124.00 | 4093 |
-| 15 | 1939 | 2160 | 1069 | FlexRL | 956.00 | 4093 |
-| 15 | 1939 | 2160 | 1069 | FlexRL | 0.11 | 4093 |
-| 15 | 1939 | 2160 | 1069 | FlexRL | 0.52 | 4093 |
-| 16 | 1130 | 1354 | 683 | BRL | 46.00 | 13 |
-| 16 | 1130 | 1354 | 683 | BRL | 12.00 | 13 |
-| 16 | 1130 | 1354 | 683 | BRL | 637.00 | 13 |
-| 16 | 1130 | 1354 | 683 | BRL | 0.07 | 13 |
-| 16 | 1130 | 1354 | 683 | BRL | 0.21 | 13 |
-| 16 | 1130 | 1354 | 683 | multilink | 112.00 | 527 |
-| 16 | 1130 | 1354 | 683 | multilink | 470.00 | 527 |
-| 16 | 1130 | 1354 | 683 | multilink | 571.00 | 527 |
-| 16 | 1130 | 1354 | 683 | multilink | 0.16 | 527 |
-| 16 | 1130 | 1354 | 683 | multilink | 0.81 | 527 |
-| 16 | 1130 | 1354 | 683 | fastLink | 266.00 | 23 |
-| 16 | 1130 | 1354 | 683 | fastLink | 774.00 | 23 |
-| 16 | 1130 | 1354 | 683 | fastLink | 417.00 | 23 |
-| 16 | 1130 | 1354 | 683 | fastLink | 0.39 | 23 |
-| 16 | 1130 | 1354 | 683 | fastLink | 0.74 | 23 |
-| 16 | 1130 | 1354 | 683 | reclin2 | 681.00 | 1 |
-| 16 | 1130 | 1354 | 683 | reclin2 | 404295.00 | 1 |
-| 16 | 1130 | 1354 | 683 | reclin2 | 2.00 | 1 |
-| 16 | 1130 | 1354 | 683 | reclin2 | 1.00 | 1 |
-| 16 | 1130 | 1354 | 683 | reclin2 | 1.00 | 1 |
-| 16 | 1130 | 1354 | 683 | diyar | 9.00 | 8 |
-| 16 | 1130 | 1354 | 683 | diyar | 1.00 | 8 |
-| 16 | 1130 | 1354 | 683 | diyar | 674.00 | 8 |
-| 16 | 1130 | 1354 | 683 | diyar | 0.01 | 8 |
-| 16 | 1130 | 1354 | 683 | diyar | 0.10 | 8 |
-| 16 | 1130 | 1354 | 683 | fedmatch | 290.00 | 8 |
-| 16 | 1130 | 1354 | 683 | fedmatch | 840.00 | 8 |
-| 16 | 1130 | 1354 | 683 | fedmatch | 393.00 | 8 |
-| 16 | 1130 | 1354 | 683 | fedmatch | 0.42 | 8 |
-| 16 | 1130 | 1354 | 683 | fedmatch | 0.74 | 8 |
-| 16 | 1130 | 1354 | 683 | FlexRL | 149.00 | 2293 |
-| 16 | 1130 | 1354 | 683 | FlexRL | 68.00 | 2293 |
-| 16 | 1130 | 1354 | 683 | FlexRL | 534.00 | 2293 |
-| 16 | 1130 | 1354 | 683 | FlexRL | 0.22 | 2293 |
-| 16 | 1130 | 1354 | 683 | FlexRL | 0.31 | 2293 |
-| 17 | 264 | 276 | 193 | BRL | 123.00 | 1 |
-| 17 | 264 | 276 | 193 | BRL | 32.00 | 1 |
-| 17 | 264 | 276 | 193 | BRL | 70.00 | 1 |
-| 17 | 264 | 276 | 193 | BRL | 0.64 | 1 |
-| 17 | 264 | 276 | 193 | BRL | 0.21 | 1 |
-| 17 | 264 | 276 | 193 | multilink | 122.00 | 13 |
-| 17 | 264 | 276 | 193 | multilink | 78.00 | 13 |
-| 17 | 264 | 276 | 193 | multilink | 71.00 | 13 |
-| 17 | 264 | 276 | 193 | multilink | 0.63 | 13 |
-| 17 | 264 | 276 | 193 | multilink | 0.39 | 13 |
-| 17 | 264 | 276 | 193 | fastLink | 130.00 | 1 |
-| 17 | 264 | 276 | 193 | fastLink | 100.00 | 1 |
-| 17 | 264 | 276 | 193 | fastLink | 63.00 | 1 |
-| 17 | 264 | 276 | 193 | fastLink | 0.67 | 1 |
-| 17 | 264 | 276 | 193 | fastLink | 0.43 | 1 |
-| 17 | 264 | 276 | 193 | reclin2 | 193.00 | 0 |
-| 17 | 264 | 276 | 193 | reclin2 | 7266.00 | 0 |
-| 17 | 264 | 276 | 193 | reclin2 | 0.00 | 0 |
-| 17 | 264 | 276 | 193 | reclin2 | 1.00 | 0 |
-| 17 | 264 | 276 | 193 | reclin2 | 0.97 | 0 |
-| 17 | 264 | 276 | 193 | diyar | 16.00 | 1 |
-| 17 | 264 | 276 | 193 | diyar | 1.00 | 1 |
-| 17 | 264 | 276 | 193 | diyar | 177.00 | 1 |
-| 17 | 264 | 276 | 193 | diyar | 0.08 | 1 |
-| 17 | 264 | 276 | 193 | diyar | 0.06 | 1 |
-| 17 | 264 | 276 | 193 | fedmatch | 127.00 | 2 |
-| 17 | 264 | 276 | 193 | fedmatch | 137.00 | 2 |
-| 17 | 264 | 276 | 193 | fedmatch | 66.00 | 2 |
-| 17 | 264 | 276 | 193 | fedmatch | 0.66 | 2 |
-| 17 | 264 | 276 | 193 | fedmatch | 0.52 | 2 |
-| 17 | 264 | 276 | 193 | FlexRL | 122.00 | 376 |
-| 17 | 264 | 276 | 193 | FlexRL | 44.00 | 376 |
-| 17 | 264 | 276 | 193 | FlexRL | 71.00 | 376 |
-| 17 | 264 | 276 | 193 | FlexRL | 0.63 | 376 |
-| 17 | 264 | 276 | 193 | FlexRL | 0.27 | 376 |
-| 18 | 501 | 554 | 362 | BRL | 90.00 | 2 |
-| 18 | 501 | 554 | 362 | BRL | 29.00 | 2 |
-| 18 | 501 | 554 | 362 | BRL | 272.00 | 2 |
-| 18 | 501 | 554 | 362 | BRL | 0.25 | 2 |
-| 18 | 501 | 554 | 362 | BRL | 0.24 | 2 |
-| 18 | 501 | 554 | 362 | multilink | 151.00 | 60 |
-| 18 | 501 | 554 | 362 | multilink | 131.00 | 60 |
-| 18 | 501 | 554 | 362 | multilink | 211.00 | 60 |
-| 18 | 501 | 554 | 362 | multilink | 0.42 | 60 |
-| 18 | 501 | 554 | 362 | multilink | 0.46 | 60 |
-| 18 | 501 | 554 | 362 | fastLink | 205.00 | 4 |
-| 18 | 501 | 554 | 362 | fastLink | 246.00 | 4 |
-| 18 | 501 | 554 | 362 | fastLink | 157.00 | 4 |
-| 18 | 501 | 554 | 362 | fastLink | 0.57 | 4 |
-| 18 | 501 | 554 | 362 | fastLink | 0.55 | 4 |
-| 18 | 501 | 554 | 362 | reclin2 | 311.00 | 0 |
-| 18 | 501 | 554 | 362 | reclin2 | 118067.00 | 0 |
-| 18 | 501 | 554 | 362 | reclin2 | 51.00 | 0 |
-| 18 | 501 | 554 | 362 | reclin2 | 0.86 | 0 |
-| 18 | 501 | 554 | 362 | reclin2 | 1.00 | 0 |
-| 18 | 501 | 554 | 362 | diyar | 7.00 | 3 |
-| 18 | 501 | 554 | 362 | diyar | 0.00 | 3 |
-| 18 | 501 | 554 | 362 | diyar | 355.00 | 3 |
-| 18 | 501 | 554 | 362 | diyar | 0.02 | 3 |
-| 18 | 501 | 554 | 362 | diyar | 0.00 | 3 |
-| 18 | 501 | 554 | 362 | fedmatch | 194.00 | 3 |
-| 18 | 501 | 554 | 362 | fedmatch | 307.00 | 3 |
-| 18 | 501 | 554 | 362 | fedmatch | 168.00 | 3 |
-| 18 | 501 | 554 | 362 | fedmatch | 0.54 | 3 |
-| 18 | 501 | 554 | 362 | fedmatch | 0.61 | 3 |
-| 18 | 501 | 554 | 362 | FlexRL | 117.00 | 912 |
-| 18 | 501 | 554 | 362 | FlexRL | 61.00 | 912 |
-| 18 | 501 | 554 | 362 | FlexRL | 245.00 | 912 |
-| 18 | 501 | 554 | 362 | FlexRL | 0.32 | 912 |
-| 18 | 501 | 554 | 362 | FlexRL | 0.34 | 912 |
-| 19 | 1524 | 1625 | 1010 | BRL | 56.00 | 18 |
-| 19 | 1524 | 1625 | 1010 | BRL | 8.00 | 18 |
-| 19 | 1524 | 1625 | 1010 | BRL | 954.00 | 18 |
-| 19 | 1524 | 1625 | 1010 | BRL | 0.06 | 18 |
-| 19 | 1524 | 1625 | 1010 | BRL | 0.12 | 18 |
-| 19 | 1524 | 1625 | 1010 | multilink | 138.00 | 1006 |
-| 19 | 1524 | 1625 | 1010 | multilink | 574.00 | 1006 |
-| 19 | 1524 | 1625 | 1010 | multilink | 872.00 | 1006 |
-| 19 | 1524 | 1625 | 1010 | multilink | 0.14 | 1006 |
-| 19 | 1524 | 1625 | 1010 | multilink | 0.81 | 1006 |
-| 19 | 1524 | 1625 | 1010 | fastLink | 354.00 | 36 |
-| 19 | 1524 | 1625 | 1010 | fastLink | 1057.00 | 36 |
-| 19 | 1524 | 1625 | 1010 | fastLink | 656.00 | 36 |
-| 19 | 1524 | 1625 | 1010 | fastLink | 0.35 | 36 |
-| 19 | 1524 | 1625 | 1010 | fastLink | 0.75 | 36 |
-| 19 | 1524 | 1625 | 1010 | reclin2 | 1006.00 | 1 |
-| 19 | 1524 | 1625 | 1010 | reclin2 | 677113.00 | 1 |
-| 19 | 1524 | 1625 | 1010 | reclin2 | 4.00 | 1 |
-| 19 | 1524 | 1625 | 1010 | reclin2 | 1.00 | 1 |
-| 19 | 1524 | 1625 | 1010 | reclin2 | 1.00 | 1 |
-| 19 | 1524 | 1625 | 1010 | diyar | 5.00 | 14 |
-| 19 | 1524 | 1625 | 1010 | diyar | 0.00 | 14 |
-| 19 | 1524 | 1625 | 1010 | diyar | 1005.00 | 14 |
-| 19 | 1524 | 1625 | 1010 | diyar | 0.00 | 14 |
-| 19 | 1524 | 1625 | 1010 | diyar | 0.00 | 14 |
-| 19 | 1524 | 1625 | 1010 | fedmatch | 351.00 | 11 |
-| 19 | 1524 | 1625 | 1010 | fedmatch | 1173.00 | 11 |
-| 19 | 1524 | 1625 | 1010 | fedmatch | 659.00 | 11 |
-| 19 | 1524 | 1625 | 1010 | fedmatch | 0.35 | 11 |
-| 19 | 1524 | 1625 | 1010 | fedmatch | 0.77 | 11 |
-| 19 | 1524 | 1625 | 1010 | FlexRL | 162.00 | 3182 |
-| 19 | 1524 | 1625 | 1010 | FlexRL | 68.00 | 3182 |
-| 19 | 1524 | 1625 | 1010 | FlexRL | 848.00 | 3182 |
-| 19 | 1524 | 1625 | 1010 | FlexRL | 0.16 | 3182 |
-| 19 | 1524 | 1625 | 1010 | FlexRL | 0.30 | 3182 |
-| 20 | 826 | 827 | 478 | BRL | 70.00 | 5 |
-| 20 | 826 | 827 | 478 | BRL | 28.00 | 5 |
-| 20 | 826 | 827 | 478 | BRL | 408.00 | 5 |
-| 20 | 826 | 827 | 478 | BRL | 0.15 | 5 |
-| 20 | 826 | 827 | 478 | BRL | 0.29 | 5 |
-| 20 | 826 | 827 | 478 | multilink | 142.00 | 241 |
-| 20 | 826 | 827 | 478 | multilink | 273.00 | 241 |
-| 20 | 826 | 827 | 478 | multilink | 336.00 | 241 |
-| 20 | 826 | 827 | 478 | multilink | 0.30 | 241 |
-| 20 | 826 | 827 | 478 | multilink | 0.66 | 241 |
-| 20 | 826 | 827 | 478 | fastLink | 232.00 | 9 |
-| 20 | 826 | 827 | 478 | fastLink | 491.00 | 9 |
-| 20 | 826 | 827 | 478 | fastLink | 246.00 | 9 |
-| 20 | 826 | 827 | 478 | fastLink | 0.49 | 9 |
-| 20 | 826 | 827 | 478 | fastLink | 0.68 | 9 |
-| 20 | 826 | 827 | 478 | reclin2 | 478.00 | 0 |
-| 20 | 826 | 827 | 478 | reclin2 | 71205.00 | 0 |
-| 20 | 826 | 827 | 478 | reclin2 | 0.00 | 0 |
-| 20 | 826 | 827 | 478 | reclin2 | 1.00 | 0 |
-| 20 | 826 | 827 | 478 | reclin2 | 0.99 | 0 |
-| 20 | 826 | 827 | 478 | diyar | 13.00 | 6 |
-| 20 | 826 | 827 | 478 | diyar | 2.00 | 6 |
-| 20 | 826 | 827 | 478 | diyar | 465.00 | 6 |
-| 20 | 826 | 827 | 478 | diyar | 0.03 | 6 |
-| 20 | 826 | 827 | 478 | diyar | 0.13 | 6 |
-| 20 | 826 | 827 | 478 | fedmatch | 245.00 | 5 |
-| 20 | 826 | 827 | 478 | fedmatch | 580.00 | 5 |
-| 20 | 826 | 827 | 478 | fedmatch | 233.00 | 5 |
-| 20 | 826 | 827 | 478 | fedmatch | 0.51 | 5 |
-| 20 | 826 | 827 | 478 | fedmatch | 0.70 | 5 |
-| 20 | 826 | 827 | 478 | FlexRL | 134.00 | 1455 |
-| 20 | 826 | 827 | 478 | FlexRL | 61.00 | 1455 |
-| 20 | 826 | 827 | 478 | FlexRL | 344.00 | 1455 |
-| 20 | 826 | 827 | 478 | FlexRL | 0.28 | 1455 |
-| 20 | 826 | 827 | 478 | FlexRL | 0.31 | 1455 |
+| IREG | n_A  | n_B  | n_links |  method   |  TP  |   FP    |  FN  | sensitivity | FDP  | seconds | memory |
+|:----:|:----:|:----:|:-------:|:---------:|:----:|:-------:|:----:|:-----------:|:----:|:-------:|:------:|
+|  1   | 1360 | 1495 |   645   |    BRL    |  61  |   25    | 584  |    0.09     | 0.29 |   19    | 1886.3 |
+|  1   | 1360 | 1495 |   645   | multilink | 153  |   399   | 492  |    0.24     | 0.72 |  1112   | 1651.5 |
+|  1   | 1360 | 1495 |   645   | fastLink  | 321  |   812   | 324  |    0.50     | 0.72 |    4    | 182.4  |
+|  1   | 1360 | 1495 |   645   |  reclin2  | 632  |  25520  |  13  |    0.98     | 0.98 |    1    | 667.5  |
+|  1   | 1360 | 1495 |   645   |   diyar   |  47  |    5    | 598  |    0.07     | 0.10 |   12    | 874.4  |
+|  1   | 1360 | 1495 |   645   | fedmatch  | 402  |   958   | 243  |    0.62     | 0.70 |   10    | 874.8  |
+|  1   | 1360 | 1495 |   645   |  FlexRL   | 205  |   113   | 440  |    0.32     | 0.36 |   22    | 874.8  |
+|  2   |  44  |  53  |   24    |    BRL    |  22  |   10    |  2   |    0.92     | 0.31 |    1    |  5.5   |
+|  2   |  44  |  53  |   24    | multilink |  23  |   10    |  1   |    0.96     | 0.30 |    1    | 124.2  |
+|  2   |  44  |  53  |   24    | fastLink  |  21  |   14    |  3   |    0.88     | 0.40 |    3    |  15.9  |
+|  2   |  44  |  53  |   24    |  reclin2  |  23  |   50    |  1   |    0.96     | 0.68 |    1    |  2.9   |
+|  2   |  44  |  53  |   24    |   diyar   |  10  |    0    |  14  |    0.42     | 0.00 |    1    |  17.5  |
+|  2   |  44  |  53  |   24    | fedmatch  |  22  |   22    |  2   |    0.92     | 0.50 |    1    |  34.2  |
+|  2   |  44  |  53  |   24    |  FlexRL   |  22  |    1    |  2   |    0.92     | 0.04 |    3    | 109.9  |
+|  3   | 2103 | 2140 |   918   |    BRL    |  40  |   11    | 878  |    0.04     | 0.22 |   37    | 1120.9 |
+|  3   | 2103 | 2140 |   918   | multilink | 121  |   585   | 797  |    0.13     | 0.83 |  3063   | 3385.0 |
+|  3   | 2103 | 2140 |   918   | fastLink  | 450  |  1383   | 468  |    0.49     | 0.75 |    6    | 483.2  |
+|  3   | 2103 | 2140 |   918   |  reclin2  | 911  |  54782  |  7   |    0.99     | 0.98 |    2    | 859.8  |
+|  3   | 2103 | 2140 |   918   |   diyar   |  54  |    1    | 864  |    0.06     | 0.02 |   23    | 1405.2 |
+|  3   | 2103 | 2140 |   918   | fedmatch  | 545  |  1558   | 373  |    0.59     | 0.74 |   17    | 768.7  |
+|  3   | 2103 | 2140 |   918   |  FlexRL   | 272  |   148   | 646  |    0.30     | 0.35 |   33    | 768.6  |
+|  4   | 437  | 541  |   229   |    BRL    |  81  |   29    | 148  |    0.35     | 0.26 |    3    | 276.7  |
+|  4   | 437  | 541  |   229   | multilink |  96  |   83    | 133  |    0.42     | 0.46 |   75    | 768.3  |
+|  4   | 437  | 541  |   229   | fastLink  | 141  |   233   |  88  |    0.62     | 0.62 |    6    | 768.4  |
+|  4   | 437  | 541  |   229   |  reclin2  | 228  |  16275  |  1   |    1.00     | 0.99 |    1    | 153.9  |
+|  4   | 437  | 541  |   229   |   diyar   |  10  |    0    | 219  |    0.04     | 0.00 |    3    | 768.8  |
+|  4   | 437  | 541  |   229   | fedmatch  | 157  |   280   |  72  |    0.69     | 0.64 |    3    | 545.5  |
+|  4   | 437  | 541  |   229   |  FlexRL   |  74  |   31    | 155  |    0.32     | 0.30 |    9    | 769.1  |
+|  5   | 1181 | 1319 |   750   |    BRL    | 156  |   31    | 594  |    0.21     | 0.17 |   13    | 764.7  |
+|  5   | 1181 | 1319 |   750   | multilink | 266  |   410   | 484  |    0.35     | 0.61 |   609   | 1268.9 |
+|  5   | 1181 | 1319 |   750   | fastLink  | 365  |   710   | 385  |    0.49     | 0.66 |   26    | 1805.3 |
+|  5   | 1181 | 1319 |   750   |  reclin2  | 598  | 341135  | 152  |    0.80     | 1.00 |    1    | 744.8  |
+|  5   | 1181 | 1319 |   750   |   diyar   |  4   |    0    | 746  |    0.01     | 0.00 |   10    | 741.9  |
+|  5   | 1181 | 1319 |   750   | fedmatch  | 349  |   832   | 401  |    0.47     | 0.70 |    9    | 213.3  |
+|  5   | 1181 | 1319 |   750   |  FlexRL   | 195  |   100   | 555  |    0.26     | 0.34 |   19    | 709.5  |
+|  6   | 459  | 513  |   238   |    BRL    |  98  |   35    | 140  |    0.41     | 0.26 |    3    | 277.0  |
+|  6   | 459  | 513  |   238   | multilink | 122  |   84    | 116  |    0.51     | 0.41 |   71    | 746.1  |
+|  6   | 459  | 513  |   238   | fastLink  | 153  |   202   |  85  |    0.64     | 0.57 |    5    | 505.8  |
+|  6   | 459  | 513  |   238   |  reclin2  | 236  |  2752   |  2   |    0.99     | 0.92 |    1    | 152.1  |
+|  6   | 459  | 513  |   238   |   diyar   |  6   |    0    | 232  |    0.03     | 0.00 |    3    | 650.0  |
+|  6   | 459  | 513  |   238   | fedmatch  | 169  |   289   |  69  |    0.71     | 0.63 |    4    | 117.9  |
+|  6   | 459  | 513  |   238   |  FlexRL   |  98  |   48    | 140  |    0.41     | 0.33 |    8    | 314.8  |
+|  7   | 670  | 710  |   321   |    BRL    |  79  |   31    | 242  |    0.25     | 0.28 |    5    | 544.7  |
+|  7   | 670  | 710  |   321   | multilink | 132  |   151   | 189  |    0.41     | 0.53 |   178   | 741.9  |
+|  7   | 670  | 710  |   321   | fastLink  | 210  |   337   | 111  |    0.65     | 0.62 |    6    |  83.3  |
+|  7   | 670  | 710  |   321   |  reclin2  | 316  |  6320   |  5   |    0.98     | 0.95 |    1    | 306.3  |
+|  7   | 670  | 710  |   321   |   diyar   |  34  |    2    | 287  |    0.11     | 0.06 |    4    | 747.1  |
+|  7   | 670  | 710  |   321   | fedmatch  | 227  |   443   |  94  |    0.71     | 0.66 |    5    | 141.8  |
+|  7   | 670  | 710  |   321   |  FlexRL   | 127  |   54    | 194  |    0.40     | 0.30 |   11    | 409.2  |
+|  8   | 1479 | 1524 |   898   |    BRL    | 140  |   23    | 758  |    0.16     | 0.14 |   18    | 742.7  |
+|  8   | 1479 | 1524 |   898   | multilink | 290  |   421   | 608  |    0.32     | 0.59 |  1130   | 2010.0 |
+|  8   | 1479 | 1524 |   898   | fastLink  | 452  |   865   | 446  |    0.50     | 0.66 |   37    | 2174.9 |
+|  8   | 1479 | 1524 |   898   |  reclin2  | 721  | 339232  | 177  |    0.80     | 1.00 |    1    | 930.9  |
+|  8   | 1479 | 1524 |   898   |   diyar   |  20  |    0    | 878  |    0.02     | 0.00 |   14    | 879.2  |
+|  8   | 1479 | 1524 |   898   | fedmatch  | 510  |   969   | 388  |    0.57     | 0.66 |   12    | 217.9  |
+|  8   | 1479 | 1524 |   898   |  FlexRL   | 299  |   104   | 599  |    0.33     | 0.26 |   24    | 721.5  |
+|  9   | 1363 | 1500 |   711   |    BRL    |  44  |   10    | 667  |    0.06     | 0.19 |   18    | 897.3  |
+|  9   | 1363 | 1500 |   711   | multilink | 107  |   371   | 604  |    0.15     | 0.78 |  1060   | 1891.1 |
+|  9   | 1363 | 1500 |   711   | fastLink  | 343  |   857   | 368  |    0.48     | 0.71 |   38    | 2576.3 |
+|  9   | 1363 | 1500 |   711   |  reclin2  |  8   | 188790  | 703  |    0.01     | 1.00 |    1    | 829.4  |
+|  9   | 1363 | 1500 |   711   |   diyar   |  27  |    0    | 684  |    0.04     | 0.00 |   12    | 837.2  |
+|  9   | 1363 | 1500 |   711   | fedmatch  | 338  |  1025   | 373  |    0.48     | 0.75 |   11    | 212.7  |
+|  9   | 1363 | 1500 |   711   |  FlexRL   | 199  |   88    | 512  |    0.28     | 0.31 |   22    | 706.0  |
+|  10  | 658  | 687  |   384   |    BRL    |  70  |   12    | 314  |    0.18     | 0.15 |    4    | 519.6  |
+|  10  | 658  | 687  |   384   | multilink | 119  |   139   | 265  |    0.31     | 0.54 |   159   | 838.6  |
+|  10  | 658  | 687  |   384   | fastLink  | 206  |   359   | 178  |    0.54     | 0.64 |    8    | 840.0  |
+|  10  | 658  | 687  |   384   |  reclin2  | 321  | 102152  |  63  |    0.84     | 1.00 |    1    | 300.0  |
+|  10  | 658  | 687  |   384   |   diyar   |  2   |    0    | 382  |    0.01     | 0.00 |    5    | 827.2  |
+|  10  | 658  | 687  |   384   | fedmatch  | 238  |   420   | 146  |    0.62     | 0.64 |    5    | 126.7  |
+|  10  | 658  | 687  |   384   |  FlexRL   | 113  |   58    | 271  |    0.29     | 0.34 |   11    | 374.1  |
+|  11  | 762  | 872  |   486   |    BRL    | 119  |   30    | 367  |    0.24     | 0.20 |    6    | 767.1  |
+|  11  | 762  | 872  |   486   | multilink | 182  |   213   | 304  |    0.37     | 0.54 |   220   | 839.7  |
+|  11  | 762  | 872  |   486   | fastLink  | 249  |   422   | 237  |    0.51     | 0.63 |   10    | 843.6  |
+|  11  | 762  | 872  |   486   |  reclin2  | 394  | 135933  |  92  |    0.81     | 1.00 |    1    | 438.6  |
+|  11  | 762  | 872  |   486   |   diyar   |  4   |    0    | 482  |    0.01     | 0.00 |    6    | 841.5  |
+|  11  | 762  | 872  |   486   | fedmatch  | 251  |   511   | 235  |    0.52     | 0.67 |    6    | 145.9  |
+|  11  | 762  | 872  |   486   |  FlexRL   | 142  |   54    | 344  |    0.29     | 0.28 |   13    | 429.0  |
+|  12  | 977  | 1142 |   455   |    BRL    |  38  |   14    | 417  |    0.08     | 0.27 |   11    | 804.0  |
+|  12  | 977  | 1142 |   455   | multilink | 125  |   235   | 330  |    0.27     | 0.65 |   516   | 1085.7 |
+|  12  | 977  | 1142 |   455   | fastLink  | 240  |   567   | 215  |    0.53     | 0.70 |   18    | 1323.5 |
+|  12  | 977  | 1142 |   455   |  reclin2  | 375  |  3911   |  80  |    0.82     | 0.91 |    1    | 713.7  |
+|  12  | 977  | 1142 |   455   |   diyar   |  6   |    0    | 449  |    0.01     | 0.00 |    8    | 716.1  |
+|  12  | 977  | 1142 |   455   | fedmatch  | 254  |   722   | 201  |    0.56     | 0.74 |    8    | 172.2  |
+|  12  | 977  | 1142 |   455   |  FlexRL   | 152  |   56    | 303  |    0.33     | 0.27 |   17    | 529.0  |
+|  13  | 454  | 493  |   311   |    BRL    | 139  |   24    | 172  |    0.45     | 0.15 |    3    | 264.6  |
+|  13  | 454  | 493  |   311   | multilink | 164  |   95    | 147  |    0.53     | 0.37 |   57    | 715.0  |
+|  13  | 454  | 493  |   311   | fastLink  | 197  |   203   | 114  |    0.63     | 0.51 |    6    | 715.3  |
+|  13  | 454  | 493  |   311   |  reclin2  | 310  |  17730  |  1   |    1.00     | 0.98 |    1    | 146.0  |
+|  13  | 454  | 493  |   311   |   diyar   |  39  |    0    | 272  |    0.13     | 0.00 |    3    | 557.1  |
+|  13  | 454  | 493  |   311   | fedmatch  | 198  |   255   | 113  |    0.64     | 0.56 |    3    | 105.6  |
+|  13  | 454  | 493  |   311   |  FlexRL   | 137  |   33    | 174  |    0.44     | 0.19 |    8    | 279.1  |
+|  14  | 280  | 299  |   183   |    BRL    | 101  |   22    |  82  |    0.55     | 0.18 |    1    | 107.1  |
+|  14  | 280  | 299  |   183   | multilink | 113  |   44    |  70  |    0.62     | 0.28 |   19    | 716.2  |
+|  14  | 280  | 299  |   183   | fastLink  | 131  |   106   |  52  |    0.72     | 0.45 |    4    | 367.1  |
+|  14  | 280  | 299  |   183   |  reclin2  | 182  |  7282   |  1   |    0.99     | 0.98 |    1    |  55.6  |
+|  14  | 280  | 299  |   183   |   diyar   |  2   |    0    | 181  |    0.01     | 0.00 |    2    | 325.4  |
+|  14  | 280  | 299  |   183   | fedmatch  | 137  |   143   |  46  |    0.75     | 0.51 |    2    |  83.4  |
+|  14  | 280  | 299  |   183   |  FlexRL   | 105  |   20    |  78  |    0.57     | 0.16 |    6    | 186.1  |
+|  15  | 1939 | 2160 |  1069   |    BRL    |  25  |   22    | 1044 |    0.02     | 0.47 |   35    | 947.1  |
+|  15  | 1939 | 2160 |  1069   | multilink |  69  |   648   | 1000 |    0.06     | 0.90 |  2229   | 3837.2 |
+|  15  | 1939 | 2160 |  1069   | fastLink  | 276  |  1526   | 793  |    0.26     | 0.85 |   74    | 4640.2 |
+|  15  | 1939 | 2160 |  1069   |  reclin2  | 1069 | 1572964 |  0   |    1.00     | 1.00 |    2    | 2191.0 |
+|  15  | 1939 | 2160 |  1069   |   diyar   |  1   |    0    | 1068 |    0.00     | 0.00 |   21    | 1505.1 |
+|  15  | 1939 | 2160 |  1069   | fedmatch  | 280  |  1659   | 789  |    0.26     | 0.86 |   16    | 291.4  |
+|  15  | 1939 | 2160 |  1069   |  FlexRL   | 108  |   117   | 961  |    0.10     | 0.52 |   30    | 847.4  |
+|  16  | 1130 | 1354 |   683   |    BRL    |  47  |   11    | 636  |    0.07     | 0.19 |   13    | 842.6  |
+|  16  | 1130 | 1354 |   683   | multilink | 112  |   470   | 571  |    0.16     | 0.81 |   528   | 1382.1 |
+|  16  | 1130 | 1354 |   683   | fastLink  | 266  |   774   | 417  |    0.39     | 0.74 |   26    | 1916.9 |
+|  16  | 1130 | 1354 |   683   |  reclin2  | 681  | 404295  |  2   |    1.00     | 1.00 |    1    | 825.0  |
+|  16  | 1130 | 1354 |   683   |   diyar   |  9   |    1    | 674  |    0.01     | 0.10 |   10    | 822.6  |
+|  16  | 1130 | 1354 |   683   | fedmatch  | 290  |   840   | 393  |    0.42     | 0.74 |   10    | 209.6  |
+|  16  | 1130 | 1354 |   683   |  FlexRL   | 154  |   64    | 529  |    0.23     | 0.29 |   19    | 689.2  |
+|  17  | 264  | 276  |   193   |    BRL    | 116  |   45    |  77  |    0.60     | 0.28 |    1    |  95.2  |
+|  17  | 264  | 276  |   193   | multilink | 122  |   78    |  71  |    0.63     | 0.39 |   13    | 829.0  |
+|  17  | 264  | 276  |   193   | fastLink  | 130  |   100   |  63  |    0.67     | 0.43 |    4    | 280.5  |
+|  17  | 264  | 276  |   193   |  reclin2  | 193  |  7266   |  0   |    1.00     | 0.97 |    1    |  49.5  |
+|  17  | 264  | 276  |   193   |   diyar   |  16  |    1    | 177  |    0.08     | 0.06 |    2    | 312.2  |
+|  17  | 264  | 276  |   193   | fedmatch  | 127  |   137   |  66  |    0.66     | 0.52 |    2    |  88.6  |
+|  17  | 264  | 276  |   193   |  FlexRL   | 134  |   39    |  59  |    0.69     | 0.23 |    5    | 193.3  |
+|  18  | 501  | 554  |   362   |    BRL    |  99  |   22    | 263  |    0.27     | 0.18 |    3    | 334.9  |
+|  18  | 501  | 554  |   362   | multilink | 151  |   131   | 211  |    0.42     | 0.46 |   61    | 832.6  |
+|  18  | 501  | 554  |   362   | fastLink  | 205  |   246   | 157  |    0.57     | 0.55 |    6    | 832.3  |
+|  18  | 501  | 554  |   362   |  reclin2  | 311  | 118067  |  51  |    0.86     | 1.00 |    1    | 190.1  |
+|  18  | 501  | 554  |   362   |   diyar   |  7   |    0    | 355  |    0.02     | 0.00 |    3    | 682.0  |
+|  18  | 501  | 554  |   362   | fedmatch  | 194  |   307   | 168  |    0.54     | 0.61 |    4    | 120.6  |
+|  18  | 501  | 554  |   362   |  FlexRL   | 121  |   49    | 241  |    0.33     | 0.29 |    9    | 341.8  |
+|  19  | 1524 | 1625 |  1010   |    BRL    |  52  |    9    | 958  |    0.05     | 0.15 |   19    | 829.8  |
+|  19  | 1524 | 1625 |  1010   | multilink | 138  |   574   | 872  |    0.14     | 0.81 |   999   | 2245.8 |
+|  19  | 1524 | 1625 |  1010   | fastLink  | 354  |  1057   | 656  |    0.35     | 0.75 |   41    | 2855.0 |
+|  19  | 1524 | 1625 |  1010   |  reclin2  | 1006 | 677113  |  4   |    1.00     | 1.00 |    2    | 1277.3 |
+|  19  | 1524 | 1625 |  1010   |   diyar   |  5   |    0    | 1005 |    0.00     | 0.00 |   15    | 892.4  |
+|  19  | 1524 | 1625 |  1010   | fedmatch  | 351  |  1173   | 659  |    0.35     | 0.77 |   12    | 259.5  |
+|  19  | 1524 | 1625 |  1010   |  FlexRL   | 166  |   58    | 844  |    0.16     | 0.26 |   24    | 649.3  |
+|  20  | 826  | 827  |   478   |    BRL    |  69  |   24    | 409  |    0.14     | 0.26 |    6    | 649.3  |
+|  20  | 826  | 827  |   478   | multilink | 142  |   273   | 336  |    0.30     | 0.66 |   239   | 846.6  |
+|  20  | 826  | 827  |   478   | fastLink  | 232  |   491   | 246  |    0.49     | 0.68 |   12    | 852.4  |
+|  20  | 826  | 827  |   478   |  reclin2  | 478  |  71205  |  0   |    1.00     | 0.99 |    1    | 443.9  |
+|  20  | 826  | 827  |   478   |   diyar   |  13  |    2    | 465  |    0.03     | 0.13 |    6    | 851.7  |
+|  20  | 826  | 827  |   478   | fedmatch  | 245  |   580   | 233  |    0.51     | 0.70 |    6    | 163.4  |
+|  20  | 826  | 827  |   478   |  FlexRL   | 140  |   63    | 338  |    0.29     | 0.31 |   13    | 508.2  |
 
 Averaged over the regions and total computing time:
 
@@ -1139,97 +608,29 @@ summary_IREG <- do.call(rbind, lapply(split(results_IREG, results_IREG$method), 
   data.frame(TP = mean(d$TP, na.rm=TRUE), FP = mean(d$FP, na.rm=TRUE), 
              FN = mean(d$FN, na.rm=TRUE), sensitivity = mean(d$sensitivity, na.rm=TRUE),
              FDP = mean(d$FDP, na.rm=TRUE), method = d$method[1],
-             minutes = sum(d$seconds) / 60)
+             minutes = sum(d$seconds) / 60,
+             memory = mean(d$memory))
 }))
-#> Warning in mean.default(d$TP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$FP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$FN, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$sensitivity, na.rm = TRUE): argument is not numeric
-#> or logical: returning NA
-#> Warning in mean.default(d$FDP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$TP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$FP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$FN, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$sensitivity, na.rm = TRUE): argument is not numeric
-#> or logical: returning NA
-#> Warning in mean.default(d$FDP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$TP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$FP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$FN, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$sensitivity, na.rm = TRUE): argument is not numeric
-#> or logical: returning NA
-#> Warning in mean.default(d$FDP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$TP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$FP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$FN, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$sensitivity, na.rm = TRUE): argument is not numeric
-#> or logical: returning NA
-#> Warning in mean.default(d$FDP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$TP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$FP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$FN, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$sensitivity, na.rm = TRUE): argument is not numeric
-#> or logical: returning NA
-#> Warning in mean.default(d$FDP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$TP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$FP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$FN, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$sensitivity, na.rm = TRUE): argument is not numeric
-#> or logical: returning NA
-#> Warning in mean.default(d$FDP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$TP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$FP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$FN, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
-#> Warning in mean.default(d$sensitivity, na.rm = TRUE): argument is not numeric
-#> or logical: returning NA
-#> Warning in mean.default(d$FDP, na.rm = TRUE): argument is not numeric or
-#> logical: returning NA
 rownames(summary_IREG) <- summary_IREG$method
 ```
 
 ``` r
 
-newdf <- as.data.frame(apply(t(summary_IREG)[c("TP","FP","FN","sensitivity","FDP","minutes"),methods], 2, function(x)  sprintf("%.2f",as.numeric(as.character(x)))))
+newdf <- as.data.frame(apply(t(summary_IREG)[c("TP","FP","FN","sensitivity","FDP","minutes","memory"),methods], 2, function(x)  sprintf("%.2f",as.numeric(as.character(x)))))
 names(newdf) <- names(df_results_full)
 rownames(newdf) <- rownames(df_results_full)
 knitr::kable(newdf, align=rep('c', ncol(newdf)))
 ```
 
-|             |  BRL  | multilink | fastLink | reclin2 | diyar | fedmatch | FlexRL  |
-|:------------|:-----:|:---------:|:--------:|:-------:|:-----:|:--------:|:-------:|
-| TP          |  NA   |    NA     |    NA    |   NA    |  NA   |    NA    |   NA    |
-| FP          |  NA   |    NA     |    NA    |   NA    |  NA   |    NA    |   NA    |
-| FN          |  NA   |    NA     |    NA    |   NA    |  NA   |    NA    |   NA    |
-| sensitivity |  NA   |    NA     |    NA    |   NA    |  NA   |    NA    |   NA    |
-| FDP         |  NA   |    NA     |    NA    |   NA    |  NA   |    NA    |   NA    |
-| minutes     | 17.00 |  1028.33  |  23.00   |  0.75   | 11.58 |  11.42   | 2771.33 |
+|             |  BRL   | multilink | fastLink |  reclin2  | diyar  | fedmatch | FlexRL |
+|:------------|:------:|:---------:|:--------:|:---------:|:------:|:--------:|:------:|
+| TP          | 80.00  |  137.00   |  247.00  |  450.00   | 16.00  |  264.00  | 148.00 |
+| FP          | 22.00  |  270.70   |  563.20  | 204638.70 |  0.60  |  656.10  | 64.90  |
+| FN          | 438.00 |  380.00   |  270.00  |   68.00   | 502.00 |  253.00  | 369.00 |
+| sensitivity |  0.26  |   0.36    |   0.55   |   0.89    |  0.06  |   0.58   |  0.36  |
+| FDP         |  0.23  |   0.58    |   0.63   |   0.97    |  0.02  |   0.67   |  0.29  |
+| time (mins) |  3.65  |  205.65   |   5.67   |   0.38    |  2.72  |   2.43   |  5.10  |
+| memory (Mb) | 634.00 |  1338.00  | 1203.00  |  564.00   | 763.00 |  245.00  | 520.00 |
 
 ``` r
 
