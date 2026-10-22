@@ -19,6 +19,7 @@ knitr::opts_chunk$set(
 pak::pak("robachowyk/FlexRL")
 options(digits = 2, scipen = 999)
 options(timeout = 5000)
+set.seed(0)
 ```
 
 ```{r setup-3}
@@ -122,6 +123,8 @@ wrapper_args <- function(method, prep_data, ...) {
   )
 }
 
+# unix::rlimit_as(20e9) # may be needed on some OS
+
 run_wrapper <- function(method, prep_data, arguments) {
   PIVs <- names(prep_data$PIVs_config)
   link_with <- get(paste0("link_with_", method), envir = asNamespace("FlexRL"))
@@ -129,9 +132,13 @@ run_wrapper <- function(method, prep_data, arguments) {
     prep_data$encodedA <- prep_data$encodedA[, c(PIVs, "local_id", "source")]
     prep_data$encodedB <- prep_data$encodedB[, c(PIVs, "local_id", "source")]
   }
-  tryCatch(link_with(prep_data$encodedA, prep_data$encodedB, arguments),
+  tryCatch(callr::r(function(link_with, A, B, arguments) {link_with(A, B, arguments)},
+                      args = list(link_with = link_with, A = prep_data$encodedA,
+                                  B = prep_data$encodedB, arguments = arguments),
+                      show = FALSE),
            error = function(e) {
-             if (grepl("cannot allocate|memory|bad_alloc|too large|long vectors", conditionMessage(e), ignore.case = TRUE)) {
+             if (grepl("cannot allocate|memory|bad_alloc|too large|long vectors|crashed or was killed|signal 9|SIGKILL",
+               conditionMessage(e), ignore.case = TRUE)) {
                message(method, ": memory error (", conditionMessage(e), "), results reported as NA")
                return(NULL)
              }
@@ -210,13 +217,6 @@ run_all_wrappers <- function(prep_data, PIVs_type, methods, FDP_estimation = TRU
   df_results
 }
 
-show_results <- function(df_results) {
-  cat("Record Linkage\n");      knitr::kable(df_results[1:5, ], digits = 2, align=rep('c', ncol(df_results)))
-  cat("\nFDP estimation\n");    knitr::kable(df_results[6:8, ], digits = 2, align=rep('c', ncol(df_results)))
-  cat("\nLinked divergence\n"); knitr::kable(df_results[9:11, ], digits = 2, align=rep('c', ncol(df_results)))
-  cat("\nComputational time and memory\n"); knitr::kable(df_results[12:13, ], digits = 2, align=rep('c', ncol(df_results)))
-}
-
 methods <- c("BRL", "multilink", "fastLink", "reclin2", "diyar", "fedmatch", "FlexRL")
 ```
 
@@ -254,7 +254,22 @@ df_results_NLTCS <- run_all_wrappers(prep_data, PIVs_type, methods)
 ```
 
 ```{r}
-show_results(df_results_NLTCS)
+cat("Record Linkage\n")
+knitr::kable(df_results_NLTCS[1:5, ], digits = 2, align=rep('c', ncol(df_results_NLTCS)))
+```
+
+```{r}
+cat("\nFDP estimation\n")
+knitr::kable(df_results_NLTCS[6:8, ], digits = 2, align=rep('c', ncol(df_results_NLTCS)))
+```
+```{r}
+cat("\nLinked divergence\n")
+knitr::kable(df_results_NLTCS[9:11, ], digits = 2, align=rep('c', ncol(df_results_NLTCS)))
+```
+
+```{r}
+cat("\nComputational time and memory\n")
+knitr::kable(df_results_NLTCS[12:13, ], digits = 2, align=rep('c', ncol(df_results_NLTCS)))
 ```
 
 ## Full SHIW data

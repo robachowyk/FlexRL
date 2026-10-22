@@ -17,7 +17,7 @@ author:
   - name: Mark A. van de Wiel
   - name: Michel H. Hof
 abstract: |
-  *FlexRL* is an `R` package for record linkage and inference on linked data. It provides a method to link observations from the same entities across two data sources that lack a unique identifier but share partially identifying variables. This method fits a hierarchical latent variable model of the data generation process, rather than classifying pairs of records from the comparison of their values, and accommodates registration errors and variables changing over time. Since linkage may affect subsequent analyses, the package also provides tools to assess the linked data quality as functions of the linkage decision rule. Two false discovery proportion estimators are implemented: a probabilistic approach contingent on the record linkage model and an augmented approach relying on an auxiliary estimation using synthetic data. Several measures of the divergence of the linked sample from the source population are provided. These tools are agnostic to the underlying record linkage model and can be applied to any method. Together, they connect the output of the linkage to the validity of the subsequent analyses. The implementation combines standard `R` functions and S3 methods with `Rcpp` computations, resulting in reasonable execution times and a low memory footprint.
+  *FlexRL* is an `R` package for probabilistic record linkage and inference on linked data. It provides a method to link observations from the same entities across two data sources that lack a unique identifier but share partially identifying variables. This method fits a hierarchical latent variable model of the data generation process, rather than classifying pairs of records from the comparison of their values, and accommodates registration errors and variables changing over time. Since linkage may affect subsequent analyses, the package also provides tools to assess the linked data quality as functions of the linkage decision rule. Two false discovery proportion estimators are implemented: a probabilistic approach contingent on the record linkage model and an augmented approach relying on an auxiliary estimation using synthetic data. Several measures of the divergence of the linked sample from the source population are provided. These tools are agnostic to the underlying record linkage model and can be applied to any method. Together, they connect the output of the linkage to the validity of the subsequent analyses. The implementation combines standard `R` functions and S3 methods with `Rcpp` computations, resulting in reasonable execution times and a low memory footprint.
 keywords:
   - Record Linkage
   - Inference
@@ -40,15 +40,15 @@ execute:
 
 ## Introduction {#sec-introduction}
 
-Researchers and statistical agencies increasingly combine data sources that do not share a unique identifier [@Cleaton_Splink_2024; @Laidler_NHSE_2025; @Kramer_Destatis_2026]. Record linkage connects records referring to the same entity across sources based on Partially Identifying Variables (PIVs) (e.g. birth year, sex, postal code or product code, brand and category). Each PIV has limited discriminative power on its own and may be missing, incorrectly recorded or change over time. Record linkage underpins the production of official statistics, enables the reuse of administrative and registry data for research [@opensafely2020; @perined_linkage_2021; @cooneyhealthcare_2023] and improves data quality through linkage and deduplication.
+Researchers and statistical agencies increasingly combine data sources that do not share a unique identifier [@Cleaton_Splink_2024; @Laidler_NHSE_2025; @Kramer_Destatis_2026]. Record linkage connects records referring to the same entity across sources based on Partially Identifying Variables (PIVs, e.g. birth year, sex, postal code or product code, brand and category). Each PIV has limited discriminative power on its own and may be missing, incorrectly recorded or change over time. Record linkage underpins the production of official statistics, enables the reuse of administrative and registry data for research [@opensafely2020; @perined_linkage_2021; @cooneyhealthcare_2023] and improves data quality through linkage and deduplication.
 
-Linked data sets become the study sample for downstream analyses, where linkage errors may propagate [@reflexRL_2020; @Wang_Slawski_linked_2022; @CoxLinkedData_2024; @CRLrobachetal26]. Errors arise when missing links between entities that appear in both sources or when falsely linking records from distinct entities. These errors cannot be reduced simultaneously and may bias the conclusions drawn from linked data [@Wang_Slawski_linked_2022; @reflexRL_2020; @CRLrobachetal26]. A stricter decision rule reduces falsely linked pairs but misses more links. Practitioners therefore need not only record linkage methods, but also tools to quantify linkage errors and appraise their consequences for statistical analysis.
+Linked data sets become the study sample for downstream analyses, where linkage errors may propagate [@reflexRL_2020; @Wang_Slawski_linked_2022; @CoxLinkedData_2024; @CRLrobachetal26]. Errors arise when links between entities that appear in both sources are missed or when records from distinct entities are falsely linked. These errors cannot be reduced simultaneously and may bias the conclusions drawn from linked data [@Wang_Slawski_linked_2022; @reflexRL_2020; @CRLrobachetal26]. A stricter decision rule reduces falsely linked pairs but misses more links. Practitioners therefore need not only record linkage methods, but also tools to quantify linkage errors and appraise their consequences for statistical analysis.
 
-Two main probabilistic approaches to record linkage have developed through times. First, the traditional mixture model [@FS_RL_1969; @jaro_RL_matching_1989; @Larsen_mixture_1999; @fortini_bay_RL_2001; @sadinle_bay_bipartite_RL_2017] treats linkage as a classification problem between pairs of records that are similar and pairs that are not. Second, the hierarchical entity resolution framework [@tancredi_bay_RL_2011; @steorts2015; @smered2016; @dblink_2021; @marchantsteorts2023] models the data generation process, considering observed values as potentially distorted versions of true latent values. The latter framework uses all the information contained in the records and is therefore more flexible but more computationally demanding. It has been implemented in `R` for entity resolution (clustering records from a single file into entities) rather than for linkage between two data sources.
+Two main probabilistic approaches to record linkage have developed through times. First, the traditional mixture model [@FS_RL_1969; @jaro_RL_matching_1989; @Larsen_mixture_1999; @fortini_bay_RL_2001; @sadinle_bay_bipartite_RL_2017] treats linkage as a classification problem between pairs of records that are similar and pairs that are not. Second, the hierarchical entity resolution framework [@tancredi_bay_RL_2011; @steorts2015; @smered2016; @dblink_2021; @marchantsteorts2023] models the data generation process, considering observed values as potentially distorted versions of latent true values. The latter framework uses all the information contained in the records and is therefore more flexible but more computationally demanding. It has been implemented in `R` for entity resolution (clustering records from a single file into entities) rather than for linkage between two data sources.
 
-We address this gap with the *FlexRL* `R` package, which makes two contributions. First, it implements the hierarchical record linkage model proposed by @RLrobachetal25. The model is fitted with a stochastic expectation maximisation (StEM) algorithm that accounts for registration errors and temporal changes in PIVs. Its architecture and efficient `Rcpp` backend support scalability to large data sets and a wide range of applications: health monitoring studies, survey waves, census and administrative records or data from different retailers. Second, it provides tools to assess the quality of the linked data, which quantify the linkage error and sample selection. *FlexRL* implements two estimators of the False Discovery Proportion (FDP): one derived from linkage scores [@belin_rubin_1995; @measurementError_2019; @fastLink_paper_2019] and one based on synthetic data [@FDProbachetal25]. *FlexRL* measures the divergence of the linked sample from the original sources using standardised mean differences, overlap of supports, maximum mean discrepancy and agreement rates. These tools only need the linked pairs and, when available, their linkage scores. They therefore apply to the output of any linkage method and *FlexRL* provides wrappers for several existing `R` packages.
+We address this gap with the *FlexRL* `R` package, which makes two contributions. First, it implements the hierarchical record linkage model proposed by @RLrobachetal25. The model is fitted with a Stochastic Expectation Maximisation (StEM) algorithm that accounts for registration errors and temporal changes in PIVs. Its architecture and efficient `Rcpp` backend support scalability to large data sets and a wide range of applications: health monitoring studies, survey waves, census and administrative records or data from different retailers. Second, it provides tools to assess the quality of the linked data, which quantify the linkage error and sample selection. *FlexRL* implements two estimators of the False Discovery Proportion (FDP): one derived from linkage scores [@belin_rubin_1995; @measurementError_2019; @fastLink_paper_2019] and one based on synthetic data [@FDProbachetal25]. *FlexRL* measures the divergence of the linked sample from the original sources using standardised mean differences, overlap of supports, maximum mean discrepancy and agreement rates. These tools only need the linked pairs and, when available, their linkage scores. They therefore apply to the output of any linkage method and *FlexRL* provides wrappers for several existing `R` packages.
 
-The *FlexRL* package is aimed at practitioners, statistical agencies and researchers who need to link data sources without a unique identifier or who want to measure the error and the sample selection induced by record linkage. It builds on three lines of work: the biases that linkage errors cause in inference [@Lahiri_Larsen_linked_2005; @Tancredi_Liseo_linked_2015; @reflexRL_2020; @Wang_Slawski_linked_2022; @CRLrobachetal26]; the need for linked data quality control in practice [@eval_linkage_17; @datalinkagequal2020; @linkage_bias_datasynthesis24; @Laidler_NHSE_2025]; advances in record linkage methodology [@sadinle_bay_bipartite_RL_2017; @marchantsteorts2023; @RLrobachetal25]. By combining record linkage and diagnostics in a practical tool, it helps evaluate whether inference can be conducted on linked data.
+The *FlexRL* package is aimed at practitioners, statistical agencies and researchers who need to link data sources without a unique identifier or who want to measure the error and the sample selection induced by record linkage. It builds on three lines of work: the biases that linkage errors cause in inference [@Lahiri_Larsen_linked_2005; @Tancredi_Liseo_linked_2015; @reflexRL_2020; @Wang_Slawski_linked_2022; @CRLrobachetal26]; the need for linked data quality control in practice [@eval_linkage_17; @datalinkagequal2020; @linkage_bias_datasynthesis24; @Laidler_NHSE_2025]; advances in record linkage methodology [@sadinle_bay_bipartite_RL_2017; @marchantsteorts2023; @RLrobachetal25]. By combining record linkage and diagnostics in a practical tool, it helps evaluating whether inference can be conducted on linked data.
 
 Throughout the paper, we motivate and illustrate the main components of *FlexRL* on the 2012 and 2014 waves of the [Survey on Household Income and Wealth](https://www.bancaditalia.it/statistiche/tematiche/indagini-famiglie-imprese/bilanci-famiglie/distribuzione-microdati/index.html) (SHIW), conducted and made available by the Bank of Italy for research purposes. @sec-setup introduces the notation, the modelling paradigms, the existing software and demonstrates the potential of *FlexRL*. @sec-model presents the record linkage model implemented in *FlexRL* and its estimation on a subset of the SHIW. On the resulting linked data, @sec-inference describes the diagnostic tools *FlexRL* provides, and illustrates the impact of linkage errors on a socio-economic regression analysis. @sec-scalability demonstrates the scalability of *FlexRL* approach to record linkage on the SHIW. @sec-discussion concludes.
 
@@ -56,7 +56,7 @@ Throughout the paper, we motivate and illustrate the main components of *FlexRL*
 
 ### Setup and notation {#sec-notation}
 
-We consider two overlapping samples $\mathcal A$ and $\mathcal B$ from the same population with $N_{\mathcal A}$ and $N_{\mathcal B} \geq N_{\mathcal A}$ records. Both sources record the same $K$ categorical PIVs, indexed by $k = 1, \dots, K$ with $N_k$ possible values each. Index $i$ refers to a record in $\mathcal A$ and index $j$ to a record in $\mathcal B.$ For PIV $k$, we denote by $G^{\mathcal A}_{i,k}$ the registered (observed) value and by $H^{\mathcal A}_{i,k}$ the true (latent) value in record $i \in \mathcal A.$ We define $G^{\mathcal B}_{j,k}$ and $H^{\mathcal B}_{j,k}$ analogously. Registered values differ from true values because of registration errors: missing values or mistakes (e.g. typographical errors). We write $\textbf{G}$ and $\textbf{H}$ for the collections of all registered and all true values. True values may also differ between the two data collections. This is the case for *dynamic* PIVs like postal code. Whereas *stable* PIVs like birth year cannot change. For an entity recorded in both sources, the true values of stable PIVs are therefore identical in $\mathcal A$ and $\mathcal B$ and any disagreement between their registered values is due to registration errors. We elaborate on dynamic PIVs later.
+We consider two overlapping samples $\mathcal A$ and $\mathcal B$ from the same population with $N_{\mathcal A}$ and $N_{\mathcal B} \geq N_{\mathcal A}$ records. Both sources record the same $K$ categorical PIVs, indexed by $k = 1, \dots, K$ with $N_k$ possible values each. Index $i$ refers to a record in $\mathcal A$ and index $j$ to a record in $\mathcal B.$ For PIV $k$, we denote by $G^{\mathcal A}_{i,k}$ the registered (observed) value and by $H^{\mathcal A}_{i,k}$ the latent true value in record $i \in \mathcal A.$ We define $G^{\mathcal B}_{j,k}$ and $H^{\mathcal B}_{j,k}$ analogously. Registered values differ from true values because of registration errors: missing values or mistakes (e.g. typographical errors). We write $\textbf{G}$ and $\textbf{H}$ for the collections of all registered and all true values. True values may also differ between the two data collections. This is the case for *dynamic* PIVs like postal code, whereas *stable* PIVs like birth year cannot change. For an entity recorded in both sources, the true values of stable PIVs are therefore identical in $\mathcal A$ and $\mathcal B$ and any disagreement between their registered values is due to registration errors. We elaborate on dynamic PIVs later.
 
 The object of interest is the linkage matrix $\boldsymbol{\Delta} \in \{0,1\}^{N_{\mathcal A} \times N_{\mathcal B}}$, with $\Delta_{i,j} = 1$ if records $i \in \mathcal A$ and $j \in \mathcal B$ refer to the same entity. We assume that there is no duplicate within a data source. Thus, each record forms a link with at most one record in the other data source: $\sum_j \Delta_{i,j} \leq 1$ for all $i$ and $\sum_i \Delta_{i,j} \leq 1$ for all $j.$ This is the one-to-one assignment constraint, also referred to as bipartite matching [@sadinle_bay_bipartite_RL_2017]. We denote by $\gamma \in (0,1)$ the probability that a record from $\mathcal A$ forms a link with a record from $\mathcal B$, that is, the overlap between the sources as a fraction of the smaller data set.
 
@@ -98,7 +98,7 @@ Record linkage packages on `CRAN` compared with *FlexRL*. The *FlexRL* package d
 
 To our knowledge, no `R` package implements Paradigm 2 for the linkage of two sources under the one-to-one assignment constraint or models the dynamics of PIVs over time. While the *postlink* package [@postlink26] develops statistical tools for post-linkage data analysis, no record linkage package provides tools to assess the quality of the linked data and their suitability for inference.
 
-The *FlexRL* package is available from the Comprehensive R Archive Network (`CRAN`) or from the package `GitHub` repository alongside documentation and vignettes describing its functionality. *FlexRL* is also available as a module in `JASP 1.0`. The implementation of *FlexRL* relies on `Rcpp` for the backend samplers, *Matrix* for the sparse likelihood and linkage matrix, and other standard `R` packages. The diagnostic tools apply to any record linkage output in the required format, with built-in wrappers for *BRL*, *diyar*, *fastLink*, *fedmatch*, *multilink* and *reclin2*. @fig-workflow shows the workflow, which follows the structure of @sec-model and @sec-inference: the data are prepared, linked with `StEM()` and the linked data quality is assessed with `RL_diagnostics()`. We elaborate on each component along the article.
+The *FlexRL* package is available from the Comprehensive R Archive Network (`CRAN`) or from the package `GitHub` repository alongside documentation and vignettes describing its functionality. *FlexRL* is also available as a module in `JASP 1.0` [@JASP2026]. The implementation of *FlexRL* relies on `Rcpp` for the backend samplers, *Matrix* for the sparse likelihood and linkage matrix, and other standard `R` packages. The diagnostic tools apply to any record linkage output in the required format, with built-in wrappers for *BRL*, *diyar*, *fastLink*, *fedmatch*, *multilink* and *reclin2*. @fig-workflow shows the workflow, which follows the structure of @sec-model and @sec-inference: the data are prepared, linked with `StEM()` and the linked data quality is assessed with `RL_diagnostics()`. We elaborate on each component along the article.
 
 ::: {#fig-workflow}
 ```{mermaid}
@@ -122,11 +122,12 @@ Workflow of *FlexRL*.
 
 ```{r simulation-example-1, include = FALSE, warning = FALSE, message = FALSE}
 # install package
-install.packages("FlexRL", repos = "https://cloud.r-project.org")
+# install.packages("FlexRL", repos = "https://cloud.r-project.org")
+remotes::install_github("robachowyk/FlexRL@glm-parallel")
 library(FlexRL)
 
 # set a seed 
-set.seed(1)
+set.seed(0)
 ```
 
 As a preliminary demonstration of the functionalities of *FlexRL*, we simulate data with the package `simulate_data()` function. This function synthesises two files with a given overlap, given rates of mistakes and missing values per PIV and file, and given hazard coefficients for structured PIVs, useful to explore and compare record linkage methods. Here, we generate two data sets of 350 and 400 records, with 300 entities common to both. Entities are represented by four PIVs. We distort the data in each file with 2% of mistakes and 0.5% of missing values; one of the PIVs undergoes temporal changes.
@@ -242,11 +243,11 @@ wrapper_args <- function(method, prep_data, ...) {
   args <- c(...)
   
   switch(method,
-         FlexRL    = c(list(data = prep_data),
+         FlexRL    = c(list(data = prep_data, threads = 4),
                        args[intersect(names(args), names(formals(FlexRL::StEM)))]),
          BRL       = c(list(flds = PIVs, types = rep("bi", length(PIVs)), nIter = 1000),
                        args[intersect(names(args), c(names(formals(BRL::compareRecords)), names(formals(BRL::bipartiteGibbs))))]),
-         fastLink  = c(list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, return.all = TRUE, n.cores = 1),
+         fastLink  = c(list(varnames = PIVs, tol.em = 1e-06, threshold.match = 0.5, return.all = TRUE, n.cores = 4),
                        args[intersect(names(args), names(formals(fastLink::fastLink)))]),
          multilink = c(list(types = rep("bi", length(PIVs)), breaks = stats::setNames(as.list(rep(NA, length(PIVs))), PIVs),
                             duplicates = c(0, 0), n_iter = 1000, max_cc_size = 50),
@@ -267,12 +268,15 @@ wrapper_args <- function(method, prep_data, ...) {
                        args[intersect(names(args), c(names(formals(diyar::prob_score_range)),
                                                      names(formals(diyar::links_wf_probabilistic))))]),
          fedmatch  = c(list(by = PIVs, match_type = "multivar", unique_key_1 = "unique_key_A",
-                            unique_key_2 = "unique_key_B", multivar_settings = fedmatch::build_multivar_settings(
+                            unique_key_2 = "unique_key_B", nthread = 4, 
+                            multivar_settings = fedmatch::build_multivar_settings(
                               compare_type = rep("indicator", length(PIVs)),
                               wgts = rep(1 / length(PIVs), length(PIVs)))),
                        args[intersect(names(args), names(formals(fedmatch::merge_plus)))])
   )
 }
+
+# unix::rlimit_as(20e9) # may be needed on some OS
 
 run_wrapper <- function(method, prep_data, arguments) {
   PIVs <- names(prep_data$PIVs_config)
@@ -281,8 +285,8 @@ run_wrapper <- function(method, prep_data, arguments) {
     prep_data$encodedA <- prep_data$encodedA[, c(PIVs, "local_id", "source")]
     prep_data$encodedB <- prep_data$encodedB[, c(PIVs, "local_id", "source")]
   }
-  
-  tryCatch(link_with(prep_data$encodedA, prep_data$encodedB, arguments),
+  if (Sys.info()["sysname"] == "Darwin") {
+    tryCatch(link_with(prep_data$encodedA, prep_data$encodedB, arguments),
            error = function(e) {
              if (grepl("cannot allocate|memory|bad_alloc|too large|long vectors", conditionMessage(e), ignore.case = TRUE)) {
                message(method, ": memory error (", conditionMessage(e), "), results reported as NA")
@@ -290,6 +294,23 @@ run_wrapper <- function(method, prep_data, arguments) {
              }
              stop(e)
            })
+  } else if (Sys.info()["sysname"] == "Linux") {
+      tryCatch(callr::r(function(link_with, A, B, arguments) {link_with(A, B, arguments)},
+                      args = list(link_with = link_with, A = prep_data$encodedA,
+                                  B = prep_data$encodedB, arguments = arguments)),
+           error = function(e) {
+             if (grepl("cannot allocate|memory|bad_alloc|too large|long vectors|crashed or was killed|signal 9|SIGKILL",
+               conditionMessage(e), ignore.case = TRUE)) {
+               message(method, ": memory error (", conditionMessage(e), "), results reported as NA")
+               return(NULL)
+             }
+             stop(e)
+           })
+  } else if (Sys.info()["sysname"] == "Windows") {
+    print("Windows command to be setup.")
+  } else {
+    print("Unknown Operating System.")
+  }
 }
 
 evaluate_linkage <- function(fit, true_pairs, threshold = 0.5) {
@@ -311,10 +332,10 @@ results_rows <- c("TP               ", "FP               ", "FN               ",
                   "min support IoU  ", "max MMD          ", "time (secs)      ", 
                   "memory (Mb)      ")
 
-methods <- c("BRL", "multilink", "fastLink", "reclin2", "diyar", "fedmatch", "FlexRL")
+methods <- c("BRL", "multilink", "fastLink", "reclin2", "diyar", "fedmatch", "FlexRL") # 
 
-run_all_wrappers <- function(prep_data, PIVs_type, methods, FDP_estimation = TRUE,
-                             maxIter4CV = 1, n_repeats = 2, ...) {
+run_all_wrappers <- function(prep_data, variables_type, methods, FDP_estimation = TRUE,
+                             maxIter4CV = 1, n_repeats = 1, ...) {
   args <- list(...)
   op <- options()
   on.exit(options(op))
@@ -368,8 +389,7 @@ run_all_wrappers <- function(prep_data, PIVs_type, methods, FDP_estimation = TRU
   MeM <- peakRAMNew(fit <- run_wrapper("FlexRL", prep_data_WhatIfStable, arguments))
   elapsed <- as.numeric(Sys.time() - t0, units = "secs")
   df_results[1:5, "FlexRL no dynamic"] <- evaluate_linkage(fit, true_pairs)
-  if (is.null(fit) || length(fit$idxA) == 0) next
-  
+
   encodedA <- prep_data$encodedA
   encodedB <- prep_data$encodedB
   
@@ -397,23 +417,20 @@ run_all_wrappers <- function(prep_data, PIVs_type, methods, FDP_estimation = TRU
 variables_type <- list( PIV1 = FALSE, PIV2 = FALSE, PIV3 = FALSE, PIV4 = FALSE )
 
 df_results_total <- run_all_wrappers(prep_data, variables_type, methods)
-print(df_results_total$Naive)
-names(df_results_total) <- c(names(df_results_total)[1:(ncol(df_results_total)-2)], c({"FlexRL (dynamics)"}, {"FlexRL (no dynamic)"}))
+names(df_results_total) <- c(names(df_results_total)[1:(ncol(df_results_total)-2)], c("FlexRL (dynamics)", "FlexRL (no dynamic)"))
 ```
 
 ::: {#tbl-demonstration}
 ```{r demonstration-2, echo = FALSE}
 options(digits=2, scipen=999)
 df_results_total[is.na(df_results_total)] <- NA
-knitr::kable(df_results_total, digits = 2, align=rep('c', ncol(df_results_total)))
+knitr::kable(df_results_total[c(1,2,3,4,5,12,13),], digits = 2, align=rep('c', ncol(df_results_total)))
 ```
 
-Linkage performance of competing record linkage methods on simulated data, with linked data quality assessed through *FlexRL*.
+Linkage performance of competing record linkage methods on simulated data (for the default linkage decision rule, see @sec-scores).
 :::
 
-This short simulation study demonstrates the potential of the *FlexRL* package. In @tbl-demonstration, we compare the methods presented in @tbl-packages to the *FlexRL* record linkage algorithm with and without modelling PIVs dynamics in terms of sensitivity and FDP. Since *FlexRL* provides linked data quality diagnostics for all methods, we additionally report three estimates of the FDP along with measures of the divergence of the linked sample from the data sources. Details are deferred to later sections; @sec-fdp presents the FDP estimators implemented in the package and @sec-representativeness discusses the measures of divergence.
-
-When appropriate, modelling PIVs dynamics improves record linkage by increasing sensitivity (more true links are recovered) while keeping the FDP under control [@RLrobachetal25]. @tbl-demonstration also shows the differences in computational time and in memory usage between the methods. More details over this demonstration showcasing the utility of accounting for PIVs dynamics are given in the package vignette 'Linkage and Diagnostics with FlexRL' available through `vignette('FlexRL-RL-vignette', 'FlexRL')` or the [online documentation](https://robachowyk.github.io/FlexRL/index.html).
+In @tbl-demonstration, we compare the methods presented in @tbl-packages to the *FlexRL* record linkage algorithm with and without modelling PIVs dynamics in terms of sensitivity and FDP. When appropriate, modelling PIVs dynamics improves record linkage by increasing sensitivity (more true links are recovered) while keeping the FDP under control [@RLrobachetal25]. @tbl-demonstration also shows the differences in computational time and in memory usage between the methods. More details on this demonstration showcasing the utility of accounting for PIVs dynamics are given in the package vignette 'Linkage and Diagnostics with FlexRL' available through `vignette('FlexRL-RL-vignette', 'FlexRL')` or the [online documentation](https://robachowyk.github.io/FlexRL/index.html).
 
 ```{r illustration-1, include = FALSE, warning = FALSE, message = FALSE}
 # R script for downloading and processing the historical "Components" data set 
@@ -512,7 +529,7 @@ rownames(df2012) <- 1:nrow(df2012)
 rownames(df2014) <- 1:nrow(df2014)
 ```
 
-## The hierarchical model estimation {#sec-model}
+## The hierarchical architecture {#sec-model}
 
 ### Data preparation and PIVs configuration {#sec-prepare}
 
@@ -522,12 +539,12 @@ As a first step in the workflow represented in @fig-workflow, the `prepare_data(
 
 The function `naive_linkage()` links records that agree exactly on all PIVs (a missing value matching any value when `na_match = TRUE`), without enforcing the one-to-one constraint. When the true links are known, the performance of this deterministic linkage indicates the discriminative power of the PIVs and the difficulty of the task. The FDP of the naive linkage reflects how many records share the same combination of PIV values.
 
-The package distinguishes three kinds of PIVs, which determine how the components of the complete data likelihood of @eq-flexrl are used:
+The package distinguishes different kinds of PIVs, which determine how the components of the complete data likelihood of @eq-flexrl are used when fitting the model in @sec-estimation. Candidate pairs of records are formed from records whose latent true values agree on every PIV for which temporal changes are not modelled; whether a candidate pair is linked is then decided from its contribution to the complete likelihood. We elaborate on candidate pairs and linked pairs in @sec-estimation.
 
-- *Stable*: the true values do not change (e.g. birth year). The PIV is used to form candidate pairs (we elaborate on candidate pairs in @sec-estimation) and its probability of mistake may be bounded (for example by $0.10$) for algorithm stability [@RLrobachetal25].
+- *Stable*: the latent true values do not change (e.g. birth year). Such PIV is used to form candidate pairs and its probability of mistake may be bounded (for example by $0.10$) for algorithm stability [@RLrobachetal25].
 - *Dynamic*: the true values may change (e.g. postal code between two survey waves):
   - *Flexible*: changes cannot be modelled, typically because registration dates are not available. The PIV is still used to form candidate pairs, but its probability of mistake should not be bounded, so that the registration model absorbs both mistakes and changes.
-  - *Structured*: changes are modelled by the survival function of @eq-survival. The PIV is not used to form candidate pairs. Registration dates are needed in both sources and covariates for the hazard may be supplied. Mistakes cannot be distinguished from temporal changes, so the probability of mistake should be fixed (for example at $0.02$), unless enough linked pairs have time gaps near zero, where changes are not plausible and mistakes can be estimated without confusion. Estimating the changes also requires variation in the time gaps among linked pairs.
+  - *Structured*: changes are modelled by the survival function of @eq-survival. Such PIV is not used to form candidate pairs. Registration dates are needed in both sources and covariates for the hazard may be supplied. Mistakes cannot be distinguished from temporal changes, so the probability of mistake should be fixed (for example at $0.02$), unless enough linked pairs have time gaps near zero, where changes are not plausible and mistakes can be estimated without confusion. Estimating the changes also requires variation in the time gaps among linked pairs.
 
 To illustrate the usage of the *FlexRL* package throughout the paper, we consider the Emilia-Romagna regional subset of the SHIW data. The record linkage task can be validated in this example where the linkage structure can be reconstructed. The 2012 and 2014 waves respectively cover 1502 and 1538 individuals, with 912 individuals observed in both waves. In @sec-inference, we analyse a regression of the expected age of retirement in 2014 on the expected age of retirement in 2012.
 
@@ -569,7 +586,7 @@ PIVs_config <- list(BirthYear     = list(dynamics        = "stable",
 PIVs <- names(PIVs_config)
 ```
 
-We prepare the two data sources for the `StEM()` record linkage algorithm with the `prepare_data()` function, which takes as inputs the data sources and their label `df2012`, `df2014`, `'2012'`, `'2014'`; the PIVs configuration `PIVs_config`; a logical `same_mistakes` describing whether the parameters fitting the probability of mistakes among PIVs should be the same between data sources (`TRUE` when the data are sampled from a same source population); a potential record identifier variable `uniq_id` when available; a logical `restrict_support_intersection` to restrict the data to common support (the `StEM()` function may raise errors when setting to `FALSE`).
+We prepare the two data sources for the `StEM()` record linkage algorithm with the `prepare_data()` function, which takes as inputs the data sources and their labels `df2012`, `df2014`, `'2012'`, `'2014'`; the PIVs configuration `PIVs_config`; a logical `same_mistakes` describing whether the parameters fitting the probability of mistakes among PIVs should be the same between data sources (`TRUE` when the data are sampled from a same source population); a potential record identifier variable `uniq_id` when available; a logical `restrict_support_intersection` to harmonise the support of the PIVs in the observed data. In the application, records with birth years outside of the range shared by the sources are excluded.
 
 ```{r illustration-5, include=FALSE, message=FALSE}
 capture_warnings({prep_data <- prepare_data(df2012, df2014, "2012", "2014", PIVs_config, same_mistakes = TRUE, uniq_id = "ID")})
@@ -634,24 +651,26 @@ options(digits=2, scipen=999)
 knitr::kable(df_results, digits = 2, align=rep('c', ncol(df_results)))
 ```
 
-Comparison of record linkage methods on the SHIW in Emilia-Romagna.
+Comparison of record linkage methods on the SHIW in Emilia-Romagna (for the default linkage decision rule, see @sec-scores).
 :::
 
 ### StEM estimation {#sec-estimation}
 
-The *FlexRL* hierarchical model for record linkage adapts @eq-hier to two sources under the one-to-one assignment constraint. For non-linked records, the true values are independent draws from the population distribution. For a linked pair $(i,j)$, $\boldsymbol H^{\mathcal B}_{j,k}$ is a copy of $\boldsymbol H^{\mathcal A}_{i,k}$ except when $k$ is a dynamic PIV, whose values may have changed between the two registrations. The registered values are versions of the true values distorted by registration errors.
+The *FlexRL* hierarchical model for record linkage adapts @eq-hier to two sources under the one-to-one assignment constraint. For non-linked records, the true values are independent draws from the population distribution. For a linked pair $(i,j)$, $H^{\mathcal B}_{j,k}$ is a copy of $H^{\mathcal A}_{i,k}$ except when $k$ is a dynamic PIV, whose values may have changed between the two registrations. The registered values are versions of the true values distorted by registration errors.
 
 With parameters $\boldsymbol{\theta} = (\gamma, \boldsymbol{\eta}, \boldsymbol{\alpha}, \boldsymbol{\phi})$, the complete data likelihood factorises as $$ \begin{aligned}
     \mathcal{L}_{\boldsymbol{\theta}} \big( \textbf{G}^{\mathcal{A}}, \textbf{G}^{\mathcal{B}}, \textbf{H}^{\mathcal{A}}, \textbf{H}^{\mathcal{B}}, \boldsymbol{\Delta} \big)
     = & \underbrace{\mathcal{L}_{\boldsymbol{\phi}^{\mathcal A}} \big( \textbf{G}^{\mathcal{A}} \mid \textbf{H}^{\mathcal{A}} \big)
     \mathcal{L}_{\boldsymbol{\phi}^{\mathcal B}} \big( \textbf{G}^{\mathcal{B}} \mid \textbf{H}^{\mathcal{B}} \big)}_{\text{registration errors}} \\ & \underbrace{\mathcal{L}_{\boldsymbol{\alpha}, \boldsymbol{\eta}} \big( \textbf{H}^{\mathcal{B}} \mid \textbf{H}^{\mathcal{A}}, \boldsymbol{\Delta} \big)}_{\text{changes over time}} \underbrace{\mathcal{L}_{\boldsymbol{\eta}} \big( \textbf{H}^{\mathcal{A}} \big)}_{\text{true values}} \\ & \underbrace{\mathcal{L}_{\gamma} \big( \boldsymbol{\Delta} \big)}_{\text{linkage}} .
-\end{aligned} $$ {#eq-flexrl} Each component is developed in the original methodological paper [@RLrobachetal25].
+\end{aligned} $$ {#eq-flexrl}
 
-Notably, the changes over time are modelled with a survival function, representing the probability that true values have not changed between data collections. By default, the package uses an exponential model with proportional hazards. For a dynamic *structured* PIV $k$ whose changes are modelled and a linked pair $(i,j)$ with time gap $t_{i,j} = |t^{\mathcal B}_j - t^{\mathcal A}_i|$: $$
+The parameter $\boldsymbol{\phi}$ governs the possible distortion mechanisms (mistakes, missing values) at the source of the differences between registered and latent true values. The parameter $\boldsymbol{\alpha}$ shapes the model for temporal changes between latent true values in data sources depending on the chosen 'structure' (see the different survival models for @eq-survival). The parameter $\boldsymbol{\eta}$ characterises the distributions of the PIVs. The parameter $\gamma$ represents the probability that an observation in $\mathcal A$ forms a link with an observation in $\mathcal B.$ Each component of @eq-flexrl and each parameter is developed in the original methodological paper [@RLrobachetal25].
+
+Notably, the probability that true values have not changed between data collections is modelled with a survival function. By default, the package uses an exponential model with proportional hazards. For a dynamic *structured* PIV $k$ whose changes are modelled and a linked pair $(i,j)$ with time gap $t_{i,j} = |t^{\mathcal B}_j - t^{\mathcal A}_i|$: $$
     P\big(H^{\mathcal B}_{j,k} = H^{\mathcal A}_{i,k} \mid t_{i,j}, \boldsymbol{x}_{i,j}, \Delta_{i,j} = 1\big) = S_{\boldsymbol{\alpha}_k}(\boldsymbol{x}_{i,j}, t_{i,j}) = \exp\big\{ - \exp(\boldsymbol{x}_{i,j}^{T} \boldsymbol{\alpha}_k) t_{i,j} \big\},
 $$ {#eq-survival} where $\boldsymbol{x}_{i,j}$ contains an intercept and, optionally, covariates from either data source that explain the hazard of change (for example age or income for a relocation) and $\boldsymbol{\alpha}_k$ contains the log hazard coefficients. The user can choose another survival model, such as a Weibull, a Gompertz, a piecewise constant hazard or any custom model.
 
-The likelihood of the observed data is given by @eq-flexrl, summed over all values of the latent $\textbf{H}$ and $\boldsymbol{\Delta}.$ *FlexRL* `StEM()` function maximises the likelihood with a stochastic EM algorithm [@celeux_diebolt_SEM]. The E-step draws the latent variables from their distribution given the current parameters with a Gibbs sampler and the M-step maximises the resulting complete data likelihood. [Algorithm @alg-stem] summarises the procedure.
+The likelihood of the observed data is obtained by summing @eq-flexrl over all values of the latent $\textbf{H}$ and $\boldsymbol{\Delta}.$ *FlexRL* maximises it with the `StEM()` function, a Stochastic Expectation Maximisation (StEM) algorithm [@celeux_diebolt_SEM]. In a classical EM, the E-step computes the conditional expectation of the complete likelihood given the observed data. In the stochastic version, this expectation is approximated by Monte Carlo: a Gibbs sampler simulates the latent variables given the current parameters. The averages of the summary statistics collected after burn-in estimate the conditional expectation from which the M-step derives the parameter updates. [Algorithm @alg-stem] summarises the procedure, detailed hereafter.
 
 ::: {#alg-stem}
 ``` text
@@ -665,12 +684,17 @@ for StEM iter = 1, ..., N_StEM do
         draw H_A, H_B | G_A, G_B, Δ, θ, x, t
         form candidate pairs (i,j) such that H_A[i,k] = H_B[j,k] for all stable or flexible k
         for each non-linked candidate pair: propose to link
-        for each linked pair: propose to break the link
+        for each linked candidate pair: propose to break the link
         accept each proposal with the likelihood of the model
         if Gibbs iter > N0_Gibbs then
-            store: count of linked data, true values crosstab, agreements G = H, x, t
+            accumulate summary statistics: 
+              number of linked pairs, 
+              latent true values distribution, 
+              temporal changes in linked (H_A = H_B, x, t), 
+              registration errors in linked and non-linked (G = H)
         end if
     end for
+    average the accumulated summary statistics # estimate E[ H, Δ | G; θ]
     # M-step
     update and store θ = (γ, η, α, φ)
 end for
@@ -684,23 +708,27 @@ Stochastic EM for record linkage.
 
 #### Initialisation
 
-The probability $\gamma$ is drawn uniformly in $(0.2, 0.8)$, the distributions of each PIV $k$, $\boldsymbol\eta_k$, are uniform over the $N_k$ values, the probabilities of mistakes are drawn in $(0.03, 0.20)$ and the probabilities of missing values are set to the observed proportions. For structured PIVs, the log baseline hazard is drawn between $0.01$ and $1$ per time unit and the covariate coefficients near $0.$ The user can supply other starting values.
+The probability $\gamma$ is drawn uniformly in $(0.2, 0.8)$, the distribution of each PIV $k$, $\boldsymbol\eta_k$, are uniform over the $N_k$ values, the probabilities of mistakes are drawn in $(0.03, 0.20)$ and the probabilities of missing values are set to the observed proportions. For structured PIVs, the log baseline hazard is drawn between $0.01$ and $1$ per time unit and the covariate coefficients near $0.$ The user can supply other starting values.
 
 #### Stochastic E-step
 
-Given $\boldsymbol{\theta}$, the Gibbs sampler alternates two blocks. First, the true values are drawn. For a non-linked record $H^{\mathcal A}_{i,k}$ or $H^{\mathcal B}_{j,k}$ is drawn from $\boldsymbol\eta_k$ weighted by the registration model. For a linked pair $(H^{\mathcal A}_{i,k}, H^{\mathcal B}_{j,k})$ is drawn jointly among the $N_k \times N_k$ possible values, from $\boldsymbol\eta_k$ weighted by the registration model and the survival model. Second, the linkage is updated. Candidate pairs are the pairs whose sampled true values agree on all PIVs that are not structured. For these, we compute the log likelihood contribution of the pair when linked, $\log \mathcal L^{L}_{i,j}$, and of the two records when not linked, $\log \mathcal L^{\mathcal A}_i + \log \mathcal L^{\mathcal B}_j.$ A sequential sweep over the candidate pairs then proposes to create or break links. A proposal is accepted with probability $\mathcal L_{\text{new}} / (\mathcal L_{\text{old}} + \mathcal L_{\text{new}})$, where the two log likelihoods differ by $\log \mathcal L^{L}_{i,j} - \log \mathcal L^{\mathcal A}_i - \log \mathcal L^{\mathcal B}_j$ and by the contributions from changes in the linkage matrix.
+Given $\boldsymbol{\theta}$, the Gibbs sampler alternates two blocks. First, the latent true values are drawn. For a non-linked record $H^{\mathcal A}_{i,k}$ or $H^{\mathcal B}_{j,k}$ is drawn from $\boldsymbol\eta_k$ weighted by the registration model. For a linked pair $(H^{\mathcal A}_{i,k}, H^{\mathcal B}_{j,k})$ is drawn jointly among the $N_k \times N_k$ possible values, from $\boldsymbol\eta_k$ weighted by the registration model and the survival model.
+
+Second, the linkage is updated. Candidate pairs are formed from matching sampled latent true values: records $i \in \mathcal A$ and $j \in \mathcal B$ are candidates when $H^{\mathcal A}_{i,k} = H^{\mathcal B}_{j,k}$ for every non-structured PIV $k$ (stable or flexible). For each candidate pair $(i,j)$, we evaluate the log likelihood contribution to @eq-flexrl when the records are linked, $\log \mathcal L^{\text{linked}}_{i,j}$, and when they are not, $\log \mathcal L^{\mathcal A}_i + \log \mathcal L^{\mathcal B}_j.$ A sequential sweep over the candidate pairs then proposes to create or break links. A proposal is accepted by comparing the proposed 'new' state of @eq-flexrl to the current 'old' state with probability $\mathcal L_{\text{new}} / (\mathcal L_{\text{old}} + \mathcal L_{\text{new}})$; the two states differ by $\log \mathcal L^{\text{linked}}_{i,j} - \log \mathcal L^{\mathcal A}_i - \log \mathcal L^{\mathcal B}_j$ and by the contributions from changes in the linkage matrix.
+
+Over the Gibbs iterations, the sampler stochastically explores the latent space of possible linkage matrices and PIVs true values. At each iteration after burn-in we store the number of pairs that were linked, the distribution of latent true values, the temporal changes (disagreements between the linked records latent true values) and the registration errors (disagreements between $\textbf{G}$ and $\textbf{H}$)—summary statistics required for the M-step.
 
 Restricting the sweep to candidate pairs keeps the algorithm light in memory: likelihood contributions are computed only for these pairs and for the remaining non-linked records in each data source, which together represent the estimated unique entities in the population.
 
 #### M-step
 
-The summary statistics averaged over the Gibbs draws after burn-in give the parameters updates. Thanks to the factorisation of @eq-flexrl, $\gamma$, $\boldsymbol{\eta}$ and $\boldsymbol{\phi}$ have separate closed form updates, and $\boldsymbol{\alpha}$ is obtained by numerical optimisation. Optional bounds on the probabilities of a mistake are applied at this stage. A warning is displayed when a bound is reached in many iterations, suggesting that the bound is too tight or that the PIV is dynamic.
+The summary statistics averaged over the Gibbs draws after burn-in give the parameter updates. Thanks to the factorisation of @eq-flexrl, $\gamma$, $\boldsymbol{\eta}$ and $\boldsymbol{\phi}$ have separate closed form updates [@RLrobachetal25], and $\boldsymbol{\alpha}$ is obtained by numerical optimisation. Optional bounds on the probabilities of a mistake are applied at this stage. A warning is displayed when a bound is reached in many iterations, suggesting that the bound is too tight or that the PIV is dynamic.
 
 ### Linkage scores and decision rule {#sec-scores}
 
 Based on the StEM chains of estimates, we build an estimate of the set of parameters, $\widehat{\boldsymbol{\theta}}$, by averaging the post burn-in elements in the sequence. These are used to sample further linkage matrices that are averaged to return a probabilistic estimate of $\boldsymbol{\Delta}$ as a final output, namely $\widehat{\boldsymbol{D}}$, whose entries $\widehat{D}_{i,j}$ are the posterior probabilities for the pair $(i,j)$ to be linked, which we call the linkage scores. A decision rule on each entry $\xi \in [0.5,1)$ then defines the final set of linked data $\mathcal{D} = \{(i,j) ; \widehat{D}_{i,j} > \xi\}.$ Since the scores of a record sum to at most one, a threshold of at least $0.5$ ensures the one-to-one assignment [@tancredi_bay_RL_2011; @sadinle_bay_bipartite_RL_2017]. The choice of $\xi$ is the subject of the upcoming @sec-inference.
 
-Note that, probabilistic record linkage methods estimate $\boldsymbol{\Delta}$ in comparable ways, by classifying pairs according to their linkage scores. Although these scores may be on different scales (e.g. likelihood ratios, log odds, posterior probabilities), they can be mapped to a probability scale. Hereafter, we take linkage scores to be posterior linkage probabilities in $[0,1]$ and treat all the methods listed in @tbl-packages in the same way.
+Note that probabilistic record linkage methods estimate $\boldsymbol{\Delta}$ in comparable ways, by classifying pairs according to their linkage scores. Although these scores may be on different scales (e.g. likelihood ratios, log odds, posterior probabilities), they can be mapped to a probability scale. Hereafter, we take linkage scores to be posterior linkage probabilities in $[0,1]$ and treat all the methods listed in @tbl-packages in the same way. Accordingly, the default decision rule is $\xi=0.5.$
 
 ### Record linkage with `StEM()` {#sec-stem}
 
@@ -718,7 +746,7 @@ The function returns `Delta`, a data frame with columns `i` (indices in $\mathca
 We run the *FlexRL* `StEM` algorithm for record linkage as follows:
 
 ```{r illustration-12, warning = FALSE, message = FALSE, results = "hide"}
-fit <- StEM(data = prep_data)
+fit <- StEM(data = prep_data, threads = 4)
 ```
 
 ### Computational aspects {#sec-computation}
@@ -736,9 +764,11 @@ Suppose we are interested in estimating the association between $X$ recorded in 
     & = (1-\text{FDP}) \cdot \mathbb E_{TP}[ Y \mid X ] + \text{FDP} \cdot \mathbb E_{FP}[ Y \mid X ],
 \end{aligned} $$ where $\mathbb E_{TP}$ and $\mathbb E_{FP}$ denote expectations among truly and falsely linked pairs.
 
-Let us recast $\widehat\beta$ accordingly. If $X$ has the same mean and variance among all data in $\mathcal{A}$, then $\widehat\beta$ is a mixture of $\widehat\beta_{TP}$ and $\widehat\beta_{FP}$, defined like in @eq-beta-hat-0 for the subsets of TP and FP, $$
+Let us recast $\widehat\beta$ accordingly. If $X$ has the same mean and variance among all data in $\mathcal{A}$, then $\widehat\beta$ is a mixture of $\widehat\beta_{TP}$ and $\widehat\beta_{FP}$, defined as in @eq-beta-hat-0 for the subsets of TP and FP, $$
     \widehat\beta = (1-\text{FDP}) \cdot \widehat\beta_{TP} + \text{FDP} \cdot \widehat\beta_{FP}.
-$$ {#eq-beta-hat} Linkage errors are often assumed to occur at random, in which case $\mathbb E_{FP}[ Y \mid X ] = \mathbb E_{FP}[ Y ]$ and $\widehat\beta_{FP} = 0.$ However, the PIVs, often demographic, are likely to be associated with variables of interest in the analysis, so it is more realistic to consider an association between $X$ and $Y$ among falsely linked pairs. Hence, the error of the analysis splits into two parts: $$
+$$ {#eq-beta-hat} Linkage errors are often assumed to occur at random, in which case $\mathbb E_{FP}[ Y \mid X ] = \mathbb E_{FP}[ Y ]$ and $\widehat\beta_{FP} = 0.$ However, the PIVs, often demographic, are likely to be associated with variables of interest in the analysis, so it is more realistic to consider an association between $X$ and $Y$ among falsely linked pairs.
+
+The estimation error of the analysis can be decomposed into two parts: $$
     \widehat\beta - \beta = \underbrace{(\widehat\beta_{TP} - \beta)}_{\text{sampling bias}} \:\:\: + \underbrace{(\widehat\beta - \widehat\beta_{TP})}_{\text{contamination bias}}.
 $$ {#eq-decomposition} Missed links may cause sample selection and falsely linked data may cause measurement error in the linked variables [@Wang_Slawski_linked_2022; @reflexRL_2020; @CRLrobachetal26].
 
@@ -748,8 +778,8 @@ Raising the threshold $\xi$ on the linkage scores reduces the number of falsely 
     \underbrace{\widehat\beta - \widehat\beta_{TP}}_{\text{contamination bias}} = \text{FDP} (\widehat\beta_{FP} - \widehat\beta_{TP}).
 $$ {#eq-beta-contamination}
 
-However, raising the threshold $\xi$ also selects fewer and more atypical records, which may increase the sampling bias due to the implicit record linkage selection. Indeed, the chance of being linked may be related to $X$ and as a consequence: $$
-    \underbrace{\widehat\beta_{TP} - \beta}_{\text{sampling bias}} = \frac{\operatorname{Cov}_{TP}(X,\varepsilon)}{\operatorname{Var}_{TP}(X)}.
+However, raising the threshold $\xi$ also selects fewer and more atypical records, which may increase the sampling bias due to the implicit record linkage selection. Indeed, the chance of being linked may be related to $X$; in the context of linear regression, this yields: $$
+    \underbrace{\widehat\beta_{TP} - \beta}_{\text{sampling bias}} = \frac{\operatorname{Cov}_{TP}(X,\beta X + \varepsilon)}{\operatorname{Var}_{TP}(X)} - \beta =  \frac{\operatorname{Cov}_{TP}(X,\varepsilon)}{\operatorname{Var}_{TP}(X)}.
 $$ {#eq-beta-sampling}
 
 These aspects motivate the complementary tools we develop in *FlexRL* to quantify these two biases. Estimating the FDP (see @sec-fdp) and evaluating the divergence of the linked sample from the data sources (see @sec-representativeness) over a range of values of $\xi$ may help users appraise this trade-off.
@@ -766,7 +796,7 @@ $$ {#eq-fdp-model} This estimator comes at no extra cost for any method that ret
 
 #### Synthetic data estimator
 
-An estimator that does not rely on linkage scores can be computed with synthetic data [@FDProbachetal25]. Source $\mathcal B$ is augmented with $N_{\text{synth}}$ synthetic records, drawn from a generative model fitted on the PIVs of $\mathcal B$—for example *arf* [@arf_2023], *synthpop* [@synthpop_2016] or *mice* [@mice_2011]. Synthetic records by definition do not form a link in $\mathcal A$, so synthetic links can represent false positives when links and non-links have similar distributions [@FDProbachetal25]. Then $\text{FP}(\xi)$ is estimated by scaling the number of synthetic links by $N_{\mathcal B} / N_{\text{synth}}$ and, like for the score based estimator, $\text{TP}(\xi) + \text{FP}(\xi)$ is estimated by the number of (real) linked pairs $N_{\text{real}}(\xi) = \sum_{(i,j)} \mathbb 1 \{\widehat{D}_{i,j} > \xi\}$: $$ 
+An estimator that does not rely on linkage scores can be computed with synthetic data [@FDProbachetal25]. Source $\mathcal B$ is augmented with $N_{\text{synth}}$ synthetic records, drawn from a generative model fitted on the PIVs of $\mathcal B$—for example *arf* [@arf_2023], *synthpop* [@synthpop_2016] or *mice* [@mice_2011]. Synthetic records by definition do not form a link in $\mathcal A$, so synthetic links can represent false positives when links and non-links have similar distributions [@FDProbachetal25]. Then $\text{FP}(\xi)$ is estimated by scaling the number of synthetic links by $N_{\mathcal B} / N_{\text{synth}}$ and, as for the score based estimator, $\text{TP}(\xi) + \text{FP}(\xi)$ is estimated by the number of (real) linked pairs $N_{\text{real}}(\xi) = \sum_{(i,j)} \mathbb 1 \{\widehat{D}_{i,j} > \xi\}$: $$ 
     \widehat{\text{FDP}}_{\text{synth}}(\xi) = \frac{\text{FP}_{\text{synth}}(\xi) \cdot N_{\mathcal B} / N_{\text{synth}}}{N_{\text{real}}(\xi)}.
 $$ {#eq-fdp-synth} The procedure is repeated over several synthetic draws and the results are averaged. The estimator does not depend on the linkage model, but it depends on the quality of the data synthesis.
 
@@ -775,11 +805,24 @@ $$ {#eq-fdp-synth} The procedure is repeated over several synthetic draws and th
 As explained in @sec-linkage-error, the linked sample may differ from the data sources in ways the analyst cannot see [@reflexRL_2020; @Wang_Slawski_linked_2022; @CRLrobachetal26]. In particular, we appraise the sampling bias of @eq-beta-sampling by comparing the distributions of variables of interest between the linked data ('selected' through record linkage) and the original data sources. For any decision rule $\xi \in [0.5, 1)$, *FlexRL* compares each source with its linked subset using the following measures, computed on sets of variables $\mathcal V_{\mathcal A}$ and $\mathcal V_{\mathcal B}$ available in sources $\mathcal A$ and $\mathcal B$ respectively:
 
 - *Agreement rates*: the proportion of linked pairs whose records agree on $v$, for each variable $v \in \mathcal V_{\mathcal A} \cap \mathcal V_{\mathcal B}$ (such as the PIVs).
-- *Standardised mean differences*: $(\text{mean}(v_{\text{linked}}) - \text{mean}(v_{\text{source}})) / \text{sd}(v_{\text{source}})$, for a continuous variable $v$ in a given set; the same quantity is computed for the indicator of each level when $v$ is categorical.
-- *Overlap of supports*: the intersection over union of the sets of values taken in the linked sample and in the source, for a variable $v$ in a given set.
-- *Maximum mean discrepancy*: a multivariate measure of the difference between the linked sample and the source, computed jointly over a given set of variables, with a Gaussian kernel and the median heuristic for the bandwidth [@gretton2012].
+- *Standardised Mean Differences* (SMD): $(\text{mean}(v_{\text{linked}}) - \text{mean}(v_{\text{source}})) / \text{sd}(v_{\text{source}})$, for a continuous variable $v$ in a given set; the same quantity is computed for the indicator of each level when $v$ is categorical.
+- *Overlap of supports* (support IoU): the Intersection over Union (IoU) of the sets of values taken in the linked sample and in the source, for a variable $v$ in a given set.
+- *Maximum Mean Discrepancy* (MMD): a multivariate measure of the difference between the linked sample and the source, computed jointly over a given set of variables, with a Gaussian kernel and the median heuristic for the bandwidth [@gretton2012].
 
 These quantities are computed over a grid of values of $\xi.$ They are built on the declared pairs and, when available, their linkage scores; they therefore apply to any linkage method.
+
+In @tbl-demonstration-2 we proceed with the demonstration of @sec-demonstration showcasing the functionalities of *FlexRL* on a simulation study.
+
+::: {#tbl-demonstration-2}
+```{r demonstration-2-2, echo = FALSE}
+options(digits=2, scipen=999)
+knitr::kable(df_results_total, digits = 2, align=rep('c', ncol(df_results_total)))
+```
+
+Linkage performance of competing record linkage methods on simulated data for the default decision rule $\xi=0.5$, with linked data quality assessed through *FlexRL*. The \* symbol refers to the record linkage augmented task, see @sec-fdp.
+:::
+
+This short simulation study demonstrates the potential of the *FlexRL* package. Since *FlexRL* provides linked data quality diagnostics for any record linkage method, we report three estimates of the FDP along with measures of the divergence of the linked sample from the data sources. @sec-fdp presented the FDP estimators implemented in the package and @sec-representativeness discussed the measures of divergence.
 
 ### Diagnostics {#sec-diagnostics}
 
@@ -797,7 +840,7 @@ These quantities are computed over a grid of values of $\xi.$ They are built on 
 Diagnostics performed by `RL_diagnostics()`.
 :::
 
-The function takes several arguments as input. The record linkage output `fit`, the data sources `encodedA` and `encodedB`, the set of variables of interest to compare `compare_vars`, their type `vars_type_cont` (`TRUE` if continuous) and the `PIVs` are passed to `RL_diagnostics()`, which computes FDP estimates and discrepancy measures that characterise the linked sample across a grid of thresholds $\xi.$
+The function takes several arguments as input. The record linkage output `fit`, the data sources `encodedA` and `encodedB`, the set of variables of interest to compare `compare_vars`, their type `vars_type_cont` (`TRUE` if continuous) and the `PIVs` are passed to `RL_diagnostics()`, which computes FDP estimates and discrepancy measures that characterise the linked sample across a grid of thresholds $\xi.$ The `true_pairs` enables reporting the true FDP and sensitivity when known.
 
 ```{r illustration-13, warning = FALSE, message = FALSE, results = "hide"}
 compare_vars <- c("BirthYear", "Sex", "MaritalStatus", 
@@ -813,7 +856,7 @@ diag <- RL_diagnostics(fit, prep_data$encodedA, prep_data$encodedB,
                        n_repeats = 5)
 ```
 
-The FDP estimation is optional (`FDP_estimation = TRUE`) since it can be time consuming. For a given `RL_method`, it is repeated `n_repeats` times and the estimates are averaged. `compute_RL_FDP_score()` returns the score based estimate on the original task. `compute_augmRL_FDP_synth()` adds `n_synth` records generated by `synth_method` to $\mathcal B$, links the augmented sources as an auxiliary task and computes both the score based and the synthetic data estimates on it. Similar score based estimates on the original and augmented tasks support the use of the synthetic data estimator. @tbl-demonstration reported these three estimates as 'est. FDP score', 'est. FDP\* score', 'est. FDP\* synth'.
+The FDP estimation is optional (`FDP_estimation = TRUE`) since it can be time consuming. For a given `RL_method`, it is repeated `n_repeats` times and the estimates are averaged. `compute_RL_FDP_score()` returns the score based estimate on the original task. `compute_augmRL_FDP_synth()` adds `n_synth` records generated by `synth_method` to $\mathcal B$, links the augmented sources as an auxiliary task and computes both the score based and the synthetic data estimates on it. Similar score based estimates on the original and augmented tasks support the use of the synthetic data estimator. @tbl-demonstration-2 reported these three estimates as 'est. FDP score', 'est. FDP\* score', 'est. FDP\* synth'.
 
 The `plot(x, type)` method for an object of class `RL_diagnostics` draws the plots listed in @tbl-diagnostics, with `type` being one of `'convergence'`, `'scores'`, `'FDP'`, `'discrepancy'` and `'distributions'`. With the `'convergence'` plots, we could verify that the StEM chains have stabilised.
 
@@ -830,7 +873,7 @@ With the `'scores'` plot, we can analyse the distribution of the linkage scores 
 plot(diag, 'scores')
 ```
 
-Distribution of the linkage scores.
+Distribution of the linkage scores returned by *FlexRL* `StEM()` on the SHIW in Emilia-Romagna.
 :::
 
 Albeit bimodal, the distribution of linkage scores produced by the record linkage algorithm does not indicate where to set the threshold $\xi.$ The FDP estimation results and the divergence plots may help further. In @fig-tradeoff we show the `'FDP'` plot and some of the `'discrepancy'` plots for the MMD and the SMD. Similar plots for the overlap of supports and the agreement rate are usually displayed by `plot(diag, 'discrepancy')`.
@@ -848,7 +891,7 @@ x <- print(diag, 0.95)
 #| fig-width: 10
 #| fig-height: 6
 plot(diag, 'FDP')
-abline(v = 0.95, lwd=0.2)
+abline(v = 0.95, lwd=0.3)
 ```
 
 ```{r illustration-19, fig.show='hide'}
@@ -868,12 +911,34 @@ two_files <- function(a, b, ylab, main, ylim = NULL, where = "topleft") {
   graphics::legend(where, c("linked A vs. A", "linked B vs. B"), lty = c(1, 2), bty = "n", cex = 0.8)
 }
 two_files(x$mmdA, x$mmdB, "MMD", "Multivariate discrepancy")
-abline(v = 0.95, lwd=0.2)
+abline(v = 0.95, lwd=0.3)
 ```
 
 ```{r illustration-21, echo = FALSE}
 #| fig-width: 14
 #| fig-height: 7.5
+x <- x[,c("smdA.MaritalStatus.MaritalStatus_3",
+          "smdB.MaritalStatus.MaritalStatus_3",
+          "smdA.MaritalStatus.MaritalStatus_2",
+          "smdB.MaritalStatus.MaritalStatus_2",
+          "smdA.MaritalStatus.MaritalStatus_4",
+          "smdB.MaritalStatus.MaritalStatus_4",
+          "smdA.BirthRegion.BirthRegion_7",
+          "smdA.BirthRegion.BirthRegion_13",
+          "smdA.BirthRegion.BirthRegion_15",
+          "smdA.BirthRegion.BirthRegion_17",
+          "smdA.BirthRegion.BirthRegion_18",
+          "smdB.BirthRegion.BirthRegion_7",
+          "smdB.BirthRegion.BirthRegion_13",
+          "smdB.BirthRegion.BirthRegion_15",
+          "smdB.BirthRegion.BirthRegion_17",
+          "smdB.BirthRegion.BirthRegion_18",
+          "smdA.Occupation.Occupation_7",
+          "smdA.Occupation.Occupation_25",
+          "smdB.Occupation.Occupation_7",
+          "smdB.Occupation.Occupation_25",
+          "smdA.BirthYear",
+          "smdB.BirthYear")]
 cols <- function(prefix) {
   v <- as.data.frame(x[grep(paste0("^", prefix, "\\."), names(x))])
   names(v) <- sub(paste0("^", prefix, "\\.([^.]*\\.)?"), "", names(v))
@@ -897,15 +962,15 @@ graphics::par(mfrow = c(1, 2))
 allsmd <- c(as.matrix(cols("smdA")), as.matrix(cols("smdB")))
 ylim <- if (any(is.finite(allsmd))) range(allsmd[is.finite(allsmd)]) else NULL
 lines_by_col(cols("smdA"), "SMD", "linked A vs. A", ylim, "topleft")
-abline(v = 0.95, lwd=0.2)
+abline(v = 0.95, lwd=0.3)
 lines_by_col(cols("smdB"), "SMD", "linked B vs. B", ylim, "topleft")
-abline(v = 0.95, lwd=0.2)
+abline(v = 0.95, lwd=0.3)
 ```
 
-Estimated FDP and discrepancy measures against the decision rule threshold.
+Estimated FDP and discrepancy measures against the linkage decision rule threshold obtained with *FlexRL* `RL_diagnostics()` on the SHIW in Emilia-Romagna.
 :::
 
-The graphics from @fig-tradeoff show how each linkage decision rule affects linked data quality. They illustrate the trade-off of @sec-linkage-error: as the threshold $\xi$ increases, the estimated FDP diminishes while the divergence of the linked sample from the sources grows. Ideally, we choose an appropriate threshold for inference at the elbow of the divergence curves, provided that the estimated FDP at that level is reasonable. For our example, we choose $\xi = 0.95$ as indicated by the vertical line in @fig-tradeoff.
+The graphics from @fig-tradeoff show how each linkage decision rule affects linked data quality. They illustrate the trade-off of @sec-linkage-error: as the threshold $\xi$ increases, the estimated FDP diminishes while the divergence of the linked sample from the sources grows. Ideally, we choose an appropriate threshold for inference at the 'elbow' of the divergence curves, provided that the estimated FDP at that level is reasonable. For our example, we choose $\xi = 0.95$ accordingly as indicated by the vertical line in @fig-tradeoff.
 
 With the `'distributions'` plots, we could compare the distribution of the linked data and of the data sources at the selected threshold—for example $\xi = 0.95.$
 
@@ -981,16 +1046,16 @@ show_block <- function(prefix, label, side) {
   }
   show_lines(left, right, side)
 }
-show_block(show_block("smdA", "SMD", "(linked A vs. A)"))
+show_block("smdA", "SMD", "(linked A vs. A)")
 show_block("smdB", "SMD", "(linked B vs. B)")
 ```
 
-Example of output from the `print()` method at threshold 0.95.
+Example of output from the `print()` method on *FlexRL* `RL_diagnostics` class, at threshold 0.95, on the SHIW in Emilia-Romagna.
 :::
 
 Throughout the diagnostics, the record linkage is run by wrappers with a common form, `link_with_<pkg>(dataA, dataB, ...)`, returning the indices of linked pairs and their linkage score. Wrappers exist for *FlexRL*, *fastLink*, *BRL*, *reclin2*, *multilink*, *diyar* and *fedmatch*. That way, the diagnostic tools apply to any of these methods in a similar fashion.
 
-On the illustrative example developed along this article, we regress the expected age of retirement in 2014 on the expected age of retirement in 2012. The tools presented so far help identify a suitable linkage threshold by assessing the trade-off between contamination and sampling bias. In @fig-example, a low threshold $\xi=0.55$ yields a linked data estimate in $\color{#FF7256}{\text{orange}}$ affected by contamination bias (due to noisy falsely linked data, estimate in $\color{#8B6914}{\text{dark yellow}}$; see @eq-beta-contamination). Conversely, a high threshold $\xi=0.99$ yields a linked data estimate in $\color{#FF7256}{\text{orange}}$ affected by sampling bias (due to atypical truly linked data, estimate in $\color{#FFC125}{\text{light yellow}}$; see @eq-beta-sampling). Using the diagnostic tools we choose $\xi = 0.95$ yielding a linked data estimate in $\color{#FF7256}{\text{orange}}$ closer to the truth represented in $\color{#B22222}{\text{red}}.$
+On the illustrative example developed along this article, we regress the expected age of retirement in 2014 on the expected age of retirement in 2012. The tools presented so far help identify a suitable linkage threshold by assessing the trade-off between contamination and sampling bias. In @fig-example, a low threshold $\xi=0.55$ yields a linked data estimate in $\color{#FF7256}{\text{orange}}$ affected by contamination bias (due to noisy falsely linked data, estimate in dashed $\color{#FFC125}{\text{yellow}}$; see @eq-beta-contamination). Conversely, a high threshold $\xi=0.99$ yields a linked data estimate in $\color{#FF7256}{\text{orange}}$ affected by sampling bias (due to atypical truly linked data, estimate in $\color{#FFC125}{\text{yellow}}$; see @eq-beta-sampling). Using the diagnostic tools we choose $\xi = 0.95$ yielding a linked data estimate in $\color{#FF7256}{\text{orange}}$ closer to the truth represented in $\color{#B22222}{\text{red}}.$
 
 ::: {#fig-example}
 ```{r illustration-26, echo = FALSE, warning = FALSE, message = FALSE}
@@ -1052,10 +1117,10 @@ for (XI in XIs) {
                                   data.frame(prep_data$encodedB[idj, ])))
   modelrlfp <- stats::lm(ExpectedAgeRetirement.1 ~ ExpectedAgeRetirement,
                          data = combined_fp, na.action = na.omit)
-  graphics::abline(modelrlfp, col = "goldenrod4", lwd = 2)
+  graphics::abline(modelrlfp, col = "goldenrod1", lwd = 2, lty = 2)
 
   graphics::legend("topleft", c("true links", sprintf("linked data, %s obs.", nrow(combined)), sprintf("TP, %s obs.", nrow(combined_tp)), sprintf("FP, %s obs.", nrow(combined_fp))),
-                   lty = 1, lwd = 2, col = c("firebrick", "coral1", "goldenrod1", "goldenrod4"),
+                   lty = c(1,1,1,2), lwd = 2, col = c("firebrick", "coral1", "goldenrod1", "goldenrod1"),
                    bty = "n")
 }
 
@@ -1066,12 +1131,12 @@ graphics::mtext("expected age of retirement 2014", side = 2, outer = TRUE, line 
 graphics::par(op)  # restore the previous graphical settings
 ```
 
-Regression analysis.
+Regression analysis on the SHIW in Emilia-Romagna linked through *FlexRL*.
 :::
 
 ## Scalability {#sec-scalability}
 
-In @tbl-illustration of @sec-model, we compared record linkage methods on the SHIW in Emilia-Romagna. Despite heterogeneous linkage performance, running time and memory usage, all methods compared ran at that scale. To complete our investigation, we demonstrate the scalability of *FlexRL* and examine that of other record linkage methods on the complete SHIW data sets, with and without regional blocking. Note that blocking on the region assumes that this variable is free of registration errors and is stable.
+In @tbl-illustration of @sec-model, we compared record linkage methods on the SHIW in Emilia-Romagna. Despite heterogeneous linkage performance, running time and memory usage, all methods ran at that scale. To complete our investigation, we demonstrate the scalability of *FlexRL* and examine that of other record linkage methods on the complete SHIW data sets, with and without regional blocking. Note that blocking on the region assumes that this variable is free of registration errors and is stable.
 
 ```{r scale-1, include = FALSE, warning = FALSE, message = FALSE}
 df2012 <- comp[comp$ANNO == 2012, c("IREG",var_of_interest)]
@@ -1098,32 +1163,42 @@ PIVs_config <- list(BirthYear     = list(dynamics        = "stable",
                                          bound_mistakes  = c(NA, NA), 
                                          fix_mistakes    = c(NA, NA)))
 PIVs <- names(PIVs_config)
-PIVs_type <- c(BirthYear = TRUE, Sex = FALSE, MaritalStatus = FALSE, BirthRegion = FALSE, Occupation = FALSE)
 PIVs_config_full <- c(PIVs_config,
                       list(Region = list(dynamics = "flexible", bound_mistakes = c(NA, NA), fix_mistakes = c(NA, NA))))
 PIVs_full <- names(PIVs_config_full)
-PIVs_type_full <- c(PIVs_type, Region = FALSE)
 prep_data_full <- prepare_data(df2012, df2014, "2012", "2014", PIVs_config_full, same_mistakes = TRUE, uniq_id = "ID")
 ```
 
+In @sec-prepare, we showed the proportion of agreements between the information carried by records among true links of the SHIW in Emilia-Romagna. Below we show the proportion of agreements among true links of the complete SHIW data. In this application the region is indeed free of registration errors and stable.
+
 ```{r scale-2, echo = FALSE}
 # check proportion of agreement in PIVs among true links
-round(RL_agreement(prep_data_full$encodedA, prep_data_full$encodedB, PIVs, prep_data_full$true_pairs)$agreements,2)
+round(RL_agreement(prep_data_full$encodedA, prep_data_full$encodedB, PIVs_full, prep_data_full$true_pairs)$agreements,2)
 ```
 
-@tbl-scalability presents the comparative study without blocking; 'Not Available' results indicate memory errors. @tbl-scalability-block shows the results with blocking on the Italian regions. More details over this data application showcasing the scalability of *FlexRL* are given in the package vignette 'Scalable Record Linkage with FlexRL' available through `vignette('FlexRL-RL-block-vignette', 'FlexRL')` or the [online documentation](https://robachowyk.github.io/FlexRL/index.html).
+Record linkage becomes considerably harder on large data sets since the discriminative power of the PIVs is unlikely to grow with the size of the data sources, whereas the number of candidate records in $\mathcal B$ that could form a link with a given record in $\mathcal A$ does. For that reason the FDPs of all methods on the complete SHIW in @tbl-scalability are high. We show below the number of unique values of each PIV in the SHIW in Emilia-Romagna and in the complete SHIW. They indicate the discriminative power of the PIVs in the regional and the national data applications.
+
+```{r discr-power-region, echo = FALSE}
+print(prep_data$n_values)
+```
+
+```{r discr-power-country, echo = FALSE}
+print(prep_data_full$n_values)
+```
+
+@tbl-scalability presents the comparative study without blocking; 'Not Available' results indicate memory errors. @tbl-scalability-block shows the results with blocking on the Italian regions. More details on this data application showcasing the scalability of *FlexRL* are given in the package vignette 'Scalable Record Linkage with FlexRL' available through `vignette('FlexRL-RL-block-vignette', 'FlexRL')` or the [online documentation](https://robachowyk.github.io/FlexRL/index.html).
 
 ```{r scale-3, include = FALSE, warning = FALSE, message = FALSE}
 true_pairs_full <- do.call(paste, c(prep_data_full$true_pairs, list(sep = "_")))
-df_results_full <- data.frame(matrix(NA, nrow = 6, ncol = 0))
-rownames(df_results_full) <- c("TP", "FP", "FN", "sensitivity", "FDP", "time (mins)")
+df_results_full <- data.frame(matrix(NA, nrow = 7, ncol = 0))
+rownames(df_results_full) <- c("TP", "FP", "FN", "sensitivity", "FDP", "time (mins)", "memory (Mb)")
 for (method in methods) {
   t0 <- Sys.time()           
-  args <- list(StEM_iter = 10, StEM_burnin = 5, gibbs_iter = 10, gibbs_burnin = 5, 
-               n_post_sample = 10, n_iter = 100, max_cc_size = 50, n.cores = 4)
-  fit <- run_wrapper(method, prep_data_full, wrapper_args(method, prep_data_full, args))
+  args <- list(n_iter = 100, max_cc_size = 50)
+  MeM <- peakRAMNew(fit <- run_wrapper(method, prep_data_full, wrapper_args(method, prep_data_full, args)))
   df_results_full[1:5, method] <- evaluate_linkage(fit, true_pairs_full)
   df_results_full[6, method] <- if (is.null(fit)) NA else round(as.numeric(Sys.time() - t0, units = "mins"))
+  df_results_full[7, method] <- MeM$Peak_RAM_Used_MiB
 }
 ```
 
@@ -1133,7 +1208,7 @@ options(digits=2, scipen=999)
 knitr::kable(df_results_full, digits = 2, align=rep('c', ncol(df_results_full)))
 ```
 
-Comparison of record linkage methods on the complete SHIW data application.
+Comparison of record linkage methods on the complete SHIW data application for the default decision rule $\xi=0.5.$
 :::
 
 ```{r scale-5, include = FALSE, warning = FALSE, message = FALSE}
@@ -1146,12 +1221,13 @@ for (r in regions) {
   true_pairs_r <- do.call(paste, c(prep_data_r$true_pairs, list(sep = "_")))
   for (method in methods) {
     t0 <- Sys.time()
-    fit <- run_wrapper(method, prep_data_r, wrapper_args(method, prep_data_r))
+    MeM <- peakRAMNew(fit <- run_wrapper(method, prep_data_r, wrapper_args(method, prep_data_r)))
     results_Region[[length(results_Region) + 1]] <- data.frame(
       Region = r, n_A = nrow(prep_data_r$encodedA),
       n_B = nrow(prep_data_r$encodedB), n_links = length(true_pairs_r),
       method = method, round(t(evaluate_linkage(fit, true_pairs_r)),2),
-      seconds = round(as.numeric(Sys.time() - t0, units = "secs")))
+      seconds = round(as.numeric(Sys.time() - t0, units = "secs")),
+      memory = MeM$Peak_RAM_Used_MiB)
   }
 }
 results_Region <- do.call(rbind, results_Region)
@@ -1159,7 +1235,8 @@ summary_Region <- do.call(rbind, lapply(split(results_Region, results_Region$met
   data.frame(TP = mean(d$TP, na.rm=TRUE), FP = mean(d$FP, na.rm=TRUE),
              FN = mean(d$FN, na.rm=TRUE), sensitivity = mean(d$sensitivity, na.rm=TRUE),
              FDP = mean(d$FDP, na.rm=TRUE), method = d$method[1],
-             minutes = sum(d$seconds) / 60)
+             minutes = sum(d$seconds) / 60,
+             memory = mean(d$memory))
 }))
 rownames(summary_Region) <- summary_Region$method
 ```
@@ -1167,21 +1244,21 @@ rownames(summary_Region) <- summary_Region$method
 ::: {#tbl-scalability-block}
 ```{r scale-6, echo = FALSE}
 options(digits=2, scipen=999)
-newdf <- as.data.frame(apply(t(summary_Region)[c("TP","FP","FN","sensitivity","FDP","minutes"),methods], 2, function(x)  sprintf("%.2f",as.numeric(as.character(x)))))
+newdf <- as.data.frame(apply(t(summary_Region)[c("TP","FP","FN","sensitivity","FDP","minutes","memory"),methods], 2, function(x)  sprintf("%.2f",as.numeric(as.character(x)))))
 names(newdf) <- names(df_results_full)
 rownames(newdf) <- rownames(df_results_full)
 knitr::kable(newdf, align=rep('c', ncol(newdf)))
 ```
 
-Comparison of record linkage methods on the complete SHIW data application with regional blocking.
+Comparison of record linkage methods on the complete SHIW data application with regional blocking, for the default decision rule $\xi=0.5.$
 :::
 
 ## Discussion {#sec-discussion}
 
 This article presented *FlexRL*: an `R` package for probabilistic record linkage of two overlapping data sources using a hierarchical model that accounts for registration errors and accommodates temporal changes in Partially Identifying Variables (PIVs). *FlexRL* provides tools for assessing the quality of the resulting linked data. These diagnostics are independent of the linkage method and thus apply broadly. These tools are essential for using record linkage in practice, where potential linkage errors and induced sample selection cannot be observed directly.
 
-To draw the attention to the implications of linkage quality for statistical analysis, *FlexRL* provides two complementary tools as functions of the linkage threshold. First, the estimated False Discovery Proportion (FDP), which quantifies contamination among the linked pairs. Second, the divergence of the linked sample from the source populations, which captures potential sampling bias. Examining these quantities jointly makes the trade-off between contamination and sampling bias explicit and provides users with information to select a linkage decision rule in light of its potential consequences for subsequent inference.
+To draw attention to the implications of linkage quality for statistical analysis, *FlexRL* provides two complementary tools as functions of the linkage threshold. First, the estimated False Discovery Proportion (FDP), which quantifies contamination among the linked pairs. Second, the divergence of the linked sample from the source populations, which captures potential sampling bias. Examining these quantities jointly makes the trade-off between contamination and sampling bias explicit and provides users with information to select a linkage decision rule in light of its potential consequences for subsequent inference.
 
-Several directions follow naturally from this work. On the computational side, the memory footprint is nearly linear in the number of links but the running time could be further improved, as it scales with the number of records, candidate pairs, PIVs, their levels and configurations. On the modelling side, the linkage model currently assumes independence of PIVs given the true values, no duplicates within a source, categorical PIVs; extensions would broaden the range of applications. Finally, the diagnostic estimators and the proposed quality measures, whose validity rests on the assumptions underlying their estimation, would benefit from further theoretical and empirical investigation.
+Several directions follow naturally from this work. On the computational side, the memory footprint is nearly linear in the number of links but the running time could be further improved, as it scales with the number of records, candidate pairs, PIVs, their levels and configurations. On the modelling side, the linkage model currently assumes independence of PIVs given the latent true values, no duplicates within a source, categorical PIVs; extensions would broaden the range of applications. Finally, the diagnostic estimators and the proposed quality measures, whose validity rests on the assumptions underlying their estimation, would benefit from further theoretical and empirical investigation.
 
-Notwithstanding these considerations, *FlexRL* provides a framework that connects record linkage to linked data quality assessment. It provides a scalable and reliable solution to record linkage in terms of memory usage and performance on a variety of scenarios. It enables record linkage to reach practice, helping researchers and practitioners not only to link data, but also quantify and communicate the extent to which linkage decisions may affect downstream inference.
+Notwithstanding these considerations, *FlexRL* provides a framework that connects record linkage to linked data quality assessment. It provides a scalable and reliable solution to record linkage in terms of memory usage and performance on a variety of scenarios. It enables record linkage to reach practice, helping researchers and practitioners not only to link data, but also to quantify and communicate the extent to which linkage decisions may affect downstream inference.

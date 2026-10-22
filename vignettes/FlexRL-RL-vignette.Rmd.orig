@@ -18,6 +18,7 @@ knitr::opts_chunk$set(
 ```{r setup-2, include = FALSE}
 pak::pak("robachowyk/FlexRL")
 options(digits = 2, scipen = 999)
+set.seed(0)
 ```
 
 ```{r setup-3}
