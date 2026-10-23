@@ -83,15 +83,15 @@ The second family models how the data were generated [@tancredi_bay_RL_2011; @st
 In `Python`, *recordlinkage* [@PYRL_de_bruin_j_2019], *Splink* [@splink_2022] and *NameMatch* [@PYRL_namematch] implement Paradigm 1. We list the main `R` packages for the task considered here in @tbl-packages. Paradigm 2 is only available in `R` through methods for entity resolution [@smered16software; @dblink_2021; @marchantsteorts2023]. These methods cluster records from a single file, possibly containing duplicates, into entities.
 
 ::: {#tbl-packages}
-| Package | Paradigm | Estimation | Linkage structure | Record deduplication | PIVs dynamics |
-|------------|------------|------------|------------|------------|------------|
-| *fedmatch* [@fedmatchmanual; @fedmatch_article] | comparison vectors | push relabel maximum flow | many-to-many | no | no |
-| *diyar* [@diyarmanual] | comparison vectors | multistage weights comparisons, fixed score level parameters | clusters | yes | no |
-| *reclin2* [@reclin2manual] | comparison vectors, supervised | EM, machine learning | one-to-one post hoc | no | no |
-| *fastLink* [@fastLink_paper_2019; @fastLinkmanual] | comparison vectors | EM | one-to-one post hoc | no | no |
-| *BRL* [@brlmanual; @sadinle_bay_bipartite_RL_2017] | comparison vectors | Bayesian, bipartite prior, Gibbs sampler | one-to-one in model | no | no |
-| *multilink* [@multilinkmanual; @multifilepartitioningrecordlinkage] | comparison vectors | Bayesian, partition prior, Gibbs sampler | clusters, one-to-one in model | yes | no |
-| *FlexRL* [@flexrlmanual] | hierarchical | stochastic EM | one-to-one in model | no | yes |
+| Package | Paradigm | Estimation | Linkage structure | Record deduplication | PIVs dynamics | Quality tools |
+|------------|------------|------------|------------|------------|------------|------------|
+| *fedmatch* [@fedmatchmanual; @fedmatch_article] | comparison vectors | push relabel maximum flow | many-to-many | no | no | no |
+| *diyar* [@diyarmanual] | comparison vectors | multistage weights comparisons, fixed score level parameters | clusters | yes | no | no |
+| *reclin2* [@reclin2manual] | comparison vectors, supervised | EM, machine learning | one-to-one post hoc | no | no | no |
+| *fastLink* [@fastLink_paper_2019; @fastLinkmanual] | comparison vectors | EM | one-to-one post hoc | no | no | no |
+| *BRL* [@brlmanual; @sadinle_bay_bipartite_RL_2017] | comparison vectors | Bayesian, bipartite prior, Gibbs sampler | one-to-one in model | no | no | no |
+| *multilink* [@multilinkmanual; @multifilepartitioningrecordlinkage] | comparison vectors | Bayesian, partition prior, Gibbs sampler | clusters, one-to-one in model | yes | no | no |
+| *FlexRL* [@flexrlmanual] | hierarchical | stochastic EM | one-to-one in model | no | yes | yes |
 
 Record linkage packages on `CRAN` compared with *FlexRL*. The *FlexRL* package diagnostic tools apply to all these packages.
 :::
