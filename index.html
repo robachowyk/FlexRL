@@ -100,7 +100,8 @@
 <strong>Registration errors</strong>, missing values and mistakes, modelled.</li>
 <li>
 <strong>Linkage quality tools that work with any method</strong>: estimated false discovery proportion, and divergence between the linked sample and the sources, as functions of the decision rule.</li>
-<li>A <strong>low memory footprint</strong>: memory grows with the number of records and candidate pairs, not with the number of all pairs.</li>
+<li>
+<strong>Fast running time</strong> and <strong>low memory footprint</strong>: memory grows with the number of records and candidate pairs, not with the number of all pairs; running time grows with the number of records, candidate pairs, PIVs, iterations and decreases with the number of threads.</li>
 </ul>
 <p>Existing record linkage methods reduces every pair of records to a vector of agreements and disagreements and classifies the pairs. FlexRL instead models the data generation process: the registered values are distorted versions of latent true values, and the linkage structure determines which records share the same true values. Parameters estimation of this hierarchical modelling is done with Stochastic Expectation Maximisation (StEM) algorithm.</p>
 <p>The model is introduced in: &gt; <em>A flexible model for record linkage</em> &gt; K. Robach, S.L. van der Pas, M.A. van de Wiel, M.H. Hof &gt; <em>Journal of the Royal Statistical Society: Series C</em>, 2025. &gt; <a href="https://doi.org/10.1093/jrsssc/qlaf016" class="external-link uri">https://doi.org/10.1093/jrsssc/qlaf016</a></p>
