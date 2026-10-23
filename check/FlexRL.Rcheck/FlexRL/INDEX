@@ -1,0 +1,63 @@
+FDP_score               Model specific, linkage score based, false
+                        discovery proportion at a given threshold
+FDP_synth               Model agnostic, based on synthetic data, false
+                        discovery proportion at a given threshold
+FlexRL                  FlexRL: A Flexible Model for Record Linkage
+RL_agreement            Agreement rate of pairs on shared variables
+RL_diagnostics          Post-linkage diagnostics
+StEM                    Stochastic Expectation-Maximisation for record
+                        linkage
+compute_RL_FDP_score    Estimate the false discovery proportion of a
+                        record-linkage method via model specific
+                        linkage scores
+compute_augmRL_FDP_synth
+                        Estimate the false discovery proportion of a
+                        record-linkage method via synthetic
+                        augmentation
+create_data_alpha       Book-keeping data frame for parameters of PIVs
+                        dynamics
+link_with_BRL           Run BRL through the uniform wrapper interface
+link_with_FlexRL        Run FlexRL through the uniform wrapper
+                        interface
+link_with_diyar         Run diyar through the uniform wrapper interface
+link_with_fastLink      Run fastLink through the uniform wrapper
+                        interface
+link_with_fedmatch      Run fedmatch through the uniform wrapper
+                        interface
+link_with_multilink     Run multilink through the uniform wrapper
+                        interface
+link_with_reclin2       Run reclin2 through the uniform wrapper
+                        interface
+log_lik                 Log-likelihood of the linkage matrix
+log_possible_config     Log number of possible linkage configurations
+mmd                     Maximum Mean Discrepancy between two sets of
+                        variables
+naive_linkage           Naive (deterministic exact-match) record
+                        linkage
+plot.FDP_curves         Plot FDP estimates against the linkage decision
+                        threshold
+plot.RL_diagnostics     Plot post-linkage diagnostics
+plot.discrepancy_curves
+                        Plot post-linkage diagnostics over thresholds
+plot_StEM_convergence   Monte Carlo convergence (trace) plots for a
+                        fitted StEM model
+plot_distributions      Compare distributions of shared variables
+                        across data sets (histograms/barplots)
+plot_linkage_scores     Plot the distribution of linkage scores
+prepare_data            Prepare two data sources for 'StEM()'
+print.RL_diagnostics    Print post-linkage diagnostics
+prop_level              Proportion of a data set with a given variable
+                        at a given level
+simulateD               Simulate the linkage matrix D
+simulateH               Simulate the true PIV values underlying the
+                        registered records
+simulate_data           Simulate two linked data sources for record
+                        linkage benchmarking
+smd                     Standardised mean difference between a selected
+                        set and a baseline
+support_iou             Intersection-over-union of two histogram
+                        supports
+survival_S              Evaluate a survival model's S, C++ fast path
+                        for the built-in families
+survival_model          Survival models for the dynamics of a PIV
+synthesise              Augment file B with synthetic records

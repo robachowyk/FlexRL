@@ -1,0 +1,828 @@
+
+R version 4.6.1 (2026-06-24) -- "Happy Hop"
+Copyright (C) 2026 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin23
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> # FlexRL test suite runner
+> library(testthat)
+> library(FlexRL)
+If you are happy with FlexRL, please cite us! If you are unhappy, please cite us anyway (and feel free to complain as well).
+> 
+> test_check("FlexRL")
+'fileB' is the larger source, saved as B; 'fileA' saved as A.
+FlexRL
+
+FDP estimation on augmented RL taskIteration: 0, Accuracy: 48.98%
+FlexRL
+Iteration: 0, Accuracy: 41.35%
+FlexRL
+FlexRL results (average over 2 iterations) (augmented RL task) `compute_augmRL_FDP_synth`
+Decision rule threshold   	0.5	0.55	0.6	0.65	0.7	0.75	0.8	0.85	0.9	0.95
+FDP model score estimator 	0.22	0.2	0.18	0.14	0.11	0.09	0.06	0.05	0.03	0.01
+FDP synth data estimator  	0.58	0.6	0.48	0.34	0.13	0.14	0.17	0.18	0	0
+Linked pairs (augm. RL)   	67	64	57	49	42	38	30	28	20	16
+Linked pairs (RL)         	70	68	60	50	42	38	30	28	20	16
+
+FDP estimation on original RL taskFlexRL
+FlexRL
+FlexRL results (average over 2 iterations) (original RL task) `compute_RL_FDP_score`
+Decision rule threshold   	0.5	0.55	0.6	0.65	0.7	0.75	0.8	0.85	0.9	0.95
+FDP model score estimator 	0.2	0.18	0.14	0.13	0.1	0.08	0.06	0.04	0.02	0.01
+Linked pairs (RL)         	72	66	56	54	46	42	35	30	26	22
+'fileB' is the larger source, saved as B; 'fileA' saved as A.
+'fileB' is the larger source, saved as B; 'fileA' saved as A.
+FlexRL
+FlexRL
+FlexRL
+Saving _problems/test-golden-parity-54.R
+Saving _problems/test-golden-parity-54.R
+Saving _problems/test-golden-parity-54.R
+Saving _problems/test-golden-parity-54.R
+Saving _problems/test-golden-parity-54.R
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+'f2' is the larger source, saved as B; 'f1' saved as A.
+'big' is the larger source, saved as B; 'small' saved as A.
+'fileB' is the larger source, saved as B; 'fileA' saved as A.
+'f2' is the larger source, saved as B; 'f1' saved as A.
+'f2' is the larger source, saved as B; 'f1' saved as A.
+'f2' is the larger source, saved as B; 'f1' saved as A.
+'f2' is the larger source, saved as B; 'f1' saved as A.
+'two' is the larger source, saved as B; 'one' saved as A.
+'fileB' is the larger source, saved as B; 'fileA' saved as A.
+'f2' is the larger source, saved as B; 'f1' saved as A.
+'fileB' is the larger source, saved as B; 'fileA' saved as A.
+FlexRL
+'fileB' is the larger source, saved as B; 'fileA' saved as A.
+FlexRL
+'fileB' is the larger source, saved as B; 'fileA' saved as A.
+FlexRL
+'fileB' is the larger source, saved as B; 'fileA' saved as A.
+FlexRL
+'fileB' is the larger source, saved as B; 'fileA' saved as A.
+FlexRL
+FlexRL
+FlexRL
+FlexRL
+'fileB' is the larger source, saved as B; 'fileA' saved as A.
+Iteration: 0, Accuracy: 50.13%
+Iteration: 1, Accuracy: 39.8%
+Iteration: 0, Accuracy: 48.35%
+Iteration: 0, Accuracy: 53.63%
+Iteration: 1, Accuracy: 39.39%
+Sample(s) of size 30 will be generated from original data of size 200.
+
+
+Synthesis
+-----------
+ V1 V2 V3 V4
+
+ iter imp variable
+  1   1  V1  V2  V3  V4
+  2   1  V1  V2  V3  V4
+  3   1  V1  V2  V3  V4
+  4   1  V1  V2  V3  V4
+  5   1  V1  V2  V3  V4
+Sample(s) of size 20 will be generated from original data of size 150.
+
+
+Synthesis
+-----------
+ V1 V2
+'fileB' is the larger source, saved as B; 'fileA' saved as A.
+FlexRL
+FlexRL
+'fileB' is the larger source, saved as B; 'fileA' saved as A.
+FlexRL
+
+==================== 
+fastLink(): Fast Probabilistic Record Linkage
+==================== 
+
+Calculating matches for each variable.
+Getting counts for parameter estimation.
+Running the EM algorithm.
+Iteration number 100 
+Maximum difference in log-likelihood = 0.001 
+Iteration number 200 
+Maximum difference in log-likelihood = 1e-04 
+Iteration number 300 
+Maximum difference in log-likelihood = 0 
+Iteration number 400 
+Maximum difference in log-likelihood = 0 
+Iteration number 500 
+Maximum difference in log-likelihood = 0 
+Getting the indices of estimated matches.
+Deduping the estimated matches.
+Getting the match patterns for each estimated match.
+[1] "Creating comparison data for field V1"
+[1] "Creating comparison data for field V2"
+[1] "Creating comparison data for field V3"
+[1] "Creating comparison data for field V4"
+[1] "Running Gibbs sampler with Gibbs updates to partition."
+[1] "Processing inputs"
+[1] "Beginning sampling"
+Beginning iteration 1/200
+Beginning iteration 100/200
+Beginning iteration 200/200
+[1] "Finished sampling in 1.30102205276489 seconds"
+[1] "Finding Bayes estimate with a threshold of 0.075 and a maximum connected component of size 30"
+[1] "Creating comparison data for field V1"
+[1] "Creating comparison data for field V2"
+[1] "Creating comparison data for field V3"
+[1] "Creating comparison data for field V4"
+[ FAIL 5 | WARN 87 | SKIP 0 | PASS 581 ]
+
+══ Warnings ════════════════════════════════════════════════════════════════════
+── Warning ('test-diagnostics-plots.R:4:1'): (code run outside of `test_that()`) ──
+PIVs 'V4' and 'V1' are associated (Cramer's V = 0.33 in data1, 0.22 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::std_generate(seed = 11) at test-diagnostics-plots.R:4:1
+ 2.   └─FlexRL::prepare_data(...) at ./helper-data.R:183:3
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'V1', file A hit its mistake bound on 30% of StEM iterations.
+  PIV 'V1', file B hit its mistake bound on 30% of StEM iterations.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'ANASCI', file A hit its mistake bound on 33% of StEM iterations.
+  PIV 'ANASCI', file B hit its mistake bound on 33% of StEM iterations.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'SESSO', file A hit its mistake bound on 33% of StEM iterations.
+  PIV 'SESSO', file B hit its mistake bound on 33% of StEM iterations.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'DOB_YEAR' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'DOB_YEAR' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'DOB_YEAR' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'DOB_YEAR' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'DOB_YEAR' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'DOB_YEAR' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'DOB_YEAR' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'DOB_YEAR' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'DOB_YEAR' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'DOB_YEAR' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'DOB_YEAR' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'DOB_YEAR' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-golden-parity.R:109:5'): StEM seed clouds reproduce the baseline cloud (z <= 5; Delta Jaccard) ──
+PIV 'STATE' has one or more values with zero estimated frequency; check for rare categories.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::golden_run_cloud(problem) at test-golden-parity.R:109:5
+ 2.   └─FlexRL::StEM(...) at ./helper-golden.R:388:5
+── Warning ('test-naive-linkage.R:35:3'): na_is_zero = FALSE treats NA as missing instead of 0 ──
+`na_match` is set to FALSE with one PIV.
+Backtrace:
+    ▆
+ 1. └─FlexRL::naive_linkage(c("V1"), A, B, na_is_zero = FALSE) at test-naive-linkage.R:35:3
+── Warning ('test-prepare-data.R:29:3'): true_pairs reconstruct entity_id matches ──
+PIVs 'V4' and 'V1' are associated (Cramer's V = 0.33 in data1, 0.22 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::std_generate(seed = 11) at test-prepare-data.R:29:3
+ 2.   └─FlexRL::prepare_data(...) at ./helper-data.R:183:3
+── Warning ('test-prepare-data.R:45:3'): out-of-support records are dropped with a warning, or kept when restriction is off ──
+We recommend bounding the mistakes with `bound_mistakes` when `dynamics` is `stable` (PIV: V).
+Backtrace:
+    ▆
+ 1. ├─testthat::expect_warning(...) at test-prepare-data.R:45:3
+ 2. │ └─testthat:::expect_condition_matching_(...)
+ 3. │   └─testthat:::quasi_capture(...)
+ 4. │     ├─testthat (local) .capture(...)
+ 5. │     │ └─base::withCallingHandlers(...)
+ 6. │     └─rlang::eval_bare(quo_get_expr(.quo), quo_get_env(.quo))
+ 7. └─FlexRL::prepare_data(d1, d2, "f1", "f2", cfg)
+── Warning ('test-prepare-data.R:123:3'): conditional-independence warning fires for associated PIVs ──
+PIVs 'V4' and 'V1' are associated (Cramer's V = 0.33 in data1, 0.22 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::std_generate(seed = 11) at test-prepare-data.R:123:3
+ 2.   └─FlexRL::prepare_data(...) at ./helper-data.R:183:3
+── Warning ('test-stem-tiny.R:33:3'): StEM rejects hand-edited encoded data (NA in a PIV column) with a clear error ──
+PIV 'V1': values out of the common support in data1 [1].
+Backtrace:
+    ▆
+ 1. └─FlexRL::prepare_data(...) at test-stem-tiny.R:33:3
+── Warning ('test-stem-tiny.R:33:3'): StEM rejects hand-edited encoded data (NA in a PIV column) with a clear error ──
+We recommend bounding the mistakes with `bound_mistakes` when `dynamics` is `stable` (PIV: V1).
+Backtrace:
+    ▆
+ 1. └─FlexRL::prepare_data(...) at test-stem-tiny.R:33:3
+── Warning ('test-stem-tiny.R:71:5'): StEM completes on tiny inputs, including square shapes ──
+PIV 'V1': values out of the common support in data2 [2, 1].
+Backtrace:
+    ▆
+ 1. └─FlexRL::prepare_data(...) at test-stem-tiny.R:71:5
+── Warning ('test-stem-tiny.R:71:5'): StEM completes on tiny inputs, including square shapes ──
+We recommend bounding the mistakes with `bound_mistakes` when `dynamics` is `stable` (PIV: V1).
+Backtrace:
+    ▆
+ 1. └─FlexRL::prepare_data(...) at test-stem-tiny.R:71:5
+── Warning ('test-stem-tiny.R:73:5'): StEM completes on tiny inputs, including square shapes ──
+No link was made in a Gibbs iteration (log-lik = -3.3315017339908, gamma so far = 0.428021107660607); check for a support mismatch between A and B.
+Backtrace:
+    ▆
+ 1. └─FlexRL::StEM(...) at test-stem-tiny.R:73:5
+── Warning ('test-stem-tiny.R:73:5'): StEM completes on tiny inputs, including square shapes ──
+No link was made in a Gibbs iteration (log-lik = -2.60268968544438, gamma so far = 0.5); check for a support mismatch between A and B.
+Backtrace:
+    ▆
+ 1. └─FlexRL::StEM(...) at test-stem-tiny.R:73:5
+── Warning ('test-stem-tiny.R:73:5'): StEM completes on tiny inputs, including square shapes ──
+No link was made in a Gibbs iteration (log-lik = -2.60268968544438, gamma so far = 0.5); check for a support mismatch between A and B.
+Backtrace:
+    ▆
+ 1. └─FlexRL::StEM(...) at test-stem-tiny.R:73:5
+── Warning ('test-stem-tiny.R:71:5'): StEM completes on tiny inputs, including square shapes ──
+PIV 'V1': values out of the common support in data1 [2] in data2 [1].
+Backtrace:
+    ▆
+ 1. └─FlexRL::prepare_data(...) at test-stem-tiny.R:71:5
+── Warning ('test-stem-tiny.R:71:5'): StEM completes on tiny inputs, including square shapes ──
+We recommend bounding the mistakes with `bound_mistakes` when `dynamics` is `stable` (PIV: V1).
+Backtrace:
+    ▆
+ 1. └─FlexRL::prepare_data(...) at test-stem-tiny.R:71:5
+── Warning ('test-stem-tiny.R:73:5'): StEM completes on tiny inputs, including square shapes ──
+No link was made in a Gibbs iteration (log-lik = -3.50217545712361, gamma so far = 0.327285512769595); check for a support mismatch between A and B.
+Backtrace:
+    ▆
+ 1. └─FlexRL::StEM(...) at test-stem-tiny.R:73:5
+── Warning ('test-stem-tiny.R:73:5'): StEM completes on tiny inputs, including square shapes ──
+No link was made in a Gibbs iteration (log-lik = -3.50217545712361, gamma so far = 0.327285512769595); check for a support mismatch between A and B.
+Backtrace:
+    ▆
+ 1. └─FlexRL::StEM(...) at test-stem-tiny.R:73:5
+── Warning ('test-stem-tiny.R:73:5'): StEM completes on tiny inputs, including square shapes ──
+`gamma` hit 0 and was reset to 0.01.
+Backtrace:
+    ▆
+ 1. └─FlexRL::StEM(...) at test-stem-tiny.R:73:5
+── Warning ('test-stem-tiny.R:73:5'): StEM completes on tiny inputs, including square shapes ──
+No link was made in a Gibbs iteration (log-lik = -1.91959284073794, gamma so far = 0.01); check for a support mismatch between A and B.
+Backtrace:
+    ▆
+ 1. └─FlexRL::StEM(...) at test-stem-tiny.R:73:5
+── Warning ('test-stem-tiny.R:73:5'): StEM completes on tiny inputs, including square shapes ──
+No link was made in a Gibbs iteration (log-lik = -1.91959284073794, gamma so far = 0.01); check for a support mismatch between A and B.
+Backtrace:
+    ▆
+ 1. └─FlexRL::StEM(...) at test-stem-tiny.R:73:5
+── Warning ('test-stem-tiny.R:73:5'): StEM completes on tiny inputs, including square shapes ──
+`gamma` hit 0 and was reset to 0.01.
+Backtrace:
+    ▆
+ 1. └─FlexRL::StEM(...) at test-stem-tiny.R:73:5
+── Warning ('test-stem-tiny.R:73:5'): StEM completes on tiny inputs, including square shapes ──
+No link was made in a Gibbs iteration (log-lik = -1.91959284073794, gamma so far = 0.01); check for a support mismatch between A and B.
+Backtrace:
+    ▆
+ 1. └─FlexRL::StEM(...) at test-stem-tiny.R:73:5
+── Warning ('test-stem-tiny.R:73:5'): StEM completes on tiny inputs, including square shapes ──
+No link was made in a Gibbs iteration (log-lik = -1.91959284073794, gamma so far = 0.01); check for a support mismatch between A and B.
+Backtrace:
+    ▆
+ 1. └─FlexRL::StEM(...) at test-stem-tiny.R:73:5
+── Warning ('test-stem-tiny.R:73:5'): StEM completes on tiny inputs, including square shapes ──
+`gamma` hit 0 and was reset to 0.01.
+Backtrace:
+    ▆
+ 1. └─FlexRL::StEM(...) at test-stem-tiny.R:73:5
+── Warning ('test-stem-tiny.R:71:5'): StEM completes on tiny inputs, including square shapes ──
+We recommend bounding the mistakes with `bound_mistakes` when `dynamics` is `stable` (PIV: V1).
+Backtrace:
+    ▆
+ 1. └─FlexRL::prepare_data(...) at test-stem-tiny.R:71:5
+── Warning ('test-stem-tiny.R:73:5'): StEM completes on tiny inputs, including square shapes ──
+`gamma` hit 1 and was reset to 0.99.
+Backtrace:
+    ▆
+ 1. └─FlexRL::StEM(...) at test-stem-tiny.R:73:5
+── Warning ('test-stem-tiny.R:71:5'): StEM completes on tiny inputs, including square shapes ──
+We recommend bounding the mistakes with `bound_mistakes` when `dynamics` is `stable` (PIV: V1).
+Backtrace:
+    ▆
+ 1. └─FlexRL::prepare_data(...) at test-stem-tiny.R:71:5
+── Warning ('test-stem-tiny.R:73:5'): StEM completes on tiny inputs, including square shapes ──
+No link was made in a Gibbs iteration (log-lik = -7.48738579190486, gamma so far = 0.333333333333333); check for a support mismatch between A and B.
+Backtrace:
+    ▆
+ 1. └─FlexRL::StEM(...) at test-stem-tiny.R:73:5
+── Warning ('test-stem-tiny.R:73:5'): StEM completes on tiny inputs, including square shapes ──
+No link was made in a Gibbs iteration (log-lik = -7.48738579190486, gamma so far = 0.333333333333333); check for a support mismatch between A and B.
+Backtrace:
+    ▆
+ 1. └─FlexRL::StEM(...) at test-stem-tiny.R:73:5
+── Warning ('test-stem-tiny.R:73:5'): StEM completes on tiny inputs, including square shapes ──
+`gamma` hit 0 and was reset to 0.01.
+Backtrace:
+    ▆
+ 1. └─FlexRL::StEM(...) at test-stem-tiny.R:73:5
+── Warning ('test-synthesise.R:3:1'): (code run outside of `test_that()`) ──────
+PIVs 'V4' and 'V1' are associated (Cramer's V = 0.33 in data1, 0.22 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::std_generate(seed = 11) at test-synthesise.R:3:1
+ 2.   └─FlexRL::prepare_data(...) at ./helper-data.R:183:3
+── Warning ('test-wrappers.R:3:1'): (code run outside of `test_that()`) ────────
+PIVs 'V4' and 'V1' are associated (Cramer's V = 0.33 in data1, 0.22 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+Backtrace:
+    ▆
+ 1. └─FlexRL:::std_generate(seed = 11) at test-wrappers.R:3:1
+ 2.   └─FlexRL::prepare_data(...) at ./helper-data.R:183:3
+
+══ Failed tests ════════════════════════════════════════════════════════════════
+── Failure ('test-golden-parity.R:54:5'): golden fixed states rebuild bit-identically under the current implementation ──
+Expected `rebuilt$eta` to be identical to `st$eta`.
+Differences:
+     actual$V4            | expected$V4                        
+ [1] 0.133937487571574920 - 0.133937487571574892 [1]           
+ [2] 0.108791045241945245 - 0.108791045241945231 [2]           
+ [3] 0.096330934123388681 - 0.096330934123388667 [3]           
+ [4] 0.088365787199869650 - 0.088365787199869636 [4]           
+ [5] 0.082643965319302154 - 0.082643965319302140 [5]           
+ [6] 0.078245032084957131 - 0.078245032084957117 [6]           
+ [7] 0.074708967794104464 - 0.074708967794104450 [7]           
+ [8] 0.071775322408999281 | 0.071775322408999281 [8]           
+ [9] 0.069283432423097355 - 0.069283432423097341 [9]           
+[10] 0.067127758874984789 | 0.067127758874984789 [10]          
+ ... ...                    ...                  and 2 more ...
+
+std_links
+── Failure ('test-golden-parity.R:54:5'): golden fixed states rebuild bit-identically under the current implementation ──
+Expected `rebuilt$eta` to be identical to `st$eta`.
+Differences:
+     actual$V4            | expected$V4                        
+ [1] 0.133937487571574920 - 0.133937487571574892 [1]           
+ [2] 0.108791045241945245 - 0.108791045241945231 [2]           
+ [3] 0.096330934123388681 - 0.096330934123388667 [3]           
+ [4] 0.088365787199869650 - 0.088365787199869636 [4]           
+ [5] 0.082643965319302154 - 0.082643965319302140 [5]           
+ [6] 0.078245032084957131 - 0.078245032084957117 [6]           
+ [7] 0.074708967794104464 - 0.074708967794104450 [7]           
+ [8] 0.071775322408999281 | 0.071775322408999281 [8]           
+ [9] 0.069283432423097355 - 0.069283432423097341 [9]           
+[10] 0.067127758874984789 | 0.067127758874984789 [10]          
+ ... ...                    ...                  and 2 more ...
+
+std_nolinks
+── Failure ('test-golden-parity.R:54:5'): golden fixed states rebuild bit-identically under the current implementation ──
+Expected `rebuilt$eta` to be identical to `st$eta`.
+Differences:
+     actual$DOB_MONTH     | expected$DOB_MONTH                 
+ [1] 0.133937487571574920 - 0.133937487571574892 [1]           
+ [2] 0.108791045241945245 - 0.108791045241945231 [2]           
+ [3] 0.096330934123388681 - 0.096330934123388667 [3]           
+ [4] 0.088365787199869650 - 0.088365787199869636 [4]           
+ [5] 0.082643965319302154 - 0.082643965319302140 [5]           
+ [6] 0.078245032084957131 - 0.078245032084957117 [6]           
+ [7] 0.074708967794104464 - 0.074708967794104450 [7]           
+ [8] 0.071775322408999281 | 0.071775322408999281 [8]           
+ [9] 0.069283432423097355 - 0.069283432423097341 [9]           
+[10] 0.067127758874984789 | 0.067127758874984789 [10]          
+ ... ...                    ...                  and 2 more ...
+
+     actual$DOB_YEAR       | expected$DOB_YEAR                    
+ [1] 0.0714322657468389882 - 0.0714322657468389605 [1]            
+ [2] 0.0580210290300254145 - 0.0580210290300253936 [2]            
+ [3] 0.0513757351336452880 - 0.0513757351336452742 [3]            
+ [4] 0.0471277198686928453 - 0.0471277198686928245 [4]            
+ [5] 0.0440761268566142936 - 0.0440761268566142797 [5]            
+ [6] 0.0417300639768666340 - 0.0417300639768666201 [6]            
+ [7] 0.0398441910319443718 - 0.0398441910319443510 [7]            
+ [8] 0.0382796033981511394 - 0.0382796033981511255 [8]            
+ [9] 0.0369506151446592837 - 0.0369506151446592698 [9]            
+[10] 0.0358009396613863939 - 0.0358009396613863801 [10]           
+ ... ...                     ...                   and 18 more ...
+
+    actual$STATE         | expected$STATE          
+[1] 0.166571931562437464 | 0.166571931562437464 [1]
+[2] 0.135298450577276713 - 0.135298450577276685 [2]
+[3] 0.119802379879433887 - 0.119802379879433860 [3]
+[4] 0.109896490704678690 - 0.109896490704678676 [4]
+[5] 0.102780522352703879 - 0.102780522352703865 [5]
+[6] 0.097309770146250238 - 0.097309770146250224 [6]
+[7] 0.092912128606636252 - 0.092912128606636238 [7]
+[8] 0.089263687926016036 - 0.089263687926016022 [8]
+[9] 0.086164638244566938 - 0.086164638244566924 [9]
+
+nltcs_links
+── Failure ('test-golden-parity.R:54:5'): golden fixed states rebuild bit-identically under the current implementation ──
+Expected `rebuilt$eta` to be identical to `st$eta`.
+Differences:
+     actual$ANASCI         | expected$ANASCI                      
+ [1] 0.0714322657468389882 - 0.0714322657468389605 [1]            
+ [2] 0.0580210290300254145 - 0.0580210290300253936 [2]            
+ [3] 0.0513757351336452880 - 0.0513757351336452742 [3]            
+ [4] 0.0471277198686928453 - 0.0471277198686928245 [4]            
+ [5] 0.0440761268566142936 - 0.0440761268566142797 [5]            
+ [6] 0.0417300639768666340 - 0.0417300639768666201 [6]            
+ [7] 0.0398441910319443718 - 0.0398441910319443510 [7]            
+ [8] 0.0382796033981511394 - 0.0382796033981511255 [8]            
+ [9] 0.0369506151446592837 - 0.0369506151446592698 [9]            
+[10] 0.0358009396613863939 - 0.0358009396613863801 [10]           
+ ... ...                     ...                   and 18 more ...
+
+shiwreg_links
+── Failure ('test-golden-parity.R:54:5'): golden fixed states rebuild bit-identically under the current implementation ──
+Expected `rebuilt$eta` to be identical to `st$eta`.
+Differences:
+     actual$ANASCI         | expected$ANASCI                      
+ [1] 0.0300025900705314097 - 0.0300025900705314236 [1]            
+ [2] 0.0243696756816829396 - 0.0243696756816829500 [2]            
+ [3] 0.0215785556382854619 - 0.0215785556382854689 [3]            
+ [4] 0.0197943274708712418 - 0.0197943274708712487 [4]            
+ [5] 0.0185126140428250006 - 0.0185126140428250111 [5]            
+ [6] 0.0175272335271037250 - 0.0175272335271037319 [6]            
+ [7] 0.0167351394740866202 - 0.0167351394740866272 [7]            
+ [8] 0.0160779899224752290 - 0.0160779899224752360 [8]            
+ [9] 0.0155197955356503638 - 0.0155197955356503707 [9]            
+[10] 0.0150369151191027048 - 0.0150369151191027117 [10]           
+ ... ...                     ...                   and 83 more ...
+
+     actual$IREG          | expected$IREG                       
+ [1] 0.091494361603855517 - 0.091494361603855490 [1]            
+ [2] 0.074316514465815595 - 0.074316514465815567 [2]            
+ [3] 0.065804857774508660 - 0.065804857774508646 [3]            
+ [4] 0.060363766963701555 - 0.060363766963701534 [4]            
+ [5] 0.056455119357528304 - 0.056455119357528283 [5]            
+ [6] 0.053450153419225925 - 0.053450153419225904 [6]            
+ [7] 0.051034623975246593 - 0.051034623975246579 [7]            
+ [8] 0.049030614369355949 - 0.049030614369355935 [8]            
+ [9] 0.047328373364384876 - 0.047328373364384863 [9]            
+[10] 0.045855805984729665 - 0.045855805984729651 [10]           
+ ... ...                    ...                  and 10 more ...
+
+shiwfull_links
+
+[ FAIL 5 | WARN 87 | SKIP 0 | PASS 581 ]
+Error:
+! Test failures.
+Execution halted

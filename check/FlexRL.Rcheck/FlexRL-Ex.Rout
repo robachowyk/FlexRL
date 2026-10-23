@@ -1,0 +1,1947 @@
+
+R version 4.6.1 (2026-06-24) -- "Happy Hop"
+Copyright (C) 2026 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin23
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> pkgname <- "FlexRL"
+> source(file.path(R.home("share"), "R", "examples-header.R"))
+> options(warn = 1)
+> base::assign(".ExTimings", "FlexRL-Ex.timings", pos = 'CheckExEnv')
+> base::cat("name\tuser\tsystem\telapsed\n", file=base::get(".ExTimings", pos = 'CheckExEnv'))
+> base::assign(".format_ptime",
++ function(x) {
++   if(!is.na(x[4L])) x[1L] <- x[1L] + x[4L]
++   if(!is.na(x[5L])) x[2L] <- x[2L] + x[5L]
++   options(OutDec = '.')
++   format(x[1L:3L], digits = 7L)
++ },
++ pos = 'CheckExEnv')
+> 
+> ### * </HEADER>
+> library('FlexRL')
+If you are happy with FlexRL, please cite us! If you are unhappy, please cite us anyway (and feel free to complain as well).
+> 
+> base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+> base::assign(".old_wd", base::getwd(), pos = 'CheckExEnv')
+> cleanEx()
+> nameEx("FDP_score")
+> ### * FDP_score
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: FDP_score
+> ### Title: Model specific, linkage score based, false discovery proportion
+> ###   at a given threshold
+> ### Aliases: FDP_score
+> 
+> ### ** Examples
+> 
+> PIVs_config <- list( V1 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V2 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V3 = list(dynamics = "flexible",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(NA,NA)),
++                      V4 = list(dynamics = "structured",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(0.03,0.03),
++                                cond_hazard_cov = list(cov1=c("Xe", "Xf"),
++                                                       cov2=c())) )
+> n_values  <- c( 5, 6, 7, 12 )
+> p_mistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
++                    V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+> p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
++                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
+> cond_hazard_params <- list( V1 = c(), V2 = c(), 
++                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
+> gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
++                            p_mistake, p_missing, cond_hazard_params, TRUE )
+> prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
++                            PIVs_config, TRUE, "entity_id", TRUE )
+Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.30 in data1, 0.24 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+Warning: PIVs 'V4' and 'V2' are associated (Cramer's V = 0.32 in data1, 0.25 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+'2' is the larger source, saved as B; '1' saved as A.
+> fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 5,
++              gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10 )
+FlexRL
+> FDP_score(fit$Delta$x, 0.5)
+$FDP_score
+[1] 0.1164706
+
+$n_linked
+[1] 85
+
+> FDP_score(fit$Delta$x, 0.75)
+$FDP_score
+[1] 0.04153846
+
+$n_linked
+[1] 65
+
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("FDP_score", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("FDP_synth")
+> ### * FDP_synth
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: FDP_synth
+> ### Title: Model agnostic, based on synthetic data, false discovery
+> ###   proportion at a given threshold
+> ### Aliases: FDP_synth
+> 
+> ### ** Examples
+> 
+> PIVs_config <- list( V1 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V2 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V3 = list(dynamics = "flexible",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(NA,NA)),
++                      V4 = list(dynamics = "structured",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(0.03,0.03),
++                                cond_hazard_cov = list(cov1=c("Xe", "Xf"),
++                                                       cov2=c())) )
+> n_values  <- c( 5, 6, 7, 12 )
+> p_mistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
++                    V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+> p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
++                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
+> cond_hazard_params <- list( V1 = c(), V2 = c(), 
++                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
+> gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
++                            p_mistake, p_missing, cond_hazard_params, TRUE )
+> prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
++                            PIVs_config, TRUE, "entity_id", TRUE )
+Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.30 in data1, 0.24 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+Warning: PIVs 'V4' and 'V2' are associated (Cramer's V = 0.32 in data1, 0.25 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+'2' is the larger source, saved as B; '1' saved as A.
+> PIVs <- names(PIVs_config)
+> n_synth <-as.integer(0.10 * nrow(prep_data$encodedB))
+> new_data <- synthesise("arf", prep_data$encodedA[, c(PIVs,"local_id","source",
++                       "date",prep_data$PIVs_config$V4$cond_hazard_cov$covA)],
++                       prep_data$encodedB[, c(PIVs,"local_id","source","date",
++                       prep_data$PIVs_config$V4$cond_hazard_cov$covB)], PIVs, 
++                       n_synth, TRUE)
+Iteration: 0, Accuracy: 48.5%
+Warning: executing %dopar% sequentially: no parallel backend registered
+Warning: PIV 'V2': synthetic records out of the common support were removed.
+Warning: PIV 'V3': synthetic records out of the common support were removed.
+Warning: PIV 'V4': synthetic records out of the common support were removed.
+> new_data$dataA[PIVs][is.na(new_data$dataA[PIVs])] <- 0
+> new_data$dataB[PIVs][is.na(new_data$dataB[PIVs])] <- 0
+> # cannot model dynamics for synthetic data, set dates to 0
+> new_data$dataA$date[is.na(new_data$dataA$date)] <- 0
+> new_data$dataB$date[is.na(new_data$dataB$date)] <- 0
+> arguments <- list(data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
++                   gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5)
+> fit_flexrl <- link_with_FlexRL(new_data$dataA, new_data$dataB, arguments)  
+FlexRL
+> FDP_synth(fit_flexrl$idxA, fit_flexrl$idxB, fit_flexrl$LinkScore, 0.5,
++           nrow(prep_data$encodedA), nrow(prep_data$encodedB), 
++           n_synth)
+$FDP_synth
+[1] 0.3409091
+
+$n_linked_real
+[1] 88
+
+$n_linked_all
+[1] 91
+
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("FDP_synth", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("FlexRL")
+> ### * FlexRL
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: FlexRL
+> ### Title: FlexRL: A Flexible Model for Record Linkage
+> ### Aliases: FlexRL-package FlexRL
+> 
+> ### ** Examples
+> 
+> # Link two simulated sources with 4 PIVs: two stable, one flexible, one
+> # structured. The true links are known, so performance can be computed.
+> PIVs_config <- list( V1 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V2 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V3 = list(dynamics = "flexible",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(NA,NA)),
++                      V4 = list(dynamics = "structured",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(0.03,0.03),
++                                cond_hazard_cov = list(cov1=c("Xe", "Xf"),
++                                                       cov2=c())) )
+> n_values  <- c( 5, 6, 7, 12 )
+> p_mistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
++                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+> p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
++                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
+> cond_hazard_params <- list(V1 = c(), V2 = c(),
++                            V3 = c(), V4 = log(c(0.7, 0.6, 0.5)))
+> gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100,
++                            p_mistake, p_missing, cond_hazard_params,
++                            TRUE, survival_model("exponential") )
+> prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
++                            PIVs_config, TRUE, "entity_id", TRUE )
+Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.30 in data1, 0.24 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+Warning: PIVs 'V4' and 'V2' are associated (Cramer's V = 0.32 in data1, 0.25 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+'2' is the larger source, saved as B; '1' saved as A.
+> fit <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2,
++              gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5 )
+FlexRL
+> 
+> # linked pairs and performance against the true pairs
+> linked <- fit$Delta[fit$Delta$x > 0.5, ]
+> linked_pairs <- paste(linked$i, linked$j, sep = "_")
+> true_pairs   <- paste(prep_data$true_pairs[[1]], prep_data$true_pairs[[2]], sep = "_")
+> tp <- length(intersect(linked_pairs, true_pairs))
+> fp <- length(setdiff(linked_pairs, true_pairs))
+> fn <- length(setdiff(true_pairs, linked_pairs))
+> c(LinkageDecisionRule = 0.5, FDP = fp / (tp + fp), Sensitivity = tp / (tp + fn))
+LinkageDecisionRule                 FDP         Sensitivity 
+          0.5000000           0.4571429           0.5700000 
+> 
+> # diagnostics for inference on the linked data
+> diag <- RL_diagnostics(fit, prep_data$encodedA, prep_data$encodedB,
++                        names(PIVs_config),
++                        list(V1 = FALSE, V2 = FALSE, V3 = FALSE, V4 = TRUE),
++                        names(PIVs_config),
++                        true_pairs = prep_data$true_pairs, FDP_estimation = TRUE,
++                        RL_method = "FlexRL", data = prep_data,
++                        StEM_iter = 5, StEM_burnin = 2,
++                        gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5,
++                        maxIter4CV = 1, n_repeats = 1)
+
+FDP estimation on augmented RL taskIteration: 0, Accuracy: 47.37%
+Warning: PIV 'V2': synthetic records out of the common support were removed.
+Warning: PIV 'V3': synthetic records out of the common support were removed.
+Warning: PIV 'V4': synthetic records out of the common support were removed.
+Warning: 5 real records were dropped from file B during synthesis; the real/synthetic index split used by the FDP_synth estimator is invalid for data that was not support-restricted by prepare_data().
+FlexRL
+FlexRL results (average over 1 iterations) (augmented RL task) `compute_augmRL_FDP_synth`
+Decision rule threshold   	0.5	0.55	0.6	0.65	0.7	0.75	0.8	0.85	0.9	0.95
+FDP model score estimator 	0.11	0.11	0.05	0.05	0.05	0.05	0	0	0	0
+FDP synth data estimator  	0.4	0.4	0.32	0.32	0.32	0.32	0.21	0.21	0.21	0.21
+Linked pairs (augm. RL)   	89	89	73	73	73	73	57	57	57	57
+Linked pairs (RL)         	92	92	75	75	75	75	58	58	58	58
+
+FDP estimation on original RL taskFlexRL
+FlexRL results (average over 1 iterations) (original RL task) `compute_RL_FDP_score`
+Decision rule threshold   	0.5	0.55	0.6	0.65	0.7	0.75	0.8	0.85	0.9	0.95
+FDP model score estimator 	0.14	0.14	0.04	0.04	0.04	0.04	0	0	0	0
+Linked pairs (RL)         	100	100	72	72	72	72	58	58	58	58
+> diag # print(diag)
+<RL_diagnostics>
+
+  Linked pairs  (score > 0.50):  105
+
+  FDP           (true pairs):    0.457
+  Sensitivity   (true pairs):    0.570
+
+  FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.140
+                                               threshold 0.50: FDP ~ 0.140
+                                           max threshold 0.99: FDP ~ 0.000
+  FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.111
+                                               threshold 0.50: FDP ~ 0.111
+                                           max threshold 0.99: FDP ~ 0.000
+  FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.397
+                                               threshold 0.50: FDP ~ 0.397
+                                           max threshold 0.99: FDP ~ 0.206
+  The score-based estimator is valid when the linkage model is well calibrated to the data.
+  The synthetic-data estimator is valid when the augmented task is equivalent to the
+  original one, which requires links and non-links to have similar distributions; similar
+  score-based FDP estimates on the original and augmented tasks support this prerequisite.
+
+  Multivariate MMD  (linked A vs. A):  0.0057
+  Multivariate MMD  (linked B vs. B):  0.0081
+
+  IoU support V1  (linked A vs. A):  1.0000
+  IoU support V2  (linked A vs. A):  1.0000
+  IoU support V3  (linked A vs. A):  1.0000
+  IoU support V4  (linked A vs. A):  1.0000
+  IoU support V1  (linked B vs. B):  1.0000
+  IoU support V2  (linked B vs. B):  1.0000
+  IoU support V3  (linked B vs. B):  1.0000
+  IoU support V4  (linked B vs. B):  1.0000
+
+  Agreement V1  (linked A vs. linked B):  0.9524
+  Agreement V2  (linked A vs. linked B):  0.9619
+  Agreement V3  (linked A vs. linked B):  0.8571
+  Agreement V4  (linked A vs. linked B):  0.5905
+  Agreement V1  (true pairs):  0.9500
+  Agreement V2  (true pairs):  0.9700
+  Agreement V3  (true pairs):  0.8800
+  Agreement V4  (true pairs):  0.7700
+
+  SMD V1 values: {0, 1, 2, ...}  (linked A vs. A):  0.0350, -0.0261, 0.0311, ...
+  SMD V2 values: {2, 5, 6, ...}  (linked A vs. A):  0.0560, 0.0683, -0.0792, ...
+  SMD V3 values: {1, 3, 7, ...}  (linked A vs. A):  -0.0942, 0.0928, 0.0952, ...
+  SMD V4                         (linked A vs. A):  0.0554
+  SMD V1 values: {0, 2, 3, ...}  (linked B vs. B):  0.0640, -0.0344, 0.0254, ...
+  SMD V2 values: {0, 5, 6, ...}  (linked B vs. B):  -0.0746, 0.0745, -0.0508, ...
+  SMD V3 values: {1, 5, 6, ...}  (linked B vs. B):  0.0560, 0.1304, -0.1463, ...
+  SMD V4                         (linked B vs. B):  0.0810
+> print(diag, threshold = 0.75)
+<RL_diagnostics>
+
+  Linked pairs  (score > 0.75):  81
+
+  FDP           (true pairs):    0.358
+  Sensitivity   (true pairs):    0.520
+
+  FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.140
+                                               threshold 0.75: FDP ~ 0.039
+                                           max threshold 0.99: FDP ~ 0.000
+  FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.111
+                                               threshold 0.75: FDP ~ 0.045
+                                           max threshold 0.99: FDP ~ 0.000
+  FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.397
+                                               threshold 0.75: FDP ~ 0.322
+                                           max threshold 0.99: FDP ~ 0.206
+  The score-based estimator is valid when the linkage model is well calibrated to the data.
+  The synthetic-data estimator is valid when the augmented task is equivalent to the
+  original one, which requires links and non-links to have similar distributions; similar
+  score-based FDP estimates on the original and augmented tasks support this prerequisite.
+
+  Multivariate MMD  (linked A vs. A):  0.0094
+  Multivariate MMD  (linked B vs. B):  0.0144
+
+  IoU support V1  (linked A vs. A):  1.0000
+  IoU support V2  (linked A vs. A):  1.0000
+  IoU support V3  (linked A vs. A):  1.0000
+  IoU support V4  (linked A vs. A):  1.0000
+  IoU support V1  (linked B vs. B):  0.8000
+  IoU support V2  (linked B vs. B):  1.0000
+  IoU support V3  (linked B vs. B):  1.0000
+  IoU support V4  (linked B vs. B):  1.0000
+
+  Agreement V1  (linked A vs. linked B):  0.9753
+  Agreement V2  (linked A vs. linked B):  0.9753
+  Agreement V3  (linked A vs. linked B):  0.9012
+  Agreement V4  (linked A vs. linked B):  0.6667
+  Agreement V1  (true pairs):  0.9500
+  Agreement V2  (true pairs):  0.9700
+  Agreement V3  (true pairs):  0.8800
+  Agreement V4  (true pairs):  0.7700
+
+  SMD V1 values: {0, 1, 2, ...}  (linked A vs. A):  0.0696, -0.1083, 0.0685, ...
+  SMD V2 values: {2, 5, 6, ...}  (linked A vs. A):  0.1143, 0.0862, -0.1016, ...
+  SMD V3 values: {2, 3, 4, ...}  (linked A vs. A):  -0.1184, 0.1483, 0.1095, ...
+  SMD V4                         (linked A vs. A):  0.0531
+  SMD V1 values: {0, 1, 3, ...}  (linked B vs. B):  -0.0707, -0.0985, 0.0505, ...
+  SMD V2 values: {2, 5, 6, ...}  (linked B vs. B):  -0.0605, 0.1152, -0.0735, ...
+  SMD V3 values: {3, 5, 6, ...}  (linked B vs. B):  0.0789, 0.0968, -0.1455, ...
+  SMD V4                         (linked B vs. B):  0.1468
+> plot(diag, "scores")
+> plot(diag, "distributions", threshold = 0.75)
+> plot(diag, "convergence")
+> plot(diag, "FDP")
+> plot(diag, "discrepancy")
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("FlexRL", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("RL_agreement")
+> ### * RL_agreement
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: RL_agreement
+> ### Title: Agreement rate of pairs on shared variables
+> ### Aliases: RL_agreement
+> 
+> ### ** Examples
+> 
+> PIVs_config <- list( V1 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V2 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V3 = list(dynamics = "flexible",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(NA,NA)),
++                      V4 = list(dynamics = "structured",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(0.03,0.03),
++                                cond_hazard_cov = list(cov1=c("Xe", "Xf"),
++                                                       cov2=c())) )
+> n_values  <- c( 5, 6, 7, 12 )
+> p_mistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
++                    V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+> p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
++                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
+> cond_hazard_params <- list( V1 = c(), V2 = c(), 
++                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
+> gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
++                            p_mistake, p_missing, cond_hazard_params, TRUE )
+> prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
++                            PIVs_config, TRUE, "entity_id", TRUE )
+Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.30 in data1, 0.24 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+Warning: PIVs 'V4' and 'V2' are associated (Cramer's V = 0.32 in data1, 0.25 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+'2' is the larger source, saved as B; '1' saved as A.
+> fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 5, 
++              gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10 )                         
+FlexRL
+> linked_pairs <- fit$Delta[fit$Delta$x > 0.5, ]
+> RL_agreement( prep_data$encodedA, prep_data$encodedB,
++               names(PIVs_config), linked_pairs )
+$agreements
+       V1        V2        V3        V4 
+0.9764706 1.0000000 0.9529412 0.7176471 
+
+> RL_agreement( prep_data$encodedA, prep_data$encodedB,
++               names(PIVs_config), prep_data$true_pairs )
+$agreements
+  V1   V2   V3   V4 
+0.95 0.97 0.88 0.77 
+
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("RL_agreement", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("RL_diagnostics")
+> ### * RL_diagnostics
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: RL_diagnostics
+> ### Title: Post-linkage diagnostics
+> ### Aliases: RL_diagnostics
+> 
+> ### ** Examples
+> 
+> PIVs_config <- list( V1 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V2 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V3 = list(dynamics = "flexible",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(NA,NA)),
++                      V4 = list(dynamics = "structured",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(0.03,0.03),
++                                cond_hazard_cov = list(cov1=c("Xe", "Xf"),
++                                                       cov2=c())) )
+> n_values  <- c( 5, 6, 7, 12 )
+> p_mistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
++                    V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+> p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
++                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
+> cond_hazard_params <- list( V1 = c(), V2 = c(), 
++                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
+> gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
++                            p_mistake, p_missing, cond_hazard_params, TRUE )
+> prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
++                            PIVs_config, TRUE, "entity_id", TRUE )
+Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.30 in data1, 0.24 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+Warning: PIVs 'V4' and 'V2' are associated (Cramer's V = 0.32 in data1, 0.25 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+'2' is the larger source, saved as B; '1' saved as A.
+> PIVs <- names(PIVs_config)  
+> PIVs_type <- list(V1=FALSE, V2=FALSE, V3=FALSE, V4=TRUE)
+> fit_brl <- link_with_BRL( prep_data$encodedA, prep_data$encodedB, 
++                           list( flds = PIVs, 
++                                 types = rep("bi",length(PIVs)),
++                                 nIter = 500 ) )
+> diag_brl <- RL_diagnostics(fit_brl, prep_data$encodedA, prep_data$encodedB,
++                            PIVs, PIVs_type, PIVs, true_pairs = prep_data$true_pairs,
++                            FDP_estimation = TRUE, RL_method = "BRL", 
++                            flds = PIVs, types = rep("bi",length(PIVs)), nIter = 500,
++                            maxIter4CV = 1, n_repeats = 1)
+
+FDP estimation on augmented RL taskIteration: 0, Accuracy: 48.74%
+Warning: PIV 'V2': synthetic records out of the common support were removed.
+Warning: PIV 'V3': synthetic records out of the common support were removed.
+Warning: PIV 'V4': synthetic records out of the common support were removed.
+Warning: 5 real records were dropped from file B during synthesis; the real/synthetic index split used by the FDP_synth estimator is invalid for data that was not support-restricted by prepare_data().
+BRL results (average over 1 iterations) (augmented RL task) `compute_augmRL_FDP_synth`
+Decision rule threshold   	0.5	0.55	0.6	0.65	0.7	0.75	0.8	0.85	0.9	0.95
+FDP model score estimator 	0.18	0.18	0.17	0.17	0.17	0.17	0.16	0.13	0.1	0
+FDP synth data estimator  	0	0	0	0	0	0	0	0	0	0
+Linked pairs (augm. RL)   	52	51	50	50	50	47	40	16	1	0
+Linked pairs (RL)         	52	51	50	50	50	47	40	16	1	0
+
+FDP estimation on original RL taskBRL results (average over 1 iterations) (original RL task) `compute_RL_FDP_score`
+Decision rule threshold   	0.5	0.55	0.6	0.65	0.7	0.75	0.8	0.85	0.9	0.95
+FDP model score estimator 	0.17	0.16	0.16	0.16	0.16	0.15	0.14	0.12	0.09	0
+Linked pairs (RL)         	52	51	51	50	50	48	42	27	3	0
+> diag_brl # print(diag_brl)
+<RL_diagnostics>
+
+  Linked pairs  (score > 0.50):  53
+
+  FDP           (true pairs):    0.151
+  Sensitivity   (true pairs):    0.450
+
+  FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.167
+                                               threshold 0.50: FDP ~ 0.167
+                                           max threshold 0.90: FDP ~ 0.095
+  FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.182
+                                               threshold 0.50: FDP ~ 0.182
+                                           max threshold 0.90: FDP ~ 0.098
+  FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.000
+                                               threshold 0.50: FDP ~ 0.000
+                                           max threshold 0.90: FDP ~ 0.000
+  The score-based estimator is valid when the linkage model is well calibrated to the data.
+  The synthetic-data estimator is valid when the augmented task is equivalent to the
+  original one, which requires links and non-links to have similar distributions; similar
+  score-based FDP estimates on the original and augmented tasks support this prerequisite.
+
+  Multivariate MMD  (linked A vs. A):  0.0147
+  Multivariate MMD  (linked B vs. B):  0.0153
+
+  IoU support V1  (linked A vs. A):  0.8000
+  IoU support V2  (linked A vs. A):  1.0000
+  IoU support V3  (linked A vs. A):  0.8571
+  IoU support V4  (linked A vs. A):  0.9167
+  IoU support V1  (linked B vs. B):  0.8000
+  IoU support V2  (linked B vs. B):  0.8333
+  IoU support V3  (linked B vs. B):  1.0000
+  IoU support V4  (linked B vs. B):  1.0000
+
+  Agreement V1  (linked A vs. linked B):  1.0000
+  Agreement V2  (linked A vs. linked B):  1.0000
+  Agreement V3  (linked A vs. linked B):  1.0000
+  Agreement V4  (linked A vs. linked B):  1.0000
+  Agreement V1  (true pairs):  0.9500
+  Agreement V2  (true pairs):  0.9700
+  Agreement V3  (true pairs):  0.8800
+  Agreement V4  (true pairs):  0.7700
+
+  SMD V1 values: {1, 2, 4, ...}  (linked A vs. A):  -0.1258, 0.1293, 0.0905, ...
+  SMD V2 values: {2, 4, 6, ...}  (linked A vs. A):  0.1220, 0.1398, -0.1052, ...
+  SMD V3 values: {2, 3, 4, ...}  (linked A vs. A):  -0.1910, 0.2369, -0.1784, ...
+  SMD V4                         (linked A vs. A):  0.0948
+  SMD V1 values: {1, 4, 5, ...}  (linked B vs. B):  -0.1164, 0.1260, -0.1085, ...
+  SMD V2 values: {0, 3, 4, ...}  (linked B vs. B):  -0.1425, -0.0925, 0.2306, ...
+  SMD V3 values: {1, 5, 6, ...}  (linked B vs. B):  0.1915, 0.3187, -0.2350, ...
+  SMD V4                         (linked B vs. B):  0.0182
+> print(diag_brl, threshold = 0.75)
+<RL_diagnostics>
+
+  Linked pairs  (score > 0.75):  46
+
+  FDP           (true pairs):    0.087
+  Sensitivity   (true pairs):    0.420
+
+  FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.167
+                                               threshold 0.75: FDP ~ 0.151
+                                           max threshold 0.90: FDP ~ 0.095
+  FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.182
+                                               threshold 0.75: FDP ~ 0.165
+                                           max threshold 0.90: FDP ~ 0.098
+  FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.000
+                                               threshold 0.75: FDP ~ 0.000
+                                           max threshold 0.90: FDP ~ 0.000
+  The score-based estimator is valid when the linkage model is well calibrated to the data.
+  The synthetic-data estimator is valid when the augmented task is equivalent to the
+  original one, which requires links and non-links to have similar distributions; similar
+  score-based FDP estimates on the original and augmented tasks support this prerequisite.
+
+  Multivariate MMD  (linked A vs. A):  0.0208
+  Multivariate MMD  (linked B vs. B):  0.0199
+
+  IoU support V1  (linked A vs. A):  0.8000
+  IoU support V2  (linked A vs. A):  1.0000
+  IoU support V3  (linked A vs. A):  0.8571
+  IoU support V4  (linked A vs. A):  0.9167
+  IoU support V1  (linked B vs. B):  0.8000
+  IoU support V2  (linked B vs. B):  0.8333
+  IoU support V3  (linked B vs. B):  1.0000
+  IoU support V4  (linked B vs. B):  1.0000
+
+  Agreement V1  (linked A vs. linked B):  1.0000
+  Agreement V2  (linked A vs. linked B):  1.0000
+  Agreement V3  (linked A vs. linked B):  1.0000
+  Agreement V4  (linked A vs. linked B):  1.0000
+  Agreement V1  (true pairs):  0.9500
+  Agreement V2  (true pairs):  0.9700
+  Agreement V3  (true pairs):  0.8800
+  Agreement V4  (true pairs):  0.7700
+
+  SMD V1 values: {0, 1, 4, ...}  (linked A vs. A):  -0.0816, -0.0963, 0.0540, ...
+  SMD V2 values: {2, 5, 6, ...}  (linked A vs. A):  0.1853, 0.0831, -0.2138, ...
+  SMD V3 values: {2, 3, 4, ...}  (linked A vs. A):  -0.1795, 0.3272, -0.1513, ...
+  SMD V4                         (linked A vs. A):  0.1236
+  SMD V1 values: {1, 4, 5, ...}  (linked B vs. B):  -0.0864, 0.0889, -0.0801, ...
+  SMD V2 values: {0, 4, 6, ...}  (linked B vs. B):  -0.1425, 0.1435, -0.1874, ...
+  SMD V3 values: {1, 3, 5, ...}  (linked B vs. B):  0.1854, 0.2051, 0.1945, ...
+  SMD V4                         (linked B vs. B):  0.0470
+> plot(diag_brl, "scores")
+> plot(diag_brl, "distributions", threshold = 0.75)
+> plot(diag_brl, "FDP")
+> plot(diag_brl, "discrepancy")
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("RL_diagnostics", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("StEM")
+> ### * StEM
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: StEM
+> ### Title: Stochastic Expectation-Maximisation for record linkage
+> ### Aliases: StEM
+> 
+> ### ** Examples
+> 
+> PIVs_config <- list( V1 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V2 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V3 = list(dynamics = "flexible",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(NA,NA)),
++                      V4 = list(dynamics = "structured",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(0.03,0.03),
++                                cond_hazard_cov = list(cov1=c("Xe", "Xf"),
++                                                       cov2=c())) )
+> n_values  <- c( 5, 6, 7, 12 )
+> p_mistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
++                    V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+> p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
++                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
+>                    
+> cond_hazard_params1 <- list( V1 = c(), V2 = c(), 
++                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
+> gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
++                            p_mistake, p_missing, cond_hazard_params1, TRUE )
+> prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
++                            PIVs_config, TRUE, "entity_id", TRUE )
+Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.30 in data1, 0.24 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+Warning: PIVs 'V4' and 'V2' are associated (Cramer's V = 0.32 in data1, 0.25 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+'2' is the larger source, saved as B; '1' saved as A.
+> fit1 <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
++               gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5,
++               model_dynamics = survival_model("exponential") )
+FlexRL
+> apply(fit1$alpha$V4[2:5,], 2, mean)
+ intercept         Xe         Xf 
+-0.5005694 -0.2558566 -0.6196497 
+> cond_hazard_params1$V4
+[1] -0.3566749 -0.5108256 -0.6931472
+> head(fit1$Delta[fit1$Delta$x > 0.5, ])
+    i j   x
+1   2 2 0.8
+2   3 3 0.8
+3   4 4 0.6
+4   5 5 1.0
+5   6 6 1.0
+7 136 8 1.0
+> 
+> cond_hazard_params2 <- list( V1 = c(), V2 = c(), 
++                              V3 = c(), V4 = log(c(0.3, 0.7, 0.6, 0.5)) )
+> gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
++                            p_mistake, p_missing, cond_hazard_params2, TRUE,
++                            model_dynamics = survival_model("weibull") )
+> prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
++                            PIVs_config, TRUE, "entity_id", TRUE )
+'2' is the larger source, saved as B; '1' saved as A.
+> fit2 <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
++               gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5,
++               model_dynamics = survival_model("weibull"))
+FlexRL
+> apply(fit2$alpha$V4[2:5,], 2, mean)
+ log_shape  intercept         Xe         Xf 
+-0.5879862 -4.0013047  0.6941859 -0.6918807 
+> cond_hazard_params2$V4
+[1] -1.2039728 -0.3566749 -0.5108256 -0.6931472
+> head(fit2$Delta[fit2$Delta$x > 0.5, ])
+  i j x
+1 1 1 1
+3 3 3 1
+4 4 4 1
+5 5 5 1
+6 6 6 1
+7 7 7 1
+> 
+> cond_hazard_params3 <- list( V1 = c(), V2 = c(), 
++                              V3 = c(), V4 = log(c(0.3, 0.7, 0.6, 0.5)) )
+> gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
++                            p_mistake, p_missing, cond_hazard_params3, TRUE,
++                            model_dynamics = survival_model("gompertz") )
+> prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
++                            PIVs_config, TRUE, "entity_id", TRUE )
+'2' is the larger source, saved as B; '1' saved as A.
+> fit3 <- StEM( data = prep_data, StEM_iter = 5, StEM_burnin = 2, 
++               gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5,
++               model_dynamics = survival_model("gompertz"))
+FlexRL
+> apply(fit3$alpha$V4[2:5,], 2, mean)
+         g  intercept         Xe         Xf 
+-0.7906202 -0.3372151  0.2207605 -0.1286891 
+> cond_hazard_params3$V4
+[1] -1.2039728 -0.3566749 -0.5108256 -0.6931472
+> head(fit3$Delta[fit3$Delta$x > 0.5, ])
+    i  j   x
+3   3  3 1.0
+4   4  4 0.6
+5   5  5 1.0
+6   6  6 1.0
+10 45 11 0.6
+11 12 12 0.6
+> 
+> cond_hazard_params4 <- list( V1 = c(), V2 = c(), 
++                              V3 = c(), V4 = log(c(0.6, 0.5, 0.4, 0.3, 0.2, 0.1)) )
+> gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
++                            p_mistake, p_missing, cond_hazard_params4, TRUE,
++                            model_dynamics = survival_model("piecewise", cuts = c(1,2,3)) )
+> prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
++                            PIVs_config, TRUE, "entity_id", TRUE )
+'2' is the larger source, saved as B; '1' saved as A.
+> fit4 <- StEM( data = prep_data, StEM_iter = 2, StEM_burnin = 1, 
++               gibbs_iter = 2, gibbs_burnin = 1, n_post_sample = 2,
++               model_dynamics = survival_model("piecewise", cuts = c(1,2,3)))
+FlexRL
+Warning: PIV 'V1', file A hit its mistake bound on 50% of StEM iterations.
+  PIV 'V1', file B hit its mistake bound on 50% of StEM iterations.
+> apply(fit4$alpha$V4, 2, mean)
+     log_h1      log_h2      log_h3      log_h4          Xe          Xf 
+  0.1044699 -25.0404900 -32.2150979 -10.0423655  -0.2941418  -0.1481116 
+> cond_hazard_params4$V4
+[1] -0.5108256 -0.6931472 -0.9162907 -1.2039728 -1.6094379 -2.3025851
+> head(fit4$Delta[fit4$Delta$x > 0.5, ])
+    i  j x
+3   4  4 1
+4   5  5 1
+5  70  6 1
+6   9  9 1
+10 13 13 1
+11 14 14 1
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("StEM", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("compute_RL_FDP_score")
+> ### * compute_RL_FDP_score
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: compute_RL_FDP_score
+> ### Title: Estimate the false discovery proportion of a record-linkage
+> ###   method via model specific linkage scores
+> ### Aliases: compute_RL_FDP_score
+> 
+> ### ** Examples
+> 
+> PIVs_config <- list( V1 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V2 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V3 = list(dynamics = "flexible",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(NA,NA)),
++                      V4 = list(dynamics = "structured",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(0.03,0.03),
++                                cond_hazard_cov = list(cov1=c("Xe", "Xf"),
++                                                       cov2=c())) )
+> n_values  <- c( 5, 6, 7, 12 )
+> p_mistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
++                    V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+> p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
++                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
+> cond_hazard_params <- list( V1 = c(), V2 = c(), 
++                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
+> gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
++                            p_mistake, p_missing, cond_hazard_params, TRUE )
+> prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
++                            PIVs_config, TRUE, "entity_id", TRUE )
+Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.30 in data1, 0.24 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+Warning: PIVs 'V4' and 'V2' are associated (Cramer's V = 0.32 in data1, 0.25 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+'2' is the larger source, saved as B; '1' saved as A.
+> PIVs <- names(PIVs_config)                          
+> compute_RL_FDP_score( prep_data$encodedA, prep_data$encodedB, PIVs, 1, 2,
++                       "BRL", flds = PIVs, types = rep("bi",length(PIVs)) )
+BRL results (average over 2 iterations) (original RL task) `compute_RL_FDP_score`
+Decision rule threshold   	0.5	0.55	0.6	0.65	0.7	0.75	0.8	0.85	0.9	0.95
+FDP model score estimator 	0.17	0.16	0.16	0.16	0.16	0.16	0.15	0.12	0.09	0
+Linked pairs (RL)         	52	50	50	50	50	50	42	18	2	0
+$FDP_score_estimator
+       0.50      0.51      0.52      0.53      0.54      0.55      0.56
+1 0.1770513 0.1709150 0.1709150 0.1709150 0.1649556 0.1649556 0.1649556
+2 0.1645534 0.1580222 0.1580222 0.1580222 0.1580222 0.1580222 0.1580222
+       0.57      0.58      0.59      0.60      0.61      0.62      0.63
+1 0.1649556 0.1649556 0.1649556 0.1649556 0.1649556 0.1649556 0.1649556
+2 0.1580222 0.1580222 0.1580222 0.1580222 0.1580222 0.1580222 0.1580222
+       0.64      0.65      0.66      0.67      0.68      0.69      0.70
+1 0.1649556 0.1649556 0.1649556 0.1649556 0.1649556 0.1649556 0.1649556
+2 0.1580222 0.1580222 0.1580222 0.1580222 0.1580222 0.1580222 0.1580222
+       0.71      0.72      0.73      0.74      0.75      0.76      0.77
+1 0.1649556 0.1649556 0.1649556 0.1649556 0.1649556 0.1632426 0.1588647
+2 0.1580222 0.1580222 0.1580222 0.1558277 0.1558277 0.1558277 0.1558277
+       0.78      0.79      0.80      0.81      0.82      0.83      0.84
+1 0.1558081 0.1545478 0.1521680 0.1477477 0.1434343 0.1400000 0.1342130
+2 0.1544907 0.1531678 0.1481654 0.1445000 0.1388254 0.1363973 0.1278222
+       0.85      0.86      0.87      0.88       0.89       0.90 0.91 0.92 0.93
+1 0.1278395 0.1195370 0.1163333 0.1093333 0.10000000 0.09666667 0.00 0.00    0
+2 0.1166049 0.1129861 0.1095238 0.1037778 0.09511111 0.08888889 0.08 0.08    0
+  0.94 0.95 0.96 0.97 0.98 0.99
+1    0    0    0    0    0    0
+2    0    0    0    0    0    0
+
+$Linked_pairs
+  0.50 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.60 0.61 0.62 0.63 0.64
+1   52   51   51   51   50   50   50   50   50   50   50   50   50   50   50
+2   51   50   50   50   50   50   50   50   50   50   50   50   50   50   50
+  0.65 0.66 0.67 0.68 0.69 0.70 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79
+1   50   50   50   50   50   50   50   50   50   50   50   49   46   44   43
+2   50   50   50   50   50   50   50   50   50   49   49   49   49   48   47
+  0.80 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.90 0.91 0.92 0.93 0.94
+1   41   37   33   30   24   18   12   10    5    2    1    0    0    0    0
+2   43   40   35   33   25   18   16   14   10    5    3    1    1    0    0
+  0.95 0.96 0.97 0.98 0.99
+1    0    0    0    0    0
+2    0    0    0    0    0
+
+> compute_RL_FDP_score( prep_data$encodedA, prep_data$encodedB, PIVs, 1, 2,
++                       "FlexRL", data = prep_data, StEM_iter = 5, 
++                       StEM_burnin = 2, gibbs_iter = 5, gibbs_burnin = 2,
++                       n_post_sample = 5 )
+FlexRL
+FlexRL
+FlexRL results (average over 2 iterations) (original RL task) `compute_RL_FDP_score`
+Decision rule threshold   	0.5	0.55	0.6	0.65	0.7	0.75	0.8	0.85	0.9	0.95
+FDP model score estimator 	0.12	0.12	0.04	0.04	0.04	0.04	0	0	0	0
+Linked pairs (RL)         	96	96	75	75	75	75	58	58	58	58
+$FDP_score_estimator
+       0.50      0.51      0.52      0.53      0.54      0.55      0.56
+1 0.1215686 0.1215686 0.1215686 0.1215686 0.1215686 0.1215686 0.1215686
+2 0.1222222 0.1222222 0.1222222 0.1222222 0.1222222 0.1222222 0.1222222
+       0.57      0.58      0.59       0.60       0.61       0.62       0.63
+1 0.1215686 0.1215686 0.1215686 0.04500000 0.04500000 0.04500000 0.04500000
+2 0.1222222 0.1222222 0.1222222 0.04285714 0.04285714 0.04285714 0.04285714
+        0.64       0.65       0.66       0.67       0.68       0.69       0.70
+1 0.04500000 0.04500000 0.04500000 0.04500000 0.04500000 0.04500000 0.04500000
+2 0.04285714 0.04285714 0.04285714 0.04285714 0.04285714 0.04285714 0.04285714
+        0.71       0.72       0.73       0.74       0.75       0.76       0.77
+1 0.04500000 0.04500000 0.04500000 0.04500000 0.04500000 0.04500000 0.04500000
+2 0.04285714 0.04285714 0.04285714 0.04285714 0.04285714 0.04285714 0.04285714
+        0.78       0.79 0.80 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.90
+1 0.04500000 0.04500000    0    0    0    0    0    0    0    0    0    0    0
+2 0.04285714 0.04285714    0    0    0    0    0    0    0    0    0    0    0
+  0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99
+1    0    0    0    0    0    0    0    0    0
+2    0    0    0    0    0    0    0    0    0
+
+$Linked_pairs
+  0.50 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.60 0.61 0.62 0.63 0.64
+1  102  102  102  102  102  102  102  102  102  102   80   80   80   80   80
+2   90   90   90   90   90   90   90   90   90   90   70   70   70   70   70
+  0.65 0.66 0.67 0.68 0.69 0.70 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79
+1   80   80   80   80   80   80   80   80   80   80   80   80   80   80   80
+2   70   70   70   70   70   70   70   70   70   70   70   70   70   70   70
+  0.80 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.90 0.91 0.92 0.93 0.94
+1   62   62   62   62   62   62   62   62   62   62   62   62   62   62   62
+2   55   55   55   55   55   55   55   55   55   55   55   55   55   55   55
+  0.95 0.96 0.97 0.98 0.99
+1   62   62   62   62   62
+2   55   55   55   55   55
+
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("compute_RL_FDP_score", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("compute_augmRL_FDP_synth")
+> ### * compute_augmRL_FDP_synth
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: compute_augmRL_FDP_synth
+> ### Title: Estimate the false discovery proportion of a record-linkage
+> ###   method via synthetic augmentation
+> ### Aliases: compute_augmRL_FDP_synth
+> 
+> ### ** Examples
+> 
+> PIVs_config <- list( V1 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V2 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V3 = list(dynamics = "flexible",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(NA,NA)),
++                      V4 = list(dynamics = "structured",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(0.03,0.03),
++                                cond_hazard_cov = list(cov1=c("Xe", "Xf"),
++                                                       cov2=c())) )
+> n_values  <- c( 5, 6, 7, 12 )
+> p_mistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
++                    V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+> p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
++                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
+> cond_hazard_params <- list( V1 = c(), V2 = c(), 
++                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
+> gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
++                            p_mistake, p_missing, cond_hazard_params, TRUE )
+> prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
++                            PIVs_config, TRUE, "entity_id", TRUE )
+Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.30 in data1, 0.24 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+Warning: PIVs 'V4' and 'V2' are associated (Cramer's V = 0.32 in data1, 0.25 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+'2' is the larger source, saved as B; '1' saved as A.
+> PIVs <- names(PIVs_config)                         
+> compute_augmRL_FDP_synth( "arf", prep_data$encodedA, prep_data$encodedB, PIVs, 
++                           NULL, TRUE, 1, 2, "BRL", flds = PIVs, 
++                           types = rep("bi",length(PIVs)) )
+Iteration: 0, Accuracy: 48.5%
+Warning: PIV 'V2': synthetic records out of the common support were removed.
+Warning: PIV 'V3': synthetic records out of the common support were removed.
+Warning: PIV 'V4': synthetic records out of the common support were removed.
+Warning: 5 real records were dropped from file B during synthesis; the real/synthetic index split used by the FDP_synth estimator is invalid for data that was not support-restricted by prepare_data().
+Iteration: 0, Accuracy: 45.2%
+Warning: PIV 'V2': synthetic records out of the common support were removed.
+Warning: PIV 'V3': synthetic records out of the common support were removed.
+Warning: PIV 'V4': synthetic records out of the common support were removed.
+Warning: 5 real records were dropped from file B during synthesis; the real/synthetic index split used by the FDP_synth estimator is invalid for data that was not support-restricted by prepare_data().
+BRL results (average over 2 iterations) (augmented RL task) `compute_augmRL_FDP_synth`
+Decision rule threshold   	0.5	0.55	0.6	0.65	0.7	0.75	0.8	0.85	0.9	0.95
+FDP model score estimator 	0.18	0.18	0.18	0.18	0.18	0.17	0.15	0.13	0	0
+FDP synth data estimator  	0.1	0.1	0.1	0.1	0.1	0.11	0	0	0	0
+Linked pairs (augm. RL)   	50	48	48	48	48	47	32	14	0	0
+Linked pairs (RL)         	50	49	49	49	49	48	32	14	0	0
+$FDP_score_estimator
+       0.50      0.51      0.52      0.53      0.54      0.55      0.56
+1 0.1865556 0.1865556 0.1804989 0.1804989 0.1804989 0.1804989 0.1804989
+2 0.1790444 0.1725624 0.1725624 0.1725624 0.1725624 0.1725624 0.1725624
+       0.57      0.58      0.59      0.60      0.61      0.62      0.63
+1 0.1804989 0.1804989 0.1804989 0.1804989 0.1804989 0.1804989 0.1804989
+2 0.1725624 0.1725624 0.1725624 0.1725624 0.1725624 0.1725624 0.1725624
+       0.64      0.65      0.66      0.67      0.68      0.69      0.70
+1 0.1804989 0.1804989 0.1804989 0.1804989 0.1804989 0.1804989 0.1804989
+2 0.1725624 0.1725624 0.1725624 0.1725624 0.1725624 0.1725624 0.1725624
+       0.71      0.72      0.73      0.74      0.75      0.76      0.77
+1 0.1804989 0.1804989 0.1804989 0.1804989 0.1773522 0.1744444 0.1716537
+2 0.1725624 0.1725624 0.1725624 0.1707176 0.1707176 0.1674638 0.1674638
+       0.78      0.79      0.80      0.81      0.82      0.83      0.84
+1 0.1661254 0.1633634 0.1570486 0.1544074 0.1498291 0.1442328 0.1363704
+2 0.1633592 0.1608672 0.1485417 0.1437548 0.1406173 0.1359722 0.1288304
+       0.85      0.86      0.87      0.88      0.89 0.90 0.91 0.92 0.93 0.94
+1 0.1300000 0.1219048 0.1168889 0.1061111 0.1061111    0    0    0    0    0
+2 0.1240278 0.1199145 0.1157778 0.1140278 0.0000000    0    0    0    0    0
+  0.95 0.96 0.97 0.98 0.99
+1    0    0    0    0    0
+2    0    0    0    0    0
+
+$FDP_synth_estimator
+       0.50      0.51      0.52      0.53      0.54      0.55      0.56
+1 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000
+2 0.2040816 0.2083333 0.2083333 0.2083333 0.2083333 0.2083333 0.2083333
+       0.57      0.58      0.59      0.60      0.61      0.62      0.63
+1 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000
+2 0.2083333 0.2083333 0.2083333 0.2083333 0.2083333 0.2083333 0.2083333
+       0.64      0.65      0.66      0.67      0.68      0.69      0.70
+1 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000
+2 0.2083333 0.2083333 0.2083333 0.2083333 0.2083333 0.2083333 0.2083333
+       0.71      0.72      0.73     0.74     0.75      0.76      0.77      0.78
+1 0.0000000 0.0000000 0.0000000 0.000000 0.000000 0.0000000 0.0000000 0.0000000
+2 0.2083333 0.2083333 0.2083333 0.212766 0.212766 0.2222222 0.2222222 0.2380952
+  0.79 0.80 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.90 0.91 0.92 0.93
+1 0.00    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+2 0.25    0    0    0    0    0    0    0    0    0    0    0    0    0    0
+  0.94 0.95 0.96 0.97 0.98 0.99
+1    0    0    0    0    0    0
+2    0    0    0    0    0    0
+
+$Linked_pairs_augm
+  0.50 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.60 0.61 0.62 0.63 0.64
+1   50   50   49   49   49   49   49   49   49   49   49   49   49   49   49
+2   49   48   48   48   48   48   48   48   48   48   48   48   48   48   48
+  0.65 0.66 0.67 0.68 0.69 0.70 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79
+1   49   49   49   49   49   49   49   49   49   49   47   45   43   39   37
+2   48   48   48   48   48   48   48   48   48   47   47   45   45   42   40
+  0.80 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.90 0.91 0.92 0.93 0.94
+1   32   30   26   21   15   11    7    5    2    2    0    0    0    0    0
+2   32   29   27   24   19   16   13   10    8    0    0    0    0    0    0
+  0.95 0.96 0.97 0.98 0.99
+1    0    0    0    0    0
+2    0    0    0    0    0
+
+$Linked_pairs
+  0.50 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.60 0.61 0.62 0.63 0.64
+1   50   50   49   49   49   49   49   49   49   49   49   49   49   49   49
+2   50   49   49   49   49   49   49   49   49   49   49   49   49   49   49
+  0.65 0.66 0.67 0.68 0.69 0.70 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79
+1   49   49   49   49   49   49   49   49   49   49   47   45   43   39   37
+2   49   49   49   49   49   49   49   49   49   48   48   46   46   43   41
+  0.80 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.90 0.91 0.92 0.93 0.94
+1   32   30   26   21   15   11    7    5    2    2    0    0    0    0    0
+2   32   29   27   24   19   16   13   10    8    0    0    0    0    0    0
+  0.95 0.96 0.97 0.98 0.99
+1    0    0    0    0    0
+2    0    0    0    0    0
+
+> compute_augmRL_FDP_synth( "arf", prep_data$encodedA, prep_data$encodedB, PIVs, 
++                           NULL, TRUE, 1, 2, "FlexRL", data = prep_data, 
++                           StEM_iter = 5, StEM_burnin = 2, 
++                           gibbs_iter = 5, gibbs_burnin = 2, n_post_sample = 5 )
+Iteration: 0, Accuracy: 48.48%
+Warning: PIV 'V2': synthetic records out of the common support were removed.
+Warning: PIV 'V3': synthetic records out of the common support were removed.
+Warning: PIV 'V4': synthetic records out of the common support were removed.
+Warning: 5 real records were dropped from file B during synthesis; the real/synthetic index split used by the FDP_synth estimator is invalid for data that was not support-restricted by prepare_data().
+FlexRL
+Iteration: 0, Accuracy: 47.37%
+Warning: PIV 'V2': synthetic records out of the common support were removed.
+Warning: PIV 'V3': synthetic records out of the common support were removed.
+Warning: PIV 'V4': synthetic records out of the common support were removed.
+Warning: 5 real records were dropped from file B during synthesis; the real/synthetic index split used by the FDP_synth estimator is invalid for data that was not support-restricted by prepare_data().
+FlexRL
+FlexRL results (average over 2 iterations) (augmented RL task) `compute_augmRL_FDP_synth`
+Decision rule threshold   	0.5	0.55	0.6	0.65	0.7	0.75	0.8	0.85	0.9	0.95
+FDP model score estimator 	0.13	0.13	0.06	0.06	0.06	0.06	0	0	0	0
+FDP synth data estimator  	0.25	0.25	0.23	0.23	0.23	0.23	0.34	0.34	0.34	0.34
+Linked pairs (augm. RL)   	92	92	74	74	74	74	52	52	52	52
+Linked pairs (RL)         	94	94	76	76	76	76	53	53	53	53
+$FDP_score_estimator
+       0.50      0.51      0.52      0.53      0.54      0.55      0.56
+1 0.1270833 0.1270833 0.1270833 0.1270833 0.1270833 0.1270833 0.1270833
+2 0.1230769 0.1230769 0.1230769 0.1230769 0.1230769 0.1230769 0.1230769
+       0.57      0.58      0.59       0.60       0.61       0.62       0.63
+1 0.1270833 0.1270833 0.1270833 0.05974026 0.05974026 0.05974026 0.05974026
+2 0.1230769 0.1230769 0.1230769 0.05945946 0.05945946 0.05945946 0.05945946
+        0.64       0.65       0.66       0.67       0.68       0.69       0.70
+1 0.05974026 0.05974026 0.05974026 0.05974026 0.05974026 0.05974026 0.05974026
+2 0.05945946 0.05945946 0.05945946 0.05945946 0.05945946 0.05945946 0.05945946
+        0.71       0.72       0.73       0.74       0.75       0.76       0.77
+1 0.05974026 0.05974026 0.05974026 0.05974026 0.05974026 0.05974026 0.05974026
+2 0.05945946 0.05945946 0.05945946 0.05945946 0.05945946 0.05945946 0.05945946
+        0.78       0.79 0.80 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.90
+1 0.05974026 0.05974026    0    0    0    0    0    0    0    0    0    0    0
+2 0.05945946 0.05945946    0    0    0    0    0    0    0    0    0    0    0
+  0.91 0.92 0.93 0.94 0.95 0.96 0.97 0.98 0.99
+1    0    0    0    0    0    0    0    0    0
+2    0    0    0    0    0    0    0    0    0
+
+$FDP_synth_estimator
+       0.50      0.51      0.52      0.53      0.54      0.55      0.56
+1 0.2503129 0.2503129 0.2503129 0.2503129 0.2503129 0.2503129 0.2503129
+2 0.2496879 0.2496879 0.2496879 0.2496879 0.2496879 0.2496879 0.2496879
+       0.57      0.58      0.59      0.60      0.61      0.62      0.63
+1 0.2503129 0.2503129 0.2503129 0.3137255 0.3137255 0.3137255 0.3137255
+2 0.2496879 0.2496879 0.2496879 0.1522070 0.1522070 0.1522070 0.1522070
+       0.64      0.65      0.66      0.67      0.68      0.69      0.70
+1 0.3137255 0.3137255 0.3137255 0.3137255 0.3137255 0.3137255 0.3137255
+2 0.1522070 0.1522070 0.1522070 0.1522070 0.1522070 0.1522070 0.1522070
+       0.71      0.72      0.73      0.74      0.75      0.76      0.77
+1 0.3137255 0.3137255 0.3137255 0.3137255 0.3137255 0.3137255 0.3137255
+2 0.1522070 0.1522070 0.1522070 0.1522070 0.1522070 0.1522070 0.1522070
+       0.78      0.79      0.80      0.81      0.82      0.83      0.84
+1 0.3137255 0.3137255 0.4524887 0.4524887 0.4524887 0.4524887 0.4524887
+2 0.1522070 0.1522070 0.2178649 0.2178649 0.2178649 0.2178649 0.2178649
+       0.85      0.86      0.87      0.88      0.89      0.90      0.91
+1 0.4524887 0.4524887 0.4524887 0.4524887 0.4524887 0.4524887 0.4524887
+2 0.2178649 0.2178649 0.2178649 0.2178649 0.2178649 0.2178649 0.2178649
+       0.92      0.93      0.94      0.95      0.96      0.97      0.98
+1 0.4524887 0.4524887 0.4524887 0.4524887 0.4524887 0.4524887 0.4524887
+2 0.2178649 0.2178649 0.2178649 0.2178649 0.2178649 0.2178649 0.2178649
+       0.99
+1 0.4524887
+2 0.2178649
+
+$Linked_pairs_augm
+  0.50 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.60 0.61 0.62 0.63 0.64
+1   94   94   94   94   94   94   94   94   94   94   75   75   75   75   75
+2   89   89   89   89   89   89   89   89   89   89   73   73   73   73   73
+  0.65 0.66 0.67 0.68 0.69 0.70 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79
+1   75   75   75   75   75   75   75   75   75   75   75   75   75   75   75
+2   73   73   73   73   73   73   73   73   73   73   73   73   73   73   73
+  0.80 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.90 0.91 0.92 0.93 0.94
+1   52   52   52   52   52   52   52   52   52   52   52   52   52   52   52
+2   51   51   51   51   51   51   51   51   51   51   51   51   51   51   51
+  0.95 0.96 0.97 0.98 0.99
+1   52   52   52   52   52
+2   51   51   51   51   51
+
+$Linked_pairs
+  0.50 0.51 0.52 0.53 0.54 0.55 0.56 0.57 0.58 0.59 0.60 0.61 0.62 0.63 0.64
+1   96   96   96   96   96   96   96   96   96   96   77   77   77   77   77
+2   91   91   91   91   91   91   91   91   91   91   74   74   74   74   74
+  0.65 0.66 0.67 0.68 0.69 0.70 0.71 0.72 0.73 0.74 0.75 0.76 0.77 0.78 0.79
+1   77   77   77   77   77   77   77   77   77   77   77   77   77   77   77
+2   74   74   74   74   74   74   74   74   74   74   74   74   74   74   74
+  0.80 0.81 0.82 0.83 0.84 0.85 0.86 0.87 0.88 0.89 0.90 0.91 0.92 0.93 0.94
+1   54   54   54   54   54   54   54   54   54   54   54   54   54   54   54
+2   52   52   52   52   52   52   52   52   52   52   52   52   52   52   52
+  0.95 0.96 0.97 0.98 0.99
+1   54   54   54   54   54
+2   52   52   52   52   52
+
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("compute_augmRL_FDP_synth", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("create_data_alpha")
+> ### * create_data_alpha
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: create_data_alpha
+> ### Title: Book-keeping data frame for parameters of PIVs dynamics
+> ### Aliases: create_data_alpha
+> 
+> ### ** Examples
+> 
+> PIVs_config <- list( V1 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V2 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V3 = list(dynamics = "flexible",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(NA,NA)),
++                      V4 = list(dynamics = "structured",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(0.03,0.03),
++                                cond_hazard_cov = list(cov1=c("Xe", "Xf"),
++                                                     cov2=c())) )
+> PIVs_stable <- sapply(PIVs_config, function(x) x$dynamics != "structured")
+> n_coef_unstable = c(0,0,0,3)
+> Valpha <- mapply(create_data_alpha, n_coef_unstable = n_coef_unstable,
++                  stable = PIVs_stable, SIMPLIFY = FALSE)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("create_data_alpha", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("log_lik")
+> ### * log_lik
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: log_lik
+> ### Title: Log-likelihood of the linkage matrix
+> ### Aliases: log_lik
+> 
+> ### ** Examples
+> 
+> LLL <- Matrix::Matrix(0, nrow = 13, ncol = 15, sparse = TRUE)
+> LLA <- stats::runif(13, 0, 2)
+> LLB <- stats::runif(15, 0, 2)
+> links <- as.matrix(data.frame(idxA = c(5, 9, 11, 12, 13),
++                               idxB = c(5, 9, 11, 13, 15)))
+> LLL[links] <- 0.67
+> sumRowD <- (seq_len(13) %in% links[, 1])
+> sumColD <- (seq_len(15) %in% links[, 2])
+> gamma <- 0.5
+> log_lik(LLL, LLA, LLB, links, sumRowD, sumColD, gamma)
+[1] 1.70038
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("log_lik", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("log_possible_config")
+> ### * log_possible_config
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: log_possible_config
+> ### Title: Log number of possible linkage configurations
+> ### Aliases: log_possible_config
+> 
+> ### ** Examples
+> 
+> log_possible_config(n_records_B = 15, sumD = 5)
+[1] 12.79486
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("log_possible_config", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("mmd")
+> ### * mmd
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: mmd
+> ### Title: Maximum Mean Discrepancy between two sets of variables
+> ### Aliases: mmd
+> 
+> ### ** Examples
+> 
+> x <- matrix(rnorm(50), ncol = 5)
+> y <- matrix(rnorm(30) + 0.5, ncol = 5)
+> mmd(x, y)
+[1] 0.2837449
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("mmd", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("naive_linkage")
+> ### * naive_linkage
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: naive_linkage
+> ### Title: Naive (deterministic exact-match) record linkage
+> ### Aliases: naive_linkage
+> 
+> ### ** Examples
+> 
+> PIVs_config <- list( V1 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V2 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V3 = list(dynamics = "flexible",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(NA,NA)),
++                      V4 = list(dynamics = "structured",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(0.03,0.03),
++                                cond_hazard_cov = list(cov1=c("Xe", "Xf"),
++                                                       cov2=c())) )
+> n_values  <- c( 5, 6, 7, 12 )
+> p_mistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
++                    V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+> p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
++                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
+> cond_hazard_params <- list( V1 = c(), V2 = c(), 
++                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
+> gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
++                            p_mistake, p_missing, cond_hazard_params, TRUE )
+> prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
++                            PIVs_config, TRUE, "entity_id", TRUE )
+Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.30 in data1, 0.24 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+Warning: PIVs 'V4' and 'V2' are associated (Cramer's V = 0.32 in data1, 0.25 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+'2' is the larger source, saved as B; '1' saved as A.
+> naive_linkage( names(prep_data$PIVs_config), 
++                prep_data$encodedA, prep_data$encodedB )
+    idxA idxB
+1      1    1
+2      2    2
+3      3    3
+4      4    4
+5      5    5
+6      5  164
+7      6    6
+8      8    8
+9      9    9
+10    10   10
+11    10  117
+12   107   10
+13   107  117
+14    11   11
+15    11  144
+16    89   11
+17    89  144
+18    12   12
+19    13   13
+20    14   14
+21    14  112
+22    15   15
+23    16   16
+24    17   17
+25    19   19
+26    20   20
+27    23   23
+28    24   24
+29    25   25
+30    27   27
+31    28   28
+32    29   29
+33    46   29
+34    30   30
+35    31   31
+36    32   32
+37    32   82
+38    33   33
+39    34   34
+40    35   80
+41    38   38
+42    38  179
+43    86   38
+44    86  179
+45    39   39
+46    40   40
+47    40  129
+48    41   41
+49    42   42
+50    43   43
+51    43   94
+52    94   43
+53    94   94
+54    44   44
+55    45   45
+56    45   97
+57    50   50
+58    51   51
+59    53   53
+60    54  166
+61    55   55
+62    56   56
+63    57   57
+64    58   58
+65    61   61
+66    62   62
+67    62  134
+68   147   62
+69   147  134
+70    63   63
+71    67   67
+72    70   70
+73    72   72
+74    74   74
+75    75   75
+76    77   77
+77    84  155
+78    85   85
+79    85   95
+80    95   85
+81    95   95
+82   112   85
+83   112   95
+84    88   88
+85    90   90
+86    90  165
+87    92   92
+88   132   92
+89    96  103
+90    96  133
+91    99   99
+92   124  158
+93   125   49
+94   126   98
+95   126  108
+96   138   98
+97   138  108
+98   127  200
+197   87   87
+198   49   18
+199    2   48
+200   48   48
+201   26   26
+202   84   26
+203   47   47
+204   47   55
+205   47   62
+206   47  134
+207   11   89
+208   89   89
+209   91   89
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("naive_linkage", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("plot_StEM_convergence")
+> ### * plot_StEM_convergence
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: plot_StEM_convergence
+> ### Title: Monte Carlo convergence (trace) plots for a fitted StEM model
+> ### Aliases: plot_StEM_convergence
+> 
+> ### ** Examples
+> 
+> PIVs_config <- list( V1 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V2 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V3 = list(dynamics = "flexible",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(NA,NA)),
++                      V4 = list(dynamics = "structured",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(0.03,0.03),
++                                cond_hazard_cov = list(cov1=c("Xe", "Xf"),
++                                                       cov2=c())) )
+> n_values  <- c( 5, 6, 7, 12 )
+> p_mistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
++                    V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+> p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
++                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
+> cond_hazard_params <- list( V1 = c(), V2 = c(), 
++                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
+> gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
++                            p_mistake, p_missing, cond_hazard_params, TRUE )
+> prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
++                            PIVs_config, TRUE, "entity_id", TRUE )
+Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.30 in data1, 0.24 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+Warning: PIVs 'V4' and 'V2' are associated (Cramer's V = 0.32 in data1, 0.25 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+'2' is the larger source, saved as B; '1' saved as A.
+> fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 3,
++              gibbs_iter = 10, gibbs_burnin = 3, n_post_sample = 10 )
+FlexRL
+> plot_StEM_convergence(fit)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("plot_StEM_convergence", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("plot_distributions")
+> ### * plot_distributions
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: plot_distributions
+> ### Title: Compare distributions of shared variables across data sets
+> ###   (histograms/barplots)
+> ### Aliases: plot_distributions
+> 
+> ### ** Examples
+> 
+> PIVs_config <- list( V1 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V2 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V3 = list(dynamics = "flexible",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(NA,NA)),
++                      V4 = list(dynamics = "structured",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(0.03,0.03),
++                                cond_hazard_cov = list(cov1=c("Xe", "Xf"),
++                                                       cov2=c())) )
+> n_values  <- c( 5, 6, 7, 12 )
+> p_mistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
++                    V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+> p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
++                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
+> cond_hazard_params <- list( V1 = c(), V2 = c(), 
++                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
+> gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
++                            p_mistake, p_missing, cond_hazard_params, TRUE )
+> prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
++                            PIVs_config, TRUE, "entity_id", TRUE )
+Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.30 in data1, 0.24 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+Warning: PIVs 'V4' and 'V2' are associated (Cramer's V = 0.32 in data1, 0.25 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+'2' is the larger source, saved as B; '1' saved as A.
+> fit <- StEM( data = prep_data, StEM_iter = 10, StEM_burnin = 5,
++              gibbs_iter = 10, gibbs_burnin = 5, n_post_sample = 10 )
+FlexRL
+> threshold_strict <- stats::quantile(fit$Delta$x, 0.75)
+> data_list = list(data_baseline = prep_data$encodedA, 
++ data_select = prep_data$encodedA[fit$Delta[fit$Delta$x > threshold_strict, "i"],])
+> common_vars = names(PIVs_config)
+> plot_distributions(data_list, common_vars)
+> common_vars = c("Xe", "Xf")
+> plot_distributions(data_list, common_vars)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("plot_distributions", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("plot_linkage_scores")
+> ### * plot_linkage_scores
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: plot_linkage_scores
+> ### Title: Plot the distribution of linkage scores
+> ### Aliases: plot_linkage_scores
+> 
+> ### ** Examples
+> 
+> fit_Delta_x <- c(0,0,0,0,0,0,0,0,0,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,
++ 0.2,0.2,0.2,0.2,0.4,0.4,0.4,0.4,0.4,0.5,0.6,0.7,0.7,0.7,0.7,0.7,0.7,0.8,0.8)
+> plot_linkage_scores(1000, fit_Delta_x)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("plot_linkage_scores", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("prepare_data")
+> ### * prepare_data
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: prepare_data
+> ### Title: Prepare two data sources for 'StEM()'
+> ### Aliases: prepare_data
+> 
+> ### ** Examples
+> 
+> PIVs_config <- list( V1 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V2 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V3 = list(dynamics = "flexible",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(NA,NA)),
++                      V4 = list(dynamics = "structured",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(0.03,0.03),
++                                cond_hazard_cov = list(cov1=c("Xe", "Xf"),
++                                                       cov2=c())) )
+> n_values  <- c( 5, 6, 7, 12 )
+> p_mistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
++                    V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+> p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
++                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
+> cond_hazard_params <- list( V1 = c(), V2 = c(), 
++                              V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
+> gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
++                            p_mistake, p_missing, cond_hazard_params, TRUE )
+> prep_data <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
++                            PIVs_config, TRUE, "entity_id", TRUE )
+Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.30 in data1, 0.24 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+Warning: PIVs 'V4' and 'V2' are associated (Cramer's V = 0.32 in data1, 0.25 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+'2' is the larger source, saved as B; '1' saved as A.
+> str(prep_data, max.level = 1)
+List of 6
+ $ encodedA     :'data.frame':	150 obs. of  11 variables:
+ $ encodedB     :'data.frame':	200 obs. of  9 variables:
+ $ n_values     : Named int [1:4] 5 6 7 12
+  ..- attr(*, "names")= chr [1:4] "V1" "V2" "V3" "V4"
+ $ PIVs_config  :List of 4
+ $ same_mistakes: logi TRUE
+ $ true_pairs   :'data.frame':	100 obs. of  2 variables:
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("prepare_data", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("prop_level")
+> ### * prop_level
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: prop_level
+> ### Title: Proportion of a data set with a given variable at a given level
+> ### Aliases: prop_level
+> 
+> ### ** Examples
+> 
+> df <- data.frame(colour = sample(c("orange", "purple"), 100, replace = TRUE))
+> prop_level(df, "colour", "purple")
+[1] 0.51
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("prop_level", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("simulateD")
+> ### * simulateD
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: simulateD
+> ### Title: Simulate the linkage matrix D
+> ### Aliases: simulateD
+> 
+> ### ** Examples
+> 
+> PIVs_config <- list( V1 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V2 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V3 = list(dynamics = "flexible",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(NA,NA)),
++                      V4 = list(dynamics = "structured",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(0.03,0.03),
++                                cond_hazard_cov = list(cov1=c("Xe", "Xf"),
++                                                       cov2=c())) )
+> n_values  <- c( 5, 6, 7, 12 )
+> p_mistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
++                    V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+> p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
++                    V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
+> cond_hazard_params <- list( V1 = c(), V2 = c(), 
++                             V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
+> gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
++                            p_mistake, p_missing, cond_hazard_params, TRUE )
+> data_StEM <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
++                            PIVs_config, TRUE, "entity_id", TRUE )
+Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.30 in data1, 0.24 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+Warning: PIVs 'V4' and 'V2' are associated (Cramer's V = 0.32 in data1, 0.25 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+'2' is the larger source, saved as B; '1' saved as A.
+> PIVs_stable <- sapply(data_StEM$PIVs_config, function(x)
++                         x$dynamics != "structured")
+> linksR = base::matrix(0,0,2)
+> linksCpp = linksR
+> sumRowD = rep(0, nrow(data_StEM$encodedA))
+> sumColD = rep(0, nrow(data_StEM$encodedB))
+> nlinkrec = 0
+> survivalpSameH = base::matrix(1, nrow(linksR), length(data_StEM$n_values))
+> gamma = 0.5
+> eta = lapply(data_StEM$n_values, function(x) rep(1/x,x))
+> phi = lapply(data_StEM$n_values, function(x)  c(0.9,0.9,0.1,0.1))
+> n_coef_unstable = lapply( seq_along(PIVs_stable), function(idx)
++  if(PIVs_stable[idx]){ 0 }else{
++    ncol(data_StEM$encodedA[, data_StEM$PIVs_config[[idx]]$cond_hazard_cov$covA,
++                              drop=FALSE]) +
++    ncol(data_StEM$encodedB[, data_StEM$PIVs_config[[idx]]$cond_hazard_cov$covB,
++                              drop=FALSE]) + 1 } )
+> alpha = lapply( seq_along(PIVs_stable),
++                 function(idx) if(PIVs_stable[idx]){ c(-Inf) }
++                 else{ rep(log(0.05), n_coef_unstable[[idx]]) }
++               )
+> newTruePivs = simulateH(data=data_StEM, links=linksCpp,
++                         survivalpSameH=survivalpSameH,
++                         sumRowD=sumRowD, sumColD=sumColD, eta=eta, phi=phi)
+> truepivsA = newTruePivs$truepivsA
+> truepivsB = newTruePivs$truepivsB
+> Dsample = simulateD(data=data_StEM, linksR=linksR,
++                    truepivsA=truepivsA, truepivsB=truepivsB,
++                    gamma=gamma, eta=eta, alpha=alpha, phi=phi)
+> linksCpp = Dsample$links
+> linksR = linksCpp + 1
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("simulateD", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("simulateH")
+> ### * simulateH
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: simulateH
+> ### Title: Simulate the true PIV values underlying the registered records
+> ### Aliases: simulateH
+> 
+> ### ** Examples
+> 
+> PIVs_config <- list( V1 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V2 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V3 = list(dynamics = "flexible",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(NA,NA)),
++                      V4 = list(dynamics = "structured",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(0.03,0.03),
++                                cond_hazard_cov = list(cov1=c("Xe", "Xf"),
++                                                     cov2=c())) )
+> n_values  <- c( 5, 6, 7, 12 )
+> p_mistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
++                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+> p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
++                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
+> cond_hazard_params <- list( V1 = c(), V2 = c(), 
++                             V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
+> gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
++                            p_mistake, p_missing, cond_hazard_params, TRUE )
+> data_StEM <- prepare_data( gen_data$data1, gen_data$data2, "1", "2",
++                            PIVs_config, TRUE, "entity_id", TRUE )
+Warning: PIVs 'V4' and 'V1' are associated (Cramer's V = 0.30 in data1, 0.24 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+Warning: PIVs 'V4' and 'V2' are associated (Cramer's V = 0.32 in data1, 0.25 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.
+'2' is the larger source, saved as B; '1' saved as A.
+> PIVs_stable <- sapply(data_StEM$PIVs_config, function(x)
++                         x$dynamics != "structured")
+> linksR = base::matrix(0,0,2)
+> linksCpp = linksR
+> sumRowD = rep(0, nrow(data_StEM$encodedA))
+> sumColD = rep(0, nrow(data_StEM$encodedB))
+> nlinkrec = 0
+> survivalpSameH = base::matrix(1, nrow(linksR), length(data_StEM$n_values))
+> gamma = 0.5
+> eta = lapply(data_StEM$n_values, function(x) rep(1/x,x))
+> phi = lapply(data_StEM$n_values, function(x)  c(0.9,0.9,0.1,0.1))
+> n_coef_unstable = lapply( seq_along(PIVs_stable), function(idx)
++  if(PIVs_stable[idx]){ 0 }else{
++    ncol(data_StEM$encodedA[, data_StEM$PIVs_config[[idx]]$cond_hazard_cov$covA,
++                              drop=FALSE]) +
++    ncol(data_StEM$encodedB[, data_StEM$PIVs_config[[idx]]$cond_hazard_cov$covB,
++                              drop=FALSE]) + 1 } )
+> alpha = lapply( seq_along(PIVs_stable),
++                 function(idx) if(PIVs_stable[idx]){ c(-Inf) }
++                 else{ rep(log(0.05), n_coef_unstable[[idx]]) }
++               )
+> newTruePivs = simulateH(data=data_StEM, links=linksCpp,
++                         survivalpSameH=survivalpSameH,
++                         sumRowD=sumRowD, sumColD=sumColD, eta=eta, phi=phi)
+> truepivsA = newTruePivs$truepivsA
+> truepivsB = newTruePivs$truepivsB
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("simulateH", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("simulate_data")
+> ### * simulate_data
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: simulate_data
+> ### Title: Simulate two linked data sources for record linkage benchmarking
+> ### Aliases: simulate_data
+> 
+> ### ** Examples
+> 
+> PIVs_config <- list( V1 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V2 = list(dynamics = "stable",
++                                bound_mistakes = c(0.10,0.10),
++                                fix_mistakes = c(NA,NA)),
++                      V3 = list(dynamics = "flexible",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(NA,NA)),
++                      V4 = list(dynamics = "structured",
++                                bound_mistakes = c(NA,NA),
++                                fix_mistakes = c(0.03,0.03),
++                                cond_hazard_cov = list(cov1=c("Xe", "Xf"),
++                                                     cov2=c())) )
+> n_values  <- c( 5, 6, 7, 12 )
+> p_mistake <- list( V1 = c(0.02, 0.02), V2 = c(0.02, 0.02),
++                   V3 = c(0.05, 0.05), V4 = c(0.02, 0.02) )
+> p_missing <- list( V1 = c(0.005, 0.005), V2 = c(0.005, 0.005),
++                   V3 = c(0.005, 0.005), V4 = c(0.005, 0.005) )
+> cond_hazard_params <- list( V1 = c(), V2 = c(), 
++                             V3 = c(), V4 = log(c(0.7, 0.6, 0.5)) )
+> gen_data <- simulate_data( PIVs_config, n_values, c(150, 200), 100, 
++                            p_mistake, p_missing, cond_hazard_params, TRUE )
+> str(gen_data, max.level = 1)
+List of 6
+ $ data1          :'data.frame':	150 obs. of  11 variables:
+ $ data2          :'data.frame':	200 obs. of  9 variables:
+ $ n_values       : int [1:4] 5 6 7 12
+ $ time_difference: num [1:100] 0.000455 0.006452 0.001761 0.006557 0.001672 ...
+ $ proba_same_H   : num [1:100, 1:4] 1 1 1 1 1 1 1 1 1 1 ...
+ $ true_pairs     :'data.frame':	100 obs. of  2 variables:
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("simulate_data", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("smd")
+> ### * smd
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: smd
+> ### Title: Standardised mean difference between a selected set and a
+> ###   baseline
+> ### Aliases: smd
+> 
+> ### ** Examples
+> 
+> base <- data.frame(age = rnorm(200, 40, 10), sex = sample(c("M", "F"),
++                     200, replace = TRUE))
+> select <- data.frame(age = rnorm(80, 43, 10), sex = sample(c("M", "F"), 80,
++                     replace = TRUE, prob = c(0.6, 0.4)))
+> smd(select, base, "age")
+$age
+[1] 0.3297924
+
+> smd(select, base, "sex", continuous = FALSE)
+$sex_F
+[1] -0.004999749
+
+$sex_M
+[1] 0.004999749
+
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("smd", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("support_iou")
+> ### * support_iou
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: support_iou
+> ### Title: Intersection-over-union of two histogram supports
+> ### Aliases: support_iou
+> 
+> ### ** Examples
+> 
+> h1 <- graphics::hist(rnorm(200), plot = FALSE)
+> h2 <- graphics::hist(rnorm(200) + 1, plot = FALSE)
+> support_iou(h1, h2)
+[1] 0.6923077
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("support_iou", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
+> nameEx("survival_model")
+> ### * survival_model
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: survival_model
+> ### Title: Survival models for the dynamics of a PIV
+> ### Aliases: survival_model
+> 
+> ### ** Examples
+> 
+> X <- cbind(intercept = rep(1, 5))
+> times <- c(0.001, 0.2, 1.3, 1.5, 2)
+> Hequal <- c(TRUE, TRUE, TRUE, FALSE, FALSE)
+> 
+> expo <- survival_model("exponential")
+> expo$S(X, alpha = log(0.3), times)
+[1] 0.9997000 0.9417645 0.6770569 0.6376282 0.5488116
+> stats::nlminb(expo$init(ncol(X)), expo$negloglik, X = X, times = times,
++               Hequal = Hequal)$par
+[1] -0.3719637
+> 
+> weib <- survival_model("weibull")
+> weib$S(X, alpha = c(0.5, -1), times)
+[1] 0.9999978 0.9865530 0.7435143 0.6871328 0.5471930
+> stats::nlminb(weib$init(ncol(X)), weib$negloglik, X = X, times = times,
++               Hequal = Hequal)$par
+[1]  6.9425277 -0.3209695
+> 
+> gomp <- survival_model("gompertz")
+> gomp$S(X, alpha = c(0.5, -1), times)
+[1] 0.9996321 0.9255377 0.5098609 0.4396208 0.2824536
+> stats::nlminb(gomp$init(ncol(X)), gomp$negloglik, X = X, times = times,
++               Hequal = Hequal)$par
+[1]  147.3019 -212.2908
+>               
+> pw <- survival_model("piecewise", cuts = 1)
+> pw$S(X, alpha = c(-2, -1), times)
+[1] 0.9998647 0.9732960 0.7821575 0.7266757 0.6045840
+> stats::nlminb(pw$init(ncol(X)), pw$negloglik, X = X, times = times,
++               Hequal = Hequal)$par
+[1] -22.7343167   0.9000345
+> 
+> # a custom model: log-logistic with scale exp(X alpha[-1]) 
+> # and shape exp(alpha[1])
+> loglogistic <- survival_model("custom",
++   S = function(X, alpha, times) {
++     lambda <- exp(as.matrix(X) %*% alpha[-1])
++     1 / ( 1 + (lambda * times)^exp(alpha[1]) )
++   },
++   n_par = function(n_cov) n_cov + 1,
++   init = function(n_cov) c(stats::rnorm(1, 0, 0.1), stats::runif(n_cov, log(0.01), log(1))))
+> loglogistic$S(X, alpha = c(0, -2), times)
+          [,1]
+[1,] 0.9998647
+[2,] 0.9736463
+[3,] 0.8503865
+[4,] 0.8312532
+[5,] 0.7869860
+> stats::nlminb(loglogistic$init(ncol(X)), loglogistic$negloglik, X = X, times = times,
++               Hequal = Hequal)$par
+[1]  5.8770233 -0.3380476
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("survival_model", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> ### * <FOOTER>
+> ###
+> cleanEx()
+> options(digits = 7L)
+> base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+Time elapsed:  9.143 0.128 9.265 0 0 
+> grDevices::dev.off()
+null device 
+          1 
+> ###
+> ### Local variables: ***
+> ### mode: outline-minor ***
+> ### outline-regexp: "\\(> \\)?### [*]+" ***
+> ### End: ***
+> quit('no')

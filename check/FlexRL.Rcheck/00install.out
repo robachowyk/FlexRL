@@ -1,0 +1,23 @@
+* installing *source* package ‘FlexRL’ ...
+** this is package ‘FlexRL’ version ‘1.0.1’
+** using staged installation
+** libs
+using C++ compiler: ‘Apple clang version 21.0.0 (clang-2100.3.34.2)’
+using SDK: ‘MacOSX27.0.sdk’
+clang++ -arch arm64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.6/Resources/library/Rcpp/include' -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -I/usr/local/include    -fPIC  -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk  -c FlexRLfunctions.cpp -o FlexRLfunctions.o
+clang++ -arch arm64 -std=gnu++20 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG  -I'/Library/Frameworks/R.framework/Versions/4.6/Resources/library/Rcpp/include' -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -I/usr/local/include    -fPIC  -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk  -c RcppExports.cpp -o RcppExports.o
+clang++ -arch arm64 -std=gnu++20 -dynamiclib -Wl,-headerpad_max_install_names -undefined dynamic_lookup -L/Library/Frameworks/R.framework/Resources/lib -L/opt/R/arm64/lib -o FlexRL.so FlexRLfunctions.o RcppExports.o -F/Library/Frameworks/R.framework/.. -framework R
+installing to /Users/kayane/Documents/FlexRL/check/FlexRL.Rcheck/00LOCK-FlexRL/00new/FlexRL/libs
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (FlexRL)
