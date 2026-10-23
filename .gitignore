@@ -10,3 +10,5 @@ docs
 *.so
 *.tar.gz
 FlexRL.Rcheck/
+/.quarto/
+**/*.quarto_ipynb
