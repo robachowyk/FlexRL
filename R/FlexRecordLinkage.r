@@ -3412,9 +3412,9 @@ RL_diagnostics <- function(fit, encodedA, encodedB, compare_vars, vars_type_cont
     arguments$encodedB <- encodedB
     arguments$PIVs <- if ("PIVs" %in% names(arguments)) arguments$PIVs else PIVs
 
-    cat("\nFDP estimation on augmented RL task")
+    cat("\nFDP estimation on augmented RL task\n")
     FDP_synth_res <- do.call(compute_augmRL_FDP_synth, arguments)
-    cat("\nFDP estimation on original RL task")
+    cat("\nFDP estimation on original RL task\n")
     FDP_score_res <- do.call(compute_RL_FDP_score, arguments)
 
     FDP_measures <- .FDP_measures(FDP_score_res, FDP_synth_res, true_performance)
