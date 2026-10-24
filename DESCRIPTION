@@ -9,15 +9,13 @@ License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Depends: R (>= 4.1.0)
-Imports: Matrix (>= 1.7), Rcpp (>= 1.0.13), cli, graphics, grDevices, stats, utils, BRL, arf, diyar, fastLink, fedmatch, mice, multilink, reclin2, synthpop
+Imports: Matrix (>= 1.7), Rcpp (>= 1.0.13), cli, graphics, grDevices, stats, utils
 LinkingTo: Rcpp
 VignetteBuilder: knitr, quarto
 Suggests: 
-    foreach,
-    knitr,
-    rmarkdown,
-    testthat (>= 3.0.0),
-    quarto
+    foreach, knitr, rmarkdown, testthat (>= 3.0.0), quarto,
+    arf, mice, synthpop,
+    BRL, diyar, fastLink, fedmatch, multilink, reclin2
 Config/testthat/edition: 3
 URL: https://github.com/robachowyk/FlexRL, https://robachowyk.github.io/FlexRL/
 BugReports: https://github.com/robachowyk/FlexRL/issues

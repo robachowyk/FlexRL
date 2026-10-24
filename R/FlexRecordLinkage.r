@@ -1481,6 +1481,12 @@ link_with_FlexRL <- function(dataA, dataB, arguments, ...) {
 #' @export
 #'
 link_with_fedmatch <- function(dataA, dataB, arguments, ...) {
+  ok <- requireNamespace("fedmatch", quietly = TRUE)
+  if (!ok) 
+    {
+    stop("Package 'fedmatch' is required. Install it with install.packages(\"fedmatch\").",
+           call. = FALSE)
+    }
   # Key the records by their row POSITION: `rownames()` are character and are
   # not guaranteed to equal the row positions once rows have been filtered
   # (e.g. by the support restriction), which would silently return wrong
@@ -1520,6 +1526,12 @@ link_with_fedmatch <- function(dataA, dataB, arguments, ...) {
 #' @export
 #'
 link_with_reclin2 <- function(dataA, dataB, arguments, ...) {
+  ok <- requireNamespace("reclin2", quietly = TRUE)
+  if (!ok) 
+  {
+    stop("Package 'reclin2' is required. Install it with install.packages(\"reclin2\").",
+         call. = FALSE)
+  }
   arguments$x <- dataA
   arguments$y <- dataB
   pairs <- do.call(reclin2::pair, arguments[intersect(names(arguments), names(formals(reclin2::pair)))])
@@ -1566,7 +1578,12 @@ link_with_reclin2 <- function(dataA, dataB, arguments, ...) {
 #' @export
 #'
 link_with_BRL <- function(dataA, dataB, arguments, ...) {
-
+  ok <- requireNamespace("BRL", quietly = TRUE)
+  if (!ok) 
+  {
+    stop("Package 'BRL' is required. Install it with install.packages(\"BRL\").",
+         call. = FALSE)
+  }
   arguments$df1 <- dataB
   arguments$df2 <- dataA
   comp_data <- do.call(BRL::compareRecords, arguments[intersect(names(arguments), names(formals(BRL::compareRecords)))])
@@ -1623,6 +1640,12 @@ link_with_BRL <- function(dataA, dataB, arguments, ...) {
 #' @export
 #'
 link_with_fastLink <- function(dataA, dataB, arguments, ...) {
+  ok <- requireNamespace("fastLink", quietly = TRUE)
+  if (!ok) 
+  {
+    stop("Package 'fastLink' is required. Install it with install.packages(\"fastLink\").",
+         call. = FALSE)
+  }
   arguments$dfA <- dataA
   arguments$dfB <- dataB
   out <- do.call(fastLink::fastLink, arguments[intersect(names(arguments), names(formals(fastLink::fastLink)))])
@@ -1656,6 +1679,12 @@ link_with_fastLink <- function(dataA, dataB, arguments, ...) {
 #' @export
 #'
 link_with_multilink <- function(dataA, dataB, arguments, ...) {
+  ok <- requireNamespace("multilink", quietly = TRUE)
+  if (!ok) 
+  {
+    stop("Package 'multilink' is required. Install it with install.packages(\"multilink\").",
+         call. = FALSE)
+  }
   PIVs <- names(arguments$breaks)
   arguments$records <- as.data.frame(lapply(rbind(dataA[, PIVs, drop=FALSE], dataB[, PIVs, drop=FALSE]), as.character))
   arguments$file_sizes <- c(nrow(dataA), nrow(dataB))
@@ -1718,6 +1747,12 @@ link_with_multilink <- function(dataA, dataB, arguments, ...) {
 #' @export
 #'
 link_with_diyar <- function(dataA, dataB, arguments, ...) {
+  ok <- requireNamespace("diyar", quietly = TRUE)
+  if (!ok) 
+  {
+    stop("Package 'diyar' is required. Install it with install.packages(\"diyar\").",
+         call. = FALSE)
+  }
   all_records <- rbind(dataA, dataB)
   PIVs <- setdiff(names(all_records),c("local_id", "source"))
   arguments$attribute <- as.list(all_records[, PIVs, drop=FALSE])
@@ -2307,6 +2342,13 @@ synthesise <- function(method, encodedA, encodedB, PIVs, n_synth, restrict_suppo
 
   if (!method %in% c("arf", "synthpop", "mice")) {
     stop("`method` must be one of 'arf', 'synthpop', 'mice'.", call. = FALSE)
+  }
+  
+  ok <- requireNamespace(method, quietly = TRUE)
+  if (!ok) 
+  {
+    stop(sprintf("Package '%s' is required. Install it with install.packages(\"%s\").",
+         method, method), call. = FALSE)
   }
 
   if (method == "arf") {
