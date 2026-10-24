@@ -579,7 +579,7 @@ simulateD <- function(data, linksR, truepivsA, truepivsB, gamma, eta, alpha, phi
   # sampleD reconstructs its loglik internally (the level cancels in every
   # acceptance ratio); this recomputes it independently in R.
   ll_check <- log_lik_pairs(LLLq, LLA, LLB, Dsample$linksQ, nrow(linksR), Dsample$sumRowD, Dsample$sumColD, gamma)
-  if (round(Dsample$loglik, 3) != round(ll_check, 3)) {
+  if (!isTRUE(all.equal(Dsample$loglik, ll_check, tolerance = 1e-6))) {
     stop(
       "Log-likelihood sanity check failed (sampler: ", round(Dsample$loglik, 3),
       ", recomputed: ", round(ll_check, 3), ").",
