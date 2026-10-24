@@ -46,7 +46,10 @@ FDP estimate is obtained.}
 \value{
 List with \code{FDP_score_estimator}, \code{FDP_synth_estimator},
 \code{Linked_pairs_augm}, \code{Linked_pairs}: data frames (\code{n_repeats} rows x 50
-thresholds, 0.50 to 0.99).
+thresholds, 0.50 to 0.99), and \code{FDP_score_sd}, \code{FDP_synth_sd} Numeric,
+standard deviations of the corresponding estimators over the \code{n_repeats}
+iterations per threshold (\code{NA} when fewer than two valid repeats are
+available).
 }
 \description{
 Repeatedly augments file B with synthetic records (\code{\link[=synthesise]{synthesise()}}), runs

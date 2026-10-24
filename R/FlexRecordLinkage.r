@@ -2609,6 +2609,15 @@ FDP_synth <- function(idxA, idxB, LinkScore, threshold,
   )
 }
 
+# Column-wise standard deviation of the per-repeat FDP estimates, to report the
+# variability of the estimators over the `n_repeats` repetitions. `NA` when
+# fewer than two valid (non-missing) repeats are available: a standard deviation
+# over a single repeat does not exist, and 0 would wrongly suggest a perfectly
+# stable estimator.
+.colSd <- function(x) {
+  apply(x, 2, function(v) if (sum(!is.na(v)) > 1) stats::sd(v, na.rm = TRUE) else NA_real_)
+}
+
 #' Estimate the false discovery proportion of a record-linkage method via
 #' model specific linkage scores
 #'
@@ -2626,7 +2635,10 @@ FDP_synth <- function(idxA, idxB, LinkScore, threshold,
 #'   (i.e. to the underlying record-linkage package).
 #'
 #' @return List with `FDP_score_estimator`, `Linked_pairs`:
-#'   data frames (`n_repeats` rows x 50 thresholds, 0.50 to 0.99).
+#'   data frames (`n_repeats` rows x 50 thresholds, 0.50 to 0.99), and
+#'   `FDP_score_sd` Numeric, standard deviation of `FDP_score_estimator` over
+#'   the `n_repeats` iterations per threshold (`NA` when fewer than two valid
+#'   repeats are available).
 #' @export
 #'
 #' @examples
@@ -2732,19 +2744,21 @@ compute_RL_FDP_score <- function(encodedA, encodedB, PIVs, maxIter4CV = 10, n_re
   }
   
   to_show <- data.frame(
-    `FDP model score estimator `     = round(colMeans(FDP_score_res, na.rm = TRUE), 2),
-    `Linked pairs (RL)         `     = round(colMeans(n_linked_score_res, na.rm = TRUE)),
+    `FDP model score estimator (mean)` = round(colMeans(FDP_score_res, na.rm = TRUE), 2),
+    `FDP model score estimator (sd)  ` = round(.colSd(FDP_score_res), 2),
+    `Linked pairs (RL)               ` = round(colMeans(n_linked_score_res, na.rm = TRUE)),
     check.names = FALSE
   )
   out <- t(to_show[c(1,6,11,16,21,26,31,36,41,46),])
-  out <- rbind("Decision rule threshold   " = as.numeric(colnames(out)), out)
+  out <- rbind("Decision rule threshold          " = as.numeric(colnames(out)), out)
   colnames(out) <- rep("", ncol(out))
-  
+
   message(sprintf("%s results (average over %s iterations) (original RL task) `compute_RL_FDP_score`", RL_method, n_repeats))
   utils::write.table(round(out,2), quote = FALSE, col.names = FALSE, sep = "\t")
-  
+
   list(
     FDP_score_estimator = FDP_score_res,
+    FDP_score_sd        = .colSd(FDP_score_res),
     Linked_pairs        = n_linked_score_res
   )
 }
@@ -2776,7 +2790,10 @@ compute_RL_FDP_score <- function(encodedA, encodedB, PIVs, maxIter4CV = 10, n_re
 #'
 #' @return List with `FDP_score_estimator`, `FDP_synth_estimator`,
 #'   `Linked_pairs_augm`, `Linked_pairs`: data frames (`n_repeats` rows x 50
-#'   thresholds, 0.50 to 0.99).
+#'   thresholds, 0.50 to 0.99), and `FDP_score_sd`, `FDP_synth_sd` Numeric,
+#'   standard deviations of the corresponding estimators over the `n_repeats`
+#'   iterations per threshold (`NA` when fewer than two valid repeats are
+#'   available).
 #' @export
 #'
 #' @examples
@@ -2946,14 +2963,16 @@ compute_augmRL_FDP_synth <- function(synth_method, encodedA, encodedB, PIVs, n_s
   }
 
   to_show <- data.frame(
-    `FDP model score estimator `     = round(colMeans(FDP_score_res, na.rm = TRUE), 2),
-    `FDP synth data estimator  `     = round(colMeans(FDP_synth_res, na.rm = TRUE), 2),
-    `Linked pairs (augm. RL)   `     = round(colMeans(n_linked_synth_res, na.rm = TRUE)),
-    `Linked pairs (RL)         `     = round(colMeans(n_linked_score_res, na.rm = TRUE)),
+    `FDP model score estimator (mean)` = round(colMeans(FDP_score_res, na.rm = TRUE), 2),
+    `FDP model score estimator (sd)  ` = round(.colSd(FDP_score_res), 2),
+    `FDP synth data estimator (mean) ` = round(colMeans(FDP_synth_res, na.rm = TRUE), 2),
+    `FDP synth data estimator (sd)   ` = round(.colSd(FDP_synth_res), 2),
+    `Linked pairs (augm. RL)         ` = round(colMeans(n_linked_synth_res, na.rm = TRUE)),
+    `Linked pairs (RL)               ` = round(colMeans(n_linked_score_res, na.rm = TRUE)),
     check.names = FALSE
   )
   out <- t(to_show[c(1,6,11,16,21,26,31,36,41,46),])
-  out <- rbind("Decision rule threshold   " = as.numeric(colnames(out)), out)
+  out <- rbind("Decision rule threshold          " = as.numeric(colnames(out)), out)
   colnames(out) <- rep("", ncol(out))
 
   message(sprintf("%s results (average over %s iterations) (augmented RL task) `compute_augmRL_FDP_synth`", RL_method, n_repeats))
@@ -2962,6 +2981,8 @@ compute_augmRL_FDP_synth <- function(synth_method, encodedA, encodedB, PIVs, n_s
   list(
     FDP_score_estimator = FDP_score_res,
     FDP_synth_estimator = FDP_synth_res,
+    FDP_score_sd        = .colSd(FDP_score_res),
+    FDP_synth_sd        = .colSd(FDP_synth_res),
     Linked_pairs_augm   = n_linked_synth_res,
     Linked_pairs        = n_linked_score_res
   )
@@ -3233,8 +3254,10 @@ plot.discrepancy_curves <- function(x, ...) {
 #'      per continuous variable or per level, see [smd()]), support overlap
 #'      per variable (see [support_iou()]) and multivariate discrepancy (see
 #'      [mmd()]), each for the linked subset of A vs. A and of B vs. B}
-#'   \item{FDP_measures}{FDP estimates by threshold (class `"FDP_curves"`) if
-#'      `FDP_estimation = TRUE`, else `NULL`}
+#'   \item{FDP_measures}{FDP estimates by threshold (class `"FDP_curves"`; the
+#'      `curve` data frame holds the average over the `n_repeats` iterations
+#'      and, in the `*_sd` columns, their standard deviation, `NA` when fewer
+#'      than two valid repeats) if `FDP_estimation = TRUE`, else `NULL`}
 #'   \item{true_agreement}{only if `true_pairs` is supplied: agreement rate of
 #'      the true pairs on each of `compare_vars`, to compare with the agreement
 #'      of the linked pairs}     
@@ -3454,14 +3477,20 @@ print.RL_diagnostics <- function(x, threshold = 0.5, ...) {
   }
   
   if (!is.null(x$FDP_measures)) {
-    valid <- !apply(apply(x$FDP_measures$curve, 2, is.na),1,any)
-    first <- x$FDP_measures$curve[valid, ][1, ]
-    idx <- which.min(abs(x$FDP_measures$curve$xi - threshold))
-    middle <- x$FDP_measures$curve[idx, ]
-    last <- x$FDP_measures$curve[valid, ][sum(valid), ]
-    cat(sprintf("  FDP score estimate (RL task):            min threshold %.2f: FDP ~ %.3f\n%-*s     threshold %.2f: FDP ~ %.3f\n%-*s max threshold %.2f: FDP ~ %.3f\n",     first$xi, first$RL_FDP_score,     42, "", threshold, middle$RL_FDP_score    , 42, "", last$xi, last$RL_FDP_score     ))
-    cat(sprintf("  FDP score estimate (augmented RL task):  min threshold %.2f: FDP ~ %.3f\n%-*s     threshold %.2f: FDP ~ %.3f\n%-*s max threshold %.2f: FDP ~ %.3f\n",     first$xi, first$augmRL_FDP_score, 42, "", threshold, middle$augmRL_FDP_score, 42, "", last$xi, last$augmRL_FDP_score ))
-    cat(sprintf("  FDP synth estimate (augmented RL task):  min threshold %.2f: FDP ~ %.3f\n%-*s     threshold %.2f: FDP ~ %.3f\n%-*s max threshold %.2f: FDP ~ %.3f\n",     first$xi, first$augmRL_FDP_synth, 42, "", threshold, middle$augmRL_FDP_synth, 42, "", last$xi, last$augmRL_FDP_synth ))
+    curve <- x$FDP_measures$curve
+    sd_cols <- c("RL_FDP_score_sd", "augmRL_FDP_score_sd", "augmRL_FDP_synth_sd")
+    # `FDP_curves` objects built before the sd columns existed
+    for (nm in sd_cols) if (!nm %in% names(curve)) curve[[nm]] <- NA_real_
+    valid <- !apply(apply(curve[setdiff(names(curve), sd_cols)], 2, is.na),1,any)
+    first <- curve[valid, ][1, ]
+    idx <- which.min(abs(curve$xi - threshold))
+    middle <- curve[idx, ]
+    last <- curve[valid, ][sum(valid), ]
+    # NA (fewer than two valid repeats) is rendered as "NA" by sprintf, never as 0
+    fmt_fdp <- function(fdp, sd) sprintf("%.3f (sd %.3f)", fdp, sd)
+    cat(sprintf("  FDP score estimate (RL task):            min threshold %.2f: FDP ~ %s\n%-*s     threshold %.2f: FDP ~ %s\n%-*s max threshold %.2f: FDP ~ %s\n",     first$xi, fmt_fdp(first$RL_FDP_score,      first$RL_FDP_score_sd),     42, "", threshold, fmt_fdp(middle$RL_FDP_score,    middle$RL_FDP_score_sd),    42, "", last$xi, fmt_fdp(last$RL_FDP_score,      last$RL_FDP_score_sd) ))
+    cat(sprintf("  FDP score estimate (augmented RL task):  min threshold %.2f: FDP ~ %s\n%-*s     threshold %.2f: FDP ~ %s\n%-*s max threshold %.2f: FDP ~ %s\n",     first$xi, fmt_fdp(first$augmRL_FDP_score,  first$augmRL_FDP_score_sd), 42, "", threshold, fmt_fdp(middle$augmRL_FDP_score, middle$augmRL_FDP_score_sd), 42, "", last$xi, fmt_fdp(last$augmRL_FDP_score,  last$augmRL_FDP_score_sd) ))
+    cat(sprintf("  FDP synth estimate (augmented RL task):  min threshold %.2f: FDP ~ %s\n%-*s     threshold %.2f: FDP ~ %s\n%-*s max threshold %.2f: FDP ~ %s\n",     first$xi, fmt_fdp(first$augmRL_FDP_synth,  first$augmRL_FDP_synth_sd), 42, "", threshold, fmt_fdp(middle$augmRL_FDP_synth, middle$augmRL_FDP_synth_sd), 42, "", last$xi, fmt_fdp(last$augmRL_FDP_synth,  last$augmRL_FDP_synth_sd) ))
     cat(sprintf("  The score-based estimator is valid when the linkage model is well calibrated to the data.\n  The synthetic-data estimator is valid when the augmented task is equivalent to the\n  original one, which requires links and non-links to have similar distributions; similar\n  score-based FDP estimates on the original and augmented tasks support this prerequisite.\n\n" ))
   }
   
@@ -3615,16 +3644,19 @@ plot.RL_diagnostics <- function(x, type, threshold = NULL, ...) {
   # FDP score-based estimate on the record linkage task
   curve <- data.frame(xi = grid,
                       RL_n_linked_score = colMeans(FDP_score_res$Linked_pairs, na.rm = TRUE),
-                      RL_FDP_score      = colMeans(FDP_score_res$FDP_score_estimator, na.rm = TRUE))
-  curve[!is.na(curve$RL_n_linked_score) & curve$RL_n_linked_score == 0, "RL_FDP_score"] <- NA
+                      RL_FDP_score      = colMeans(FDP_score_res$FDP_score_estimator, na.rm = TRUE),
+                      RL_FDP_score_sd   = .colSd(FDP_score_res$FDP_score_estimator))
+  curve[!is.na(curve$RL_n_linked_score) & curve$RL_n_linked_score == 0, c("RL_FDP_score", "RL_FDP_score_sd")] <- NA
   # FDP score-based estimate on the augmented task
   curve$augmRL_n_linked_score <- colMeans(FDP_synth_res$Linked_pairs, na.rm = TRUE)
   curve$augmRL_FDP_score      <- colMeans(FDP_synth_res$FDP_score_estimator, na.rm = TRUE)
-  curve[!is.na(curve$augmRL_n_linked_score) & curve$augmRL_n_linked_score == 0, "augmRL_FDP_score"] <- NA
+  curve$augmRL_FDP_score_sd   <- .colSd(FDP_synth_res$FDP_score_estimator)
+  curve[!is.na(curve$augmRL_n_linked_score) & curve$augmRL_n_linked_score == 0, c("augmRL_FDP_score", "augmRL_FDP_score_sd")] <- NA
   # FDP synthetic-data estimate on the augmented task
   curve$augmRL_n_linked_synth <- colMeans(FDP_synth_res$Linked_pairs_augm, na.rm = TRUE)
   curve$augmRL_FDP_synth      <- colMeans(FDP_synth_res$FDP_synth_estimator, na.rm = TRUE)
-  curve[!is.na(curve$augmRL_n_linked_synth) & curve$augmRL_n_linked_synth == 0, "augmRL_FDP_synth"] <- NA
+  curve$augmRL_FDP_synth_sd   <- .colSd(FDP_synth_res$FDP_synth_estimator)
+  curve[!is.na(curve$augmRL_n_linked_synth) & curve$augmRL_n_linked_synth == 0, c("augmRL_FDP_synth", "augmRL_FDP_synth_sd")] <- NA
   structure(list(curve = curve, true_performance = true_performance), class = "FDP_curves")
 }
 

@@ -58,8 +58,10 @@ variable (see \code{\link[=RL_agreement]{RL_agreement()}}), standardised mean di
 per continuous variable or per level, see \code{\link[=smd]{smd()}}), support overlap
 per variable (see \code{\link[=support_iou]{support_iou()}}) and multivariate discrepancy (see
 \code{\link[=mmd]{mmd()}}), each for the linked subset of A vs. A and of B vs. B}
-\item{FDP_measures}{FDP estimates by threshold (class \code{"FDP_curves"}) if
-\code{FDP_estimation = TRUE}, else \code{NULL}}
+\item{FDP_measures}{FDP estimates by threshold (class \code{"FDP_curves"}; the
+\code{curve} data frame holds the average over the \code{n_repeats} iterations
+and, in the \verb{*_sd} columns, their standard deviation, \code{NA} when fewer
+than two valid repeats) if \code{FDP_estimation = TRUE}, else \code{NULL}}
 \item{true_agreement}{only if \code{true_pairs} is supplied: agreement rate of
 the true pairs on each of \code{compare_vars}, to compare with the agreement
 of the linked pairs}
