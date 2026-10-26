@@ -22,3 +22,4 @@
 ^vignettes/Article-references\.bib$
 ^\.quarto$
 ^vignettes/.quarto$
+^vignettes/Archive$

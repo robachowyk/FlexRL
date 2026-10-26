@@ -1535,7 +1535,8 @@ link_with_reclin2 <- function(dataA, dataB, arguments, ...) {
   arguments$x <- dataA
   arguments$y <- dataB
   pairs <- do.call(reclin2::pair, arguments[intersect(names(arguments), names(formals(reclin2::pair)))])
-
+  
+  # watch out: internal set.seed in cluster sub functions
   arguments$pairs <- pairs
   pairs <- do.call(reclin2::compare_pairs, arguments[intersect(names(arguments), names(formals(reclin2::compare_pairs)))])
 
@@ -1589,6 +1590,7 @@ link_with_BRL <- function(dataA, dataB, arguments, ...) {
   comp_data <- do.call(BRL::compareRecords, arguments[intersect(names(arguments), names(formals(BRL::compareRecords)))])
 
   arguments$cd <- comp_data
+  # watch out: internal set.seed in bipartiteGibbs()
   chain <- do.call(BRL::bipartiteGibbs, arguments[intersect(names(arguments), names(formals(BRL::bipartiteGibbs)))])
 
   if (!"nIter" %in% names(arguments)) arguments$nIter <- 1000
@@ -1700,6 +1702,7 @@ link_with_multilink <- function(dataA, dataB, arguments, ...) {
 
   arguments$comparison_list <- reduced
   arguments$prior_list <- prior
+  # watch out: internal set.seed in gibbs_sampler()
   results <- do.call(multilink::gibbs_sampler, arguments[intersect(names(arguments), names(formals(multilink::gibbs_sampler)))])
 
   arguments$burn_in <- if ("n_iter" %in% names(arguments)) as.integer(arguments$n_iter / 5) else 400
