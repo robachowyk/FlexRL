@@ -2901,7 +2901,11 @@ compute_augmRL_FDP_synth <- function(synth_method, encodedA, encodedB, PIVs, n_s
     # The estimator's scaling (paper Eq. 2) must use the number of synthetic
     # records actually present in the augmented file, not the requested count:
     # synthesise() drops synthetic records that fall outside the common support.
+    print("n_synth")
+    print(n_synth)
     n_synth_actual <- if (!is.null(new_data$n_synth_actual)) new_data$n_synth_actual else n_synth
+    print("n_synth_actual")
+    print(n_synth_actual)
     n_real_kept <- nrow(new_data$dataB) - n_synth_actual
     if (n_real_kept != n_records_B) {
       warning(sprintf(

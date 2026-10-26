@@ -36,6 +36,7 @@ editor: visual
 number-sections: true
 execute:
   cache: true
+  cache-refresh: true
 ---
 
 ## Introduction {#sec-introduction}
@@ -122,7 +123,7 @@ Workflow of *FlexRL*.
 
 ```{r setup-1, include = FALSE, warning = FALSE, message = FALSE}
 # set a seed 
-set.seed(0)
+set.seed(1)
 
 # import FlexRL
 pak::pak("robachowyk/FlexRL")
@@ -301,7 +302,7 @@ run_wrapper <- function(method, prep_data, arguments) {
   if (Sys.info()["sysname"] == "Darwin") {
     tryCatch(
       {
-      set.seed(0)
+      set.seed(1)
       link_with(prep_data$encodedA, prep_data$encodedB, arguments)
       },
            error = function(e) {
@@ -314,7 +315,7 @@ run_wrapper <- function(method, prep_data, arguments) {
   } else if (Sys.info()["sysname"] %in% c("Linux","Windows")) {
       tryCatch(callr::r(function(link_with, A, B, arguments) 
         {
-        set.seed(0)
+        set.seed(1)
         link_with(A, B, arguments)
         },
                       args = list(link_with = link_with, A = prep_data$encodedA,
@@ -354,8 +355,7 @@ results_rows <- c("TP               ", "FP               ", "FN               ",
 methods <- c("BRL", "multilink", "fastLink", "reclin2", "diyar", "fedmatch", "FlexRL")
 
 run_all_wrappers <- function(prep_data, prep_data_WhatIfStable, variables_type, 
-                             methods, FDP_estimation = TRUE,
-                             maxIter4CV = 3, n_repeats = 5, ...) {
+                             methods, FDP_estimation = TRUE, ...) {
   args <- list(...)
   op <- options()
   on.exit(options(op))
@@ -372,7 +372,7 @@ run_all_wrappers <- function(prep_data, prep_data_WhatIfStable, variables_type,
   df_results[13, "Naive"] <- MeM$Peak_RAM_Used_MiB
 
   for (method in methods) {
-    set.seed(0)
+    set.seed(1)
     
     arguments <- wrapper_args(method, prep_data, args)
     
@@ -391,7 +391,7 @@ run_all_wrappers <- function(prep_data, prep_data_WhatIfStable, variables_type,
     
     diag <- do.call(RL_diagnostics, c(list(fit, encodedA, encodedB, PIVs, variables_type, PIVs,
                                            true_pairs = prep_data$true_pairs, FDP_estimation = FDP_estimation,
-                                           RL_method = method, data = prep_data, maxIter4CV = maxIter4CV, n_repeats = n_repeats),
+                                           RL_method = method, data = prep_data),
                                       arguments))
     if (FDP_estimation) {
       df_results[6, method] <- diag$FDP_measures$curve$RL_FDP_score[1]
@@ -417,7 +417,7 @@ run_all_wrappers <- function(prep_data, prep_data_WhatIfStable, variables_type,
   
   diag <- do.call(RL_diagnostics, c(list(fit, encodedA, encodedB, PIVs, variables_type, PIVs,
                                          true_pairs = prep_data$true_pairs, FDP_estimation = FDP_estimation,
-                                         RL_method = "FlexRL", data = prep_data_WhatIfStable, maxIter4CV = maxIter4CV, n_repeats = n_repeats),
+                                         RL_method = "FlexRL", data = prep_data_WhatIfStable),
                                     arguments))
   if (FDP_estimation) {
     df_results[6, "FlexRL no dynamics"] <- diag$FDP_measures$curve$RL_FDP_score[1]
@@ -480,12 +480,11 @@ run_replicates <- function(n_sim, PIVs_config, PIVs_config_WhatIfStable,
 ```
 
 ```{r demonstration-2, include = FALSE, warning = FALSE, message = FALSE}
-# set a seed 
-set.seed(0)
+set.seed(1)
 
 variables_type <- list( PIV1 = FALSE, PIV2 = FALSE, PIV3 = FALSE, PIV4 = FALSE )
 
-df_results_total <- run_replicates(n_sim = 10,
+df_results_total <- run_replicates(n_sim = 3,
                       PIVs_config = PIVs_config,
                       PIVs_config_WhatIfStable = PIVs_config_WhatIfStable,
                       n_values = n_values, p_mistake = p_mistake, p_missing = p_missing,
@@ -496,7 +495,7 @@ df_results_total <- run_replicates(n_sim = 10,
 
 ::: {#tbl-demonstration}
 ```{r demonstration-3, echo = FALSE}
-set.seed(0)
+set.seed(1)
 
 names(df_results_total$table) <- c("Naive", "BRL", "multilink", "fastLink", "reclin2", "diyar", "fedmatch", "FlexRL (dynamics)", "FlexRL (no dynamics)")
 
@@ -698,8 +697,7 @@ round(RL_agreement(prep_data$encodedA, prep_data$encodedB, PIVs, prep_data$true_
 In @tbl-illustration, we compare the record linkage methods mentioned in @tbl-packages on this regional subset of the SHIW data. Memory usage is of the same order of magnitude on these relatively small data sets for all methods.
 
 ```{r illustration-10, include = FALSE, warning = FALSE, message = FALSE}
-# set a seed 
-set.seed(0)
+set.seed(1)
 
 true_pairs <- do.call(paste, c(prep_data$true_pairs, list(sep = "_")))
 truelinksdata <- merge(prep_data$encodedA, prep_data$encodedB, by = "ID")
@@ -713,7 +711,7 @@ df_results[1:5, "Naive"] <- evaluate_linkage(list(idxA = naive_fit[[1]], idxB = 
 df_results[6,"Naive"] <- elapsed
 df_results[7, "Naive"] <- MeM$Peak_RAM_Used_MiB
 for (method in methods) {
-  set.seed(0)
+  set.seed(1)
   link_with <- get(paste0("link_with_", method), envir = asNamespace("FlexRL"))
   prep_data_new <- prep_data
   if (method == "diyar") {
@@ -832,8 +830,7 @@ The function returns `Delta`, a data frame with columns `i` (indices in $\mathca
 We run the *FlexRL* `StEM` algorithm for record linkage as follows:
 
 ```{r illustration-12-1, include = FALSE}
-# set a seed 
-set.seed(0)
+set.seed(1)
 ```
 
 ```{r illustration-12, warning = FALSE, message = FALSE, results = "hide"}
@@ -844,9 +841,11 @@ fit <- StEM(data = prep_data)
 
 The two latent variable samplers are implemented with `Rcpp`. To draw the true values, `sampleH()` goes through the $N_k^2$ joint values once per PIV $k$ for linked pairs and through the $N_k$ values once per PIV $k$ for non-linked records. `sampleD()` performs the sequential sweep over candidate pairs, recording the current linkage in two vectors that give, for each record of $\mathcal A$ and of $\mathcal B$, the index of the record it is linked to (or a negative value when not linked). Reading and updating the linkage takes a fixed number of operations, so the sweep is linear in the number of candidate pairs and the memory is linear in the number of records $N_{\mathcal A} + N_{\mathcal B}$ rather than in $N_{\mathcal A} \times N_{\mathcal B}.$
 
-Candidate pairs are found by hashing the pattern of sampled true values on the non-structured PIVs, an operation linear in $N_{\mathcal A} + N_{\mathcal B}.$ Their likelihood contributions are computed in a single pass over the records and the candidate pairs, implemented in `Rcpp`. Built-in survival models are evaluated in `Rcpp`; custom survival functions keep their `R` implementation. The loops are parallelised over `OpenMP` threads. Without `OpenMP` the code runs sequentially. Memory therefore grows with the number of records and of candidate pairs, not with $N_{\mathcal A} \times N_{\mathcal B}.$
+Candidate pairs are found by hashing the pattern of sampled true values on the non-structured PIVs, an operation linear in $N_{\mathcal A} + N_{\mathcal B}.$ Their contributions to the complete data likelihood are computed in a single pass over the records and the candidate pairs, implemented in `Rcpp`. Built-in survival models are evaluated in `Rcpp`; custom survival functions keep their `R` implementation. 
 
-Running time grows with the number of records; the number of candidate pairs, larger when PIVs have few levels; the number of PIVs and their numbers of levels; the number of structured PIVs, whose survival model is estimated at each iteration; the number of iterations; and decreases with the number of threads. `OpenMP` parallelises the computation of candidate pair contributions to the complete data likelihood. Each thread processes a disjoint set of candidates. All random draws occur upstream, so the threads never call the `R` random number generator. Results are therefore identical regardless of the number of threads, and `set.seed()` ensures reproducibility.
+The single pass over the candidate pairs likelihood contributions can be parallelised over `OpenMP` threads, each processing a disjoint set of candidates. Without `OpenMP` the code runs sequentially. All random draws occur upstream, so the threads never call the `R` random number generator. Results are therefore identical regardless of the number of threads, and `set.seed()` ensures reproducibility.
+
+Running time grows with the number of records; the number of candidate pairs, larger when PIVs have few levels; the number of PIVs and their numbers of levels; the number of structured PIVs, whose survival model is estimated at each iteration; the number of iterations; and decreases with the number of threads.
 
 ## Inference on linked data {#sec-inference}
 
@@ -912,9 +911,6 @@ In @tbl-demonstration-2 we proceed with the demonstration of @sec-demonstration 
 
 ::: {#tbl-demonstration-2}
 ```{r demonstration-4, echo = FALSE}
-# set a seed 
-set.seed(0)
-
 options(digits=2, scipen=999)
 knitr::kable(df_results_total$table, align=rep('c', ncol(df_results_total$table)))
 ```
@@ -944,8 +940,7 @@ Diagnostics performed by `RL_diagnostics()`.
 The function takes several arguments as input. The record linkage output `fit`, the data sources `encodedA` and `encodedB`, the set of variables of interest to compare `compare_vars`, their type `vars_type_cont` (`TRUE` if continuous) and the `PIVs` are passed to `RL_diagnostics()`, which computes FDP estimates and discrepancy measures that characterise the linked sample across a grid of thresholds $\xi.$ The `true_pairs` enables reporting the true FDP and sensitivity when known.
 
 ```{r illustration-13, warning = FALSE, message = FALSE, results = "hide"}
-# set a seed 
-set.seed(0)
+set.seed(1)
 
 compare_vars <- c("BirthYear", "Sex", "MaritalStatus", 
                   "BirthRegion", "Occupation")
@@ -1169,8 +1164,7 @@ Guided by the diagnostic tools, we choose $\xi = 0.95$, which yields a linked da
 #| fig-width: 7
 #| fig-height: 21
 
-# set a seed 
-set.seed(0)
+set.seed(1)
 
 XIs <- c(0.5, 0.95, 0.99) ### TOREMOVE TODO
 
@@ -1286,7 +1280,7 @@ In @sec-prepare, we showed the proportion of agreements between the information 
 round(RL_agreement(prep_data_full$encodedA, prep_data_full$encodedB, PIVs_full, prep_data_full$true_pairs)$agreements,2)
 ```
 
-Record linkage becomes considerably harder on large data sets: the discriminative power of the PIVs is unlikely to grow with the size of the data sources, whereas the number of candidate records in $\mathcal B$ that could form a link with a given record in $\mathcal A$ does. Without blocking, we therefore expect higher FDPs. We also expect higher sensitivities, since true links involving registration errors or changes between waves, which blocking rules out, become recoverable. Indeed the FDPs and sensitivities of most methods on the complete SHIW in @tbl-scalability are higher. 
+Record linkage becomes considerably harder on large data sets: the discriminative power of the PIVs is unlikely to grow with the size of the data sources, whereas the number of candidate records in $\mathcal B$ that could form a link with a given record in $\mathcal A$ does. Without blocking, we therefore expect higher FDPs. Generally, we also expect higher sensitivities, since true links involving registration errors or changes between waves, which blocking rules out, become recoverable. It is not the case in the complete SHIW where the region is actually stable and error free. TODO CHECK OR REMOVE LAST: Indeed the FDPs and sensitivities of most methods on the complete SHIW in @tbl-scalability are higher. 
 
 Below, we report the number of unique values of each PIV in the SHIW in Emilia-Romagna and in the complete SHIW. These counts indicate the discriminative power of the PIVs in the regional and national applications. In addition, we appraise the difficulty of the tasks, without and with regional blocking, through the performance of the 'Naive' approach in @tbl-scalability and @tbl-scalability-block, which reflects how many records share the same combination of PIV values.
 
@@ -1301,8 +1295,7 @@ print(prep_data_full$n_values)
 @tbl-scalability presents the comparative study without blocking; 'Not Available' results indicate memory errors. When supported, methods run with four threads (`threads` for *FlexRL*, `n.cores` for *fastLink*, `nthread` for *fedmatch*). @tbl-scalability-block shows the results with blocking on the Italian regions. More details on this data application showcasing the scalability of *FlexRL* are given in the package vignette 'Scalable Record Linkage with FlexRL' available through `vignette('FlexRL-RL-block-vignette', 'FlexRL')` or the [online documentation](https://robachowyk.github.io/FlexRL/index.html).
 
 ```{r scale-5, include = FALSE, warning = FALSE, message = FALSE}
-# set a seed 
-set.seed(0)
+set.seed(1)
 
 true_pairs_full <- do.call(paste, c(prep_data_full$true_pairs, list(sep = "_")))
 df_results_full <- data.frame(matrix(NA, nrow = 7, ncol = 0))
@@ -1314,7 +1307,7 @@ df_results_full[1:5, "Naive"] <- evaluate_linkage(list(idxA = naive_fit[[1]], id
 df_results_full[6,"Naive"] <- elapsed
 df_results_full[7, "Naive"] <- MeM$Peak_RAM_Used_MiB
 for (method in methods) {
-  set.seed(0)
+  set.seed(1)
   t0 <- Sys.time()
   MeM <- peakRAMNew(fit <- run_wrapper(method, prep_data_full, wrapper_args(method, prep_data_full)))
   df_results_full[1:5, method] <- evaluate_linkage(fit, true_pairs_full)
@@ -1333,8 +1326,7 @@ Comparison of record linkage methods on the complete SHIW data application for t
 :::
 
 ```{r scale-7, include = FALSE, warning = FALSE, message = FALSE}
-# set a seed 
-set.seed(0)
+set.seed(1)
 
 regions <- sort(unique(c(df2012$Region, df2014$Region)))
 results_Region <- list()
@@ -1353,7 +1345,7 @@ for (r in regions) {
             seconds = round(as.numeric(Sys.time() - t0, units = "secs")),
             memory = MeM$Peak_RAM_Used_MiB)
   for (method in methods) {
-    set.seed(0)
+    set.seed(1)
     t0 <- Sys.time()
     MeM <- peakRAMNew(fit <- run_wrapper(method, prep_data_r, wrapper_args(method, prep_data_r)))
     results_Region[[length(results_Region) + 1]] <- data.frame(
@@ -1366,7 +1358,6 @@ for (r in regions) {
 }
 results_Region <- do.call(rbind, results_Region)
 ```
-
 
 ```{r scale-777}
 print(results_Region)
