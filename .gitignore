@@ -3,12 +3,9 @@
 .Rdata
 .httr-oauth
 .DS_Store
-.quarto
 inst/doc
 *.o
 docs
 *.so
 *.tar.gz
 FlexRL.Rcheck/
-/.quarto/
-**/*.quarto_ipynb
