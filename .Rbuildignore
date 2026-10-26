@@ -18,8 +18,4 @@
 ^vignettes/.*_files$
 ^vignettes/figure$
 ^vignettes/cache$
-^vignettes/Article-FlexRL\.qmd$
-^vignettes/Article-references\.bib$
-^\.quarto$
-^vignettes/.quarto$
-^vignettes/Archive$
+^vignettes/article$
