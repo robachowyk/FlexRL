@@ -2885,6 +2885,9 @@ compute_augmRL_FDP_synth <- function(synth_method, encodedA, encodedB, PIVs, n_s
                               PIVs, n_synth, 
                               restrict_support_intersection)
         # cannot model dynamics for synthetic data, set dates to 0
+        print("is na in a and in b")
+        print(sum(is.na(new_data$dataA$date)))
+        print(sum(is.na(new_data$dataB$date)))
         new_data$dataA$date[is.na(new_data$dataA$date)] <- 0
         new_data$dataB$date[is.na(new_data$dataB$date)] <- 0
       } else {
