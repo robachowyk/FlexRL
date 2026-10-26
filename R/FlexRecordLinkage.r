@@ -3497,10 +3497,10 @@ print.RL_diagnostics <- function(x, threshold = 0.5, ...) {
     cat(sprintf("  The score-based estimator is valid when the linkage model is well calibrated to the data.\n  The synthetic-data estimator is valid when the augmented task is equivalent to the\n  original one, which requires links and non-links to have similar distributions; similar\n  score-based FDP estimates on the original and augmented tasks support this prerequisite.\n\n" ))
   }
   
-  cat(sprintf("  Multivariate MMD  (linked A vs. A):  %.4f\n", at_dm$mmdA))
-  cat(sprintf("  Multivariate MMD  (linked B vs. B):  %.4f\n\n", at_dm$mmdB))
+  cat(sprintf("  Multivariate MMD  (linked A vs. A):  %.3f\n", at_dm$mmdA))
+  cat(sprintf("  Multivariate MMD  (linked B vs. B):  %.3f\n\n", at_dm$mmdB))
   
-  fmt <- function(z) formatC(z, format = "f", digits = 4)
+  fmt <- function(z) formatC(z, format = "f", digits = 3)
   show_lines <- function(left, right, side) {
     cat(sprintf("  %s  %s:  %s\n", formatC(left, width = -max(nchar(left))), side, right), sep = "")
   }

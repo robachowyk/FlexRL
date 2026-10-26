@@ -937,9 +937,11 @@ Diagnostics performed by `RL_diagnostics()`.
 
 The function takes several arguments as input. The record linkage output `fit`, the data sources `encodedA` and `encodedB`, the set of variables of interest to compare `compare_vars`, their type `vars_type_cont` (`TRUE` if continuous) and the `PIVs` are passed to `RL_diagnostics()`, which computes FDP estimates and discrepancy measures that characterise the linked sample across a grid of thresholds $\xi.$ The `true_pairs` enables reporting the true FDP and sensitivity when known.
 
-```{r illustration-13, warning = FALSE, message = FALSE, results = "hide"}
+```{r illustration-13-1, include = FALSE}
 set.seed(1)
+```
 
+```{r illustration-13, warning = FALSE, message = FALSE, results = "hide"}
 compare_vars <- c("BirthYear", "Sex", "MaritalStatus", 
                   "BirthRegion", "Occupation")
 
@@ -1100,14 +1102,18 @@ if (!is.null(x$true_performance)) {
   cat(sprintf("  Sensitivity   (true pairs):    %.2f\n\n", at$sensitivity))
 }
 if (!is.null(x$FDP_measures)) {
-  valid <- !apply(apply(x$FDP_measures$curve, 2, is.na),1,any)
-  first <- x$FDP_measures$curve[valid, ][1, ]
-  idx <- which.min(abs(x$FDP_measures$curve$xi - threshold))
-  middle <- x$FDP_measures$curve[idx, ]
-  last <- x$FDP_measures$curve[valid, ][sum(valid), ]
-  cat(sprintf("  FDP score estimate (RL task):            min threshold %.2f: FDP ~ %.2f\n%-*s     threshold %.2f: FDP ~ %.2f\n%-*s max threshold %.2f: FDP ~ %.2f\n",     first$xi, first$RL_FDP_score,     42, "", threshold, middle$RL_FDP_score    , 42, "", last$xi, last$RL_FDP_score     ))
-  cat(sprintf("  FDP score estimate (augmented RL task):  min threshold %.2f: FDP ~ %.2f\n%-*s     threshold %.2f: FDP ~ %.2f\n%-*s max threshold %.2f: FDP ~ %.2f\n",     first$xi, first$augmRL_FDP_score, 42, "", threshold, middle$augmRL_FDP_score, 42, "", last$xi, last$augmRL_FDP_score ))
-  cat(sprintf("  FDP synth estimate (augmented RL task):  min threshold %.2f: FDP ~ %.2f\n%-*s     threshold %.2f: FDP ~ %.2f\n%-*s max threshold %.2f: FDP ~ %.2f\n",     first$xi, first$augmRL_FDP_synth, 42, "", threshold, middle$augmRL_FDP_synth, 42, "", last$xi, last$augmRL_FDP_synth ))
+  curve <- x$FDP_measures$curve
+    sd_cols <- c("RL_FDP_score_sd", "augmRL_FDP_score_sd", "augmRL_FDP_synth_sd")
+    for (nm in sd_cols) if (!nm %in% names(curve)) curve[[nm]] <- NA_real_
+    valid <- !apply(apply(curve[setdiff(names(curve), sd_cols)], 2, is.na),1,any)
+    first <- curve[valid, ][1, ]
+    idx <- which.min(abs(curve$xi - threshold))
+    middle <- curve[idx, ]
+    last <- curve[valid, ][sum(valid), ]
+    fmt_fdp <- function(fdp, sd) sprintf("%.3f (sd %.3f)", fdp, sd)
+    cat(sprintf("  FDP score estimate (RL task):            min threshold %.2f: FDP ~ %s\n%-*s     threshold %.2f: FDP ~ %s\n%-*s max threshold %.2f: FDP ~ %s\n",     first$xi, fmt_fdp(first$RL_FDP_score,      first$RL_FDP_score_sd),     42, "", threshold, fmt_fdp(middle$RL_FDP_score,    middle$RL_FDP_score_sd),    42, "", last$xi, fmt_fdp(last$RL_FDP_score,      last$RL_FDP_score_sd) ))
+    cat(sprintf("  FDP score estimate (augmented RL task):  min threshold %.2f: FDP ~ %s\n%-*s     threshold %.2f: FDP ~ %s\n%-*s max threshold %.2f: FDP ~ %s\n",     first$xi, fmt_fdp(first$augmRL_FDP_score,  first$augmRL_FDP_score_sd), 42, "", threshold, fmt_fdp(middle$augmRL_FDP_score, middle$augmRL_FDP_score_sd), 42, "", last$xi, fmt_fdp(last$augmRL_FDP_score,  last$augmRL_FDP_score_sd) ))
+    cat(sprintf("  FDP synth estimate (augmented RL task):  min threshold %.2f: FDP ~ %s\n%-*s     threshold %.2f: FDP ~ %s\n%-*s max threshold %.2f: FDP ~ %s\n",     first$xi, fmt_fdp(first$augmRL_FDP_synth,  first$augmRL_FDP_synth_sd), 42, "", threshold, fmt_fdp(middle$augmRL_FDP_synth, middle$augmRL_FDP_synth_sd), 42, "", last$xi, fmt_fdp(last$augmRL_FDP_synth,  last$augmRL_FDP_synth_sd) ))
 }
 cat(sprintf("  Multivariate MMD  (linked A vs. A):  %.2f\n", at_dm$mmdA))
 cat(sprintf("  Multivariate MMD  (linked B vs. B):  %.2f\n\n", at_dm$mmdB))
@@ -1155,7 +1161,7 @@ On the illustrative example developed along this article, we regress the expecte
 
 The tools presented so far help identify a suitable linkage threshold by assessing the trade-off between contamination and sampling bias. In @fig-example, a low threshold $\xi=0.55$ yields a linked data estimate (dotted $\color{#FF7256}{\text{orange}}$) affected by contamination bias, due to noisy falsely linked data (short dashed $\color{#FFC125}{\text{yellow}}$ estimate); see @eq-beta-contamination. Conversely, a high threshold $\xi=0.99$ yields a linked data estimate (dotted $\color{#FF7256}{\text{orange}}$) affected by sampling bias, due to atypical truly linked data (long dashed $\color{#FFC125}{\text{yellow}}$ estimate); see @eq-beta-sampling. 
 
-Guided by the diagnostic tools, we choose $\xi = 0.94$, which yields a linked data estimate (dotted $\color{#FF7256}{\text{orange}}$) closer to the reference. At this threshold, we retain 238 linked observations, corresponding to an FDP of 0.13 and a sensitivity of 0.23.
+Guided by the diagnostic tools, we choose $\xi = 0.94$, which yields a linked data estimate (dotted $\color{#FF7256}{\text{orange}}$) closer to the reference. At this threshold, we retain 245 linked observations, corresponding to an FDP of 0.15 and a sensitivity of 0.23.
 
 ::: {#fig-example}
 ```{r illustration-26, echo = FALSE, warning = FALSE, message = FALSE}

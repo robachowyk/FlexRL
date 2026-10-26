@@ -7686,18 +7686,16 @@ Table 5: Diagnostics performed by <code>RL_diagnostics()</code>.
 </div>
 <p>The function takes several arguments as input. The record linkage output <code>fit</code>, the data sources <code>encodedA</code> and <code>encodedB</code>, the set of variables of interest to compare <code>compare_vars</code>, their type <code>vars_type_cont</code> (<code>TRUE</code> if continuous) and the <code>PIVs</code> are passed to <code>RL_diagnostics()</code>, which computes FDP estimates and discrepancy measures that characterise the linked sample across a grid of thresholds <span class="math inline">\(\xi.\)</span> The <code>true_pairs</code> enables reporting the true FDP and sensitivity when known.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>compare_vars <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;BirthYear&quot;</span>, <span class="st">&quot;Sex&quot;</span>, <span class="st">&quot;MaritalStatus&quot;</span>, </span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>                  <span class="st">&quot;BirthRegion&quot;</span>, <span class="st">&quot;Occupation&quot;</span>)</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>vars_type_cont <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">BirthYear =</span> <span class="cn">TRUE</span>, <span class="at">Sex =</span> <span class="cn">FALSE</span>, <span class="at">MaritalStatus =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>                       <span class="at">BirthRegion =</span> <span class="cn">FALSE</span>, <span class="at">Occupation =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>diag <span class="ot">&lt;-</span> <span class="fu">RL_diagnostics</span>(fit, prep_data<span class="sc">$</span>encodedA, prep_data<span class="sc">$</span>encodedB,</span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>                       compare_vars, vars_type_cont, PIVs,</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>                       <span class="at">true_pairs =</span> prep_data<span class="sc">$</span>true_pairs, <span class="at">FDP_estimation =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>                       <span class="at">RL_method =</span> <span class="st">&quot;FlexRL&quot;</span>, <span class="at">data =</span> prep_data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>compare_vars <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;BirthYear&quot;</span>, <span class="st">&quot;Sex&quot;</span>, <span class="st">&quot;MaritalStatus&quot;</span>, </span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>                  <span class="st">&quot;BirthRegion&quot;</span>, <span class="st">&quot;Occupation&quot;</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>vars_type_cont <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">BirthYear =</span> <span class="cn">TRUE</span>, <span class="at">Sex =</span> <span class="cn">FALSE</span>, <span class="at">MaritalStatus =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>                       <span class="at">BirthRegion =</span> <span class="cn">FALSE</span>, <span class="at">Occupation =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>diag <span class="ot">&lt;-</span> <span class="fu">RL_diagnostics</span>(fit, prep_data<span class="sc">$</span>encodedA, prep_data<span class="sc">$</span>encodedB,</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>                       compare_vars, vars_type_cont, PIVs,</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>                       <span class="at">true_pairs =</span> prep_data<span class="sc">$</span>true_pairs, <span class="at">FDP_estimation =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>                       <span class="at">RL_method =</span> <span class="st">&quot;FlexRL&quot;</span>, <span class="at">data =</span> prep_data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The FDP estimation is optional (<code>FDP_estimation = TRUE</code>) since it can be time consuming. For a given <code>RL_method</code>, it is repeated <code>n_repeats</code> times and the estimates are averaged. <code>compute_RL_FDP_score()</code> returns the score based estimate on the original task. <code>compute_augmRL_FDP_synth()</code> adds <code>n_synth</code> records generated by <code>synth_method</code> to <span class="math inline">\(\mathcal B\)</span>, links the augmented sources as an auxiliary task and computes both the score based and the synthetic data estimates on it. Similar score based estimates on the original and augmented tasks support the use of the synthetic data estimator. <a href="#tbl-demonstration-2" class="quarto-xref">Table 4</a> reported these three estimates as ‘est. FDP score’, ‘est. FDP* score’, ‘est. FDP* synth’.</p>
 <p>The <code>plot(x, type)</code> method for an object of class <code>RL_diagnostics</code> draws the plots listed in <a href="#tbl-diagnostics" class="quarto-xref">Table 5</a>, with <code>type</code> being one of <code>&#39;convergence&#39;</code>, <code>&#39;scores&#39;</code>, <code>&#39;FDP&#39;</code>, <code>&#39;discrepancy&#39;</code> and <code>&#39;distributions&#39;</code>. With the <code>&#39;convergence&#39;</code> plots, we could verify that the StEM chains have stabilised.</p>
@@ -7788,15 +7786,15 @@ Figure 3: Estimated FDP and discrepancy measures against the linkage decision r
   Sensitivity   (true pairs):    0.23</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>  FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.12
-                                               threshold 0.94: FDP ~ 0.01
-                                           max threshold 0.99: FDP ~ 0.00
-  FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.13
-                                               threshold 0.94: FDP ~ 0.01
-                                           max threshold 0.99: FDP ~ 0.00
-  FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.19
-                                               threshold 0.94: FDP ~ 0.07
-                                           max threshold 0.99: FDP ~ 0.04</code></pre>
+<pre><code>  FDP score estimate (RL task):            min threshold 0.50: FDP ~ 0.124 (sd 0.003)
+                                               threshold 0.94: FDP ~ 0.013 (sd 0.000)
+                                           max threshold 0.99: FDP ~ 0.003 (sd 0.000)
+  FDP score estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.125 (sd 0.003)
+                                               threshold 0.94: FDP ~ 0.014 (sd 0.001)
+                                           max threshold 0.99: FDP ~ 0.003 (sd 0.000)
+  FDP synth estimate (augmented RL task):  min threshold 0.50: FDP ~ 0.185 (sd 0.060)
+                                               threshold 0.94: FDP ~ 0.068 (sd 0.082)
+                                           max threshold 0.99: FDP ~ 0.039 (sd 0.069)</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  Multivariate MMD  (linked A vs. A):  0.07</code></pre>
@@ -7828,7 +7826,7 @@ Figure 4: Example of output from the <code>print()</code> method on <em>FlexRL<
 <p>Across the diagnostics, record linkage is run through wrappers with a common form, <code>link_with_&lt;pkg&gt;(dataA, dataB, ...)</code>, returning the indices of linked pairs and their linkage score. Wrappers exist for <em>FlexRL</em>, <em>fastLink</em>, <em>BRL</em>, <em>reclin2</em>, <em>multilink</em>, <em>diyar</em> and <em>fedmatch</em>. That way, the diagnostic tools apply to any of these methods in a similar fashion.</p>
 <p>On the illustrative example developed along this article, we regress the expected age of retirement in 2014 on the expected age of retirement in 2012 (originally named ‘etapen’ in each wave). After preparation of the SHIW in Emilia-Romagna data for record linkage (see <code>prepare_data()</code> in <a href="#sec-prepare" class="quarto-xref">Section 3.1</a>), we work with 1479 and 1524 records in the two data sources, which share 898 true links. The solid <span class="math inline">\(\color{#B22222}{\text{red}}\)</span> line in <a href="#fig-example" class="quarto-xref">Figure 5</a> is the reference estimate computed on these true links.</p>
 <p>The tools presented so far help identify a suitable linkage threshold by assessing the trade-off between contamination and sampling bias. In <a href="#fig-example" class="quarto-xref">Figure 5</a>, a low threshold <span class="math inline">\(\xi=0.55\)</span> yields a linked data estimate (dotted <span class="math inline">\(\color{#FF7256}{\text{orange}}\)</span>) affected by contamination bias, due to noisy falsely linked data (short dashed <span class="math inline">\(\color{#FFC125}{\text{yellow}}\)</span> estimate); see <a href="#eq-beta-contamination" class="quarto-xref">Equation 8</a>. Conversely, a high threshold <span class="math inline">\(\xi=0.99\)</span> yields a linked data estimate (dotted <span class="math inline">\(\color{#FF7256}{\text{orange}}\)</span>) affected by sampling bias, due to atypical truly linked data (long dashed <span class="math inline">\(\color{#FFC125}{\text{yellow}}\)</span> estimate); see <a href="#eq-beta-sampling" class="quarto-xref">Equation 9</a>.</p>
-<p>Guided by the diagnostic tools, we choose <span class="math inline">\(\xi = 0.94\)</span>, which yields a linked data estimate (dotted <span class="math inline">\(\color{#FF7256}{\text{orange}}\)</span>) closer to the reference. At this threshold, we retain 238 linked observations, corresponding to an FDP of 0.13 and a sensitivity of 0.23.</p>
+<p>Guided by the diagnostic tools, we choose <span class="math inline">\(\xi = 0.94\)</span>, which yields a linked data estimate (dotted <span class="math inline">\(\color{#FF7256}{\text{orange}}\)</span>) closer to the reference. At this threshold, we retain 245 linked observations, corresponding to an FDP of 0.15 and a sensitivity of 0.23.</p>
 <div id="fig-example" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
