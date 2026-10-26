@@ -1,4 +1,4 @@
-# FlexRL 1.0.1 (release candidate)
+# FlexRL 2.0.0 (release)
 
 - Bugs fixed.
 - Performance: the Gibbs machinery is ~100x faster end-to-end on the benchmark

@@ -691,7 +691,7 @@ Among the true links, known in this application, there are some registration err
 round(RL_agreement(prep_data$encodedA, prep_data$encodedB, PIVs, prep_data$true_pairs)$agreements,2)
 ```
 
-In @tbl-illustration, we compare the record linkage methods mentioned in @tbl-packages on this regional subset of the SHIW data. Memory usage is of the same order of magnitude on these relatively small data sets for all methods.
+In @tbl-illustration, we compare the record linkage methods mentioned in @tbl-packages on this regional subset of the SHIW data. Memory usage is of the same order of magnitude on these relatively small data sets for all methods. The figures and tables based on the SHIW data reflect a single random realisation. They depend on the seed we use in the script and on the seed some other packages use internally.
 
 ```{r illustration-10, include = FALSE, warning = FALSE, message = FALSE}
 set.seed(1)
@@ -879,7 +879,7 @@ For the decision rule $\xi \in [0.5, 1)$, the FDP is $\text{FDP}(\xi) = \text{FP
 
 #### Score based estimator
 
-If the linkage model is well calibrated, $\widehat{D}_{i,j}$ should represent the probability that the pair $(i,j)$ is a true link, and the expected number of truly linked pairs among linked data is $\sum_{(i,j)} \widehat{D}_{i,j} \mathbb 1 \{\widehat{D}_{i,j} > \xi\}.$ Therefore $$
+If the linkage model is well calibrated, $\widehat{D}_{i,j}$ should represent the probability that the pair $(i,j)$ is a true link, and the expected number of truly linked pairs among linked data is $\sum_{(i,j)} \widehat{D}_{i,j} \mathbb 1 \{\widehat{D}_{i,j} > \xi\}$ [@fastLink_paper_2019; @FDProbachetal25]. Therefore $$
     \widehat{\text{FDP}}(\xi) = 1 - \frac{\sum_{(i,j)} \widehat{D}_{i,j} \mathbb 1 \{\widehat{D}_{i,j} > \xi\}}{\sum_{(i,j)} \mathbb 1 \{\widehat{D}_{i,j} > \xi\}} .
 $$ {#eq-fdp-model} This estimator comes at no extra cost for any method that returns linkage scores, but it is only as good as the linkage model.
 
