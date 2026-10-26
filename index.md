@@ -48,7 +48,10 @@ use FlexRL for linkage.
 - **Linkage quality tools that work with any method**: estimated false
   discovery proportion, and divergence between the linked sample and the
   sources, as functions of the decision rule.
-- **Fast running time** and **low memory footprint**: memory grows with the number of records and candidate pairs, not with the number of all pairs; running time grows with the number of records, candidate pairs, PIVs, iterations and decreases with the number of threads.
+- **Fast running time** and **low memory footprint**: memory grows with
+  the number of records and candidate pairs, not with the number of all
+  pairs; running time grows with the number of records, candidate pairs,
+  PIVs, iterations and decreases with the number of threads.
 
 Existing record linkage methods reduces every pair of records to a
 vector of agreements and disagreements and classifies the pairs. FlexRL

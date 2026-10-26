@@ -9,7 +9,7 @@ in every data set of data_list (e.g. a baseline file vs. the linked set)."><meta
 
     <a class="navbar-brand me-2" href="../index.html">FlexRL</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,8 +20,8 @@ in every data set of data_list (e.g. a baseline file vs. the linked set)."><meta
       <ul class="navbar-nav me-auto"><li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/Article-FlexRL.html">Flexible Record Linkage and Linked Data Quality Assessment</a></li>
-    <li><a class="dropdown-item" href="../articles/FlexRL-RL-vignette.html">Linkage and Diagnostics with FlexRL</a></li>
-    <li><a class="dropdown-item" href="../articles/FlexRL-RL-block-vignette.html">Scalable Record Linkage with FlexRL</a></li>
+    <li><a class="dropdown-item" href="../articles/FlexRL-RL-vignette.html">Linkage and Diagnostics</a></li>
+    <li><a class="dropdown-item" href="../articles/FlexRL-RL-block-vignette.html">Scalable Record Linkage</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -36,7 +36,7 @@ in every data set of data_list (e.g. a baseline file vs. the linked set)."><meta
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Compare distributions of shared variables across data sets (histograms/barplots)</h1>
-      <small class="dont-index">Source: <a href="https://github.com/robachowyk/FlexRL/blob/HEAD/R/FlexRecordLinkage.r" class="external-link"><code>R/FlexRecordLinkage.r</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/robachowyk/FlexRL/blob/master/R/FlexRecordLinkage.r" class="external-link"><code>R/FlexRecordLinkage.r</code></a></small>
       <div class="d-none name"><code>plot_distributions.Rd</code></div>
     </div>
 
@@ -103,6 +103,7 @@ data; only used to label the linked data in the legend.</p></dd>
 <span class="r-in"><span>                           <span class="va">p_mistake</span>, <span class="va">p_missing</span>, <span class="va">cond_hazard_params</span>, <span class="cn">TRUE</span> <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">prep_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="prepare_data.html">prepare_data</a></span><span class="op">(</span> <span class="va">gen_data</span><span class="op">$</span><span class="va">data1</span>, <span class="va">gen_data</span><span class="op">$</span><span class="va">data2</span>, <span class="st">"1"</span>, <span class="st">"2"</span>,</span></span>
 <span class="r-in"><span>                           <span class="va">PIVs_config</span>, <span class="cn">TRUE</span>, <span class="st">"entity_id"</span>, <span class="cn">TRUE</span> <span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIVs 'V4' and 'V2' are associated (Cramer's V = 0.31 in data1, 0.28 in data2); FlexRL assumes conditional independence between PIVs, consider merging or dropping one.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> '2' is the larger source, saved as B; '1' saved as A.</span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="StEM.html">StEM</a></span><span class="op">(</span> data <span class="op">=</span> <span class="va">prep_data</span>, StEM_iter <span class="op">=</span> <span class="fl">10</span>, StEM_burnin <span class="op">=</span> <span class="fl">5</span>,</span></span>
 <span class="r-in"><span>             gibbs_iter <span class="op">=</span> <span class="fl">10</span>, gibbs_burnin <span class="op">=</span> <span class="fl">5</span>, n_post_sample <span class="op">=</span> <span class="fl">10</span> <span class="op">)</span></span></span>

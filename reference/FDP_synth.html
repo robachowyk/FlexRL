@@ -9,7 +9,7 @@ a given threshold"><meta property="og:image" content="https://robachowyk.github.
 
     <a class="navbar-brand me-2" href="../index.html">FlexRL</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,8 +20,8 @@ a given threshold"><meta property="og:image" content="https://robachowyk.github.
       <ul class="navbar-nav me-auto"><li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/Article-FlexRL.html">Flexible Record Linkage and Linked Data Quality Assessment</a></li>
-    <li><a class="dropdown-item" href="../articles/FlexRL-RL-vignette.html">Linkage and Diagnostics with FlexRL</a></li>
-    <li><a class="dropdown-item" href="../articles/FlexRL-RL-block-vignette.html">Scalable Record Linkage with FlexRL</a></li>
+    <li><a class="dropdown-item" href="../articles/FlexRL-RL-vignette.html">Linkage and Diagnostics</a></li>
+    <li><a class="dropdown-item" href="../articles/FlexRL-RL-block-vignette.html">Scalable Record Linkage</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -36,7 +36,7 @@ a given threshold"><meta property="og:image" content="https://robachowyk.github.
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Model agnostic, based on synthetic data, false discovery proportion at a given threshold</h1>
-      <small class="dont-index">Source: <a href="https://github.com/robachowyk/FlexRL/blob/HEAD/R/FlexRecordLinkage.r" class="external-link"><code>R/FlexRecordLinkage.r</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/robachowyk/FlexRL/blob/master/R/FlexRecordLinkage.r" class="external-link"><code>R/FlexRecordLinkage.r</code></a></small>
       <div class="d-none name"><code>FDP_synth.Rd</code></div>
     </div>
 
@@ -130,11 +130,12 @@ linked records, <code>n_linked_real</code> Integer, number of real linked record
 <span class="r-in"><span>                      <span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">PIVs</span>,<span class="st">"local_id"</span>,<span class="st">"source"</span>,<span class="st">"date"</span>,</span></span>
 <span class="r-in"><span>                      <span class="va">prep_data</span><span class="op">$</span><span class="va">PIVs_config</span><span class="op">$</span><span class="va">V4</span><span class="op">$</span><span class="va">cond_hazard_cov</span><span class="op">$</span><span class="va">covB</span><span class="op">)</span><span class="op">]</span>, <span class="va">PIVs</span>, </span></span>
 <span class="r-in"><span>                      <span class="va">n_synth</span>, <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration: 0, Accuracy: 50%</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iteration: 0, Accuracy: 48.86%</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>executing %dopar% sequentially: no parallel backend registered</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIV 'V1': synthetic records out of the common support were removed.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIV 'V2': synthetic records out of the common support were removed.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIV 'V3': synthetic records out of the common support were removed.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>PIV 'V4': synthetic records out of the common support were removed.</span>
 <span class="r-in"><span><span class="va">new_data</span><span class="op">$</span><span class="va">dataA</span><span class="op">[</span><span class="va">PIVs</span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">new_data</span><span class="op">$</span><span class="va">dataA</span><span class="op">[</span><span class="va">PIVs</span><span class="op">]</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">0</span></span></span>
 <span class="r-in"><span><span class="va">new_data</span><span class="op">$</span><span class="va">dataB</span><span class="op">[</span><span class="va">PIVs</span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">new_data</span><span class="op">$</span><span class="va">dataB</span><span class="op">[</span><span class="va">PIVs</span><span class="op">]</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">0</span></span></span>
 <span class="r-in"><span><span class="co"># cannot model dynamics for synthetic data, set dates to 0</span></span></span>
@@ -148,13 +149,13 @@ linked records, <code>n_linked_real</code> Integer, number of real linked record
 <span class="r-in"><span>          <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">prep_data</span><span class="op">$</span><span class="va">encodedA</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">prep_data</span><span class="op">$</span><span class="va">encodedB</span><span class="op">)</span>, </span></span>
 <span class="r-in"><span>          <span class="va">n_synth</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $FDP_synth</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.2816901</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.1298701</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $n_linked_real</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 71</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 77</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $n_linked_all</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 73</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 78</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>
