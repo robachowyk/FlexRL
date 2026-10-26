@@ -17,6 +17,7 @@ test_that("link_with_FlexRL returns posterior probabilities; > 0.5 is one-to-one
 })
 
 test_that("BRL wrapper: idxA indexes dataA, idxB indexes dataB, links are mostly true", {
+  skip_if_not_installed("BRL")
   set.seed(82)
   # V1 is unique per record so the true pairs are unambiguous for BRL's Gibbs;
   # V2 adds a weak secondary field. (With only a handful of levels per field,
@@ -38,6 +39,7 @@ test_that("BRL wrapper: idxA indexes dataA, idxB indexes dataB, links are mostly
 })
 
 test_that("fastLink wrapper returns pairs with probability scores", {
+  skip_if_not_installed("fastLink")
   args <- list(varnames = PIVs, tol.em = 1e-6, threshold.match = 0.5,
                return.all = TRUE, n.cores = 1)
   set.seed(83)
@@ -47,6 +49,7 @@ test_that("fastLink wrapper returns pairs with probability scores", {
 })
 
 test_that("reclin2 wrapper returns threshold-selected pairs", {
+  skip_if_not_installed("reclin2")
   args <- list(on = PIVs,
                formula = stats::as.formula(paste("~", paste(PIVs, collapse = "+"))),
                type = "mpost", add = TRUE, variable = "selected",
@@ -58,6 +61,7 @@ test_that("reclin2 wrapper returns threshold-selected pairs", {
 })
 
 test_that("fedmatch wrapper returns matches with multivar scores", {
+  skip_if_not_installed("fedmatch")
   args <- list(by = PIVs, match_type = "multivar",
                unique_key_1 = "unique_key_A", unique_key_2 = "unique_key_B",
                multivar_settings = fedmatch::build_multivar_settings(
@@ -71,6 +75,7 @@ test_that("fedmatch wrapper returns matches with multivar scores", {
 })
 
 test_that("multilink wrapper (no duplicates) returns in-range one-to-one pairs", {
+  skip_if_not_installed("multilink")
   args <- list(types = rep("bi", length(PIVs)),
                breaks = setNames(rep(list(NA), length(PIVs)), PIVs),
                duplicates = c(0, 0), n_iter = 200, max_cc_size = 50)
@@ -85,6 +90,7 @@ test_that("multilink wrapper (no duplicates) returns in-range one-to-one pairs",
 })
 
 test_that("KNOWN BUG: multilink wrapper errors when duplicates are allowed (FINDINGS #F)", {
+  skip_if_not_installed("multilink")
   args <- list(types = rep("bi", length(PIVs)),
                breaks = setNames(rep(list(NA), length(PIVs)), PIVs),
                duplicates = c(1, 0), n_iter = 200, max_cc_size = 50)
@@ -93,6 +99,7 @@ test_that("KNOWN BUG: multilink wrapper errors when duplicates are allowed (FIND
 })
 
 test_that("diyar wrapper (vignette arguments, PIVs only) links the std data", {
+  skip_if_not_installed("diyar")
   args <- list(probabilistic = TRUE, return_weights = TRUE)
   set.seed(87)
   res <- link_with_diyar(prep$encodedA[, PIVs], prep$encodedB[, PIVs], args)
@@ -102,6 +109,7 @@ test_that("diyar wrapper (vignette arguments, PIVs only) links the std data", {
 })
 
 test_that("KNOWN TRAP: diyar wrapper silently uses entity_id when present (FINDINGS #E)", {
+  skip_if_not_installed("diyar")
   args <- list(probabilistic = TRUE, return_weights = TRUE)
   set.seed(87)
   res <- link_with_diyar(prep$encodedA[, c(PIVs, "entity_id")],
@@ -114,6 +122,7 @@ test_that("KNOWN TRAP: diyar wrapper silently uses entity_id when present (FINDI
 })
 
 test_that("KNOWN BUG: diyar wrapper errors on prepare_data output containing 'change' (FINDINGS #E)", {
+  skip_if_not_installed("diyar")
   expect_error(
     link_with_diyar(prep$encodedA, prep$encodedB,
                     list(probabilistic = TRUE, return_weights = TRUE)))

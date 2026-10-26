@@ -6,6 +6,7 @@ encA <- std$prep$encodedA[, c(PIVs, "local_id", "source")]
 encB <- std$prep$encodedB[, c(PIVs, "local_id", "source")]
 
 test_that("synthesise keeps real rows (up to support restriction) and marks synthetic ones", {
+  skip_if_not_installed("arf")
   set.seed(91)
   nd <- suppressWarnings(synthesise("arf", encA, encB, PIVs, 50))
   # Real rows are never altered or invented: what survives is a subset of the
@@ -19,6 +20,7 @@ test_that("synthesise keeps real rows (up to support restriction) and marks synt
 })
 
 test_that("restrict_support_intersection = FALSE never drops rows", {
+  skip_if_not_installed("arf")
   set.seed(92)
   nd <- suppressWarnings(synthesise("arf", encA, encB, PIVs, 200,
                                     restrict_support_intersection = FALSE))
@@ -26,6 +28,7 @@ test_that("restrict_support_intersection = FALSE never drops rows", {
 })
 
 test_that("synthesise reports how many synthetic rows survived (post-fix contract)", {
+  skip_if_not_installed("arf")
   set.seed(93)
   nd <- suppressWarnings(synthesise("arf", encA, encB, PIVs, 50))
   expect_true("n_synth_actual" %in% names(nd))
@@ -33,6 +36,8 @@ test_that("synthesise reports how many synthetic rows survived (post-fix contrac
 })
 
 test_that("synthpop and mice paths run on small data", {
+  skip_if_not_installed("synthpop")
+  skip_if_not_installed("mice")
   set.seed(94)
   nd1 <- suppressWarnings(synthesise("synthpop", encA, encB, PIVs, 30))
   expect_gt(sum(nd1$dataB$source == "synthetic"), 0)
@@ -42,6 +47,7 @@ test_that("synthpop and mice paths run on small data", {
 })
 
 test_that("high-cardinality PIVs take the numeric-conversion path without error", {
+  skip_if_not_installed("synthpop")
   set.seed(96)
   # synthpop::syn needs at least two columns, so use two PIVs.
   A <- data.frame(V1 = sample.int(65, 100, TRUE), V2 = sample.int(65, 100, TRUE),
