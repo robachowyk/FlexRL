@@ -1,13 +1,14 @@
 bibentry(
   bibtype = "Article",
-  title   = "A flexible model for record linkage",
+  title   = "FlexRL: an R package for Flexible Record Linkage and Linked Data Quality Assessment",
   author  = c(
     person("Kayané", "Robach"),
-    person(c("Stéphanie", "L."), "van der Pas"),
     person(c("Mark", "A."), "van de Wiel"),
     person(c("Michel", "H."), "Hof")
   ),
-  year    = "2025",
-  journal = "Journal of the Royal Statistical Society Series C: Applied Statistics",
-  doi     = "10.1093/jrsssc/qlaf016"
+  year    = "2026",
+  volume  = "1",
+  number  = "11",
+  journal = "Journal of Reproducible Statistics",
+  doi     = "10.68365/jrepstat.2026.11"
 )
